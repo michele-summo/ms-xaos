@@ -458,9 +458,9 @@ int sffe_parse(sffe **parser, const char *expression)
     char *tokens; /*tokenized form : (f(n)+f(n))*f(n)-n (f-func, n-num,const) */
 
     char *ech;
-    char *ch1, *ch2;
+    char *ch1, *ch2, *buf, *bufp;
 
-    unsigned int ui1;
+    unsigned int ui1, buflen;
     unsigned char token;
 
     enum sffe_error err;
@@ -537,6 +537,11 @@ int sffe_parse(sffe **parser, const char *expression)
     ch1 = NULL;
     ui1 = 0; /*brackets */
     ch2 = ech;
+    buflen = strlen(_parser->expression) * 2;
+
+    buf = new char[buflen + 1];
+    *buf = '\0';
+    bufp = buf;
 
     /* skip leading spaces */
     while (isspace(*ech)) {
@@ -565,25 +570,45 @@ int sffe_parse(sffe **parser, const char *expression)
 
         *ch2 = (char)tolower((int)*ech);
 
+        if (strchr("+-", (int)*ech)) {
+            if (!*buf) {
+                *bufp = '0';
+            } else if(strchr("(,", (int)*bufp)) {
+                bufp++;
+                *bufp = '0';
+            }
+        }
+
         /*fix multiple arithm operators */
-        if (ch1 && strchr("+-/*^", (int)*ech) && strchr("+-/*^", (int)*ch1)) {
-            if (*ch1 == '-' && *ech == '-') {
-                *ch1 = '+';
-            } else if (*ch1 == '-' && *ech == '+') {
-                *ch1 = '-';
-            } else if (*ch1 == '+' && *ech == '-') {
-                *ch1 = '-';
-            } else if (*ch1 == *ech) {
-                *ch1 = *ech;
-            } else if (*ech == '-') {
-                ch1 = ++ch2;
-            } else if (*ch1 != *ech) {
+        if (*bufp && strchr("+-/*^", (int)*ech) && strchr("+-/*^", (int)*bufp)) {
+            if (*bufp == '-' && *ech == '-') {
+                //*ch1 = '+';
+                *bufp = '+';
+            } else if (*bufp == '-' && *ech == '+') {
+                //*ch1 = '-';
+                *bufp = '-';
+            } else if (*bufp == '+' && *ech == '-') {
+                //*ch1 = '-';
+                *bufp = '-';
+            } else if (*bufp == *ech) {
+                //*ch1 = *ech;
+                *bufp = *ech;
+            } else if (strchr("+-", (int)*ech)) {
+                //ch1 = ++ch2;
+                bufp++;
+                *bufp = *ch2;
+            } else if (*bufp != *ech) {
                 err = InvalidOperators;
                 break;
             }
         } else {
-            ch1 = ch2;
-            ch2 += 1;
+
+            //ch1 = ch2;
+            if (*buf) {
+                bufp++;
+            }
+            *bufp = *ch2;
+            ch2 ++;
         }
 
         /*skip spaces */
@@ -591,11 +616,13 @@ int sffe_parse(sffe **parser, const char *expression)
             ech += 1;
         } while (isspace(*ech));
     }
-
+    bufp++;
+    *bufp = '\0';
     *ch2 = '\0';
 
-    _parser->expression = (char *)realloc((char *)_parser->expression,
-                                          strlen(_parser->expression) + 1);
+    /* _parser->expression = (char *)realloc((char *)_parser->expression,
+                                          strlen(_parser->expression) + 1); */
+    _parser->expression = buflen > 0 ? (char *)realloc((char *)buf, strlen(buf) + 1) : new char{'\0'};
 
     if (ui1 && !err) {
         err = UnbalancedBrackets;

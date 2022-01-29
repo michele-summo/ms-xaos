@@ -13,7 +13,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
-#define sffnctscount 43
+#define sffnctscount 63
 #define sfvarscount 6
 #define cmplxset(c, r, i) GSL_SET_COMPLEX(&c, r, i)
 #define real(c) GSL_REAL((c))
@@ -51,11 +51,40 @@ sfarg *sfrtni(sfarg *const p);  /* rtni */
 sfarg *sfinv(sfarg *const p);   /* cinv */
 sfarg *sfceil(sfarg *const p);  /* ceil */
 sfarg *sffloor(sfarg *const p); /* floor */
+sfarg *sfcarg(sfarg *const p); /* arg */
+sfarg *sfmod(sfarg *const p); /* mod */
+sfarg *sfconj(sfarg *const p); /* conj */
 sfarg *sfabs(sfarg *const p);   /* abs - |z| */
 sfarg *sfre(sfarg *const p);    /* RE */
 sfarg *sfim(sfarg *const p);    /* IM */
 sfarg *sfrabs(sfarg *const p);  /* abs - real numbers */
 sfarg *sfrand(sfarg *const p);  /* rand */
+
+sfarg *sfbship(sfarg *const p);  /* bship - burning ship */
+sfarg *sfbshipr(sfarg *const p);  /* bshipr - burning ship only for real  */
+sfarg *sfbshipi(sfarg *const p);  /* bshipi - burning ship only for imag */
+
+sfarg *sfrect(sfarg *const p);  /* rect coordinates f(z1,z2) = r1+i*i2 */
+sfarg *sfpolar(sfarg *const p); /* polar coordinates f(z1,z2) = m1*e^(i*a2) */
+
+/* Comparison function (r only by real value,
+ * i only by imag, m by modulo, else by both real and imag) */
+/* min function */
+sfarg *sfmin(sfarg *const p);
+sfarg *sfminr(sfarg *const p);
+sfarg *sfmini(sfarg *const p);
+sfarg *sfminm(sfarg *const p);
+/* max function */
+sfarg *sfmax(sfarg *const p);
+sfarg *sfmaxr(sfarg *const p);
+sfarg *sfmaxi(sfarg *const p);
+sfarg *sfmaxm(sfarg *const p);
+/* mid function: if a<b then a<x<b else x<b or x<a */
+sfarg *sfmid(sfarg *const p);
+sfarg *sfmidr(sfarg *const p);
+sfarg *sfmidi(sfarg *const p);
+sfarg *sfmidm(sfarg *const p);
+
 /*const eval*/
 void sfcPI(sfNumber *cnst);
 void sfcPI2(sfNumber *cnst);

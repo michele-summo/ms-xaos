@@ -9,6 +9,8 @@ TEMPLATE = app
 
 QT += widgets
 
+CONFIG+= static
+
 macx {
     TARGET = XaoS
 } else {
