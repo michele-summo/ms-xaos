@@ -1263,7 +1263,8 @@ thread_local bool sffe_formula_valid = false;
 thread_local sffe *sffe_formula_local = NULL;
 thread_local bool sffe_initial_valid = false;
 thread_local sffe *sffe_initial_local = NULL;
-thread_local cmplx sffe_z, sffe_c, sffe_p, sffe_n;
+thread_local cmplx sffe_z, sffe_c, sffe_n;
+thread_local cmplx sffe_p[NUM_P];
 
 // Copy the formula from the main parser to this thread's local parser
 // Possibly initializing the parser if this is the first time
@@ -1273,7 +1274,12 @@ void sffe_setmine(void *data, struct taskinfo * /*task*/, int /*r1*/,
     fractal_context *c = (fractal_context *)data;
     if (!sffe_formula_local) {
         sffe_formula_local = sffe_alloc();
-        sffe_regvar(&sffe_formula_local, &sffe_p, "p");
+        sffe_regvar(&sffe_formula_local, &sffe_p[0], "p");
+        for (int i = 0; i < NUM_P; i++) {
+            char pname[3];
+            snprintf(pname, 3, "p%d", (i+1));
+            sffe_regvar(&sffe_formula_local, &sffe_p[i], pname);
+        }
         sffe_regvar(&sffe_formula_local, &sffe_z, "z");
         sffe_regvar(&sffe_formula_local, &sffe_c, "c");
         sffe_regvar(&sffe_formula_local, &sffe_n, "n");
@@ -1287,7 +1293,12 @@ void sffe_setmine(void *data, struct taskinfo * /*task*/, int /*r1*/,
 
     if (!sffe_initial_local) {
         sffe_initial_local = sffe_alloc();
-        sffe_regvar(&sffe_initial_local, &sffe_p, "p");
+        sffe_regvar(&sffe_initial_local, &sffe_p[0], "p");
+        for (int i = 0; i < NUM_P; i++) {
+            char pname[3];
+            snprintf(pname, 3, "p%d", (i+1));
+            sffe_regvar(&sffe_formula_local, &sffe_p[i], pname);
+        }
         sffe_regvar(&sffe_initial_local, &sffe_c, "c");
         sffe_regvar(&sffe_initial_local, &sffe_n, "n");
     }
@@ -1307,7 +1318,9 @@ void sffe_setlocal(fractal_context *c)
 }
 
 #define INIT                                                                   \
-    cmplxset(sffe_p, 0, 0);                                                    \
+    for (int i = 0; i < NUM_P; i++) {                                          \
+        cmplxset(sffe_p[i], 0, 0);                                             \
+    }                                                                          \
     cmplxset(sffe_c, pre, pim);                                                \
     if (sffe_initial_valid)                                                    \
         sffe_z = sffe_eval(sffe_initial_local);                                \
@@ -1320,7 +1333,10 @@ void sffe_setlocal(fractal_context *c)
 #define FORMULA                                                                \
     if (sffe_formula_valid)                                                    \
         sffe_z = sffe_eval(sffe_formula_local);                                \
-    cmplxset(sffe_p, zre, zim);                                                \
+    for (int i = NUM_P - 1; i > 0; i--) {                                      \
+        cmplxset(sffe_p[i], real(sffe_p[i - 1]), imag(sffe_p[i - 1]));         \
+    }                                                                          \
+    cmplxset(sffe_p[0], zre, zim);                                             \
     zre = real(sffe_z);                                                        \
     zim = imag(sffe_z);                                                        \
     cmplxset(sffe_n, (unsigned int)cfractalc.maxiter - iter + 1, 0);

@@ -460,6 +460,8 @@ int sffe_parse(sffe **parser, const char *expression)
     char *ech;
     char *ch1, *ch2, *buf, *bufp;
 
+    bool num_mode;
+
     unsigned int ui1, buflen;
     unsigned char token;
 
@@ -548,6 +550,7 @@ int sffe_parse(sffe **parser, const char *expression)
         ech += 1;
     }
 
+    num_mode = false;
     /*handle brackets and change ';'->',', '['->'{', ']'->'}' */
     while (*ech) {
         switch (*ech) {
@@ -570,7 +573,12 @@ int sffe_parse(sffe **parser, const char *expression)
 
         *ch2 = (char)tolower((int)*ech);
 
-        if (strchr("+-", (int)*ech)) {
+        if (*ech == '{') {
+            num_mode = true;
+        } else if (*ech == '}') {
+            num_mode = false;
+        }
+        if (!num_mode && strchr("+-", (int)*ech)) {
             if (!*buf) {
                 *bufp = '0';
             } else if(strchr("(,", (int)*bufp)) {
@@ -669,7 +677,7 @@ int sffe_parse(sffe **parser, const char *expression)
                             if (!sffe_const(ch1, (size_t)(ech - ch1),
                                             _argument->value)) {
                                 *ech = 0; // terminate string after this symbol
-                                set_error(UnknownVariable);
+                                set_error( UnknownVariable);
                             }
                         } else {
                             set_error(MemoryError);

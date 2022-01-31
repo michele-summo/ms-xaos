@@ -330,6 +330,13 @@ fractal_context *make_fractalc(const int formula, float wi, float he)
     sffe_regvar(&new_ctxt->userinitial, &sffe_dummy, "z");
     sffe_regvar(&new_ctxt->userinitial, &sffe_dummy, "c");
     sffe_regvar(&new_ctxt->userinitial, &sffe_dummy, "n");
+
+    for (int i = 0; i < NUM_P; i++) {
+        char pname[3];
+        snprintf(pname, 3, "p%d", (i+1));
+        sffe_regvar(&new_ctxt->userformula, &sffe_dummy, pname);
+        sffe_regvar(&new_ctxt->userinitial, &sffe_dummy, pname);
+    }
 #endif
     set_formula(new_ctxt, formula);
     return (new_ctxt);
