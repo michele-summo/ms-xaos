@@ -1,4 +1,4 @@
-XaoS
+Michele Summo XaoS Hacked Xaos version
 ====
 
 XaoS (pronounced *chaos*) is a realtime interactive fractal zoomer. This
@@ -62,3 +62,10 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+Added functions:
+----------------
+* Coloring speed and speed functions
+* New functions: bship (burning ship), min(default/real/imag/magnitude),
+* max(default/real/imag/magnitude), mid(default/real/imag/magnitude), 
+* rect, polar, trunc, round, mod and so on...
