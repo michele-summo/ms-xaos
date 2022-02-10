@@ -1766,6 +1766,52 @@ void uih_setouttcolor(uih_context *c, int mode)
     }
 }
 
+void uih_setincolorspeed(uih_context *c, number_t speed) {
+    if (c->fcontext->incolorspeed != (number_t)speed) {
+        c->fcontext->incolorspeed = speed;
+        c->fcontext->version++;
+        uih_newimage(c);
+    }
+}
+
+void uih_setincolorfun(uih_context *c, int func){
+    if (func < 0)
+        func = rand() % COLORFUN;
+    if (func > COLORFUN)
+        func = COLORFUN;
+    if (c->fcontext->incolorfun != func) {
+        char str[10];
+        c->fcontext->incolorfun = func;
+        c->fcontext->version++;
+        uih_newimage(c);
+        sprintf(str, "in%i", func);
+        uih_updatemenus(c, str);
+    }
+}
+
+void uih_setoutcolorspeed(uih_context *c, number_t speed){
+    if (c->fcontext->outcolorspeed != (number_t)speed) {
+        c->fcontext->outcolorspeed = speed;
+        c->fcontext->version++;
+        uih_newimage(c);
+    }
+}
+
+void uih_setoutcolorfun(uih_context *c, int func){
+    if (func < 0)
+        func = rand() % COLORFUN;
+    if (func > COLORFUN)
+        func = COLORFUN;
+    if (c->fcontext->outcolorfun != func) {
+        char str[10];
+        c->fcontext->outcolorfun = func;
+        c->fcontext->version++;
+        uih_newimage(c);
+        sprintf(str, "in%i", func);
+        uih_updatemenus(c, str);
+    }
+}
+
 void uih_setperbutation(uih_context *c, number_t zre, number_t zim)
 {
     if (c->fcontext->bre != zre || c->fcontext->bim != zim) {
@@ -2130,6 +2176,10 @@ void uih_initstate(struct uih_context *uih)
     uih_setbailout(uih, 4);
     uih_setincoloringmode(uih, 0);
     uih_setoutcoloringmode(uih, 0);
+    uih_setincolorspeed(uih, 1.0);
+    uih_setincolorfun(uih, 0);
+    uih_setoutcolorspeed(uih, 1.0);
+    uih_setoutcolorfun(uih, 0);
     uih_setcycling(uih, 30);
     uih_display(uih);
     uih_setfastmode(uih, 2);

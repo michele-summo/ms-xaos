@@ -30,6 +30,7 @@
 #define INCOLORING 11
 #define OUTCOLORING 11
 #define TCOLOR 15
+#define COLORFUN 10
 
 typedef struct {
     number_t y0, k;
@@ -79,6 +80,10 @@ struct fractal_context {
     number_t bailout;
     int coloringmode, incoloringmode;
     int intcolor, outtcolor;
+    //MSUMMO BEGIN HACK
+    number_t incolorspeed, outcolorspeed;
+    int incolorfun, outcolorfun;
+    //MSUMMO END HACK
     int mandelbrot;
     int plane;
     int version;

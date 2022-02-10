@@ -422,6 +422,12 @@ void uih_setincoloringmode(uih_context *c, int mode);
 void uih_setoutcoloringmode(uih_context *c, int mode);
 void uih_setintcolor(uih_context *c, int mode);
 void uih_setouttcolor(uih_context *c, int mode);
+
+void uih_setincolorspeed(uih_context *c, number_t speed);
+void uih_setincolorfun(uih_context *c, int func);
+void uih_setoutcolorspeed(uih_context *c, number_t speed);
+void uih_setoutcolorfun(uih_context *c, int func);
+
 void uih_setplane(uih_context *c, int mode);
 void uih_setmandelbrot(uih_context *c, int mode, int mousex, int mousey);
 void uih_setfastmode(uih_context *c, int mode);

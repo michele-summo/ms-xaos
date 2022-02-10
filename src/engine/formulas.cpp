@@ -97,6 +97,19 @@ const char *const tcolorname[] = {
     "simple blue (for education purposes)",
     NULL};
 
+const char *const colorfun[] = {
+    "ident",
+    "log",
+    "atan",
+    "sin",
+    "cos",
+    "square",
+    "cube",
+    "square root",
+    "cube root",
+    NULL
+};
+
 #define SHIFT 8
 #define SMUL 256
 
@@ -114,9 +127,10 @@ const char *const tcolorname[] = {
 
 #define OUTOUTPUT()                                                            \
     STAT(niter2 += iter);                                                      \
-    return (!cfractalc.coloringmode                                            \
-                ? cpalette.pixels[(iter % (cpalette.size - 1)) + 1]            \
-                : color_output(zre, zim, iter))
+    return (color_output(zre, zim, iter))
+//return (!cfractalc.coloringmode                                            \
+//            ? iter_output(iter)                                            \
+//            : color_output(zre, zim, iter))
 #define INOUTPUT()                                                             \
     STAT(niter1 += iter; ninside2++);                                          \
     return (cfractalc.incoloringmode                                           \
@@ -159,6 +173,87 @@ const char *const tcolorname[] = {
             return (interpoltype(cpalette, i2, i1, iter));                     \
         }                                                                      \
     }
+
+/* 2021-02-09 MSUMMO calculate color functions */
+const number_t V_MAX = DBL_MAX / SMUL;
+static void color_f_normalize(number_t &v) {
+    if (v < -V_MAX) {
+        v = -V_MAX;
+    } else if (v > V_MAX) {
+        v = V_MAX;
+    }
+}
+
+static float color_f_func(number_t v, const float speed, const int func) {
+    color_f_normalize(v);
+    switch (func) {
+    case 1:
+        // LOG
+        if (v > 0)
+           v = logl(v + 1);
+        else
+           v = -logl(-v + 1);
+        break;
+    case 2:
+        // ATAN
+        v = atanl(v);
+        break;
+    case 3:
+        // SIN
+        v = sinl(v);
+        break;
+    case 4:
+        // COS
+        v = cosl(v);
+        break;
+    case 5:
+        // SQR
+        if (v > 0)
+           v = v * v;
+        else
+           v = -(v * v);
+        color_f_normalize(v);
+        break;
+    case 6:
+        // CUBE
+        v = v * v * v;
+        color_f_normalize(v);
+        break;
+    case 7:
+        // SQRT
+        if (v > 0)
+           v = sqrtl(v);
+        else
+           v = -sqrtl(-v);
+        break;
+    case 8:
+        // CBRT
+        if (v > 0)
+           v = cbrtl(v);
+        else
+           v = -cbrtl(-v);
+        break;
+    }
+    v = v * speed;
+    color_f_normalize(v);
+    return v;
+}
+
+static void color_precalc(number_t &iter, int inset) {
+    const float speed = inset ? cfractalc.incolorspeed : cfractalc.outcolorspeed;
+    const int func = inset ? cfractalc.incolorfun : cfractalc.outcolorfun;
+    iter = (color_f_func(iter / SMUL, speed, func) * SMUL);
+}
+static void color_precalc(number_t &zre, number_t &zim, number_t &pre,
+                          number_t &pim, int inset) {
+    const float speed = inset ? cfractalc.incolorspeed : cfractalc.outcolorspeed;
+    const int func = inset ? cfractalc.incolorfun : cfractalc.outcolorfun;
+    zre = color_f_func(zre, speed, func);
+    zim = color_f_func(zim, speed, func);
+    zre = color_f_func(pre, speed, func);
+    zim = color_f_func(pim, speed, func);
+}
+
 /* 2009-07-30 JB Langston:
  * Fixing bug #3: HSV modes are completely black when compiled with GCC 4...
  * Removed  qualifier from hsv_to_rgb declaration.  macro is
@@ -234,29 +329,33 @@ static unsigned int truecolor_output(number_t zre, number_t zim, number_t pre,
 static unsigned int truecolor_output(number_t zre, number_t zim, number_t pre,
                                      number_t pim, int mode, int inset)
 {
+    color_precalc(zre, zim, pre, pim, inset);
     /* WARNING: r and b fields are swapped for HISTORICAL REASONS (BUG :),
      * in other words: use r for blue and b for red. */
-    int r = 0, g = 0, b = 0, w = 0;
+    /*
+     * MSUMMO: Fixed bug!
+     */
+    int b = 0, g = 0, r = 0, w = 0;
 
     switch (mode) {
         case 0:
             break;
         case 1:
-            b = (int)((sin((double)atan2((double)zre, (double)zim) * 20) + 1) *
+            r = (int)((sin((double)atan2((double)zre, (double)zim) * 20) + 1) *
                       127);
             w = (int)((sin((double)zim / zre)) * 127);
-            r = (int)((int)(zre * zim));
+            b = (int)((int)(zre * zim));
             g = (int)((sin((double)(zre * zre) / 2) + 1) * 127);
             break;
         case 2:
             if (!inset) {
-                r = (int)((sin((double)zre * 2) + 1) * 127);
+                b = (int)((sin((double)zre * 2) + 1) * 127);
                 g = (int)((sin((double)zim * 2) + 1) * 127);
-                b = (int)((sin((double)(zim * zim + zre * zre) / 2) + 1) * 127);
+                r = (int)((sin((double)(zim * zim + zre * zre) / 2) + 1) * 127);
             } else {
-                r = (int)((sin((double)zre * 50) + 1) * 127);
+                b = (int)((sin((double)zre * 50) + 1) * 127);
                 g = (int)((sin((double)zim * 50) + 1) * 127);
-                b = (int)((sin((double)(zim * zim + zre * zre) * 50) + 1) *
+                r = (int)((sin((double)(zim * zim + zre * zre) * 50) + 1) *
                           127);
             }
             w = (int)((sin((double)zim / zre)) * 127);
@@ -265,12 +364,12 @@ static unsigned int truecolor_output(number_t zre, number_t zim, number_t pre,
             if (inset)
                 hsv_to_rgb((int)(atan2((double)zre, (double)zim) * 256 / M_PI),
                            (int)((sin((double)(zre * 50)) + 1) * 128),
-                           (int)((sin((double)(zim * 50)) + 1) * 128), &r, &g,
-                           &b);
+                           (int)((sin((double)(zim * 50)) + 1) * 128), &b, &g,
+                           &r);
             else
                 hsv_to_rgb((int)(atan2((double)zre, (double)zim) * 256 / M_PI),
                            (int)((sin((double)zre) + 1) * 128),
-                           (int)((sin((double)zim) + 1) * 128), &r, &g, &b);
+                           (int)((sin((double)zim) + 1) * 128), &b, &g, &r);
             break;
         case 4:
             if (inset)
@@ -278,171 +377,185 @@ static unsigned int truecolor_output(number_t zre, number_t zim, number_t pre,
                     (int)(sin((double)(zre * zre + zim * zim) * 0.1) * 256),
                     (int)(sin(atan2((double)zre, (double)zim) * 10) * 128 +
                           128),
-                    (int)((sin((double)(zre + zim) * 10)) * 65 + 128), &r, &g,
-                    &b);
+                    (int)((sin((double)(zre + zim) * 10)) * 65 + 128), &b, &g,
+                    &r);
             else
                 hsv_to_rgb(
                     (int)(sin((double)(zre * zre + zim * zim) * 0.01) * 256),
                     (int)(sin(atan2((double)zre, (double)zim) * 10) * 128 +
                           128),
-                    (int)((sin((double)(zre + zim) * 0.3)) * 65 + 128), &r, &g,
-                    &b);
+                    (int)((sin((double)(zre + zim) * 0.3)) * 65 + 128), &b, &g,
+                    &r);
             break;
         case 5: {
             if (!inset) {
-                r = (int)(cos((double)myabs(zre * zre)) * 128) + 128;
+                b = (int)(cos((double)myabs(zre * zre)) * 128) + 128;
                 g = (int)(cos((double)myabs(zre * zim)) * 128) + 128;
-                b = (int)(cos((double)myabs(zim * zim + zre * zre)) * 128) +
+                r = (int)(cos((double)myabs(zim * zim + zre * zre)) * 128) +
                     128;
             } else {
-                r = (int)(cos((double)myabs(zre * zre) * 10) * 128) + 128;
+                b = (int)(cos((double)myabs(zre * zre) * 10) * 128) + 128;
                 g = (int)(cos((double)myabs(zre * zim) * 10) * 128) + 128;
-                b = (int)(cos((double)myabs(zim * zim + zre * zre) * 10) *
+                r = (int)(cos((double)myabs(zim * zim + zre * zre) * 10) *
                           128) +
                     128;
             }
         } break;
         case 6: {
             if (!inset) {
-                r = (int)(zre * zim * 64);
+                b = (int)(zre * zim * 64);
                 g = (int)(zre * zre * 64);
-                b = (int)(zim * zim * 64);
+                r = (int)(zim * zim * 64);
             } else
-                r = (int)(zre * zim * 256);
+                b = (int)(zre * zim * 256);
             g = (int)(zre * zre * 256);
-            b = (int)(zim * zim * 256);
+            r = (int)(zim * zim * 256);
         } break;
         case 7: {
             if (!inset) {
-                r = (int)((zre * zre + zim * zim - pre * pre - pim * pim) * 16);
+                b = (int)((zre * zre + zim * zim - pre * pre - pim * pim) * 16);
                 g = (int)((zre * zre * 2 - pre * pre - pim * pim) * 16);
-                b = (int)((zim * zim * 2 - pre * pre - pim * pim) * 16);
+                r = (int)((zim * zim * 2 - pre * pre - pim * pim) * 16);
             } else {
-                r = (int)((zre * zre + zim * zim - pre * pre - pim * pim) *
+                b = (int)((zre * zre + zim * zim - pre * pre - pim * pim) *
                           256);
                 g = (int)((zre * zre * 2 - pre * pre - pim * pim) * 256);
-                b = (int)((zim * zim * 2 - pre * pre - pim * pim) * 256);
+                r = (int)((zim * zim * 2 - pre * pre - pim * pim) * 256);
             }
         } break;
         case 8: {
             if (!inset) {
-                r = (int)((myabs(zim * pim)) * 64);
+                b = (int)((myabs(zim * pim)) * 64);
                 g = (int)((myabs(zre * pre)) * 64);
-                b = (int)((myabs(zre * pim)) * 64);
+                r = (int)((myabs(zre * pim)) * 64);
             } else {
-                r = (int)((myabs(zim * pim)) * 256);
+                b = (int)((myabs(zim * pim)) * 256);
                 g = (int)((myabs(zre * pre)) * 256);
-                b = (int)((myabs(zre * pim)) * 256);
+                r = (int)((myabs(zre * pim)) * 256);
             }
         } break;
         case 9: {
             if (!inset) {
-                r = (int)((myabs(zre * zim - pre * pre - pim * pim)) * 64);
+                b = (int)((myabs(zre * zim - pre * pre - pim * pim)) * 64);
                 g = (int)((myabs(zre * zre - pre * pre - pim * pim)) * 64);
-                b = (int)((myabs(zim * zim - pre * pre - pim * pim)) * 64);
+                r = (int)((myabs(zim * zim - pre * pre - pim * pim)) * 64);
             } else {
-                r = (int)((myabs(zre * zim - pre * pre - pim * pim)) * 256);
+                b = (int)((myabs(zre * zim - pre * pre - pim * pim)) * 256);
                 g = (int)((myabs(zre * zre - pre * pre - pim * pim)) * 256);
-                b = (int)((myabs(zim * zim - pre * pre - pim * pim)) * 256);
+                r = (int)((myabs(zim * zim - pre * pre - pim * pim)) * 256);
             }
         } break;
         case 10: {
-            r = (int)(atan2((double)zre, (double)zim) * 128 / M_PI) + 128;
+            b = (int)(atan2((double)zre, (double)zim) * 128 / M_PI) + 128;
             g = (int)(atan2((double)zre, (double)zim) * 128 / M_PI) + 128;
-            b = (int)(atan2((double)zim, (double)zre) * 128 / M_PI) + 128;
+            r = (int)(atan2((double)zim, (double)zre) * 128 / M_PI) + 128;
         } break;
             // case 11 is for disabling truecolor mode
         case 12: {
-            b = 255;
-            g = 0;
-            r = 0;
-            w = 50;
-        } break;
-        case 13: {
             r = 255;
             g = 0;
             b = 0;
+            w = 50;
+        } break;
+        case 13: {
+            b = 255;
+            g = 0;
+            r = 0;
             w = 0;
         } break;
     }
 
-    r += w;
-    g += w;
     b += w;
-    if (r < 0)
-        r = 0;
-    else if (r > 255)
-        r = 255;
-    if (g < 0)
-        g = 0;
-    else if (g > 255)
-        g = 255;
+    g += w;
+    r += w;
     if (b < 0)
         b = 0;
     else if (b > 255)
         b = 255;
+    if (g < 0)
+        g = 0;
+    else if (g > 255)
+        g = 255;
+    if (r < 0)
+        r = 0;
+    else if (r > 255)
+        r = 255;
 
     switch (cpalette.type) {
         case GRAYSCALE:
-            return ((unsigned int)(r * 76 + g * 151 + b * 29) *
+            return ((unsigned int)(b * 76 + g * 151 + r * 29) *
                         (cpalette.end - cpalette.start) >>
                     16) +
                    cpalette.start;
         case TRUECOLOR:
         case TRUECOLOR24:
         case TRUECOLOR16:
-            r >>= cpalette.info.truec.bprec;
+            b >>= cpalette.info.truec.bprec;
             g >>= cpalette.info.truec.gprec;
-            b >>= cpalette.info.truec.rprec;
-            return ((r << cpalette.info.truec.bshift) +
+            r >>= cpalette.info.truec.rprec;
+            return ((b << cpalette.info.truec.bshift) +
                     (g << cpalette.info.truec.gshift) +
-                    (b << cpalette.info.truec.rshift) +
+                    (r << cpalette.info.truec.rshift) +
                     cpalette.info.truec.alpha);
     }
 
     return cpalette.pixels[inset];
 }
 
+//static unsigned int iter_output(unsigned int iter);
+
+//static unsigned int iter_output(unsigned int iter) {
+//    return cpalette.pixels[(iter % (cpalette.size - 1)) + 1];
+//}
+
 static unsigned int color_output(number_t zre, number_t zim, unsigned int iter);
 static unsigned int color_output(number_t zre, number_t zim, unsigned int iter)
 {
     int i;
+    number_t i_f;
     iter <<= SHIFT;
-    i = iter;
+    i_f = iter;
+    if (cfractalc.coloringmode) {
+        color_f_normalize(zre);
+        color_f_normalize(zim);
+    }
 
     switch (cfractalc.coloringmode) {
+        case 0:
         case 9:
             break;
         case 1: /* real */
-            i = (int)(iter + zre * SMUL);
+            i_f = (iter + zre * SMUL);
             break;
         case 2: /* imag */
-            i = (int)(iter + zim * SMUL);
+            i_f = (iter + zim * SMUL);
             break;
         case 3: /* real / imag */
-            i = (int)(iter + (zre / zim) * SMUL);
+            i_f = (iter + (zre / zim) * SMUL);
             break;
         case 4: /* all of the above */
-            i = (int)(iter + (zre + zim + zre / zim) * SMUL);
+            i_f = (iter + (zre + zim + zre / zim) * SMUL);
             break;
         case 5:
             if (zim > 0)
-                i = ((cfractalc.maxiter << SHIFT) - iter);
+                i_f = ((cfractalc.maxiter << SHIFT) - iter);
             break;
         case 6:
             if (myabs(zim) < 2.0 || myabs(zre) < 2.0)
-                i = ((cfractalc.maxiter << SHIFT) - iter);
+                i_f = ((cfractalc.maxiter << SHIFT) - iter);
             break;
         case 7:
             zre = zre * zre + zim * zim;
-            i = (int)(sqrt(log((double)zre) / i) * 256 * 256);
+            i_f = (sqrtl(logl(zre) / i_f) * 256 * 256);
             break;
         default:
         case 8:
-            i = (int)((atan2((double)zre, (double)zim) / (M_PI + M_PI) + 0.75) *
+            i_f = ((atan2l(zre, zim) / (M_PI + M_PI) + 0.75) *
                       20000);
             break;
     }
+    color_precalc(i_f, 0);
+    i = (int)i_f;
 
     if (i < 0) {
         i = (((unsigned int)(cpalette.size - 1)) << 8) -
@@ -474,58 +587,68 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
 static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
                                    number_t pim, unsigned int iter)
 {
-    int i = iter;
+    int i;
+    number_t i_f = iter;
+    if (cfractalc.coloringmode) {
+        color_f_normalize(zre);
+        color_f_normalize(zim);
+        color_f_normalize(pre);
+        color_f_normalize(pim);
+    }
+
     switch (cfractalc.incoloringmode) {
         case 1: /* zmag */
-            i = (int)(((zre * zre + zim * zim) *
+            i_f = (((zre * zre + zim * zim) *
                            (number_t)(cfractalc.maxiter >> 1) * SMUL +
                        SMUL));
             break;
         case 2: /* real */
-            i = (int)((
-                (atan2((double)zre, (double)zim) / (M_PI + M_PI) + 0.75) *
+            i_f = ((
+                (atan2l(zre, zim) / (M_PI + M_PI) + 0.75) *
                 20000));
             break;
         default:
             break;
         case 3: /* real / imag */
-            i = (int)(100 + (zre / zim) * SMUL * 10);
+            i_f = (100 + (zre / zim) * SMUL * 10);
             break;
         case 4:
             zre = myabs(zre);
             zim = myabs(zim);
             pre = myabs(pre);
             pre = myabs(pim);
-            i += (int)(myabs(pre - zre) * 256 * 64);
-            i += (int)(myabs(pim - zim) * 256 * 64);
+            i_f += (myabs(pre - zre) * 256 * 64);
+            i_f += (myabs(pim - zim) * 256 * 64);
             break;
         case 5:
             if (((int)((zre * zre + zim * zim) * 10)) % 2)
-                i = (int)(cos((double)(zre * zim * pre * pim)) * 256 * 256);
+                i_f = (cosl((zre * zim * pre * pim)) * 256 * 256);
             else
-                i = (int)(sin((double)(zre * zim * pre * pim)) * 256 * 256);
+                i_f = (sinl((zre * zim * pre * pim)) * 256 * 256);
             break;
         case 6:
-            i = (int)((zre * zre + zim * zim) * cos((double)(zre * zre)) * 256 *
+            i_f = ((zre * zre + zim * zim) * cosl((zre * zre)) * 256 *
                       256);
             break;
         case 7:
-            i = (int)(sin((double)(zre * zre - zim * zim)) * 256 * 256);
+            i_f = (sinl((zre * zre - zim * zim)) * 256 * 256);
             break;
         case 8:
-            i = (int)(atan((double)(zre * zim * pre * pim)) * 256 * 64);
+            i_f = (atanl((zre * zim * pre * pim)) * 256 * 64);
             break;
         case 9:
             if ((abs((int)(zre * 40)) % 2) ^ (abs((int)(zim * 40)) % 2))
-                i = (int)((
-                    (atan2((double)zre, (double)zim) / (M_PI + M_PI) + 0.75) *
+                i_f = ((
+                    (atan2l(zre, zim) / (M_PI + M_PI) + 0.75) *
                     20000));
             else
-                i = (int)((
-                    (atan2((double)zim, (double)zre) / (M_PI + M_PI) + 0.75) *
+                i_f = ((
+                    (atan2l(zim, zre) / (M_PI + M_PI) + 0.75) *
                     20000));
             break;
     };
+    color_precalc(i_f, 1);
+    i = (int) i_f;
 
     if (i < 0) {
         i = (((unsigned int)(cpalette.size - 1)) << 8) -
