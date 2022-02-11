@@ -250,8 +250,8 @@ static void color_precalc(number_t &zre, number_t &zim, number_t &pre,
     const int func = inset ? cfractalc.incolorfun : cfractalc.outcolorfun;
     zre = color_f_func(zre, speed, func);
     zim = color_f_func(zim, speed, func);
-    zre = color_f_func(pre, speed, func);
-    zim = color_f_func(pim, speed, func);
+    pre = color_f_func(pre, speed, func);
+    pim = color_f_func(pim, speed, func);
 }
 
 /* 2009-07-30 JB Langston:
@@ -329,74 +329,73 @@ static unsigned int truecolor_output(number_t zre, number_t zim, number_t pre,
 static unsigned int truecolor_output(number_t zre, number_t zim, number_t pre,
                                      number_t pim, int mode, int inset)
 {
-    color_precalc(zre, zim, pre, pim, inset);
     /* WARNING: r and b fields are swapped for HISTORICAL REASONS (BUG :),
      * in other words: use r for blue and b for red. */
     /*
      * MSUMMO: Fixed bug!
      */
     int b = 0, g = 0, r = 0, w = 0;
-
+    color_precalc(zre, zim, pre, pim, inset);
     switch (mode) {
         case 0:
             break;
         case 1:
-            r = (int)((sin((double)atan2((double)zre, (double)zim) * 20) + 1) *
+            r = (int)((sinl(atan2l(zre, zim) * 20) + 1) *
                       127);
-            w = (int)((sin((double)zim / zre)) * 127);
+            w = (int)((sinl(zim / zre)) * 127);
             b = (int)((int)(zre * zim));
-            g = (int)((sin((double)(zre * zre) / 2) + 1) * 127);
+            g = (int)((sinl((zre * zre) / 2) + 1) * 127);
             break;
         case 2:
             if (!inset) {
-                b = (int)((sin((double)zre * 2) + 1) * 127);
-                g = (int)((sin((double)zim * 2) + 1) * 127);
-                r = (int)((sin((double)(zim * zim + zre * zre) / 2) + 1) * 127);
+                b = (int)((sinl(zre * 2) + 1) * 127);
+                g = (int)((sinl(zim * 2) + 1) * 127);
+                r = (int)((sinl((zim * zim + zre * zre) / 2) + 1) * 127);
             } else {
-                b = (int)((sin((double)zre * 50) + 1) * 127);
-                g = (int)((sin((double)zim * 50) + 1) * 127);
-                r = (int)((sin((double)(zim * zim + zre * zre) * 50) + 1) *
+                b = (int)((sinl(zre * 50) + 1) * 127);
+                g = (int)((sinl(zim * 50) + 1) * 127);
+                r = (int)((sinl((zim * zim + zre * zre) * 50) + 1) *
                           127);
             }
-            w = (int)((sin((double)zim / zre)) * 127);
+            w = (int)((sinl(zim / zre)) * 127);
             break;
         case 3:
             if (inset)
-                hsv_to_rgb((int)(atan2((double)zre, (double)zim) * 256 / M_PI),
-                           (int)((sin((double)(zre * 50)) + 1) * 128),
-                           (int)((sin((double)(zim * 50)) + 1) * 128), &b, &g,
+                hsv_to_rgb((int)(atan2l(zre, zim) * 256 / M_PI),
+                           (int)((sinl((zre * 50)) + 1) * 128),
+                           (int)((sinl((zim * 50)) + 1) * 128), &b, &g,
                            &r);
             else
-                hsv_to_rgb((int)(atan2((double)zre, (double)zim) * 256 / M_PI),
-                           (int)((sin((double)zre) + 1) * 128),
-                           (int)((sin((double)zim) + 1) * 128), &b, &g, &r);
+                hsv_to_rgb((int)(atan2l(zre, zim) * 256 / M_PI),
+                           (int)((sinl(zre) + 1) * 128),
+                           (int)((sinl(zim) + 1) * 128), &b, &g, &r);
             break;
         case 4:
             if (inset)
                 hsv_to_rgb(
-                    (int)(sin((double)(zre * zre + zim * zim) * 0.1) * 256),
-                    (int)(sin(atan2((double)zre, (double)zim) * 10) * 128 +
+                    (int)(sinl((zre * zre + zim * zim) * 0.1) * 256),
+                    (int)(sinl(atan2l(zre, zim) * 10) * 128 +
                           128),
-                    (int)((sin((double)(zre + zim) * 10)) * 65 + 128), &b, &g,
+                    (int)((sinl((zre + zim) * 10)) * 65 + 128), &b, &g,
                     &r);
             else
                 hsv_to_rgb(
-                    (int)(sin((double)(zre * zre + zim * zim) * 0.01) * 256),
-                    (int)(sin(atan2((double)zre, (double)zim) * 10) * 128 +
+                    (int)(sinl((zre * zre + zim * zim) * 0.01) * 256),
+                    (int)(sinl(atan2l(zre, zim) * 10) * 128 +
                           128),
-                    (int)((sin((double)(zre + zim) * 0.3)) * 65 + 128), &b, &g,
+                    (int)((sinl((zre + zim) * 0.3)) * 65 + 128), &b, &g,
                     &r);
             break;
         case 5: {
             if (!inset) {
-                b = (int)(cos((double)myabs(zre * zre)) * 128) + 128;
-                g = (int)(cos((double)myabs(zre * zim)) * 128) + 128;
-                r = (int)(cos((double)myabs(zim * zim + zre * zre)) * 128) +
+                b = (int)(cosl(myabs(zre * zre)) * 128) + 128;
+                g = (int)(cosl(myabs(zre * zim)) * 128) + 128;
+                r = (int)(cosl(myabs(zim * zim + zre * zre)) * 128) +
                     128;
             } else {
-                b = (int)(cos((double)myabs(zre * zre) * 10) * 128) + 128;
-                g = (int)(cos((double)myabs(zre * zim) * 10) * 128) + 128;
-                r = (int)(cos((double)myabs(zim * zim + zre * zre) * 10) *
+                b = (int)(cosl(myabs(zre * zre) * 10) * 128) + 128;
+                g = (int)(cosl(myabs(zre * zim) * 10) * 128) + 128;
+                r = (int)(cosl(myabs(zim * zim + zre * zre) * 10) *
                           128) +
                     128;
             }
@@ -446,9 +445,9 @@ static unsigned int truecolor_output(number_t zre, number_t zim, number_t pre,
             }
         } break;
         case 10: {
-            b = (int)(atan2((double)zre, (double)zim) * 128 / M_PI) + 128;
-            g = (int)(atan2((double)zre, (double)zim) * 128 / M_PI) + 128;
-            r = (int)(atan2((double)zim, (double)zre) * 128 / M_PI) + 128;
+            b = (int)(atan2l(zre, zim) * 128 / M_PI) + 128;
+            g = (int)(atan2l(zre, zim) * 128 / M_PI) + 128;
+            r = (int)(atan2l(zim, zre) * 128 / M_PI) + 128;
         } break;
             // case 11 is for disabling truecolor mode
         case 12: {
