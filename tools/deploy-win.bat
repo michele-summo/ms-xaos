@@ -6,11 +6,6 @@ if errorlevel 1 (
     exit /b
 )
 
-where /q binarycreator
-if errorlevel 1 (
-    echo binarycreator is not in your path.
-    exit /b
-)
 
 cd /D "%~dp0\.."
 
@@ -29,5 +24,11 @@ xcopy /s /e tutorial installer\packages\net.sourceforge.xaos\data\tutorial
 
 mkdir installer\packages\net.sourceforge.xaos\data\examples
 for /R examples %%f in (*.*) do copy %%f installer\packages\net.sourceforge.xaos\data\examples
+
+where /q binarycreator
+if errorlevel 1 (
+    echo binarycreator is not in your path.
+    exit /b
+) 
 
 binarycreator --offline-only -p installer\packages -c installer\config\config.xml xaossetup.exe
