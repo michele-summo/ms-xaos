@@ -478,12 +478,18 @@ void uih_saveframe(struct uih_context *uih)
         if (s->fcontext->incolorspeed != uih->fcontext->incolorspeed)
             save_floatc(uih, "incolorspeed", uih->fcontext->incolorspeed),
                 s->fcontext->incolorspeed = uih->fcontext->incolorspeed;
+        if (s->fcontext->incolorshift != uih->fcontext->incolorshift)
+            save_intc(uih, "incolorshift", uih->fcontext->incolorshift),
+                s->fcontext->incolorshift = uih->fcontext->incolorshift;
         if (s->fcontext->outcolorfun != uih->fcontext->outcolorfun)
             save_intc(uih, "outcolorfun", uih->fcontext->outcolorfun),
                 s->fcontext->outcolorfun = uih->fcontext->outcolorfun;
         if (s->fcontext->outcolorspeed != uih->fcontext->outcolorspeed)
             save_floatc(uih, "outcolorspeed", uih->fcontext->outcolorspeed),
                 s->fcontext->outcolorspeed = uih->fcontext->outcolorspeed;
+        if (s->fcontext->outcolorshift != uih->fcontext->outcolorshift)
+            save_intc(uih, "outcolorshift", uih->fcontext->outcolorshift),
+                s->fcontext->outcolorshift = uih->fcontext->outcolorshift;
         if (s->fcontext->mandelbrot != uih->fcontext->mandelbrot)
             save_onoffc(uih, "julia", !uih->fcontext->mandelbrot),
                 s->fcontext->mandelbrot = uih->fcontext->mandelbrot;
@@ -608,8 +614,10 @@ int uih_save_enable(struct uih_context *uih, xio_file f, int mode)
     s->fcontext->mandelbrot = 1;
     s->fcontext->incolorfun = 0;
     s->fcontext->incolorspeed = 1.0f;
+    s->fcontext->incolorshift = 0;
     s->fcontext->outcolorfun = 0;
     s->fcontext->outcolorspeed = 1.0f;
+    s->fcontext->outcolorshift = 0;
     s->fcontext->plane = 0;
     s->fcontext->range = 3;
     s->fcontext->angle = 0;

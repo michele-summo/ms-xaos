@@ -83,6 +83,7 @@ struct fractal_context {
     //MSUMMO BEGIN HACK
     number_t incolorspeed, outcolorspeed;
     int incolorfun, outcolorfun;
+    int incolorshift, outcolorshift;
     //MSUMMO END HACK
     int mandelbrot;
     int plane;

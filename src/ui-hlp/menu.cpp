@@ -603,6 +603,21 @@ static menudialog *uih_getoutcolorspeeddialog(struct uih_context *c)
     return (uih_fpdialog);
 }
 
+static menudialog *uih_getincolorshiftdialog(struct uih_context *c)
+{
+    if (c != NULL)
+        uih_numdialog[0].defint = c->fcontext->incolorshift;
+    return (uih_numdialog);
+}
+
+static menudialog *uih_getoutcolorshiftdialog(struct uih_context *c)
+{
+    if (c != NULL)
+        uih_numdialog[0].defint = c->fcontext->outcolorshift;
+    return (uih_numdialog);
+}
+
+
 int defthreads = 0;
 
 static menudialog *uih_getthreaddialog(struct uih_context *c)
@@ -1333,6 +1348,12 @@ void uih_registermenus_i18n(void)
     MENUDIALOG_I("fractal", NULL, TR("Menu", "Outside coloring speed"),
                  "outcolorspeed", MENUFLAG_NOMENU | MENUFLAG_INTERRUPT,
                  uih_setoutcolorspeed, uih_fpdialog);
+    MENUDIALOG_I("fractal", NULL, TR("Menu", "Inside coloring shift"),
+                 "incolorshift", MENUFLAG_NOMENU | MENUFLAG_INTERRUPT,
+                 uih_setincolorshift, uih_numdialog);
+    MENUDIALOG_I("fractal", NULL, TR("Menu", "Outside coloring shift"),
+                 "outcolorshift", MENUFLAG_NOMENU | MENUFLAG_INTERRUPT,
+                 uih_setoutcolorshift, uih_numdialog);
     MENUDIALOG_I("fractal", NULL, TR("Menu", "Julia seed"), "juliaseed",
                  MENUFLAG_NOMENU | MENUFLAG_INTERRUPT, uih_setjuliaseed,
                  uih_coorddialog);
@@ -1517,6 +1538,12 @@ static const menuitem menuitems2[] = {
     MENUCDIALOG("moutcoloring", NULL, TR("Menu", "Coloring speed"), "moutcolorspeed",
         MENUFLAG_INTERRUPT,
         uih_setoutcolorspeed, uih_getoutcolorspeeddialog),
+    MENUCDIALOG("mincoloring", NULL, TR("Menu", "Coloring shift"), "mincolorshift",
+        MENUFLAG_INTERRUPT,
+        uih_setincolorshift, uih_getincolorshiftdialog),
+    MENUCDIALOG("moutcoloring", NULL, TR("Menu", "Coloring shift"), "moutcolorshift",
+        MENUFLAG_INTERRUPT,
+        uih_setoutcolorshift, uih_getoutcolorshiftdialog),
     SUBMENU("mincoloring", NULL, "Coloring speed functions",
             "mincolorfun"),
     SUBMENU("moutcoloring", NULL, "Coloring speed functions",

@@ -184,7 +184,7 @@ static void color_f_normalize(number_t &v) {
     }
 }
 
-static float color_f_func(number_t v, const float speed, const int func) {
+static float color_f_func(number_t v, const float speed, const int func, const int shift) {
     color_f_normalize(v);
     switch (func) {
     case 1:
@@ -235,6 +235,7 @@ static float color_f_func(number_t v, const float speed, const int func) {
         break;
     }
     v = v * speed;
+    v += shift;
     color_f_normalize(v);
     return v;
 }
@@ -242,16 +243,18 @@ static float color_f_func(number_t v, const float speed, const int func) {
 static void color_precalc(number_t &iter, int inset) {
     const float speed = inset ? cfractalc.incolorspeed : cfractalc.outcolorspeed;
     const int func = inset ? cfractalc.incolorfun : cfractalc.outcolorfun;
-    iter = (color_f_func(iter / SMUL, speed, func) * SMUL);
+    const int shift = inset ? cfractalc.incolorshift : cfractalc.outcolorshift;
+    iter = (color_f_func(iter / SMUL, speed, func, shift) * SMUL);
 }
 static void color_precalc(number_t &zre, number_t &zim, number_t &pre,
                           number_t &pim, int inset) {
     const float speed = inset ? cfractalc.incolorspeed : cfractalc.outcolorspeed;
     const int func = inset ? cfractalc.incolorfun : cfractalc.outcolorfun;
-    zre = color_f_func(zre, speed, func);
-    zim = color_f_func(zim, speed, func);
-    pre = color_f_func(pre, speed, func);
-    pim = color_f_func(pim, speed, func);
+    const int shift = inset ? cfractalc.incolorshift : cfractalc.outcolorshift;
+    zre = color_f_func(zre, speed, func, shift);
+    zim = color_f_func(zim, speed, func, shift);
+    pre = color_f_func(pre, speed, func, shift);
+    pim = color_f_func(pim, speed, func, shift);
 }
 
 /* 2009-07-30 JB Langston:

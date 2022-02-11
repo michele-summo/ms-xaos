@@ -312,8 +312,10 @@ fractal_context *make_fractalc(const int formula, float wi, float he)
     new_ctxt->outtcolor = 0;
     new_ctxt->incolorfun = 0;
     new_ctxt->incolorspeed = 1.0f;
+    new_ctxt->incolorshift = 0;
     new_ctxt->outcolorfun = 0;
     new_ctxt->outcolorspeed = 1.0f;
+    new_ctxt->outcolorshift = 0;
     new_ctxt->slowmode = 0;
     new_ctxt->range = 3;
     new_ctxt->angle = 0;

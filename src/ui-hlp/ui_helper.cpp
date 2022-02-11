@@ -1789,6 +1789,14 @@ void uih_setincolorfun(uih_context *c, int func){
     }
 }
 
+void uih_setincolorshift(uih_context *c, int shift) {
+    if (c->fcontext->incolorshift != shift) {
+        c->fcontext->incolorshift = shift;
+        c->fcontext->version++;
+        uih_newimage(c);
+    }
+}
+
 void uih_setoutcolorspeed(uih_context *c, number_t speed){
     if (c->fcontext->outcolorspeed != (number_t)speed) {
         c->fcontext->outcolorspeed = speed;
@@ -1809,6 +1817,14 @@ void uih_setoutcolorfun(uih_context *c, int func){
         uih_newimage(c);
         sprintf(str, "in%i", func);
         uih_updatemenus(c, str);
+    }
+}
+
+void uih_setoutcolorshift(uih_context *c, int shift) {
+    if (c->fcontext->outcolorshift != shift) {
+        c->fcontext->outcolorshift = shift;
+        c->fcontext->version++;
+        uih_newimage(c);
     }
 }
 
@@ -2178,8 +2194,10 @@ void uih_initstate(struct uih_context *uih)
     uih_setoutcoloringmode(uih, 0);
     uih_setincolorspeed(uih, 1.0);
     uih_setincolorfun(uih, 0);
+    uih_setincolorshift(uih, 0);
     uih_setoutcolorspeed(uih, 1.0);
     uih_setoutcolorfun(uih, 0);
+    uih_setoutcolorshift(uih, 0);
     uih_setcycling(uih, 30);
     uih_display(uih);
     uih_setfastmode(uih, 2);
