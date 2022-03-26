@@ -13,7 +13,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
-#define sffnctscount 77
+#define sffnctscount 78
 #define sfvarscount 6
 #define cmplxset(c, r, i) GSL_SET_COMPLEX(&c, r, i)
 #define real(c) GSL_REAL((c))
@@ -100,6 +100,7 @@ sfarg *sftani(sfarg *const p);
 sfarg *sfcoti(sfarg *const p);
 /* other trunc functions */
 sfarg *sftrunc(sfarg *const p);
+sfarg *sfsawtooth(sfarg *const p);
 sfarg *sftwave(sfarg *const p);
 
 /*const eval*/

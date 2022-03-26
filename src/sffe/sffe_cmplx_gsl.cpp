@@ -99,6 +99,7 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sfcoti, 1, "coti\0"},
 
     {sftrunc, 1, "trunc\0"},
+    {sfsawtooth, 1, "sawtooth\0"},
     {sftwave, 1, "twave\0"},
 
     {NULL, 1, "rad\0"},
@@ -652,8 +653,20 @@ sfarg *sftrunc(sfarg *const p)
     return sfaram1(p);
 }
 
+double sawtooth(double x) {
+    return x - floor(x);
+}
+
+sfarg *sfsawtooth(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = sawtooth(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = sawtooth(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
 double twave(double x) {
-    return 4*abs(1/2 - fmod(x + 1/2, 1)) - 1;
+    double xf = x/2.0;
+    return 2.0*abs(2.0*(xf-floor(xf+0.5)))-1.0;
 }
 
 sfarg *sftwave(sfarg *const p)
