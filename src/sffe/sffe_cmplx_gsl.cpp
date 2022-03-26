@@ -84,6 +84,23 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sfmidi, 3, "midi\0"},
     {sfmidm, 3, "midm\0"},
 
+    {sfsincos, 1, "sincos\0"},
+    {sfcossin, 1, "cossin\0"},
+    {sfsinr, 1, "sinr\0"},
+    {sfcosr, 1, "cosr\0"},
+    {sfsini, 1, "sini\0"},
+    {sfcosi, 1, "cosi\0"},
+
+    {sftancot, 1, "tancot\0"},
+    {sfcottan, 1, "cottan\0"},
+    {sftanr, 1, "tanr\0"},
+    {sfcotr, 1, "cotr\0"},
+    {sftani, 1, "tani\0"},
+    {sfcoti, 1, "coti\0"},
+
+    {sftrunc, 1, "trunc\0"},
+    {sftwave, 1, "twave\0"},
+
     {NULL, 1, "rad\0"},
     {NULL, 1, "deg\0"},
     {NULL, 1, "sign\0"},
@@ -538,6 +555,112 @@ sfarg *sfmidm(sfarg *const p)
 
     sfvalue(p) = gsl_complex_polar(calc_mid(r1, r2, r3), theta);
     return sfaram3(p);
+}
+
+sfarg *sfsincos(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = sin(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = cos(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
+sfarg *sfcossin(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = cos(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = sin(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
+sfarg *sfsinr(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = sin(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram1(p)));
+    return sfaram1(p);
+}
+
+sfarg *sfcosr(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = cos(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram1(p)));
+    return sfaram1(p);
+}
+
+sfarg *sfsini(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram1(p)));
+    GSL_IMAG(sfvalue(p)) = sin(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
+sfarg *sfcosi(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram1(p)));
+    GSL_IMAG(sfvalue(p)) = cos(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
+double cot(double x) {
+    return cos(x)/sin(x);
+}
+
+sfarg *sftancot(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = tan(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = cot(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
+sfarg *sfcottan(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = cot(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = tan(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
+sfarg *sftanr(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = tan(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram1(p)));
+    return sfaram1(p);
+}
+
+sfarg *sfcotr(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = cot(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram1(p)));
+    return sfaram1(p);
+}
+
+sfarg *sftani(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram1(p)));
+    GSL_IMAG(sfvalue(p)) = tan(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
+sfarg *sfcoti(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram1(p)));
+    GSL_IMAG(sfvalue(p)) = cot(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
+sfarg *sftrunc(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = trunc(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = trunc(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
+double twave(double x) {
+    return 4*abs(1/2 - fmod(x + 1/2, 1)) - 1;
+}
+
+sfarg *sftwave(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = twave(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = twave(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
 }
 
 // const eval

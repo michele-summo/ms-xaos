@@ -13,7 +13,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
-#define sffnctscount 63
+#define sffnctscount 77
 #define sfvarscount 6
 #define cmplxset(c, r, i) GSL_SET_COMPLEX(&c, r, i)
 #define real(c) GSL_REAL((c))
@@ -84,6 +84,23 @@ sfarg *sfmid(sfarg *const p);
 sfarg *sfmidr(sfarg *const p);
 sfarg *sfmidi(sfarg *const p);
 sfarg *sfmidm(sfarg *const p);
+/* sincos functions */
+sfarg *sfsincos(sfarg *const p);
+sfarg *sfcossin(sfarg *const p);
+sfarg *sfsinr(sfarg *const p);
+sfarg *sfcosr(sfarg *const p);
+sfarg *sfsini(sfarg *const p);
+sfarg *sfcosi(sfarg *const p);
+/* tancot functions */
+sfarg *sftancot(sfarg *const p);
+sfarg *sfcottan(sfarg *const p);
+sfarg *sftanr(sfarg *const p);
+sfarg *sfcotr(sfarg *const p);
+sfarg *sftani(sfarg *const p);
+sfarg *sfcoti(sfarg *const p);
+/* other trunc functions */
+sfarg *sftrunc(sfarg *const p);
+sfarg *sftwave(sfarg *const p);
 
 /*const eval*/
 void sfcPI(sfNumber *cnst);
