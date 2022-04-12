@@ -1463,7 +1463,8 @@ void sffe_setlocal(fractal_context *c)
 //#define SAVE cmplxset(pZ,real(Z),imag(Z));
 //#define PRETEST 0
 #define VARIABLES number_t n; bool newtok = cfractalc.newtonmodesffe;          \
-    bool pndef = cfractalc.pndefault; unsigned int maxit = (unsigned int)cfractalc.maxiter;
+    bool pndef = cfractalc.pndefault; unsigned int maxit                       \
+    = (unsigned int)cfractalc.maxiter;
 #define FORMULA                                                                \
     if (sffe_formula_valid)                                                    \
         sffe_z = sffe_eval(sffe_formula_local);                                \
@@ -1476,14 +1477,12 @@ void sffe_setlocal(fractal_context *c)
     if (newtok) {                                                              \
         pre = real(sffe_p[0]);                                                 \
         pim = imag(sffe_p[0]);                                                 \
-        n = iter <= maxit ? zre*zre - 2*zre*pre + zim*zim - 2*pim*zim + pre*pre + pim*pim : 0; \
-    } else {                                                                   \
-        n = zre *zre + zim * zim;                                              \
+        n = iter > 1 ? zre*zre - 2*zre*pre + zim*zim - 2*pim*zim + pre*pre + pim*pim : 0; \
     }                                                                          \
     cmplxset(sffe_n, maxit - iter + 1, 0);
 #define BTEST newtok ?                                                         \
-    greater_then_1Em6(n)                                                       \
-    : less_than_4(n)
+    greater_then_1Em6(n) \
+    : less_than_4(zre *zre + zim * zim)
 // less_than_4(rp+ip)
 #define CALC sffe_calc
 #define JULIA sffe_julia
