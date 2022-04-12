@@ -429,6 +429,9 @@ void uih_setincolorshift(uih_context *c, int shift);
 void uih_setoutcolorspeed(uih_context *c, number_t speed);
 void uih_setoutcolorfun(uih_context *c, int func);
 void uih_setoutcolorshift(uih_context *c, int shift);
+void uih_setpndefault(uih_context *c, int periodicity);
+void uih_setnewtonmodesffe(uih_context *c, int periodicity);
+void uih_setnewtonconvergence(uih_context *c, number_t periodicity);
 
 void uih_setplane(uih_context *c, int mode);
 void uih_setmandelbrot(uih_context *c, int mode, int mousex, int mousey);

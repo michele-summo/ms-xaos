@@ -1828,6 +1828,32 @@ void uih_setoutcolorshift(uih_context *c, int shift) {
     }
 }
 
+void uih_setpndefault(uih_context *c, int value) {
+    if (c->fcontext->pndefault != (int)value) {
+        c->fcontext->pndefault = value;
+        c->fcontext->version++;
+        uih_updatemenus(c, "pndefault");
+        uih_newimage(c);
+    }
+}
+
+void uih_setnewtonmodesffe(uih_context *c, int value) {
+    if (c->fcontext->newtonmodesffe != (int)value) {
+        c->fcontext->newtonmodesffe = value;
+        c->fcontext->version++;
+        uih_updatemenus(c, "newtonmodesffe");
+        uih_newimage(c);
+    }
+}
+
+void uih_setnewtonconvergence(uih_context *c, number_t conv) {
+    if (c->fcontext->newtonconvergence != (number_t)conv) {
+        c->fcontext->newtonconvergence = conv;
+        c->fcontext->version++;
+        uih_newimage(c);
+    }
+}
+
 void uih_setperbutation(uih_context *c, number_t zre, number_t zim)
 {
     if (c->fcontext->bre != zre || c->fcontext->bim != zim) {
@@ -2188,8 +2214,8 @@ void uih_initstate(struct uih_context *uih)
     sffe_parse(&uih->fcontext->userinitial, "");
 #endif
     uih_setperiodicity(uih, 1);
-    uih_setmaxiter(uih, 170);
-    uih_setbailout(uih, 4);
+    uih_setmaxiter(uih, DEFAULT_MAX_ITER);
+    uih_setbailout(uih, DEFAULT_BAILOUT);
     uih_setincoloringmode(uih, 0);
     uih_setoutcoloringmode(uih, 0);
     uih_setincolorspeed(uih, 1.0);
@@ -2198,11 +2224,15 @@ void uih_initstate(struct uih_context *uih)
     uih_setoutcolorspeed(uih, 1.0);
     uih_setoutcolorfun(uih, 0);
     uih_setoutcolorshift(uih, 0);
+    uih_setpndefault(uih, 0);
+    uih_setnewtonmodesffe(uih, 0);
+    uih_setnewtonconvergence(uih, 1E-6);
     uih_setcycling(uih, 30);
     uih_display(uih);
     uih_setfastmode(uih, 2);
     uih_setintcolor(uih, 0);
     uih_setouttcolor(uih, 0);
+    //XXX TODO
     uih_setplane(uih, 0);
     uih_setguessing(uih, 3);
     uih_angle(uih, 0);

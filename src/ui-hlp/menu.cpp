@@ -617,6 +617,12 @@ static menudialog *uih_getoutcolorshiftdialog(struct uih_context *c)
     return (uih_numdialog);
 }
 
+static menudialog *uih_getnewtonconvergencedialog(struct uih_context *c)
+{
+    if (c != NULL)
+        uih_fpdialog[0].deffloat = c->fcontext->newtonconvergence;
+    return (uih_fpdialog);
+}
 
 int defthreads = 0;
 
@@ -919,6 +925,30 @@ static int uih_periodicityselected(struct uih_context *c)
 static void uih_periodicitysw(struct uih_context *c)
 {
     uih_setperiodicity(c, c->fcontext->periodicity ^ 1);
+}
+
+static int uih_pndefaultselected(struct uih_context *c)
+{
+    if (c == NULL)
+        return 0;
+    return (c->fcontext->pndefault);
+}
+
+static void uih_pndefaultsw(struct uih_context *c)
+{
+    uih_setpndefault(c, c->fcontext->pndefault ^ 1);
+}
+
+static int uih_newtonmodesffeselected(struct uih_context *c)
+{
+    if (c == NULL)
+        return 0;
+    return (c->fcontext->newtonmodesffe);
+}
+
+static void uih_newtonmodesffesw(struct uih_context *c)
+{
+    uih_setnewtonmodesffe(c, c->fcontext->newtonmodesffe ^ 1);
 }
 
 static int uih_cyclingselected(struct uih_context *c)
@@ -1294,6 +1324,10 @@ void uih_registermenus_i18n(void)
                   uih_sffein, uih_getsffedialog);
     MENUCDIALOG_I("fractal", NULL, TR("Menu", "User initialization"),
                   "usrformInit", 0, uih_sffeinitin, uih_getsffeinitdialog);
+    MENUNOPCB_I("fractal", NULL, TR("Menu", "Set p values on first iteration"), "pndefault",
+                0, uih_pndefaultsw, uih_pndefaultselected);
+    MENUNOPCB_I("fractal", NULL, TR("Menu", "Newton mode simulation"), "newtonmodesffe",
+                0, uih_newtonmodesffesw, uih_newtonmodesffeselected);
 #endif
 
     MENUSEPARATOR_I("fractal");
@@ -1420,6 +1454,8 @@ void uih_registermenus_i18n(void)
                   MENUFLAG_INTERRUPT, uih_setmaxiter, uih_getiterdialog);
     MENUCDIALOG_I("calc", NULL, TR("Menu", "Bailout"), "bailout",
                   MENUFLAG_INTERRUPT, uih_setbailout, uih_getbailoutdialog);
+    MENUCDIALOG_I("calc", NULL, TR("Menu", "Newton convergence"), "newtonconvergence",
+                  MENUFLAG_INTERRUPT, uih_setnewtonconvergence, uih_getnewtonconvergencedialog);
     MENUCDIALOGCB_I("calc", "b", TR("Menu", "Perturbation"), "uiperturbation",
                     MENUFLAG_INTERRUPT | UI, uih_persw,
                     uih_getperturbationdialog, uih_perselected);

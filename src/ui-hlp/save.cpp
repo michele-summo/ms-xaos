@@ -490,6 +490,15 @@ void uih_saveframe(struct uih_context *uih)
         if (s->fcontext->outcolorshift != uih->fcontext->outcolorshift)
             save_intc(uih, "outcolorshift", uih->fcontext->outcolorshift),
                 s->fcontext->outcolorshift = uih->fcontext->outcolorshift;
+        if (s->fcontext->pndefault != uih->fcontext->pndefault)
+            save_onoffc(uih, "pndefault", uih->fcontext->pndefault),
+                s->fcontext->pndefault = uih->fcontext->pndefault;
+        if (s->fcontext->newtonmodesffe != uih->fcontext->newtonmodesffe)
+            save_onoffc(uih, "newtonmodesffe", uih->fcontext->newtonmodesffe),
+                s->fcontext->newtonmodesffe = uih->fcontext->newtonmodesffe;
+        if (s->fcontext->newtonconvergence != uih->fcontext->newtonconvergence)
+            save_floatc(uih, "newtonconvergence", uih->fcontext->newtonconvergence),
+                s->fcontext->newtonconvergence = uih->fcontext->newtonconvergence;
         if (s->fcontext->mandelbrot != uih->fcontext->mandelbrot)
             save_onoffc(uih, "julia", !uih->fcontext->mandelbrot),
                 s->fcontext->mandelbrot = uih->fcontext->mandelbrot;
@@ -618,6 +627,9 @@ int uih_save_enable(struct uih_context *uih, xio_file f, int mode)
     s->fcontext->outcolorfun = 0;
     s->fcontext->outcolorspeed = 1.0f;
     s->fcontext->outcolorshift = 0;
+    s->fcontext->pndefault = 0;
+    s->fcontext->newtonmodesffe = 0;
+    s->fcontext->newtonconvergence = 1E-6;
     s->fcontext->plane = 0;
     s->fcontext->range = 3;
     s->fcontext->angle = 0;

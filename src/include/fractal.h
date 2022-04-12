@@ -84,6 +84,10 @@ struct fractal_context {
     number_t incolorspeed, outcolorspeed;
     int incolorfun, outcolorfun;
     int incolorshift, outcolorshift;
+    //MSUMMO HACK 20220409
+    int pndefault;
+    int newtonmodesffe;
+    number_t newtonconvergence;
     //MSUMMO END HACK
     int mandelbrot;
     int plane;

@@ -116,7 +116,7 @@ const char *const colorfun[] = {
 #ifndef less_than_4
 #define less_than_0(x) ((x) < 0)
 #define less_than_4(x) ((x) < cfractalc.bailout)
-#define greater_then_1Em6(n) ((n) > 1E-6)
+#define greater_then_1Em6(n) ((n) > cfractalc.newtonconvergence)
 #define abs_less_than(x, y) (myabs(x) < y)
 #define greater_than(x, y) ((x) > (y))
 #endif
@@ -1443,8 +1443,14 @@ void sffe_setlocal(fractal_context *c)
 }
 
 #define INIT                                                                   \
-    for (int i = 0; i < NUM_P; i++) {                                          \
-        cmplxset(sffe_p[i], 0, 0);                                             \
+    if (pndef) {                                                               \
+        for (int i = 0; i < NUM_P; i++) {                                      \
+            cmplxset(sffe_p[i], pre, pim);                                     \
+        }                                                                      \
+    } else {                                                                   \
+        for (int i = 0; i < NUM_P; i++) {                                      \
+            cmplxset(sffe_p[i], 0, 0);                                         \
+        }                                                                      \
     }                                                                          \
     cmplxset(sffe_c, pre, pim);                                                \
     if (sffe_initial_valid)                                                    \
@@ -1452,9 +1458,12 @@ void sffe_setlocal(fractal_context *c)
     else {                                                                     \
         cmplxset(sffe_z, zre, zim);                                            \
         cmplxset(sffe_n, 1, 0);                                                \
-    }
+    }                                                                          \
+    n = INFINITY;
 //#define SAVE cmplxset(pZ,real(Z),imag(Z));
 //#define PRETEST 0
+#define VARIABLES number_t n; bool newtok = cfractalc.newtonmodesffe;          \
+    bool pndef = cfractalc.pndefault; unsigned int maxit = (unsigned int)cfractalc.maxiter;
 #define FORMULA                                                                \
     if (sffe_formula_valid)                                                    \
         sffe_z = sffe_eval(sffe_formula_local);                                \
@@ -1464,9 +1473,17 @@ void sffe_setlocal(fractal_context *c)
     cmplxset(sffe_p[0], zre, zim);                                             \
     zre = real(sffe_z);                                                        \
     zim = imag(sffe_z);                                                        \
-    cmplxset(sffe_n, (unsigned int)cfractalc.maxiter - iter + 1, 0);
-
-#define BTEST less_than_4(zre *zre + zim * zim)
+    if (newtok) {                                                              \
+        pre = real(sffe_p[0]);                                                 \
+        pim = imag(sffe_p[0]);                                                 \
+        n = iter <= maxit ? zre*zre - 2*zre*pre + zim*zim - 2*pim*zim + pre*pre + pim*pim : 0; \
+    } else {                                                                   \
+        n = zre *zre + zim * zim;                                              \
+    }                                                                          \
+    cmplxset(sffe_n, maxit - iter + 1, 0);
+#define BTEST newtok ?                                                         \
+    greater_then_1Em6(n)                                                       \
+    : less_than_4(n)
 // less_than_4(rp+ip)
 #define CALC sffe_calc
 #define JULIA sffe_julia
@@ -2642,7 +2659,6 @@ const struct formula formulas[] = {
        NULL,
        NULL,
        NULL,
-#endif
        sffe_julia,
        {"User defined", "User defined"},
        "user",
@@ -2684,6 +2700,7 @@ const struct formula formulas[] = {
         },
        MANDEL_BTRACE | SFFE_FRACTAL,
        }
+#endif
 };
 
 const struct formula *currentformula;
