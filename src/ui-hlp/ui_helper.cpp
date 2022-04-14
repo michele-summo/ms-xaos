@@ -2115,6 +2115,7 @@ uih_mkcontext(int flags, struct image *image,
     sffe_parse(&uih->fcontext->userformula, USER_FORMULA);
     sffe_parse(&uih->fcontext->userinitial, "");
 #endif
+    uih->fcontext->pndefault = 1;
     uih_setformula(uih, 0);
     uih_saveundo(uih);
     return (uih);

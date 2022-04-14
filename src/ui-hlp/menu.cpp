@@ -815,6 +815,7 @@ static void uih_palettecolors(struct uih_context *uih, dialogparam *p){
 static void uih_palettepicker(struct uih_context *uih, dialogparam *p)
 {
     uih_newimage(uih);
+    uih->manualpaletteshift = 0;
     uih->palettepickerenabled = 1;
 }
 
@@ -949,6 +950,12 @@ static int uih_newtonmodesffeselected(struct uih_context *c)
 static void uih_newtonmodesffesw(struct uih_context *c)
 {
     uih_setnewtonmodesffe(c, c->fcontext->newtonmodesffe ^ 1);
+}
+
+static void uih_newfractal(struct uih_context *c)
+{
+    uih_initstate(c);
+    uih_setpndefault(c, 1);
 }
 
 static int uih_cyclingselected(struct uih_context *c)
@@ -1282,7 +1289,8 @@ void uih_registermenus_i18n(void)
                 UIH_TEXTCENTER, uih_xtextselected);
     MENUINTRB_I("xtextpos", NULL, "Right", "xtexteight", UI, uih_setxtextpos,
                 UIH_TEXTRIGHT, uih_xtextselected);
-    MENUNOP_I("file", NULL, TR("Menu", "New"), "initstate", 0, uih_initstate);
+    MENUNOP_I("file", NULL, TR("Menu", "Initstate"), "initstate", MENUFLAG_NOMENU, uih_initstate);
+    MENUNOP_I("file", NULL, TR("Menu", "New"), "newfractal", 0, uih_newfractal);
     MENUDIALOG_I("file", NULL, TR("Menu", "Open"), "loadpos",
                  MENUFLAG_INTERRUPT | MENUFLAG_NOPLAY, uih_loadfile,
                  loaddialog);

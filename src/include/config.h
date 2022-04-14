@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 // XaoS release
-#define XaoS_VERSION "4.2.1_MS_HACK"
+#define XaoS_VERSION "4.2.1_MS_HACK2"
 
 // URLs
 #define HELP_URL "https://github.com/xaos-project/XaoS/wiki"
