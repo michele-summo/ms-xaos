@@ -102,6 +102,8 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sfsawtooth, 1, "sawtooth\0"},
     {sftwave, 1, "twave\0"},
 
+    {sfjulian, 3, "julian\0"},
+
     {NULL, 1, "rad\0"},
     {NULL, 1, "deg\0"},
     {NULL, 1, "sign\0"},
@@ -674,6 +676,21 @@ sfarg *sftwave(sfarg *const p)
     GSL_REAL(sfvalue(p)) = twave(GSL_REAL(sfvalue(sfaram1(p))));
     GSL_IMAG(sfvalue(p)) = twave(GSL_IMAG(sfvalue(sfaram1(p))));
     return sfaram1(p);
+}
+
+sfarg *sfjulian(sfarg *const p)
+{
+    gsl_complex z = sfvalue(sfaram3(p));
+    double mag = gsl_complex_abs(
+                gsl_complex_pow(z, sfvalue(sfaram2(p))));
+    gsl_complex b = sfvalue(sfaram1(p));
+    double arg = gsl_complex_arg(z);
+    double byg = exp(-GSL_IMAG(b)*arg);
+    double bxg = arg * GSL_REAL(b);
+
+    GSL_REAL(sfvalue(p)) = mag * byg * cos(bxg);
+    GSL_IMAG(sfvalue(p)) = mag * byg * sin(bxg);
+    return sfaram3(p);
 }
 
 // const eval
