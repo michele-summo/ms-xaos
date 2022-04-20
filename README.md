@@ -65,7 +65,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Added functions:
 ----------------
-* Coloring speed and speed functions
+* Coloring speed and coloring speed functions
 * New functions: bship (burning ship), min(default/real/imag/magnitude),
 * max(default/real/imag/magnitude), mid(default/real/imag/magnitude), 
-* rect, polar, trunc, round, mod and so on...
+* rect, polar, trunc, round, mod
+* sincos, tancot, julian, pn transforms (p1, p2, ..., pn)
+* Newton mode emulation and so on...
