@@ -1383,7 +1383,7 @@ void uih_registermenus_i18n(void)
                  uih_setincolorfun, uih_numdialog);
     MENUDIALOG_I("fractal", NULL, TR("Menu", "Outside coloring speed function"),
                  "outcolorfun", MENUFLAG_NOMENU | MENUFLAG_INTERRUPT,
-                 uih_setoutcolorfun, uih_fpdialog);
+                 uih_setoutcolorfun, uih_numdialog);
     MENUDIALOG_I("fractal", NULL, TR("Menu", "Inside coloring speed"),
                  "incolorspeed", MENUFLAG_NOMENU | MENUFLAG_INTERRUPT,
                  uih_setincolorspeed, uih_fpdialog);

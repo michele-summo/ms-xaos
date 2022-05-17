@@ -681,15 +681,20 @@ sfarg *sftwave(sfarg *const p)
 sfarg *sfjulian(sfarg *const p)
 {
     gsl_complex z = sfvalue(sfaram3(p));
-    double mag = gsl_complex_abs(
-                gsl_complex_pow(z, sfvalue(sfaram2(p))));
+    gsl_complex m;
+    GSL_SET_COMPLEX(&m, gsl_complex_abs(z), 0);
+    m = gsl_complex_pow(m, sfvalue(sfaram2(p)));
     gsl_complex b = sfvalue(sfaram1(p));
+    double mx = GSL_REAL(m);
+    double my = GSL_IMAG(m);
     double arg = gsl_complex_arg(z);
     double byg = exp(-GSL_IMAG(b)*arg);
     double bxg = arg * GSL_REAL(b);
+    double cosbxg = cos(bxg);
+    double sinbxg = sin(bxg);
 
-    GSL_REAL(sfvalue(p)) = mag * byg * cos(bxg);
-    GSL_IMAG(sfvalue(p)) = mag * byg * sin(bxg);
+    GSL_REAL(sfvalue(p)) = byg*(mx*cosbxg - my*sinbxg);
+    GSL_IMAG(sfvalue(p)) = byg*(my*cosbxg + mx*sinbxg);
     return sfaram3(p);
 }
 
