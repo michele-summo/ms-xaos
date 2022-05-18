@@ -1643,6 +1643,7 @@ void uih_mkdefaultpalette(uih_context *c)
     c->palettechanged = 1;
     c->palettetype = 0;
     uih_finishpalette(c);
+    c->palettepickerenabled = 0;
     uih_cycling_continue(c);
 }
 
@@ -1663,6 +1664,7 @@ void uih_mkpalette(uih_context *c)
     uih_finishpalette(c);
     c->palettechanged = 1;
     c->palettetype = alg + 1;
+    c->palettepickerenabled = 0;
     uih_cycling_continue(c);
 }
 
