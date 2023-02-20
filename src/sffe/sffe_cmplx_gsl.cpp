@@ -103,6 +103,7 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sftwave, 1, "twave\0"},
 
     {sfjulian, 3, "julian\0"},
+    {sfinveps, 2, "inveps\0"},
 
     {NULL, 1, "rad\0"},
     {NULL, 1, "deg\0"},
@@ -696,6 +697,16 @@ sfarg *sfjulian(sfarg *const p)
     GSL_REAL(sfvalue(p)) = byg*(mx*cosbxg - my*sinbxg);
     GSL_IMAG(sfvalue(p)) = byg*(my*cosbxg + mx*sinbxg);
     return sfaram3(p);
+}
+
+sfarg *sfinveps(sfarg *const p)
+{ /* cinv */
+    double x = GSL_REAL(sfvalue(sfaram2(p)));
+    double y = GSL_IMAG(sfvalue(sfaram2(p)));
+    double delta = (x*x + y*y);
+    GSL_REAL(sfvalue(p)) = x/(delta + GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = -y/(delta + GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram2(p);
 }
 
 // const eval

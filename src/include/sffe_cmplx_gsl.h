@@ -13,7 +13,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
-#define sffnctscount 79
+#define sffnctscount 80
 #define sfvarscount 6
 #define cmplxset(c, r, i) GSL_SET_COMPLEX(&c, r, i)
 #define real(c) GSL_REAL((c))
@@ -104,6 +104,7 @@ sfarg *sfsawtooth(sfarg *const p);
 sfarg *sftwave(sfarg *const p);
 /* other functions */
 sfarg *sfjulian(sfarg *const p); // |z^a|*e^(i*b*arg(z))
+sfarg *sfinveps(sfarg *const p);
 
 /*const eval*/
 void sfcPI(sfNumber *cnst);
