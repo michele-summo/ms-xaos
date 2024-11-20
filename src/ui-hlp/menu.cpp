@@ -591,6 +591,42 @@ static menudialog *uih_getbailoutdialog(struct uih_context *c)
     return (uih_bailoutdialog);
 }
 
+static menudialog *uih_getincolorspeeddialog(struct uih_context *c)
+{
+    if (c != NULL)
+        uih_fpdialog[0].deffloat = c->fcontext->incolorspeed;
+    return (uih_fpdialog);
+}
+
+static menudialog *uih_getoutcolorspeeddialog(struct uih_context *c)
+{
+    if (c != NULL)
+        uih_fpdialog[0].deffloat = c->fcontext->outcolorspeed;
+    return (uih_fpdialog);
+}
+
+static menudialog *uih_getincolorshiftdialog(struct uih_context *c)
+{
+    if (c != NULL)
+        uih_numdialog[0].defint = c->fcontext->incolorshift;
+    return (uih_numdialog);
+}
+
+static menudialog *uih_getoutcolorshiftdialog(struct uih_context *c)
+{
+    if (c != NULL)
+        uih_numdialog[0].defint = c->fcontext->outcolorshift;
+    return (uih_numdialog);
+}
+
+static menudialog *uih_getnewtonconvergencedialog(struct uih_context *c)
+{
+    if (c != NULL)
+        uih_fpdialog[0].deffloat = c->fcontext->newtonconvergence;
+    return (uih_fpdialog);
+}
+
+
 int defthreads = 0;
 
 static menudialog *uih_getthreaddialog(struct uih_context *c)
@@ -782,6 +818,7 @@ static void uih_palettecolors(struct uih_context *uih, dialogparam *p){
 static void uih_palettepicker(struct uih_context *uih, dialogparam *p)
 {
     uih_newimage(uih);
+    uih->manualpaletteshift = 0;
     uih->palettepickerenabled = 1;
 }
 
@@ -892,6 +929,36 @@ static int uih_periodicityselected(struct uih_context *c)
 static void uih_periodicitysw(struct uih_context *c)
 {
     uih_setperiodicity(c, c->fcontext->periodicity ^ 1);
+}
+
+static int uih_pndefaultselected(struct uih_context *c)
+{
+    if (c == NULL)
+        return 0;
+    return (c->fcontext->pndefault);
+}
+
+static void uih_pndefaultsw(struct uih_context *c)
+{
+    uih_setpndefault(c, c->fcontext->pndefault ^ 1);
+}
+
+static int uih_newtonmodesffeselected(struct uih_context *c)
+{
+    if (c == NULL)
+        return 0;
+    return (c->fcontext->newtonmodesffe);
+}
+
+static void uih_newtonmodesffesw(struct uih_context *c)
+{
+    uih_setnewtonmodesffe(c, c->fcontext->newtonmodesffe ^ 1);
+}
+
+static void uih_newfractal(struct uih_context *c)
+{
+    uih_initstate(c);
+    uih_setpndefault(c, 1);
 }
 
 static int uih_cyclingselected(struct uih_context *c)
@@ -1225,7 +1292,8 @@ void uih_registermenus_i18n(void)
                 UIH_TEXTCENTER, uih_xtextselected);
     MENUINTRB_I("xtextpos", NULL, "Right", "xtexteight", UI, uih_setxtextpos,
                 UIH_TEXTRIGHT, uih_xtextselected);
-    MENUNOP_I("file", NULL, TR("Menu", "New"), "initstate", 0, uih_initstate);
+    MENUNOP_I("file", NULL, TR("Menu", "Initstate"), "initstate", MENUFLAG_NOMENU, uih_initstate);
+    MENUNOP_I("file", NULL, TR("Menu", "New"), "newfractal", 0, uih_newfractal);
     MENUDIALOG_I("file", NULL, TR("Menu", "Open"), "loadpos",
                  MENUFLAG_INTERRUPT | MENUFLAG_NOPLAY, uih_loadfile,
                  loaddialog);
@@ -1273,6 +1341,10 @@ void uih_registermenus_i18n(void)
                   uih_sffein, uih_getsffedialog);
     MENUCDIALOG_I("fractal", NULL, TR("Menu", "User initialization"),
                   "usrformInit", 0, uih_sffeinitin, uih_getsffeinitdialog);
+    MENUNOPCB_I("fractal", NULL, TR("Menu", "Set p values on first iteration"), "pndefault",
+                0, uih_pndefaultsw, uih_pndefaultselected);
+    MENUNOPCB_I("fractal", NULL, TR("Menu", "Newton mode simulation"), "newtonmodesffe",
+                0, uih_newtonmodesffesw, uih_newtonmodesffeselected);
 #endif
 
     MENUSEPARATOR_I("fractal");
@@ -1315,6 +1387,24 @@ void uih_registermenus_i18n(void)
     MENUDIALOG_I("fractal", NULL, TR("Menu", "Outside truecolor coloring mode"),
                  "outtcoloring", MENUFLAG_NOMENU | MENUFLAG_INTERRUPT,
                  uih_setouttcolor, uih_numdialog);
+    MENUDIALOG_I("fractal", NULL, TR("Menu", "Inside coloring speed function"),
+                 "incolorfun", MENUFLAG_NOMENU | MENUFLAG_INTERRUPT,
+                 uih_setincolorfun, uih_numdialog);
+    MENUDIALOG_I("fractal", NULL, TR("Menu", "Outside coloring speed function"),
+                 "outcolorfun", MENUFLAG_NOMENU | MENUFLAG_INTERRUPT,
+                 uih_setoutcolorfun, uih_numdialog);
+    MENUDIALOG_I("fractal", NULL, TR("Menu", "Inside coloring speed"),
+                 "incolorspeed", MENUFLAG_NOMENU | MENUFLAG_INTERRUPT,
+                 uih_setincolorspeed, uih_fpdialog);
+    MENUDIALOG_I("fractal", NULL, TR("Menu", "Outside coloring speed"),
+                 "outcolorspeed", MENUFLAG_NOMENU | MENUFLAG_INTERRUPT,
+                 uih_setoutcolorspeed, uih_fpdialog);
+    MENUDIALOG_I("fractal", NULL, TR("Menu", "Inside coloring shift"),
+                 "incolorshift", MENUFLAG_NOMENU | MENUFLAG_INTERRUPT,
+                 uih_setincolorshift, uih_numdialog);
+    MENUDIALOG_I("fractal", NULL, TR("Menu", "Outside coloring shift"),
+                 "outcolorshift", MENUFLAG_NOMENU | MENUFLAG_INTERRUPT,
+                 uih_setoutcolorshift, uih_numdialog);
     MENUDIALOG_I("fractal", NULL, TR("Menu", "Julia seed"), "juliaseed",
                  MENUFLAG_NOMENU | MENUFLAG_INTERRUPT, uih_setjuliaseed,
                  uih_coorddialog);
@@ -1381,6 +1471,8 @@ void uih_registermenus_i18n(void)
                   MENUFLAG_INTERRUPT, uih_setmaxiter, uih_getiterdialog);
     MENUCDIALOG_I("calc", NULL, TR("Menu", "Bailout"), "bailout",
                   MENUFLAG_INTERRUPT, uih_setbailout, uih_getbailoutdialog);
+    MENUCDIALOG_I("calc", NULL, TR("Menu", "Newton convergence"), "newtonconvergence",
+                  MENUFLAG_INTERRUPT, uih_setnewtonconvergence, uih_getnewtonconvergencedialog);
     MENUCDIALOGCB_I("calc", "b", TR("Menu", "Perturbation"), "uiperturbation",
                     MENUFLAG_INTERRUPT | UI, uih_persw,
                     uih_getperturbationdialog, uih_perselected);
@@ -1492,7 +1584,23 @@ void uih_registermenus_i18n(void)
 static const menuitem menuitems2[] = {
     SUBMENU("mincoloring", NULL, "True-color incoloring mode", "tincoloring"),
     SUBMENU("moutcoloring", NULL, "True-color outcoloring mode",
-            "toutcoloring")};
+            "toutcoloring"),
+    MENUCDIALOG("mincoloring", NULL, TR("Menu", "Coloring speed"), "mincolorspeed",
+                MENUFLAG_INTERRUPT,
+                uih_setincolorspeed, uih_getincolorspeeddialog),
+    MENUCDIALOG("moutcoloring", NULL, TR("Menu", "Coloring speed"), "moutcolorspeed",
+                MENUFLAG_INTERRUPT,
+                uih_setoutcolorspeed, uih_getoutcolorspeeddialog),
+    MENUCDIALOG("mincoloring", NULL, TR("Menu", "Coloring shift"), "mincolorshift",
+                MENUFLAG_INTERRUPT,
+                uih_setincolorshift, uih_getincolorshiftdialog),
+    MENUCDIALOG("moutcoloring", NULL, TR("Menu", "Coloring shift"), "moutcolorshift",
+                MENUFLAG_INTERRUPT,
+                uih_setoutcolorshift, uih_getoutcolorshiftdialog),
+    SUBMENU("mincoloring", NULL, "Coloring speed functions",
+            "mincolorfun"),
+    SUBMENU("moutcoloring", NULL, "Coloring speed functions",
+            "moutcolorfun")};
 
 static int uih_selectedformula(struct uih_context *c, int n)
 {
@@ -1526,6 +1634,20 @@ static int uih_selectedoutcoloring(struct uih_context *c, int n)
     if (c == NULL)
         return 0;
     return (c->fcontext->coloringmode.AsInt() == n);
+}
+
+static int uih_selectedincolorfun(struct uih_context *c, int n)
+{
+    if (c == NULL)
+        return 0;
+    return (c->fcontext->incolorfun == n);
+}
+
+static int uih_selectedoutcolorfun(struct uih_context *c, int n)
+{
+    if (c == NULL)
+        return 0;
+    return (c->fcontext->outcolorfun == n);
 }
 
 static int uih_selectedplane(struct uih_context *c, int n)
@@ -1615,6 +1737,14 @@ void uih_registermenus(void)
                        UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
                        uih_setouttruecolor, uih_selectedouttcoloring, "outt");
 
+    menu_genernumbered(COLORFUN - 1, "mincolorfun", colorfun, NULL, MENU_INT,
+                       UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
+                       uih_setincolorfun, uih_selectedincolorfun, "infun");
+
+    menu_genernumbered(COLORFUN - 1, "moutcolorfun", colorfun, NULL, MENU_INT,
+                       UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
+                       uih_setoutcolorfun, uih_selectedoutcolorfun, "outfun");
+
     {
         int i;
         for (i = 0; planename[i] != NULL; i++)
@@ -1662,6 +1792,11 @@ void uih_unregistermenus(void)
     menu_delnumbered(OUTCOLORING - 1, "out");
 
     menu_delnumbered(TCOLOR - 1, "outt");
+
+    menu_delnumbered(COLORFUN - 1, "infun");
+
+    menu_delnumbered(COLORFUN - 1, "outfun");
+
     {
         int i;
         for (i = 0; planename[i] != NULL; i++)

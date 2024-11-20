@@ -13,7 +13,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
-#define sffnctscount 43
+#define sffnctscount 84
 #define sfvarscount 6
 #define cmplxset(c, r, i) GSL_SET_COMPLEX(&c, r, i)
 #define real(c) GSL_REAL((c))
@@ -51,11 +51,66 @@ sfarg *sfrtni(sfarg *const p);  /* rtni */
 sfarg *sfinv(sfarg *const p);   /* cinv */
 sfarg *sfceil(sfarg *const p);  /* ceil */
 sfarg *sffloor(sfarg *const p); /* floor */
+sfarg *sfcarg(sfarg *const p); /* arg */
+sfarg *sfmod(sfarg *const p); /* mod */
+sfarg *sfconj(sfarg *const p); /* conj */
 sfarg *sfabs(sfarg *const p);   /* abs - |z| */
 sfarg *sfre(sfarg *const p);    /* RE */
 sfarg *sfim(sfarg *const p);    /* IM */
 sfarg *sfrabs(sfarg *const p);  /* abs - real numbers */
 sfarg *sfrand(sfarg *const p);  /* rand */
+
+
+sfarg *sfbship(sfarg *const p);  /* bship - burning ship */
+sfarg *sfbshipr(sfarg *const p);  /* bshipr - burning ship only for real  */
+sfarg *sfbshipi(sfarg *const p);  /* bshipi - burning ship only for imag */
+
+sfarg *sfrect(sfarg *const p);  /* rect coordinates f(z1,z2) = r1+i*i2 */
+sfarg *sfpolar(sfarg *const p); /* polar coordinates f(z1,z2) = m1*e^(i*a2) */
+
+/* Comparison function (r only by real value,
+ * i only by imag, m by modulo, else by both real and imag) */
+/* min function */
+sfarg *sfmin(sfarg *const p);
+sfarg *sfminr(sfarg *const p);
+sfarg *sfmini(sfarg *const p);
+sfarg *sfminm(sfarg *const p);
+/* max function */
+sfarg *sfmax(sfarg *const p);
+sfarg *sfmaxr(sfarg *const p);
+sfarg *sfmaxi(sfarg *const p);
+sfarg *sfmaxm(sfarg *const p);
+/* mid function: if a<b then a<x<b else x<b or x<a */
+sfarg *sfmid(sfarg *const p);
+sfarg *sfmidr(sfarg *const p);
+sfarg *sfmidi(sfarg *const p);
+sfarg *sfmidm(sfarg *const p);
+/* sincos functions */
+sfarg *sfsincos(sfarg *const p);
+sfarg *sfcossin(sfarg *const p);
+sfarg *sfsinr(sfarg *const p);
+sfarg *sfcosr(sfarg *const p);
+sfarg *sfsini(sfarg *const p);
+sfarg *sfcosi(sfarg *const p);
+/* tancot functions */
+sfarg *sftancot(sfarg *const p);
+sfarg *sfcottan(sfarg *const p);
+sfarg *sftanr(sfarg *const p);
+sfarg *sfcotr(sfarg *const p);
+sfarg *sftani(sfarg *const p);
+sfarg *sfcoti(sfarg *const p);
+/* other trunc functions */
+sfarg *sftrunc(sfarg *const p);
+sfarg *sfsawtooth(sfarg *const p);
+sfarg *sftwave(sfarg *const p);
+/* other functions */
+sfarg *sfjulian(sfarg *const p); // |z^a|*e^(i*b*arg(z))
+sfarg *sfinveps(sfarg *const p); // x/(Delta + xeps) - iy/(Delta + yeps)
+sfarg *sfatan2s(sfarg *const p); /* atan2(x1, x2) + i*atan2(y1, y2) */
+sfarg *sfngon(sfarg *const p);
+sfarg *sfparchment(sfarg *const p);
+sfarg *sfparchmenta(sfarg *const p);
+
 /*const eval*/
 void sfcPI(sfNumber *cnst);
 void sfcPI2(sfNumber *cnst);

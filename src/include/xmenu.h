@@ -215,6 +215,12 @@ typedef struct menuitem {
         menuname, key, name, param, MENU_SUBMENU, 0, NULL, 0, NULL, NULL, NULL \
     }
 
+#define MENUCDIALOG(menuname, key, name, shortname, flags, function, param)     \
+{                                                                               \
+       menuname, key, name, shortname, MENU_CUSTOMDIALOG, flags,                \
+        (void (*)(void))function, 0, NULL, NULL,                                \
+       (const menudialog *(*)(struct uih_context *))param                       \
+}
 /* Definitions for internationalized menus. All of them must be defined
 dynamically because TR() cannot be used within a static
 variable. Usage (example):

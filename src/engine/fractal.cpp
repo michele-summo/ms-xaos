@@ -310,6 +310,15 @@ fractal_context *make_fractalc(const int formula, float wi, float he)
     new_ctxt->coloringmode = OutColormodeType::ColOut_iter;
     new_ctxt->intcolor = 0;
     new_ctxt->outtcolor = 0;
+    new_ctxt->incolorfun = 0;
+    new_ctxt->incolorspeed = 1.0f;
+    new_ctxt->incolorshift = 0;
+    new_ctxt->outcolorfun = 0;
+    new_ctxt->outcolorspeed = 1.0f;
+    new_ctxt->outcolorshift = 0;
+    new_ctxt->pndefault = 0;
+    new_ctxt->newtonmodesffe = 0;
+    new_ctxt->newtonconvergence = 1E-6;
     new_ctxt->slowmode = 0;
     new_ctxt->range = 3;
     new_ctxt->angle = 0;
@@ -325,11 +334,21 @@ fractal_context *make_fractalc(const int formula, float wi, float he)
     sffe_regvar(&new_ctxt->userformula, &sffe_dummy, "c");
     sffe_regvar(&new_ctxt->userformula, &sffe_dummy, "n");
 
+    sffe_regvar(&new_ctxt->userformula, &sffe_dummy, "x");
+
     new_ctxt->userinitial = sffe_alloc();
     sffe_regvar(&new_ctxt->userinitial, &sffe_dummy, "p");
     sffe_regvar(&new_ctxt->userinitial, &sffe_dummy, "z");
     sffe_regvar(&new_ctxt->userinitial, &sffe_dummy, "c");
     sffe_regvar(&new_ctxt->userinitial, &sffe_dummy, "n");
+
+    sffe_regvar(&new_ctxt->userinitial, &sffe_dummy, "x");
+    for (int i = 0; i < NUM_P; i++) {
+        char pname[3];
+        snprintf(pname, 3, "p%d", (i+1));
+        sffe_regvar(&new_ctxt->userformula, &sffe_dummy, pname);
+        sffe_regvar(&new_ctxt->userinitial, &sffe_dummy, pname);
+    }
 #endif
     set_formula(new_ctxt, formula);
     return (new_ctxt);

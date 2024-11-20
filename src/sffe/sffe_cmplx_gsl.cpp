@@ -1,6 +1,6 @@
 /*/////////////////////////////////////////////////////////////////////////////////////
 // project : sFFe ( SegFault (or Segmentation Fault :) ) formula evalutaor )
-// author  : Mateusz Malczak (mateusz@malczak.info)
+// author  : Mateusz Malczak ( mateusz@malczak.info )
 // wpage   : www.segfaultlabs.com/projects/sffe
 ///////////////////////////////////////////////////////////////////////////////////////
 // special build for XaoS, for more info visit
@@ -58,6 +58,57 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sfrabs, 1, "rabs\0"},
     {sfre, 1, "re\0"},
     {sfim, 1, "im\0"},
+    {sfcarg, 1, "arg\0"},
+    {sfmod, 1, "mod\0"},
+    {sfconj, 1, "conj\0"},
+
+    {sfbship, 1, "bship\0"},
+    {sfbshipr, 1, "bshipr\0"},
+    {sfbshipi, 1, "bshipi\0"},
+
+    {sfrect, 2, "rect\0"},
+    {sfpolar, 2, "polar\0"},
+
+    {sfmin, 2, "min\0"},
+    {sfminr, 2, "minr\0"},
+    {sfmini, 2, "mini\0"},
+    {sfminm, 2, "minm\0"},
+
+    {sfmax, 2, "max\0"},
+    {sfmaxr, 2, "maxr\0"},
+    {sfmaxi, 2, "maxi\0"},
+    {sfmaxm, 2, "maxm\0"},
+
+    {sfmid, 3, "mid\0"},
+    {sfmidr, 3, "midr\0"},
+    {sfmidi, 3, "midi\0"},
+    {sfmidm, 3, "midm\0"},
+
+    {sfsincos, 1, "sincos\0"},
+    {sfcossin, 1, "cossin\0"},
+    {sfsinr, 1, "sinr\0"},
+    {sfcosr, 1, "cosr\0"},
+    {sfsini, 1, "sini\0"},
+    {sfcosi, 1, "cosi\0"},
+
+    {sftancot, 1, "tancot\0"},
+    {sfcottan, 1, "cottan\0"},
+    {sftanr, 1, "tanr\0"},
+    {sfcotr, 1, "cotr\0"},
+    {sftani, 1, "tani\0"},
+    {sfcoti, 1, "coti\0"},
+
+    {sftrunc, 1, "trunc\0"},
+    {sfsawtooth, 1, "sawtooth\0"},
+    {sftwave, 1, "twave\0"},
+
+    {sfjulian, 3, "julian\0"},
+    {sfinveps, 2, "inveps\0"},
+    {sfatan2s, 2, "atan2s\0"},
+
+    {sfngon, 4, "ngon\0"}, //ngon(z, center, n, pow)
+    {sfparchment, 2, "parchment\0"}, //z, n
+    {sfparchmenta, 2, "parchmenta\0"}, //z, n
 
     {NULL, 1, "rad\0"},
     {NULL, 1, "deg\0"},
@@ -250,12 +301,40 @@ sfarg *sfinv(sfarg *const p)
 sfarg *sfceil(sfarg *const p)
 { /* ceil */
     // sfvalue(p) = ceil( sfvalue( sfaram1(p) ) );
+    GSL_REAL(sfvalue(p)) = ceil(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = ceil(GSL_IMAG(sfvalue(sfaram1(p))));
     return sfaram1(p);
 }
 
 sfarg *sffloor(sfarg *const p)
 { /* floor */
     // sfvalue(p) = floor( sfvalue( sfaram1(p) ) );
+    GSL_REAL(sfvalue(p)) = floor(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = floor(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
+sfarg *sfcarg(sfarg *const p)
+{ /* floor */
+    // sfvalue(p) = floor( sfvalue( sfaram1(p) ) );
+    GSL_REAL(sfvalue(p)) = gsl_complex_arg(sfvalue(sfaram1(p)));
+    GSL_IMAG(sfvalue(p)) = 0.0;
+    return sfaram1(p);
+}
+
+sfarg *sfmod(sfarg *const p)
+{ /* floor */
+    // sfvalue(p) = floor( sfvalue( sfaram1(p) ) );
+    GSL_REAL(sfvalue(p)) = fmod(GSL_REAL(sfvalue(sfaram1(p))), 1);
+    GSL_IMAG(sfvalue(p)) = fmod(GSL_IMAG(sfvalue(sfaram1(p))), 1);
+    return sfaram1(p);
+}
+
+sfarg *sfconj(sfarg *const p)
+{ /* floor */
+    // sfvalue(p) = floor( sfvalue( sfaram1(p) ) );
+    GSL_REAL(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram1(p)));
+    GSL_IMAG(sfvalue(p)) = GSL_REAL(sfvalue(sfaram1(p)));
     return sfaram1(p);
 }
 
@@ -294,6 +373,422 @@ sfarg *sfrand(sfarg *const p)
     GSL_REAL(sfvalue(p)) =
         GSL_REAL(sfvalue(sfaram1(p))) * (double)rand() / (double)RAND_MAX;
     GSL_IMAG(sfvalue(p)) = 0;
+    return sfaram1(p);
+}
+
+sfarg *sfbship(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = abs(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = abs(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
+sfarg *sfbshipr(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = abs(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram1(p)));
+    return sfaram1(p);
+}
+
+sfarg *sfbshipi(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram1(p)));
+    GSL_IMAG(sfvalue(p)) = abs(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
+sfarg *sfrect(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram1(p)));
+    GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram2(p)));
+    return sfaram1(p);
+}
+
+sfarg *sfpolar(sfarg *const p)
+{
+    double radius = gsl_complex_abs(sfvalue(sfaram1(p)));
+    double theta = gsl_complex_arg(sfvalue(sfaram2(p)));
+    sfvalue(p) = gsl_complex_polar(radius, theta);
+    return sfaram1(p);
+}
+
+sfarg *sfmin(sfarg *const p)
+{
+    double r1 = GSL_REAL(sfvalue(sfaram2(p)));
+    double r2 = GSL_REAL(sfvalue(sfaram1(p)));
+
+    double i1 = GSL_IMAG(sfvalue(sfaram2(p)));
+    double i2 = GSL_IMAG(sfvalue(sfaram1(p)));
+
+    GSL_REAL(sfvalue(p)) = r1 < r2 ? r2 : r1;
+    GSL_IMAG(sfvalue(p)) = i1 < i2 ? i2 : i1;
+    return sfaram2(p);
+}
+
+sfarg *sfminr(sfarg *const p)
+{
+    double r1 = GSL_REAL(sfvalue(sfaram2(p)));
+    double r2 = GSL_REAL(sfvalue(sfaram1(p)));
+
+    GSL_REAL(sfvalue(p)) = r1 < r2 ? r2 : r1;
+    GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram2(p)));
+    return sfaram2(p);
+}
+
+sfarg *sfmini(sfarg *const p)
+{
+    double i1 = GSL_IMAG(sfvalue(sfaram2(p)));
+    double i2 = GSL_IMAG(sfvalue(sfaram1(p)));
+
+    GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram2(p)));
+    GSL_IMAG(sfvalue(p)) = i1 < i2 ? i2 : i1;
+    return sfaram2(p);
+}
+
+sfarg *sfminm(sfarg *const p)
+{
+    double r1 = gsl_complex_abs(sfvalue(sfaram2(p)));
+    double r2 = gsl_complex_abs(sfvalue(sfaram1(p)));
+    double theta = gsl_complex_arg(sfvalue(sfaram2(p)));
+
+    sfvalue(p) = gsl_complex_polar(r1 < r2 ? r2 : r1, theta);
+    return sfaram2(p);
+}
+
+sfarg *sfmax(sfarg *const p)
+{
+    double r1 = GSL_REAL(sfvalue(sfaram2(p)));
+    double r2 = GSL_REAL(sfvalue(sfaram1(p)));
+
+    double i1 = GSL_IMAG(sfvalue(sfaram2(p)));
+    double i2 = GSL_IMAG(sfvalue(sfaram1(p)));
+
+    GSL_REAL(sfvalue(p)) = r1 < r2 ? r1 : r2;
+    GSL_IMAG(sfvalue(p)) = i1 < i2 ? i1 : i2;
+    return sfaram2(p);
+}
+
+sfarg *sfmaxr(sfarg *const p)
+{
+    double r1 = GSL_REAL(sfvalue(sfaram2(p)));
+    double r2 = GSL_REAL(sfvalue(sfaram1(p)));
+
+    GSL_REAL(sfvalue(p)) = r1 < r2 ? r1 : r2;
+    GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram2(p)));
+    return sfaram2(p);
+}
+
+sfarg *sfmaxi(sfarg *const p)
+{
+    double i1 = GSL_IMAG(sfvalue(sfaram2(p)));
+    double i2 = GSL_IMAG(sfvalue(sfaram1(p)));
+
+    GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram2(p)));
+    GSL_IMAG(sfvalue(p)) = i1 < i2 ? i1 : i2;
+    return sfaram2(p);
+}
+
+sfarg *sfmaxm(sfarg *const p)
+{
+    double r1 = gsl_complex_abs(sfvalue(sfaram2(p)));
+    double r2 = gsl_complex_abs(sfvalue(sfaram1(p)));
+    double theta = gsl_complex_arg(sfvalue(sfaram2(p)));
+
+    sfvalue(p) = gsl_complex_polar(r1 < r2 ? r1 : r2, theta);
+    return sfaram2(p);
+}
+
+double calc_mid(double v1, double v2, double v3) {
+    if (v2 < v3) {
+        if (v1 < v2) {
+            return v2;
+        } else if (v1 > v3) {
+            return v3;
+        } else {
+            return v1;
+        }
+    } else {
+        if (v1 < v2 && v1 < v3) {
+            return v2;
+        } else if (v1 > v3 && v1 > v2) {
+            return v3;
+        } else {
+            return v1;
+        }
+    }
+}
+
+sfarg *sfmid(sfarg *const p)
+{
+    double r1 = GSL_REAL(sfvalue(sfaram3(p)));
+    double r2 = GSL_REAL(sfvalue(sfaram2(p)));
+    double r3 = GSL_REAL(sfvalue(sfaram1(p)));
+
+    double i1 = GSL_IMAG(sfvalue(sfaram3(p)));
+    double i2 = GSL_IMAG(sfvalue(sfaram2(p)));
+    double i3 = GSL_IMAG(sfvalue(sfaram1(p)));
+
+    GSL_REAL(sfvalue(p)) = calc_mid(r1, r2, r3);
+    GSL_IMAG(sfvalue(p)) = calc_mid(i1, i2, i3);
+    return sfaram3(p);
+}
+
+sfarg *sfmidr(sfarg *const p)
+{
+    double r1 = GSL_REAL(sfvalue(sfaram3(p)));
+    double r2 = GSL_REAL(sfvalue(sfaram2(p)));
+    double r3 = GSL_REAL(sfvalue(sfaram1(p)));
+
+    GSL_REAL(sfvalue(p)) = calc_mid(r1, r2, r3);
+    GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram3(p)));
+    return sfaram3(p);
+}
+
+sfarg *sfmidi(sfarg *const p)
+{
+    double i1 = GSL_IMAG(sfvalue(sfaram3(p)));
+    double i2 = GSL_IMAG(sfvalue(sfaram2(p)));
+    double i3 = GSL_IMAG(sfvalue(sfaram1(p)));
+
+    GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram3(p)));
+    GSL_IMAG(sfvalue(p)) = calc_mid(i1, i2, i3);
+    return sfaram3(p);
+}
+
+sfarg *sfmidm(sfarg *const p)
+{
+    double r1 = gsl_complex_abs(sfvalue(sfaram3(p)));
+    double r2 = gsl_complex_abs(sfvalue(sfaram2(p)));
+    double r3 = gsl_complex_abs(sfvalue(sfaram1(p)));
+    double theta = gsl_complex_arg(sfvalue(sfaram3(p)));
+
+    sfvalue(p) = gsl_complex_polar(calc_mid(r1, r2, r3), theta);
+    return sfaram3(p);
+}
+
+sfarg *sfsincos(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = sin(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = cos(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
+sfarg *sfcossin(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = cos(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = sin(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
+sfarg *sfsinr(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = sin(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram1(p)));
+    return sfaram1(p);
+}
+
+sfarg *sfcosr(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = cos(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram1(p)));
+    return sfaram1(p);
+}
+
+sfarg *sfsini(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram1(p)));
+    GSL_IMAG(sfvalue(p)) = sin(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
+sfarg *sfcosi(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram1(p)));
+    GSL_IMAG(sfvalue(p)) = cos(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
+double cot(double x) {
+    return cos(x)/sin(x);
+}
+
+sfarg *sftancot(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = tan(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = cot(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
+sfarg *sfcottan(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = cot(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = tan(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
+sfarg *sftanr(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = tan(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram1(p)));
+    return sfaram1(p);
+}
+
+sfarg *sfcotr(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = cot(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram1(p)));
+    return sfaram1(p);
+}
+
+sfarg *sftani(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram1(p)));
+    GSL_IMAG(sfvalue(p)) = tan(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
+sfarg *sfcoti(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram1(p)));
+    GSL_IMAG(sfvalue(p)) = cot(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
+sfarg *sftrunc(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = trunc(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = trunc(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
+double sawtooth(double x) {
+    return x - floor(x);
+}
+
+sfarg *sfsawtooth(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = sawtooth(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = sawtooth(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
+double twave(double x) {
+    double xf = x/2.0;
+    return 2.0*abs(2.0*(xf-floor(xf+0.5)))-1.0;
+}
+
+sfarg *sftwave(sfarg *const p)
+{
+    GSL_REAL(sfvalue(p)) = twave(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = twave(GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram1(p);
+}
+
+sfarg *sfjulian(sfarg *const p)
+{
+    gsl_complex z = sfvalue(sfaram3(p));
+    gsl_complex m;
+    GSL_SET_COMPLEX(&m, gsl_complex_abs(z), 0);
+    m = gsl_complex_pow(m, sfvalue(sfaram2(p)));
+    gsl_complex b = sfvalue(sfaram1(p));
+    double mx = GSL_REAL(m);
+    double my = GSL_IMAG(m);
+    double arg = gsl_complex_arg(z);
+    double byg = exp(-GSL_IMAG(b)*arg);
+    double bxg = arg * GSL_REAL(b);
+    double cosbxg = cos(bxg);
+    double sinbxg = sin(bxg);
+
+    GSL_REAL(sfvalue(p)) = byg*(mx*cosbxg - my*sinbxg);
+    GSL_IMAG(sfvalue(p)) = byg*(my*cosbxg + mx*sinbxg);
+    return sfaram3(p);
+}
+
+sfarg *sfinveps(sfarg *const p)
+{ /* cinv */
+    double x = GSL_REAL(sfvalue(sfaram2(p)));
+    double y = GSL_IMAG(sfvalue(sfaram2(p)));
+    double delta = (x*x + y*y);
+    GSL_REAL(sfvalue(p)) = x/(delta + GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = -y/(delta + GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram2(p);
+}
+
+sfarg *sfatan2s(sfarg *const p)
+{ /* cinv */
+    GSL_REAL(sfvalue(p)) = atan2(GSL_REAL(sfvalue(sfaram2(p))), GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = atan2(GSL_IMAG(sfvalue(sfaram2(p))), GSL_IMAG(sfvalue(sfaram1(p))));
+    return sfaram2(p);
+}
+
+#define M_1_2PI     0.15915494309189533576888376337251
+#define M_2PI       6.283185307179586476925286766559
+
+sfarg *sfngon(sfarg *const p)
+{
+    gsl_complex i;
+    GSL_SET_COMPLEX(&i, 0.0, 1.0);
+
+    gsl_complex n = sfvalue(sfaram2(p));
+    gsl_complex zc = gsl_complex_sub(sfvalue(sfaram4(p)), sfvalue(sfaram3(p)));
+    double t = gsl_complex_arg(zc);
+    gsl_complex tn = gsl_complex_mul_real(n, t * M_1_2PI);
+    tn = gsl_complex_add_real(tn, 0.5);
+    GSL_REAL(tn) = floor(GSL_REAL(tn));
+    GSL_IMAG(tn) = floor(GSL_IMAG(tn));
+    tn = gsl_complex_mul_real(tn, M_2PI);
+    tn = gsl_complex_div(tn, n);
+    double cr = cos(t);
+    double sr = sin(t);
+    gsl_complex ccn = gsl_complex_cos(tn);
+    gsl_complex scn = gsl_complex_sin(tn);
+    gsl_complex rn = gsl_complex_add(gsl_complex_mul_real(ccn, cr),
+                                     gsl_complex_mul_real(scn, sr));
+    rn = gsl_complex_mul_real(gsl_complex_pow(rn, sfvalue(sfaram1(p))),
+                              gsl_complex_abs(zc));
+    gsl_complex argexp = gsl_complex_exp(gsl_complex_mul_real(i, t));
+    sfvalue(p) =  gsl_complex_add(gsl_complex_mul(rn, argexp), sfvalue(sfaram3(p)));
+
+    return sfaram4(p);
+}
+
+sfarg *sfparchment(sfarg *const p)
+{
+    gsl_complex z = sfvalue(sfaram2(p));
+    double n = gsl_complex_abs(sfvalue(sfaram1(p)));
+
+    double t = gsl_complex_arg(z);
+    double dN = n * M_1_2PI;
+    double nN = 1/dN;
+
+    double trc = ceil(t * dN) * nN;
+
+    double trm = t - trc + nN;
+
+    sfvalue(p) = gsl_complex_polar(gsl_complex_abs(z), trm);
+    return sfaram1(p);
+}
+
+sfarg *sfparchmenta(sfarg *const p)
+{
+    gsl_complex z = sfvalue(sfaram2(p));
+    double n = gsl_complex_abs(sfvalue(sfaram1(p)));
+    //if (n == 5 && abs(GSL_REAL(z) - (-1.5)) < 0.1  && abs(GSL_IMAG(z) - (-1)) < 0.1) {
+    //    int vb = 1;
+    //}
+
+    double t = gsl_complex_arg(z);
+    double dN = n * M_1_2PI;
+    double nN = 1/dN;
+    double trc = ceil(t * dN) * nN;
+
+    dN = dN*2;
+    nN = 1/dN;
+    double trc2 = ceil(t * dN) * nN;
+
+    double trm = trc < trc2 + 0.1 / n ? trc2 - t : t + nN - trc2;
+
+    sfvalue(p) = gsl_complex_polar(gsl_complex_abs(z), trm);
     return sfaram1(p);
 }
 

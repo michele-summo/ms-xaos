@@ -1675,6 +1675,7 @@ void uih_mkdefaultpalette(uih_context *c)
     c->palettechanged = 1;
     c->palettetype = 0;
     uih_finishpalette(c);
+    c->palettepickerenabled = 0;
     uih_cycling_continue(c);
 }
 
@@ -1695,6 +1696,7 @@ void uih_mkpalette(uih_context *c)
     uih_finishpalette(c);
     c->palettechanged = 1;
     c->palettetype = alg + 1;
+    c->palettepickerenabled = 0;
     uih_cycling_continue(c);
 }
 
@@ -1795,6 +1797,95 @@ void uih_setouttcolor(uih_context *c, int mode)
         }
         sprintf(str, "outt%i", mode);
         uih_updatemenus(c, str);
+    }
+}
+
+
+void uih_setincolorspeed(uih_context *c, number_t speed) {
+    if (c->fcontext->incolorspeed != (number_t)speed) {
+        c->fcontext->incolorspeed = speed;
+        c->fcontext->version++;
+        uih_newimage(c);
+    }
+}
+
+void uih_setincolorfun(uih_context *c, int func){
+    if (func < 0)
+        func = rand() % COLORFUN;
+    if (func > COLORFUN)
+        func = COLORFUN;
+    if (c->fcontext->incolorfun != func) {
+        char str[10];
+        c->fcontext->incolorfun = func;
+        c->fcontext->version++;
+        uih_newimage(c);
+        sprintf(str, "in%i", func);
+        uih_updatemenus(c, str);
+    }
+}
+
+void uih_setincolorshift(uih_context *c, int shift) {
+    if (c->fcontext->incolorshift != shift) {
+        c->fcontext->incolorshift = shift;
+        c->fcontext->version++;
+        uih_newimage(c);
+    }
+}
+
+void uih_setoutcolorspeed(uih_context *c, number_t speed){
+    if (c->fcontext->outcolorspeed != (number_t)speed) {
+        c->fcontext->outcolorspeed = speed;
+        c->fcontext->version++;
+        uih_newimage(c);
+    }
+}
+
+void uih_setoutcolorfun(uih_context *c, int func){
+    if (func < 0)
+        func = rand() % COLORFUN;
+    if (func > COLORFUN)
+        func = COLORFUN;
+    if (c->fcontext->outcolorfun != func) {
+        char str[10];
+        c->fcontext->outcolorfun = func;
+        c->fcontext->version++;
+        uih_newimage(c);
+        sprintf(str, "in%i", func);
+        uih_updatemenus(c, str);
+    }
+}
+
+void uih_setoutcolorshift(uih_context *c, int shift) {
+    if (c->fcontext->outcolorshift != shift) {
+        c->fcontext->outcolorshift = shift;
+        c->fcontext->version++;
+        uih_newimage(c);
+    }
+}
+
+void uih_setpndefault(uih_context *c, int value) {
+    if (c->fcontext->pndefault != (int)value) {
+        c->fcontext->pndefault = value;
+        c->fcontext->version++;
+        uih_updatemenus(c, "pndefault");
+        uih_newimage(c);
+    }
+}
+
+void uih_setnewtonmodesffe(uih_context *c, int value) {
+    if (c->fcontext->newtonmodesffe != (int)value) {
+        c->fcontext->newtonmodesffe = value;
+        c->fcontext->version++;
+        uih_updatemenus(c, "newtonmodesffe");
+        uih_newimage(c);
+    }
+}
+
+void uih_setnewtonconvergence(uih_context *c, number_t conv) {
+    if (c->fcontext->newtonconvergence != (number_t)conv) {
+        c->fcontext->newtonconvergence = conv;
+        c->fcontext->version++;
+        uih_newimage(c);
     }
 }
 
@@ -2061,6 +2152,7 @@ uih_mkcontext(int flags, struct image *image,
     sffe_parse(&uih->fcontext->userformula, USER_FORMULA);
     sffe_parse(&uih->fcontext->userinitial, "");
 #endif
+    uih->fcontext->pndefault = 1;
     uih_setformula(uih, 0);
     uih_saveundo(uih);
     return (uih);
@@ -2160,15 +2252,25 @@ void uih_initstate(struct uih_context *uih)
     sffe_parse(&uih->fcontext->userinitial, "");
 #endif
     uih_setperiodicity(uih, 1);
-    uih_setmaxiter(uih, 170);
-    uih_setbailout(uih, 4);
+    uih_setmaxiter(uih, DEFAULT_MAX_ITER);
+    uih_setbailout(uih, DEFAULT_BAILOUT);
     uih_setincoloringmode(uih, 0);
     uih_setoutcoloringmode(uih, 0);
+    uih_setincolorspeed(uih, 1.0);
+    uih_setincolorfun(uih, 0);
+    uih_setincolorshift(uih, 0);
+    uih_setoutcolorspeed(uih, 1.0);
+    uih_setoutcolorfun(uih, 0);
+    uih_setoutcolorshift(uih, 0);
+    uih_setpndefault(uih, 0);
+    uih_setnewtonmodesffe(uih, 0);
+    uih_setnewtonconvergence(uih, 1E-6);
     uih_setcycling(uih, 30);
     uih_display(uih);
     uih_setfastmode(uih, 2);
     uih_setintcolor(uih, 0);
     uih_setouttcolor(uih, 0);
+    //XXX TODO
     uih_setplane(uih, 0);
     uih_setguessing(uih, 3);
     uih_angle(uih, 0);
