@@ -1042,10 +1042,11 @@ void MainWindow::showDialog(const char *name)
                 switch (dialog->type) {
                     case DIALOG_INT:
                     {
-                        qInputDialog->setIntMaximum(1000000);
+                        qInputDialog->setIntMaximum(1000000000);
+                        qInputDialog->setIntMinimum(-1000000000);
                         qInputDialog->setIntValue(dialog->defint);
                         connect(qInputDialog, &QInputDialog::intValueSelected, qInputDialog,
-                            [=](const unsigned long int &value) {
+                            [=](const long int &value) {
                                 param->dint = value;
                                 menuActivate(item, param);
                             });
@@ -1053,7 +1054,8 @@ void MainWindow::showDialog(const char *name)
                     }
                     case DIALOG_FLOAT:
                     {
-                        qInputDialog->setDoubleMaximum(1000000);
+                        qInputDialog->setDoubleMaximum(1E300);
+                        qInputDialog->setDoubleMinimum(-1E300);
                         qInputDialog->setDoubleValue(dialog->deffloat);
                         connect(qInputDialog, &QInputDialog::doubleValueSelected, qInputDialog,
                             [=](const double &value) {
