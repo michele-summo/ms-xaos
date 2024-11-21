@@ -455,7 +455,7 @@ void uih_saveframe(struct uih_context *uih)
         if (s->fcontext->bailout != uih->fcontext->bailout)
             save_floatc(uih, "bailout", uih->fcontext->bailout),
                 s->fcontext->bailout = uih->fcontext->bailout;
-        if (s->fcontext->coloringmode != uih->fcontext->coloringmode)
+        if (uih->save || s->fcontext->coloringmode != uih->fcontext->coloringmode)
             save_intc(uih, "outcoloring", uih->fcontext->coloringmode.AsInt()),
                 s->fcontext->coloringmode = uih->fcontext->coloringmode;
         if (s->fcontext->incoloringmode != uih->fcontext->incoloringmode)
