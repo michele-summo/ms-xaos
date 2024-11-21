@@ -756,6 +756,9 @@ sfarg *sfparchment(sfarg *const p)
 {
     gsl_complex z = sfvalue(sfaram2(p));
     double n = gsl_complex_abs(sfvalue(sfaram1(p)));
+    //if (n == 2 && abs(GSL_REAL(z) - (-1.5)) < 0.1  && abs(GSL_IMAG(z) - (-1)) < 0.1) {
+    //    int vb = 1;
+    //}
 
     double t = gsl_complex_arg(z);
     double dN = n * M_1_2PI;
@@ -766,7 +769,7 @@ sfarg *sfparchment(sfarg *const p)
     double trm = t - trc + nN;
 
     sfvalue(p) = gsl_complex_polar(gsl_complex_abs(z), trm);
-    return sfaram1(p);
+    return sfaram2(p);
 }
 
 sfarg *sfparchmenta(sfarg *const p)
@@ -789,7 +792,7 @@ sfarg *sfparchmenta(sfarg *const p)
     double trm = trc < trc2 + 0.1 / n ? trc2 - t : t + nN - trc2;
 
     sfvalue(p) = gsl_complex_polar(gsl_complex_abs(z), trm);
-    return sfaram1(p);
+    return sfaram2(p);
 }
 
 // const eval
