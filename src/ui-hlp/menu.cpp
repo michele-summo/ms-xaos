@@ -68,7 +68,7 @@ const char *const uih_colornames[] = {"white", "black", "red", NULL};
  * Zoltan Kovacs <kovzol@math.u-szeged.hu>, 2003-01-05
  */
 
-#define MAX_MENUDIALOGS_I18N 150
+#define MAX_MENUDIALOGS_I18N 1024
 #define Register(variable) variable = &menudialogs_i18n[no_menudialogs_i18n]
 static menudialog menudialogs_i18n[MAX_MENUDIALOGS_I18N];
 // static int no_menudialogs_i18n;
@@ -126,8 +126,8 @@ void uih_registermenudialogs_i18n(void)
     Register(uih_renderdialog);
     DIALOGIFILES_I(TR("Dialog", "Files to render:"), 0);
     DIALOGOFILE_I(TR("Dialog", "Basename:"), "anim");
-    DIALOGINT_I(TR("Dialog", "Width:"), 640);
-    DIALOGINT_I(TR("Dialog", "Height:"), 480);
+    DIALOGINT_I(TR("Dialog", "Width:"), 1920);
+    DIALOGINT_I(TR("Dialog", "Height:"), 1080);
     DIALOGFLOAT_I(TR("Dialog", "Pixel width (cm):"), 0.025);
     DIALOGFLOAT_I(TR("Dialog", "Pixel height (cm):"), 0.025);
     DIALOGFLOAT_I(TR("Dialog", "Framerate:"), 30);
@@ -138,8 +138,8 @@ void uih_registermenudialogs_i18n(void)
 
     Register(uih_renderimgdialog);
     DIALOGOFILE_I(TR("Dialog", "Basename:"), "anim");
-    DIALOGINT_I(TR("Dialog", "Width:"), 640);
-    DIALOGINT_I(TR("Dialog", "Height:"), 480);
+    DIALOGINT_I(TR("Dialog", "Width:"), 1920);
+    DIALOGINT_I(TR("Dialog", "Height:"), 1080);
     DIALOGFLOAT_I(TR("Dialog", "Pixel width (cm):"), 0.025);
     DIALOGFLOAT_I(TR("Dialog", "Pixel height (cm):"), 0.025);
     DIALOGCHOICE_I(TR("Dialog", "Image type:"), imgtypes, 0);
@@ -1364,7 +1364,7 @@ void uih_registermenus_i18n(void)
                 uih_juliasw, uih_juliaselected);
     MENUSEPARATOR_I("fractal");
     MENUCDIALOG_I("fractal", NULL, TR("Menu", "View"), "uiview",
-                  MENUFLAG_INTERRUPT | UI, uih_dview, uih_getviewdialog);
+                 MENUFLAG_INTERRUPT | UI, uih_dview, uih_getviewdialog);
     MENUDIALOG_I("fractal", NULL, TR("Menu", "View"), "view",
                  MENUFLAG_NOMENU | MENUFLAG_INTERRUPT, uih_plview,
                  uih_plviewdialog);

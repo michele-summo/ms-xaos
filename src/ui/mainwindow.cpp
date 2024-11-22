@@ -958,6 +958,11 @@ void MainWindow::showDialog(const char *name)
     for (nitems = 0; dialog[nitems].question; nitems++)
         ;
 
+    int dtype = dialog->type;
+    if (nitems > 1) {
+        dtype = DIALOG_CUSTOM;
+    }
+
     if (nitems == 1 &&
         (dialog[0].type == DIALOG_IFILE || dialog[0].type == DIALOG_OFILE)) {
         QString filter =
@@ -1029,8 +1034,7 @@ void MainWindow::showDialog(const char *name)
     } else {
 
         dialogparam *param = (dialogparam *)malloc(sizeof(dialogparam));
-
-        switch (dialog->type) {
+        switch (dtype) {
             case DIALOG_INT:
             case DIALOG_FLOAT:
             case DIALOG_STRING:

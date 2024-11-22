@@ -35,6 +35,7 @@ typedef char *(*tokenfunc)(struct uih_context *c);
 #define DIALOG_PALPICKER 11
 #define DIALOG_IFILES 12
 #define DIALOG_LIST 13
+#define DIALOG_CUSTOM 99
 
 #define DIALOGIFILE(question, filename)                                        \
     {                                                                          \

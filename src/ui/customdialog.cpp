@@ -45,7 +45,6 @@ CustomDialog::CustomDialog(struct uih_context *uih, const menuitem *item,
     QFormLayout *formLayout = new QFormLayout();
 
     for (int i = 0; dialog[i].question; i++) {
-
         QString label(dialog[i].question);
         if (dialog[i].type == DIALOG_COORD) {
 
