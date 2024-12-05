@@ -630,6 +630,7 @@ int sffe_parse(sffe **parser, const char *expression)
 
     /* _parser->expression = (char *)realloc((char *)_parser->expression,
                                           strlen(_parser->expression) + 1); */
+    const char* _tempexpr = _parser->expression;
     _parser->expression = buflen > 0 ? (char *)realloc((char *)buf, strlen(buf) + 1) : new char{'\0'};
 
     if (ui1 && !err) {
@@ -1207,7 +1208,9 @@ int sffe_parse(sffe **parser, const char *expression)
 #ifdef SFFE_DEVEL
     printf("\nparse - END\n");
 #endif
-
+    //TODO
+    delete _parser->expression;
+    _parser->expression = _tempexpr;
     return err;
 }
 
