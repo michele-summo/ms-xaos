@@ -13,11 +13,25 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
-#define sffnctscount 84
+#define sffnctscount 92
 #define sfvarscount 6
 #define cmplxset(c, r, i) GSL_SET_COMPLEX(&c, r, i)
 #define real(c) GSL_REAL((c))
 #define imag(c) GSL_IMAG((c))
+
+static const int LANCZOS_G = 7;
+static const double LANCZOS_P[] = {
+    0.99999999999980993,
+    676.5203681218851,
+    -1259.1392167224028,
+    771.32342877765313,
+    -176.61502916214059,
+    12.507343278686905,
+    -0.13857109526572012,
+    9.9843695780195716e-6,
+    1.5056327351493116e-7
+};
+
 
 sfarg *sfadd(sfarg *const p);   /*  +  */
 sfarg *sfsub(sfarg *const p);   /*  -  */
@@ -110,6 +124,16 @@ sfarg *sfatan2s(sfarg *const p); /* atan2(x1, x2) + i*atan2(y1, y2) */
 sfarg *sfngon(sfarg *const p);
 sfarg *sfparchment(sfarg *const p);
 sfarg *sfparchmenta(sfarg *const p);
+/* other trunc function */
+sfarg *sftruncv(sfarg *const p);
+sfarg *sftruncc(sfarg *const p);
+sfarg *sftruncvr(sfarg *const p);
+sfarg *sftruncvi(sfarg *const p);
+sfarg *sftruncvm(sfarg *const p); //Magnitude
+sfarg *sftruncva(sfarg *const p); //Argument
+
+sfarg *sfgamma(sfarg *const p);
+sfarg *sflambertw(sfarg *const p);
 
 /*const eval*/
 void sfcPI(sfNumber *cnst);

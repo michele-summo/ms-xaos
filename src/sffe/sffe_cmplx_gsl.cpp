@@ -110,6 +110,16 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sfparchment, 2, "parchment\0"}, //z, n
     {sfparchmenta, 2, "parchmenta\0"}, //z, n
 
+    {sftruncv, 2, "truncv\0"},
+    {sftruncc, 2, "truncc\0"},
+    {sftruncvr, 2, "truncvr\0"},
+    {sftruncvi, 2, "truncvi\0"},
+    {sftruncvm, 2, "truncvm\0"},
+    {sftruncva, 2, "truncva\0"},
+
+    {sfgamma, 1, "gamma\0"},
+    {sflambertw, 1, "lambertw\0"},
+
     {NULL, 1, "rad\0"},
     {NULL, 1, "deg\0"},
     {NULL, 1, "sign\0"},
@@ -412,49 +422,6 @@ sfarg *sfpolar(sfarg *const p)
     return sfaram1(p);
 }
 
-sfarg *sfmin(sfarg *const p)
-{
-    double r1 = GSL_REAL(sfvalue(sfaram2(p)));
-    double r2 = GSL_REAL(sfvalue(sfaram1(p)));
-
-    double i1 = GSL_IMAG(sfvalue(sfaram2(p)));
-    double i2 = GSL_IMAG(sfvalue(sfaram1(p)));
-
-    GSL_REAL(sfvalue(p)) = r1 < r2 ? r2 : r1;
-    GSL_IMAG(sfvalue(p)) = i1 < i2 ? i2 : i1;
-    return sfaram2(p);
-}
-
-sfarg *sfminr(sfarg *const p)
-{
-    double r1 = GSL_REAL(sfvalue(sfaram2(p)));
-    double r2 = GSL_REAL(sfvalue(sfaram1(p)));
-
-    GSL_REAL(sfvalue(p)) = r1 < r2 ? r2 : r1;
-    GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram2(p)));
-    return sfaram2(p);
-}
-
-sfarg *sfmini(sfarg *const p)
-{
-    double i1 = GSL_IMAG(sfvalue(sfaram2(p)));
-    double i2 = GSL_IMAG(sfvalue(sfaram1(p)));
-
-    GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram2(p)));
-    GSL_IMAG(sfvalue(p)) = i1 < i2 ? i2 : i1;
-    return sfaram2(p);
-}
-
-sfarg *sfminm(sfarg *const p)
-{
-    double r1 = gsl_complex_abs(sfvalue(sfaram2(p)));
-    double r2 = gsl_complex_abs(sfvalue(sfaram1(p)));
-    double theta = gsl_complex_arg(sfvalue(sfaram2(p)));
-
-    sfvalue(p) = gsl_complex_polar(r1 < r2 ? r2 : r1, theta);
-    return sfaram2(p);
-}
-
 sfarg *sfmax(sfarg *const p)
 {
     double r1 = GSL_REAL(sfvalue(sfaram2(p)));
@@ -463,8 +430,8 @@ sfarg *sfmax(sfarg *const p)
     double i1 = GSL_IMAG(sfvalue(sfaram2(p)));
     double i2 = GSL_IMAG(sfvalue(sfaram1(p)));
 
-    GSL_REAL(sfvalue(p)) = r1 < r2 ? r1 : r2;
-    GSL_IMAG(sfvalue(p)) = i1 < i2 ? i1 : i2;
+    GSL_REAL(sfvalue(p)) = r1 < r2 ? r2 : r1;
+    GSL_IMAG(sfvalue(p)) = i1 < i2 ? i2 : i1;
     return sfaram2(p);
 }
 
@@ -473,7 +440,7 @@ sfarg *sfmaxr(sfarg *const p)
     double r1 = GSL_REAL(sfvalue(sfaram2(p)));
     double r2 = GSL_REAL(sfvalue(sfaram1(p)));
 
-    GSL_REAL(sfvalue(p)) = r1 < r2 ? r1 : r2;
+    GSL_REAL(sfvalue(p)) = r1 < r2 ? r2 : r1;
     GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram2(p)));
     return sfaram2(p);
 }
@@ -484,11 +451,54 @@ sfarg *sfmaxi(sfarg *const p)
     double i2 = GSL_IMAG(sfvalue(sfaram1(p)));
 
     GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram2(p)));
-    GSL_IMAG(sfvalue(p)) = i1 < i2 ? i1 : i2;
+    GSL_IMAG(sfvalue(p)) = i1 < i2 ? i2 : i1;
     return sfaram2(p);
 }
 
 sfarg *sfmaxm(sfarg *const p)
+{
+    double r1 = gsl_complex_abs(sfvalue(sfaram2(p)));
+    double r2 = gsl_complex_abs(sfvalue(sfaram1(p)));
+    double theta = gsl_complex_arg(sfvalue(sfaram2(p)));
+
+    sfvalue(p) = gsl_complex_polar(r1 < r2 ? r2 : r1, theta);
+    return sfaram2(p);
+}
+
+sfarg *sfmin(sfarg *const p)
+{
+    double r1 = GSL_REAL(sfvalue(sfaram2(p)));
+    double r2 = GSL_REAL(sfvalue(sfaram1(p)));
+
+    double i1 = GSL_IMAG(sfvalue(sfaram2(p)));
+    double i2 = GSL_IMAG(sfvalue(sfaram1(p)));
+
+    GSL_REAL(sfvalue(p)) = r1 < r2 ? r1 : r2;
+    GSL_IMAG(sfvalue(p)) = i1 < i2 ? i1 : i2;
+    return sfaram2(p);
+}
+
+sfarg *sfminr(sfarg *const p)
+{
+    double r1 = GSL_REAL(sfvalue(sfaram2(p)));
+    double r2 = GSL_REAL(sfvalue(sfaram1(p)));
+
+    GSL_REAL(sfvalue(p)) = r1 < r2 ? r1 : r2;
+    GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram2(p)));
+    return sfaram2(p);
+}
+
+sfarg *sfmini(sfarg *const p)
+{
+    double i1 = GSL_IMAG(sfvalue(sfaram2(p)));
+    double i2 = GSL_IMAG(sfvalue(sfaram1(p)));
+
+    GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram2(p)));
+    GSL_IMAG(sfvalue(p)) = i1 < i2 ? i1 : i2;
+    return sfaram2(p);
+}
+
+sfarg *sfminm(sfarg *const p)
 {
     double r1 = gsl_complex_abs(sfvalue(sfaram2(p)));
     double r2 = gsl_complex_abs(sfvalue(sfaram1(p)));
@@ -793,6 +803,262 @@ sfarg *sfparchmenta(sfarg *const p)
 
     sfvalue(p) = gsl_complex_polar(gsl_complex_abs(z), trm);
     return sfaram2(p);
+}
+
+sfarg *sftruncv(sfarg *const p)
+{
+    double n = gsl_complex_abs(sfvalue(sfaram1(p)));
+
+    if (n != 0) {
+        GSL_REAL(sfvalue(p)) = trunc(GSL_REAL(sfvalue(sfaram2(p))) * n) / n;
+        GSL_IMAG(sfvalue(p)) = trunc(GSL_IMAG(sfvalue(sfaram2(p))) * n) / n;
+    } else {
+        GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram2(p)));
+        GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram2(p)));
+    }
+    return sfaram2(p);
+}
+
+sfarg *sftruncc(sfarg *const p)
+{
+    double nr = GSL_REAL(sfvalue(sfaram1(p)));
+    double ni = GSL_IMAG(sfvalue(sfaram1(p)));
+
+    if (nr != 0) {
+        GSL_REAL(sfvalue(p)) = trunc(GSL_REAL(sfvalue(sfaram2(p))) * nr) / nr;
+    } else {
+        GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram2(p)));
+    }
+
+    if (ni != 0) {
+        GSL_IMAG(sfvalue(p)) = trunc(GSL_IMAG(sfvalue(sfaram2(p))) * ni) / ni;
+    } else {
+        GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram2(p)));
+    }
+    return sfaram2(p);
+}
+
+sfarg *sftruncvr(sfarg *const p)
+{
+    double n = gsl_complex_abs(sfvalue(sfaram1(p)));
+
+    if (n != 0) {
+        GSL_REAL(sfvalue(p)) = trunc(GSL_REAL(sfvalue(sfaram2(p))) * n) / n;
+    } else {
+        GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram2(p)));
+    }
+    GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram2(p)));
+    return sfaram2(p);
+}
+
+sfarg *sftruncvi(sfarg *const p)
+{
+    double n = gsl_complex_abs(sfvalue(sfaram1(p)));
+
+    GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram2(p)));
+    if (n != 0) {
+        GSL_IMAG(sfvalue(p)) = trunc(GSL_IMAG(sfvalue(sfaram2(p))) * n) / n;
+    } else {
+        GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram2(p)));
+    }
+    return sfaram2(p);
+}
+
+sfarg *sftruncvm(sfarg *const p)
+{
+    double n = gsl_complex_abs(sfvalue(sfaram1(p)));
+    double m;
+    double a;
+
+    if (n != 0) {
+        m = trunc(gsl_complex_abs(sfvalue(sfaram2(p))) * n) / n;
+    } else {
+        m = gsl_complex_abs(sfvalue(sfaram2(p)));
+    }
+    a = gsl_complex_arg(sfvalue(sfaram2(p)));
+    sfvalue(p) = gsl_complex_polar(m, a);
+    return sfaram2(p);
+}
+
+sfarg *sftruncva(sfarg *const p)
+{
+    double n = gsl_complex_abs(sfvalue(sfaram1(p)));
+    double m;
+    double a;
+
+    m = gsl_complex_abs(sfvalue(sfaram2(p)));
+    if (n != 0) {
+        a = trunc(gsl_complex_arg(sfvalue(sfaram2(p))) * n) / n;
+    } else {
+        a = gsl_complex_arg(sfvalue(sfaram2(p)));
+    }
+    sfvalue(p) = gsl_complex_polar(m, a);
+    return sfaram2(p);
+}
+
+/**
+ * @brief Calcola la funzione Gamma complessa Γ(z) usando l'approssimazione di Lanczos.
+ * @details Questa è una funzione helper che implementa l'algoritmo.
+ * Gestisce i poli e usa la formula di riflessione per Re(z) < 0.5.
+ * @param z Il numero complesso di input.
+ * @return Il valore di Γ(z).
+ */
+gsl_complex complex_gamma_lanczos(gsl_complex z)
+{
+    double real_z = GSL_REAL(z);
+    double imag_z = GSL_IMAG(z);
+    gsl_complex temp;
+
+    // Gestione dei poli per interi non positivi
+    if (real_z <= 0.0 && imag_z == 0.0 && floor(real_z) == real_z) {
+        GSL_SET_COMPLEX(&temp, NAN, NAN);
+        return temp;
+    }
+
+    // Formula di riflessione per Re(z) < 0.5
+    if (real_z < 0.5) {
+        // Γ(z) = π / (sin(πz) * Γ(1-z))
+        GSL_SET_COMPLEX(&temp, 1.0, 0.0);
+        gsl_complex one_minus_z = gsl_complex_sub(temp, z);
+        gsl_complex pi_z = gsl_complex_mul_real(z, M_PI);
+        gsl_complex sin_pi_z = gsl_complex_sin(pi_z);
+
+        gsl_complex gamma_one_minus_z = complex_gamma_lanczos(one_minus_z);
+
+        gsl_complex den = gsl_complex_mul(sin_pi_z, gamma_one_minus_z);
+        GSL_SET_COMPLEX(&temp, M_PI, 0.0);
+        return gsl_complex_div(temp, den);
+    }
+
+    // Approssimazione di Lanczos per Re(z) >= 0.5
+    z = gsl_complex_sub_real(z, 1.0); // Corretto: sottrae un reale da un complesso
+    gsl_complex x;
+    GSL_SET_COMPLEX(&x, LANCZOS_P[0], 0.0);
+
+    for (int i = 1; i < sizeof(LANCZOS_P) / sizeof(LANCZOS_P[0]); ++i) {
+        GSL_SET_COMPLEX(&temp, LANCZOS_P[i], 0.0);
+        gsl_complex term = gsl_complex_div( // Corretto: divisione tra complessi
+            temp,
+            gsl_complex_add_real(z, (double)i)
+            );
+        x = gsl_complex_add(x, term);
+    }
+
+    gsl_complex t = gsl_complex_add_real(z, LANCZOS_G + 0.5);
+
+    gsl_complex log_sqrt_2pi;
+    GSL_SET_COMPLEX(&log_sqrt_2pi, log(sqrt(2.0 * M_PI)), 0.0);
+
+    gsl_complex result = gsl_complex_mul(
+        log_sqrt_2pi,
+        gsl_complex_pow(t, gsl_complex_add_real(z, 0.5))
+        );
+    result = gsl_complex_mul(result, gsl_complex_exp(gsl_complex_mul_real(t, -1.0)));
+    result = gsl_complex_mul(result, x);
+
+    return result;
+}
+
+/**
+ * @brief Wrapper per la funzione Gamma complessa da usare in sFFe.
+ * @param p Puntatore all'argomento della funzione. L'input è sfaram1(p).
+ * @return Puntatore all'argomento di input, come da convenzione di sffe.
+ */
+sfarg *sfgamma(sfarg *const p)
+{
+    gsl_complex z = sfvalue(sfaram1(p));
+    sfvalue(p) = complex_gamma_lanczos(z);
+    return sfaram1(p);
+}
+
+// --- Fine implementazione Funzione Gamma Complessa ---
+
+
+/**
+ * @brief Calcola il ramo principale (W_0) della funzione W di Lambert complessa.
+ * * La funzione W di Lambert è la soluzione dell'equazione z = w * exp(w).
+ * Poiché GSL non fornisce una versione complessa, questa funzione la implementa
+ * usando il metodo di Halley, che ha una convergenza cubica.
+ *
+ * @param p Puntatore all'argomento della funzione. L'input è sfaram1(p).
+ * @return Puntatore all'argomento di input, come da convenzione di sffe.
+ */
+sfarg *sflambertw(sfarg *const p)
+{
+    const int MAX_ITERATIONS = 50; // Meno iterazioni necessarie grazie alla convergenza più rapida
+    const double TOLERANCE = 1e-10;
+
+    gsl_complex z = sfvalue(sfaram1(p));
+    gsl_complex w; // La nostra stima corrente per W(z)
+
+    // 1. Stima iniziale per w
+    if (gsl_complex_abs(z) < 1.0) {
+        // Per z vicino a 0, w ≈ z
+        w = z;
+    } else {
+        // Per |z| grande, w ≈ ln(z)
+        w = gsl_complex_log(z);
+    }
+
+    // 2. Iterazioni con il metodo di Householder (ordine 3, convergenza quartica)
+    for (int i = 0; i < MAX_ITERATIONS; ++i)
+    {
+        gsl_complex ew = gsl_complex_exp(w);
+        gsl_complex f = gsl_complex_sub(gsl_complex_mul(w, ew), z);
+
+        if (gsl_complex_abs(f) < TOLERANCE) {
+            break;
+        }
+
+        // Calcolo delle derivate necessarie
+        gsl_complex w_plus_1 = gsl_complex_add_real(w, 1.0);
+        gsl_complex w_plus_2 = gsl_complex_add_real(w, 2.0);
+        gsl_complex w_plus_3 = gsl_complex_add_real(w, 3.0);
+
+        gsl_complex fp = gsl_complex_mul(ew, w_plus_1);   // f'
+        gsl_complex fpp = gsl_complex_mul(ew, w_plus_2);  // f''
+        gsl_complex fppp = gsl_complex_mul(ew, w_plus_3); // f'''
+
+        if (gsl_complex_abs(fp) < 1e-300) { // Evita divisione per zero
+            break;
+        }
+
+        // Termini del metodo di Householder
+        gsl_complex l1 = gsl_complex_div(f, fp);      // l1 = f/f'
+        gsl_complex l2 = gsl_complex_div(fpp, fp);    // l2 = f''/f'
+        gsl_complex l3 = gsl_complex_div(fppp, fp);   // l3 = f'''/f'
+
+        // Numeratore del fattore di aggiornamento: 1 + 0.5 * l2 * l1
+        gsl_complex num_factor = gsl_complex_mul(l2, l1);
+        num_factor = gsl_complex_mul_real(num_factor, 0.5);
+        num_factor = gsl_complex_add_real(num_factor, 1.0);
+
+        // Denominatore del fattore di aggiornamento: 1 + l2*l1 + (1/6)*l3*l1^2
+        gsl_complex l1_sq = gsl_complex_mul(l1, l1);
+        gsl_complex den_term2 = gsl_complex_mul(l3, l1_sq);
+        den_term2 = gsl_complex_mul_real(den_term2, 1.0/6.0);
+
+        gsl_complex den_factor = gsl_complex_mul(l2, l1);
+        den_factor = gsl_complex_add_real(den_factor, 1.0);
+        den_factor = gsl_complex_add(den_factor, den_term2);
+
+        if (gsl_complex_abs(den_factor) < 1e-300) { // Evita divisione per zero
+            break;
+        }
+
+        // Calcolo del passo di aggiornamento
+        gsl_complex update_factor = gsl_complex_div(num_factor, den_factor);
+        gsl_complex step = gsl_complex_mul(l1, update_factor);
+
+        w = gsl_complex_sub(w, step);
+
+        if (gsl_complex_abs(step) < TOLERANCE * gsl_complex_abs(w)) {
+            break;
+        }
+    }
+
+    sfvalue(p) = w;
+    return sfaram1(p);
 }
 
 // const eval
