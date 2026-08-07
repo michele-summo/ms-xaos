@@ -139,19 +139,15 @@ static const testcase cases[] = {
     T_ERR("rtni(z,c)", InvalidParameters, "too few arguments, arity 3"),
     T_ERR("sin()", InvalidParameters, "empty argument list"),
     T_ERR("sin(,z)", InvalidParameters, "missing first argument"),
-    /* rtni does not return its root: it stores it over its own first argument
-     * and evaluates to -1. Saved formulas depend on that, so it is kept.
-     * See the note on sfrtni. */
-    T_VAL("rtni(2,12,6)", -1, 0, "arity 3 satisfied"),
-    T_VAL("rtni(z,12,6)*(1-z)+c", 0.940536905640704735, 0,
-          "the shipped heart.xpf formula keeps its value"),
-    /* rtni2 is the same root returned the ordinary way: it leaves z alone, so
-     * adding z back gives root + 2 rather than root + root. */
-    T_VAL("rtni2(2,12,6)", -1.059463094359295265, 0, "rtni2 returns the root"),
-    T_VAL("rtni2(z,12,6)+z", 0.940536905640704735, 0,
-          "rtni2 does not overwrite its argument"),
-    T_VAL("rtni(z,12,6)+z", -2.059463094359295265, 0,
-          "...whereas rtni does, and both z read the root"),
+    /* rtni(z,n,i) is the i-th of the n n-th roots of z. rtni(2,12,6) is the
+     * 6th twelfth root of 2: modulus 2^(1/12), argument (0 + 2*pi*6)/12 = pi. */
+    T_VAL("rtni(2,12,6)", -1.059463094359295265, 0, "arity 3 satisfied"),
+    /* It used to write that root over its own first argument, so the second z
+     * here read the root rather than 2 and the sum came out as -2.0595. */
+    T_VAL("rtni(z,12,6)+z", 0.940536905640704735, 0,
+          "rtni leaves its argument alone"),
+    T_VAL("rtni(z,12,6)*(1-z)+c", 4.059463094359295265, 0,
+          "the heart.xpf formula, with the root actually returned"),
 
     /* --- behaviour pinned by the table's documentation ------------------
      * These names do not mean what they look like. The comments in

@@ -23,7 +23,7 @@ endif(DEEPZOOM)
 
 # Keep in sync with the case table in sffe_test.cpp; the sffe_case_count test
 # fails with instructions if the two drift apart.
-set(SFFE_TEST_CASE_COUNT 121)
+set(SFFE_TEST_CASE_COUNT 119)
 
 add_test(NAME sffe_case_count
          COMMAND sffe_test --expect-count ${SFFE_TEST_CASE_COUNT})

@@ -13,7 +13,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
-#define sffnctscount 96
+#define sffnctscount 95
 /* sfcmplxfunc starts with the operators, which are reached through
  * sffe_operator/sffe_unary_operator rather than by name. Lookups by name start
  * after them. */
@@ -64,9 +64,7 @@ sfarg *sfpowi(sfarg *const p);  /* double pow */
 sfarg *sfpowdc(sfarg *const p); /* double to csflx pow */
 sfarg *sfsqr(sfarg *const p);   /* sqr */
 sfarg *sfsqrt(sfarg *const p);  /* sqrt */
-sfarg *sfrtni(sfarg *const p);  /* rtni  - stores its root over its first
-                                   argument and evaluates to -1 */
-sfarg *sfrtni2(sfarg *const p); /* rtni2 - the same root, returned normally */
+sfarg *sfrtni(sfarg *const p);  /* rtni(z,n,i) - the i-th of the n n-th roots */
 sfarg *sfinv(sfarg *const p);   /* cinv */
 sfarg *sfceil(sfarg *const p);  /* ceil */
 sfarg *sffloor(sfarg *const p); /* floor */

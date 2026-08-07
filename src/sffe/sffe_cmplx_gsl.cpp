@@ -72,11 +72,9 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sfpow, 2, "powdc\0"}, /* another plain a ^ b, alias of pow */
     {sfsqr, 1, "sqr\0"}, /* a * a. This used to raise a to itself: sqr(3) was 27 */
     {sfsqrt, 1, "sqrt\0"}, /* principal square root of a */
-    /* rtni(a, b, c): the c-th of the b b-th roots of a -- but it stores that
-     * root over its own first argument and evaluates to -1 instead of
-     * returning it. Kept for saved formulas; see sfrtni. Use rtni2 instead. */
-    {sfrtni, 3, "rtni"},
-    {sfrtni2, 3, "rtni2\0"}, /* the same root, returned the ordinary way */
+    /* the c-th of the b b-th roots of a. This used to store that root over its
+     * own first argument and evaluate to -1 rather than returning it. */
+    {sfrtni, 3, "rtni\0"},
     /* 1 / a. The name used to end in \n rather than \0, which made it four
      * characters long, so it never matched a three-character lookup and the
      * function could not be called at all. */
@@ -410,44 +408,21 @@ sfarg *sfsqrt(sfarg *const p)
     return sfaram1(p);
 }
 
-/* Modulus and angle of the i-th of the n n-th roots of z, for rtni/rtni2.
- * Arguments are (z, n, i) as written, so sfaram3 is z and sfaram1 is i. */
-static void rtni_root(sfarg *const p, double *modulus, double *angle)
-{
-    double n = (double)(int)real(sfvalue(sfaram2(p)));
-    *modulus = pow(gsl_complex_abs(sfvalue(sfaram3(p))), 1.0 / n);
-    *angle = (gsl_complex_arg(sfvalue(sfaram3(p))) +
-              8 * atan(1.0) * (double)(int)real(sfvalue(sfaram1(p)))) /
-             n;
-}
-
 sfarg *sfrtni(sfarg *const p)
-{ /* rtni */
-    double nrz, alfi;
-    rtni_root(p, &nrz, &alfi);
-
-    /* rtni does not hand its root back the way every other function does: it
-     * stores it over its own first argument and evaluates to -1. That is odd,
-     * and it means rtni(z,...) overwrites the variable z for the rest of the
-     * formula -- but saved position files were written against it, so the
-     * behaviour is kept deliberately.
-     *
-     * examples/Malczak/heart.xpf relies on exactly this. Its
-     * "RTNI(Z;12;6)(1-Z)+C" reads as -1 * (1 - the root just written over Z)
-     * + C; returning the root normally would draw a different fractal.
-     *
-     * The -1 used to be the placeholder the parser left in every unwritten
-     * result slot. Now that slots start at zero it has to be written here. */
-    cmplxset(sfvalue(sfaram3(p)), nrz * cos(alfi), nrz * sin(alfi));
-    cmplxset(sfvalue(p), -1, 0);
-    return p;
-}
-
-sfarg *sfrtni2(sfarg *const p)
-{ /* rtni2: what rtni looks like written the ordinary way -- it returns the
-   * root and leaves its arguments alone. Prefer it in new formulas. */
-    double nrz, alfi;
-    rtni_root(p, &nrz, &alfi);
+{ /* rtni(a, b, c): the c-th of the b b-th roots of a.
+   *
+   * Arguments are (z, n, i) as written, so sfaram3 is z and sfaram1 is i.
+   *
+   * This used to store the root over its own first argument and evaluate to
+   * -1, rather than returning it. Writing through that argument reached the
+   * caller's variable, so rtni(z,...) silently redefined z for the rest of the
+   * formula: rtni(z,12,6)+z answered -2.0595 instead of 0.9405, because the
+   * second z read the root as well. */
+    double n = (double)(int)real(sfvalue(sfaram2(p)));
+    double nrz = pow(gsl_complex_abs(sfvalue(sfaram3(p))), 1.0 / n);
+    double alfi = (gsl_complex_arg(sfvalue(sfaram3(p))) +
+                   8 * atan(1.0) * (double)(int)real(sfvalue(sfaram1(p)))) /
+                  n;
 
     cmplxset(sfvalue(p), nrz * cos(alfi), nrz * sin(alfi));
     return p;
