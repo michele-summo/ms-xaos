@@ -91,9 +91,7 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sfim, 1, "im\0"},       /* imag(a), as a real */
     {sfcarg, 1, "arg\0"},    /* angle of a, as a real */
     {sfmod, 1, "mod\0"},     /* fractional part of each component */
-    /* NOT the conjugate: conj(a) swaps the components, giving
-     * imag(a) + i*real(a) rather than real(a) - i*imag(a). */
-    {sfconj, 1, "conj\0"},
+    {sfconj, 1, "conj\0"},   /* real(a) - i*imag(a); this used to swap them */
 
     /* --- burning ship variants --- */
     {sfbship, 1, "bship\0"},   /* |real(a)| + i*|imag(a)| */
@@ -101,8 +99,8 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sfbshipi, 1, "bshipi\0"}, /* real(a) + i*|imag(a)| */
 
     /* --- assembling one value out of two --- */
-    {sfrect, 2, "rect\0"},   /* real(b) + i*imag(a) */
-    {sfpolar, 2, "polar\0"}, /* |b| * e^(i*arg(a)) */
+    {sfrect, 2, "rect\0"},   /* real(a) + i*imag(b) */
+    {sfpolar, 2, "polar\0"}, /* |a| * e^(i*arg(b)) */
 
     /* --- smaller of two; the suffix says which part is compared --- */
     {sfmin, 2, "min\0"},   /* smaller real part and smaller imaginary part */
@@ -494,10 +492,11 @@ sfarg *sfmod(sfarg *const p)
 }
 
 sfarg *sfconj(sfarg *const p)
-{ /* floor */
-    // sfvalue(p) = floor( sfvalue( sfaram1(p) ) );
-    GSL_REAL(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram1(p)));
-    GSL_IMAG(sfvalue(p)) = GSL_REAL(sfvalue(sfaram1(p)));
+{ /* conj: real(a) - i*imag(a).
+   *
+   * This used to swap the two components instead of negating the imaginary
+   * one, so conj(3+4i) answered 4+3i. */
+    sfvalue(p) = gsl_complex_conjugate(sfvalue(sfaram1(p)));
     return sfaram1(p);
 }
 
@@ -560,19 +559,25 @@ sfarg *sfbshipi(sfarg *const p)
     return sfaram1(p);
 }
 
+/* rect(a, b) and polar(a, b) each build one value from two, taking a part from
+ * each. Both used to read them the wrong way round -- rect answered
+ * real(b) + i*imag(a) -- which is the opposite of what their declarations in
+ * sffe_cmplx_gsl.h have always said. Remember that sfaram1 is the argument
+ * written last, so a is sfaram2 and b is sfaram1. */
+
 sfarg *sfrect(sfarg *const p)
-{
-    GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram1(p)));
-    GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram2(p)));
-    return sfaram1(p);
+{ /* rect(a, b) = real(a) + i*imag(b) */
+    GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram2(p)));
+    GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram1(p)));
+    return sfaram2(p);
 }
 
 sfarg *sfpolar(sfarg *const p)
-{
-    double radius = gsl_complex_abs(sfvalue(sfaram1(p)));
-    double theta = gsl_complex_arg(sfvalue(sfaram2(p)));
+{ /* polar(a, b) = |a| * e^(i*arg(b)) */
+    double radius = gsl_complex_abs(sfvalue(sfaram2(p)));
+    double theta = gsl_complex_arg(sfvalue(sfaram1(p)));
     sfvalue(p) = gsl_complex_polar(radius, theta);
-    return sfaram1(p);
+    return sfaram2(p);
 }
 
 sfarg *sfmax(sfarg *const p)

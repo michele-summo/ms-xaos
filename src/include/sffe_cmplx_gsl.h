@@ -84,10 +84,8 @@ sfarg *sfbship(sfarg *const p);  /* bship - burning ship */
 sfarg *sfbshipr(sfarg *const p);  /* bshipr - burning ship only for real  */
 sfarg *sfbshipi(sfarg *const p);  /* bshipi - burning ship only for imag */
 
-/* These two take their two halves from opposite arguments; the comments here
- * used to claim the other way round. */
-sfarg *sfrect(sfarg *const p);  /* rect(z1,z2)  = real(z2) + i*imag(z1) */
-sfarg *sfpolar(sfarg *const p); /* polar(z1,z2) = |z2| * e^(i*arg(z1)) */
+sfarg *sfrect(sfarg *const p);  /* rect coordinates f(z1,z2) = r1+i*i2 */
+sfarg *sfpolar(sfarg *const p); /* polar coordinates f(z1,z2) = m1*e^(i*a2) */
 
 /* Comparison function (r only by real value,
  * i only by imag, m by modulo, else by both real and imag) */
