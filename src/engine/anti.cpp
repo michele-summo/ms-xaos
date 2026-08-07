@@ -1,7 +1,5 @@
 #include "config.h"
-#ifndef __cplusplus
 #include <cmath>
-#endif
 #include <cstring>
 #include "config.h"
 #include <cstdio>
@@ -13,6 +11,60 @@
 struct antidata {
     int shift;
 };
+
+/* Averaging colours means averaging light, and the values in the image are not
+ * light: they carry the sRGB transfer curve, which devotes more codes to the
+ * dark end. Adding them up as they stand under-weights the bright samples, so
+ * an edge between a bright and a dark region comes out darker than the light
+ * arriving there. The error peaks near the middle of the range, where a 50/50
+ * mix of black and white lands on 128 instead of the 188 that reads as half
+ * the light.
+ *
+ * With antialias_linear set, each sample is taken back to linear light before
+ * the sum and the result is put back on the curve afterwards. It costs two
+ * table lookups per channel and, in the packed paths below, the trick of
+ * accumulating two channels in one register -- which is why the plain
+ * behaviour is kept as it was rather than replaced. */
+int antialias_linear = 0;
+
+/* sRGB code -> linear light, and back. The forward table is 16 bit so that a
+ * sum of up to 16 samples keeps its precision; the reverse is indexed by the
+ * whole 16 bit range, which makes it exact and branch-free at 64K. */
+static unsigned short srgb_to_linear[256];
+static unsigned char linear_to_srgb[65536];
+static int tables_ready = 0;
+
+static double srgb_decode(double c)
+{
+    return c <= 0.04045 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4);
+}
+
+static double srgb_encode(double c)
+{
+    return c <= 0.0031308 ? c * 12.92 : 1.055 * pow(c, 1.0 / 2.4) - 0.055;
+}
+
+static void build_tables(void)
+{
+    int i;
+    if (tables_ready)
+        return;
+    for (i = 0; i < 256; i++) {
+        srgb_to_linear[i] =
+            (unsigned short)(srgb_decode(i / 255.0) * 65535.0 + 0.5);
+    }
+    for (i = 0; i < 65536; i++) {
+        linear_to_srgb[i] =
+            (unsigned char)(srgb_encode(i / 65535.0) * 255.0 + 0.5);
+    }
+    tables_ready = 1;
+}
+
+/* Mean of n sRGB codes, taken in linear light. */
+static inline unsigned int mean_linear(unsigned int sum, int n)
+{
+    return linear_to_srgb[sum / (unsigned int)n];
+}
 static int requirement(struct filter *f, struct requirements *r)
 {
     f->req = *r;
@@ -24,6 +76,7 @@ static int requirement(struct filter *f, struct requirements *r)
 static int initialize(struct filter *f, struct initdata *i)
 {
     struct antidata *s = (struct antidata *)f->data;
+    build_tables();
     if (i->image->width * i->image->height * i->image->bytesperpixel * 2 * 16 >
         15 * 1024 * 1024) {
         s->shift = 1;
@@ -77,7 +130,28 @@ static void antigray(void *data, struct taskinfo */*task*/, int r1, int r2)
         ystart = ((unsigned int)i) << s->shift;
         xstart = 0;
         for (; dest < destend; dest++) {
-            if (xstep > 2) {
+            if (antialias_linear) {
+                if (xstep > 2) {
+                    sum = 0;
+                    for (y = 0; y < 4; y++) {
+                        src = (unsigned char *)srci->currlines[y + ystart] +
+                              xstart;
+                        sum += srgb_to_linear[src[0]];
+                        sum += srgb_to_linear[src[1]];
+                        sum += srgb_to_linear[src[2]];
+                        sum += srgb_to_linear[src[3]];
+                    }
+                    sum = mean_linear(sum, 16);
+                } else {
+                    src = (unsigned char *)srci->currlines[ystart] + xstart;
+                    sum = srgb_to_linear[src[0]];
+                    sum += srgb_to_linear[src[1]];
+                    src = (unsigned char *)srci->currlines[ystart + 1] + xstart;
+                    sum += srgb_to_linear[src[0]];
+                    sum += srgb_to_linear[src[1]];
+                    sum = mean_linear(sum, 4);
+                }
+            } else if (xstep > 2) {
                 sum = 0;
                 for (y = 0; y < 4; y++) {
                     src = (unsigned char *)srci->currlines[y + ystart] + xstart;
@@ -236,6 +310,34 @@ static void anti32(void *data, struct taskinfo */*task*/, int r1, int r2)
         ystart = ((unsigned int)i) << s->shift;
         xstart = 0;
         for (; dest < destend; dest++) {
+            if (antialias_linear) {
+                /* One accumulator per byte instead of two channels packed into
+                 * one register: the curve has to be applied per channel, so
+                 * the packing cannot survive. */
+                unsigned int acc[4] = {0, 0, 0, 0};
+                int n = (xstep > 2) ? 16 : 4;
+                int rows = (xstep > 2) ? 4 : 2;
+                int cols = (xstep > 2) ? 4 : 2;
+                int b, cx;
+                for (y = 0; (int)y < rows; y++) {
+                    const unsigned char *p =
+                        (const unsigned char *)((unsigned int *)
+                                                    srci->currlines[y + ystart] +
+                                                xstart);
+                    for (cx = 0; cx < cols; cx++, p += 4) {
+                        for (b = 0; b < 4; b++)
+                            acc[b] += srgb_to_linear[p[b]];
+                    }
+                }
+                {
+                    unsigned char out[4];
+                    for (b = 0; b < 4; b++)
+                        out[b] = (unsigned char)mean_linear(acc[b], n);
+                    memcpy(dest, out, 4);
+                }
+                xstart += xstep;
+                continue;
+            }
             if (xstep > 2) {
                 sum1 = sum2 = 0;
                 for (y = 0; y < 4; y++) {

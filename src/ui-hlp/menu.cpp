@@ -1209,6 +1209,13 @@ void uih_registermenus_i18n(void)
                  uih_setspeedup, uih_fpdialog);
     MENUDIALOG_I("mfilter", NULL, TR("Menu", "Filter"), "filter", MP,
                  uih_playfilter, uih_filterdialog);
+    /* A setting for the antialiasing filter rather than a filter of its own,
+     * so it sits in the same menu but is registered here with the other
+     * toggles instead of being generated from uih_filters[]. */
+    MENUNOPCB_I("mfilter", NULL, TR("Menu", "Antialiasing in linear light"),
+                "linearaa",
+                MENUFLAG_INTERRUPT | MENUFLAG_NOPLAY | MENUFLAG_NOOPTION,
+                uih_linearaa, uih_linearaaenabled);
 #undef MP
 #define UI (MENUFLAG_NOPLAY | MENUFLAG_NOOPTION)
     MENUCDIALOG_I("ui", NULL, TR("Menu", "Letters per second"), "letterspersec",

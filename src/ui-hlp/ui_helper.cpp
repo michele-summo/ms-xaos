@@ -2644,3 +2644,14 @@ int uih_cartesiangridenabled(uih_context * /*uih*/)
 {
     return (cartesiangridwindow != NULL);
 }
+
+void uih_linearaa(uih_context *uih)
+{
+    antialias_linear = !antialias_linear;
+    /* The antialiasing filter keeps its downsampled output, so the image has
+     * to be thrown away for the change to show. */
+    uih_newimage(uih);
+    uih_updatemenus(uih, "linearaa");
+}
+
+int uih_linearaaenabled(uih_context * /*uih*/) { return antialias_linear; }

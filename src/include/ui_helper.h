@@ -562,6 +562,8 @@ int uih_statusenabled(uih_context *uih);
 int uih_ministatusenabled(uih_context *uih);
 void uih_ministatus(uih_context *uih);
 int uih_cartesiangridenabled(uih_context *uih);
+void uih_linearaa(uih_context *uih);
+int uih_linearaaenabled(uih_context *uih);
 void uih_cartesiangrid(uih_context *uih);
 void uih_sffeset(uih_context *c, sffe *parser, const char *formula);
 

@@ -91,6 +91,8 @@ const struct params global_params[] = {
     {"-renderframerate", P_FLOAT, &framerate, "framerate"},
     {"-antialiasing", P_SWITCH, &alias,
      "Perform antialiasing (slow, requires quite lot of memory)"},
+    {"-linearaa", P_SWITCH, &antialias_linear,
+     "Average antialiasing samples in linear light, so that edges keep their brightness"},
     {"-alwaysrecalc", P_SWITCH, &slowmode,
      "Always recalculate whole image (slowes down rendering, increases quality)"},
 

@@ -226,6 +226,11 @@ extern const struct filteraction interlace_filter, stereogram_filter,
     fixedcolor_filter, bitmap_filter, emboss_filter, palette_filter,
     antialias_filter, threed_filter;
 
+/* When set, the antialiasing filter averages its samples in linear light
+ * rather than straight on the sRGB codes, which stops edges coming out darker
+ * than they should. Costs two table lookups per channel. */
+extern int antialias_linear;
+
 extern unsigned int col_diff[3][512];
 struct filter *createfilter(const struct filteraction *fa);
 struct queue *create_queue(struct filter *f);
