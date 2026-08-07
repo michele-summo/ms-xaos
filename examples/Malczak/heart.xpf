@@ -6,7 +6,7 @@
 (palette 1 1400652044 0)
 (shiftpalette 11)
 (formula 'user)
-(usrform "RTNI(Z;12;6)(1-Z)+C")
+(usrform "RTNI(Z;12;6)-1+C")
 (usrformInit "")
 (angle -90.921)
 (maxiter 100)

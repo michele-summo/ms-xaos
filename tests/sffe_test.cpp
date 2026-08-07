@@ -146,8 +146,12 @@ static const testcase cases[] = {
      * here read the root rather than 2 and the sum came out as -2.0595. */
     T_VAL("rtni(z,12,6)+z", 0.940536905640704735, 0,
           "rtni leaves its argument alone"),
-    T_VAL("rtni(z,12,6)*(1-z)+c", 4.059463094359295265, 0,
-          "the heart.xpf formula, with the root actually returned"),
+    /* What examples/Malczak/heart.xpf carries now. Its original
+     * "RTNI(Z;12;6)(1-Z)+C" was written against the rtni that overwrote Z, and
+     * came to root - 1 + C once that substitution is worked through; this is
+     * that same expression, and the same value, with rtni returning its root. */
+    T_VAL("rtni(z,12,6)-1+c", 0.940536905640704735, 0,
+          "heart.xpf keeps the picture it always had"),
 
     /* --- behaviour pinned by the table's documentation ------------------
      * These names do not mean what they look like. The comments in
