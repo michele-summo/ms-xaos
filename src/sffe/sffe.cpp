@@ -32,59 +32,72 @@
 
 #ifdef SFFE_COMPLEX
 #define sfset(arg, val)                                                        \
-(arg)->value = (sfNumber *)malloc(sizeof(sfNumber));                       \
+(arg)->args = NULL;                                                        \
+    (arg)->argc = 0;                                                           \
+    (arg)->value = (sfNumber *)malloc(sizeof(sfNumber));                       \
     if ((arg)->value) {                                                        \
         (arg)->type = sfvar_type_managed_ptr;                                  \
         cmplxset(*((arg)->value), (val), 0);                                   \
 }
 #else
 #define sfset(arg, val)                                                        \
-(arg)->value = (sfNumber *)malloc(sizeof(sfNumber));                       \
+(arg)->args = NULL;                                                        \
+    (arg)->argc = 0;                                                           \
+    (arg)->value = (sfNumber *)malloc(sizeof(sfNumber));                       \
     if ((arg)->value) {                                                        \
         (arg)->type = sfvar_type_managed_ptr;                                  \
         *((arg)->value) = (val);                                               \
-}
+    }
 #endif
 
 /** utils */
 
 void sffe_error_message(int errorcode, char *context, char *errormessage)
 {
+    /* The context is user-supplied formula text of unbounded length, so every
+     * message is written with a bounded snprintf. */
+    if (!context) {
+        context = (char *)"";
+    }
+
     switch (errorcode) {
     case MemoryError:
-        sprintf(errormessage, "%s", TR("Message", "Out of memory"));
+        snprintf(errormessage, SFFE_ERRORMSG_SIZE, "%s",
+                 TR("Message", "Out of memory"));
         break;
     case UnbalancedBrackets:
-        sprintf(errormessage, TR("Message", "Unbalanced parentheses"),
-                context);
+        snprintf(errormessage, SFFE_ERRORMSG_SIZE,
+                 TR("Message", "Unbalanced parentheses"), context);
         break;
     case UnknownFunction:
-        sprintf(errormessage, TR("Message", "Unknown function: %s"),
-                context);
+        snprintf(errormessage, SFFE_ERRORMSG_SIZE,
+                 TR("Message", "Unknown function: %s"), context);
         break;
     case InvalidNumber:
-        sprintf(errormessage, TR("Message", "Invalid number: %s"), context);
+        snprintf(errormessage, SFFE_ERRORMSG_SIZE,
+                 TR("Message", "Invalid number: %s"), context);
         break;
     case UnknownVariable:
-        sprintf(errormessage, TR("Message", "Unknown variable: %s"),
-                context);
+        snprintf(errormessage, SFFE_ERRORMSG_SIZE,
+                 TR("Message", "Unknown variable: %s"), context);
         break;
     case InvalidOperators:
-        sprintf(errormessage, TR("Message", "Invalid operator: %s"),
-                context);
+        snprintf(errormessage, SFFE_ERRORMSG_SIZE,
+                 TR("Message", "Invalid operator: %s"), context);
         break;
     case StackError:
-        sprintf(errormessage,
-                TR("Message", "Internal error occurred in formula: %s"),
-                context);
+        snprintf(errormessage, SFFE_ERRORMSG_SIZE,
+                 TR("Message", "Internal error occurred in formula: %s"),
+                 context);
         break;
     case InvalidParameters:
-        sprintf(errormessage,
-                TR("Message", "Function has incorrect parameter count: %s"),
-                context);
+        snprintf(errormessage, SFFE_ERRORMSG_SIZE,
+                 TR("Message", "Function has incorrect parameter count: %s"),
+                 context);
         break;
     case EmptyFormula:
-        sprintf(errormessage, TR("Message", "Empty formula"), context);
+        snprintf(errormessage, SFFE_ERRORMSG_SIZE,
+                 TR("Message", "Empty formula"), context);
         break;
     }
 }
@@ -117,6 +130,10 @@ unsigned char sf_priority(char *chr)
         return 0x60;
     case '^':
         return 0x40;
+    /* prefix sign: looser than '^' so that -z^2 is -(z^2), tighter than '*'
+     * so that -z*c is (-z)*c */
+    case 'u':
+        return 0x30;
     case '/':
     case '*':
         return 0x20;
@@ -146,7 +163,7 @@ void sffe_print_error(enum sffe_error errorcode, char *context)
 sffunction *sffe_function(char *fn, size_t len)
 {
     /* sffnctscount - defined in sffe_cmplx_* file */
-    for (unsigned char idx = 5; idx < sffnctscount; idx += 1) {
+    for (unsigned char idx = sffnctsfirst; idx < sffnctscount; idx += 1) {
         if (!strncmp(fn, sfcmplxfunc[idx].name, len) &&
             strlen(sfcmplxfunc[idx].name) == len) {
             return (sffunction *)(sfcmplxfunc + idx);
@@ -174,6 +191,16 @@ sffunction *sffe_operator(char op)
     return NULL;
 }
 
+/* Prefix sign, the last of the operator entries. Unary '+' has no effect, so
+ * it needs no operation at all. */
+sffunction *sffe_unary_operator(char op)
+{
+    if (op == '-') {
+        return (sffunction *)sfcmplxfunc + (sffnctsfirst - 1);
+    }
+    return NULL;
+}
+
 void *sffe_const(char *fn, size_t len, void *ptr)
 {
     for (unsigned char idx = 0; idx < sfvarscount; idx += 1) {
@@ -186,6 +213,52 @@ void *sffe_const(char *fn, size_t len, void *ptr)
 }
 
 /************************* custom function */
+
+/* Starts compiling a lazy call. The parser owns every sflazy it creates, so
+ * that abandoning a parse half way still releases them. */
+sflazy *sffe_lazy_new(sffe *parser, sfselptr sel)
+{
+    sflazy **grown = (sflazy **)realloc(
+        parser->lazy, (parser->lazyCount + 1) * sizeof(sflazy *));
+    if (!grown) {
+        return NULL;
+    }
+    parser->lazy = grown;
+
+    sflazy *lz = (sflazy *)malloc(sizeof(sflazy));
+    if (!lz) {
+        return NULL;
+    }
+    lz->select = sel;
+    lz->nblocks = 0;
+    lz->bounds = NULL;
+    parser->lazy[parser->lazyCount++] = lz;
+    return lz;
+}
+
+/* Records where one argument of a lazy call ends and the next begins. While
+ * the call is open nblocks counts the boundaries stored; sffe_lazy_close turns
+ * it into the number of blocks. */
+bool sffe_lazy_bound(sflazy *lz, unsigned int op)
+{
+    unsigned int *grown = (unsigned int *)realloc(
+        lz->bounds, (lz->nblocks + 1) * sizeof(unsigned int));
+    if (!grown) {
+        return false;
+    }
+    lz->bounds = grown;
+    lz->bounds[lz->nblocks] = op;
+    lz->nblocks += 1;
+    return true;
+}
+
+void sffe_lazy_close(sflazy *lz)
+{
+    /* n arguments leave n + 1 boundaries behind */
+    if (lz->nblocks) {
+        lz->nblocks -= 1;
+    }
+}
 
 sffe *sffe_alloc(void)
 {
@@ -206,6 +279,7 @@ void sffe_clear(sffe **parser)
         if (p->args[i].type == sfvar_type_managed_ptr) {
             free(p->args[i].value);
         }
+        free(p->args[i].args);
     }
 
     if (p->args) {
@@ -219,9 +293,28 @@ void sffe_clear(sffe **parser)
     if (p->oprs) {
         free(p->oprs);
     }
+
+    if (p->lazy) {
+        for (i = 0; i < p->lazyCount; i++) {
+            if (p->lazy[i]) {
+                free(p->lazy[i]->bounds);
+                free(p->lazy[i]);
+            }
+        }
+        free(p->lazy);
+        p->lazy = NULL;
+    }
+    p->lazyCount = 0;
+
     p->expression = NULL;
     p->args = NULL;
     p->oprs = NULL;
+    p->result = NULL;
+    /* The counts describe the arrays just released. Leaving them set makes the
+     * next sffe_clear walk a freed NULL args array, which is exactly what
+     * happens when a failed parse is followed by sffe_free or a re-parse. */
+    p->argCount = 0;
+    p->oprCount = 0;
 }
 
 void sffe_free(sffe **parser)
@@ -252,19 +345,47 @@ void sffe_free(sffe **parser)
 // avg time: 0.250767773750267
 // avg time: 0.252280894999276
 
+#ifdef SFFE_DIRECT_FPTR
+#define sffe_call(op) (op)->fnc((op)->arg)
+#else
+#define sffe_call(op) (op)->fnc->fptr((op)->arg)
+#endif
+
+/* Runs operations [from, to). A dispatch operation runs just one of the
+ * argument ranges behind it and then skips the rest, which is what makes a
+ * lazy call cost one branch instead of all of them. Recurses so that lazy
+ * calls nest. */
+static void sffe_run(sfopr *const oprs, unsigned int from, unsigned int to)
+{
+    unsigned int pc = from;
+    while (pc < to) {
+        sfopr *op = oprs + pc;
+        if (op->lazy) {
+            sflazy *lz = op->lazy;
+            unsigned int k = lz->select(lz->nblocks);
+            sffe_run(oprs, lz->bounds[k], lz->bounds[k + 1]);
+            pc = lz->bounds[lz->nblocks];
+        } else {
+            sffe_call(op);
+            pc += 1;
+        }
+    }
+}
+
+/* Runs the operations in the order the parser emitted them. Each one already
+ * knows where its operands live, so evaluating it is just a call: there is no
+ * stack to maintain and no bookkeeping between operations. */
 sfNumber sffe_eval(sffe *const parser)
 {
-    sfopr *optr = parser->oprs;
-    sfopr *optro = optr;
-    sfopr *optrl = optr + parser->oprCount;
-    for (; optr != optrl; optr += 1, optro += 1) {
-        optro->arg->parg = optro->arg - 1;
-        sfarg *arg = optr->arg;
-#ifdef SFFE_DIRECT_FPTR
-        arg->parg = optr->fnc(arg)->parg;
-#else
-        arg->parg = optr->fnc->fptr(arg)->parg;
-#endif
+    if (parser->lazyCount) {
+        sffe_run(parser->oprs, 0, parser->oprCount);
+    } else {
+        /* Nothing to branch on, so do not pay for the test per operation. */
+        sfopr *optr = parser->oprs;
+        sfopr *optrl = optr + parser->oprCount;
+        for (; optr != optrl; optr += 1) {
+            sffe_call(optr);
+        }
     }
     return *(parser->result);
 }
@@ -359,6 +480,7 @@ void *sffe_regfunc(sffe **parser, const char *vname, unsigned int parcnt,
 
     sff->parcnt = parcnt;
     sff->fptr = funptr;
+    sff->sel = NULL; /* user functions get their arguments evaluated eagerly */
 
     parser_->userfCount += 1;
     return (void *)sff;
@@ -435,8 +557,13 @@ int sffe_parse(sffe **parser, const char *expression)
 #ifdef SFFE_DEVEL
         char c; /* used in debug build to store operator character */
 #endif
+        const char *name;   /* function/operator name, for error messages */
         unsigned char type; /* store priority of the operator 'f' */
         unsigned char args; /* number of parameters */
+        bool variadic;      /* takes any number of arguments */
+        unsigned char seen; /* variadic only: arguments counted so far */
+        sfselptr sel;       /* non-NULL: arguments are evaluated lazily */
+        sflazy *lazy;       /* the call being compiled, owned by the parser */
 #ifdef SFFE_DIRECT_FPTR
         sffptr fnc;
 #else
@@ -453,19 +580,44 @@ int sffe_parse(sffe **parser, const char *expression)
     sffunction **_functions; /* hold all functions used in expression in left -
                                 to - right order */
     sffunction **_function;  /* currently expected function from 'fnctbl' */
-    sfarg *_argument, *_arg_itr;
+    sfarg *_argument;
 
     char *tokens; /*tokenized form : (f(n)+f(n))*f(n)-n (f-func, n-num,const) */
 
     char *ech;
-    char *ch1, *ch2, *buf, *bufp;
+    char *ch1, *ch2;
 
-    bool num_mode;
-
-    unsigned int ui1, buflen;
+    unsigned int ui1;
     unsigned char token;
 
     enum sffe_error err;
+    const char *errctx; /* text quoted in the error message; NULL means ch1 */
+
+    /* Number of values waiting to be consumed while phase 3 walks the tokens.
+     * Every operator and function pops its operands off this count and pushes
+     * its result back, so a formula is only well formed if each of them finds
+     * enough operands and exactly one value is left at the end. Without this
+     * the parser happily emits a call stack that sffe_eval walks off. */
+    unsigned int _depth;
+
+    /* Values produced so far and not yet consumed, innermost last. _depth is
+     * its height. Holds slots of _parser->args, which is not reallocated once
+     * phase 3 has started. */
+    sfarg **_vstack;
+
+    /* Next free slot of _parser->args to hand out as an operation result. The
+     * leaves occupy the front of the array, one reserved slot per operation
+     * follows. */
+    unsigned int _result_slot;
+
+    /* Lazy calls seen while tokenizing. Each needs one dispatch operation on
+     * top of the operations its arguments compile to. */
+    unsigned int lazy_calls;
+
+    /* Number of entries in _functions, which is one per function and operator
+     * the tokenizer found. Not the same as the final _parser->oprCount: that
+     * one counts the dispatch operations too. */
+    unsigned int function_count;
 
     /**************used defines */
 
@@ -482,21 +634,55 @@ int sffe_parse(sffe **parser, const char *expression)
             break;                                                                 \
     }
 
-#define insert_fnc_slot()                                                      \
-    for (_arg_itr = _parser->args + _parser->argCount - 1;                     \
-                                                                               _arg_itr > _argument; _arg_itr -= 1) {                                \
-            *_arg_itr = *(_arg_itr - 1);                                           \
-    }                                                                          \
-        sfset(_arg_itr, -1.0);
+/* Same, but names what the message should quote. In phase 3 ch1 points into
+ * the tokenized form ("fn(n)"), which is meaningless to the user. */
+#define set_error_at(errno, ctx)                                               \
+    {                                                                          \
+            err = errno;                                                           \
+            errctx = ctx;                                                          \
+            break;                                                                 \
+    }
 
+/* Emits one operation: takes its operands off the value stack, wires them into
+ * a fresh result slot and pushes that back. Leaves err set instead of breaking
+ * out, so the loops that flush the stack have to test !err themselves. */
 #define pop_expression()                                                       \
     {                                                                          \
-            _expression->size -= 1;                                                \
-            insert_fnc_slot();                                                     \
-            _parser->oprs[ui1].arg = (sfarg *)_argument;                           \
-            _parser->oprs[ui1].fnc = _expression->stck[_expression->size].fnc;     \
-            ui1 += 1;                                                              \
-            _argument += 1;                                                        \
+            struct _operator *_op = _expression->stck + (--_expression->size);     \
+            unsigned char _nargs = _op->variadic ? _op->seen : _op->args;          \
+            if (_depth < _nargs) {                                                 \
+                err = ((_op->type & 0xE0) == 0x60) ? InvalidParameters              \
+                                                   : InvalidOperators;             \
+                errctx = _op->name;                                                \
+            } else {                                                               \
+                sfarg *_res = _parser->args + _result_slot;                        \
+                _res->args = (sfarg **)malloc(_nargs * sizeof(sfarg *));           \
+                if (!_res->args) {                                                 \
+                    err = MemoryError;                                             \
+                } else {                                                           \
+                    _depth -= _nargs;                                              \
+                    _res->argc = _nargs;                                           \
+                    /* operands are right to left for the sfaramN macros */     \
+                    for (unsigned char _k = 0; _k < _nargs; _k += 1) {             \
+                        _res->args[_k] = _vstack[_depth + _nargs - 1 - _k];        \
+                    }                                                              \
+                    _res->value = (sfNumber *)malloc(sizeof(sfNumber));            \
+                    if (!_res->value) {                                            \
+                        err = MemoryError;                                         \
+                    } else {                                                       \
+                        _res->type = sfvar_type_managed_ptr;                       \
+                        /* defined until the operation writes it */             \
+                        cmplxset(*(_res->value), 0, 0);                            \
+                        _vstack[_depth] = _res;                                    \
+                        _depth += 1;                                               \
+                        _result_slot += 1;                                         \
+                        _parser->oprs[ui1].arg = _res;                             \
+                        _parser->oprs[ui1].fnc = _op->fnc;                         \
+                        _parser->oprs[ui1].lazy = NULL;                            \
+                        ui1 += 1;                                                  \
+                    }                                                              \
+                }                                                                  \
+            }                                                                      \
     }
 
 #define max(a, b) ((a > b) ? a : b)
@@ -508,10 +694,31 @@ int sffe_parse(sffe **parser, const char *expression)
 
     /**************** code */
     _functions = NULL;
-    ech = (char *)expression;
+    errctx = NULL;
+    _depth = 0;
+    _vstack = NULL;
+    _result_slot = 0;
+    lazy_calls = 0;
+    function_count = 0;
     tokens = (char *)malloc(1);
     err = MemoryError;
     _parser = *parser;
+
+    /* Take both copies before touching the parser: callers legitimately pass
+     * parser->expression straight back in, and sffe_clear would free it from
+     * under us. 'work' is chewed up by phases 1 and 2; 'original' is what the
+     * caller gets to read back afterwards. */
+    char *work = NULL;
+    char *original = NULL;
+    sf_strdup(&work, expression);
+    sf_strdup(&original, expression);
+    if (!work || !original) {
+        free(work);
+        free(original);
+        free(tokens);
+        sffe_setup_error(_parser, MemoryError, NULL);
+        return MemoryError;
+    }
 
     /* clear all internal structures */
     if (_parser->expression) {
@@ -521,9 +728,8 @@ int sffe_parse(sffe **parser, const char *expression)
     _parser->oprCount = 0;
     _parser->argCount = 0;
 
-    ech = (char *)malloc(strlen(expression) + 1);
-    sf_strdup(&ech, expression);
-    _parser->expression = ech;
+    ech = work;
+    _parser->expression = work;
 
 #ifdef SFFE_DEVEL
     printf(
@@ -533,24 +739,22 @@ int sffe_parse(sffe **parser, const char *expression)
            _parser->expression);
 #endif
 
-    /*! PHASE 1 !!!!!!!!! remove spaces, count brackets, change decimal
-     * separators ',' to '.', remove multiple operators eg. ++--++1 -> 1, -+++2
-     * -> -2 */
+    /*! PHASE 1 !!!!!!!!! remove spaces, count brackets, change separators
+     * ';' -> ',' and '[' ']' -> '{' '}'.
+     *
+     * Signs are deliberately left untouched. Phase 2 decides for each '+'/'-'
+     * whether it is a prefix or an infix operator, so runs like "--" need no
+     * rewriting here, and a prefix sign no longer has to be padded into a
+     * subtraction (the "-x" -> "0-x" trick this phase used to do). */
     ch1 = NULL;
     ui1 = 0; /*brackets */
     ch2 = ech;
-    buflen = strlen(_parser->expression) * 2;
-
-    buf = new char[buflen + 1];
-    *buf = '\0';
-    bufp = buf;
 
     /* skip leading spaces */
     while (isspace(*ech)) {
         ech += 1;
     }
 
-    num_mode = false;
     /*handle brackets and change ';'->',', '['->'{', ']'->'}' */
     while (*ech) {
         switch (*ech) {
@@ -571,67 +775,16 @@ int sffe_parse(sffe **parser, const char *expression)
             break;
         }
 
+        /* compact in place: spaces are dropped, so ch2 trails ech */
         *ch2 = (char)tolower((int)*ech);
-
-        if (*ech == '{') {
-            num_mode = true;
-        } else if (*ech == '}') {
-            num_mode = false;
-        }
-        if (!num_mode && strchr("+-", (int)*ech)) {
-            if (!*buf) {
-                *bufp = '0';
-            } else if(strchr("(,", (int)*bufp)) {
-                bufp++;
-                *bufp = '0';
-            }
-        }
-
-        /*fix multiple arithm operators */
-        if (*bufp && strchr("+-/*^", (int)*ech) && strchr("+-/*^", (int)*bufp)) {
-            if (*bufp == '-' && *ech == '-') {
-                //*ch1 = '+';
-                *bufp = '+';
-            } else if (*bufp == '-' && *ech == '+') {
-                //*ch1 = '-';
-                *bufp = '-';
-            } else if (*bufp == '+' && *ech == '-') {
-                //*ch1 = '-';
-                *bufp = '-';
-            } else if (*bufp == *ech) {
-                //*ch1 = *ech;
-                *bufp = *ech;
-            } else if (strchr("+-", (int)*ech)) {
-                //ch1 = ++ch2;
-                bufp++;
-                *bufp = *ch2;
-            } else if (*bufp != *ech) {
-                err = InvalidOperators;
-                break;
-            }
-        } else {
-
-            //ch1 = ch2;
-            if (*buf) {
-                bufp++;
-            }
-            *bufp = *ch2;
-            ch2 ++;
-        }
+        ch2 += 1;
 
         /*skip spaces */
         do {
             ech += 1;
         } while (isspace(*ech));
     }
-    bufp++;
-    *bufp = '\0';
     *ch2 = '\0';
-
-    /* _parser->expression = (char *)realloc((char *)_parser->expression,
-                                          strlen(_parser->expression) + 1); */
-    const char* _tempexpr = _parser->expression;
-    _parser->expression = buflen > 0 ? (char *)realloc((char *)buf, strlen(buf) + 1) : new char{'\0'};
 
     if (ui1 && !err) {
         err = UnbalancedBrackets;
@@ -669,6 +822,8 @@ int sffe_parse(sffe **parser, const char *expression)
 
                 _argument = _parser->args + (_parser->argCount++);
                 _argument->type = sfvar_type_ptr;
+                _argument->args = NULL; /* a leaf has no operands */
+                _argument->argc = 0;
                 _argument->value = (sfNumber *)sffe_variable(
                     _parser, ch1, (size_t)(ech - ch1));
 
@@ -712,18 +867,24 @@ int sffe_parse(sffe **parser, const char *expression)
                         ch1, (size_t)(ech - ch1));
                 }
 
-                /* if not -> ERROR */
-                if (!*_function) {
+                /* if not, or if the table lists the name with no implementation
+                 * behind it, -> ERROR. Calling one of those used to jump
+                 * through a NULL pointer. */
+                if (!*_function || !(*_function)->fptr) {
                     *ech = 0; // terminate string after function name
                     set_error(UnknownFunction);
+                }
+
+                /* a lazy call also needs its dispatch operation */
+                if ((*_function)->sel) {
+                    lazy_calls += 1;
                 }
 
                 token = 'f';
                 break;
             }
             /* is it a real number? */
-        } else if (isdigit(*ech) ||
-                   (strchr("/*^(", (int)token) && strchr("+-", *ech))) {
+        } else if (isdigit(*ech)) {
 
             /* numbers (this part can be optimized) */
             ch1 = ech; /* st = 1;  */
@@ -768,6 +929,26 @@ int sffe_parse(sffe **parser, const char *expression)
             token = 'n';
         }
 #endif
+        /* a '+' or '-' with no left operand in sight is a prefix sign */
+        else if (strchr("+-", (int)*ech) && strchr("(,+-*/^u", (int)token)) {
+            ch1 = ech;
+            ech += 1;
+
+            /* unary plus is the identity, so it needs no operation at all */
+            if (*ch1 == '+') {
+                continue;
+            }
+
+            _functions = (sffunction **)realloc(
+                _functions, (++_parser->oprCount) * sizeof(sffunction *));
+
+            if (!_functions) {
+                set_error(MemoryError);
+            }
+
+            _functions[_parser->oprCount - 1] = sffe_unary_operator(*ch1);
+            token = 'u';
+        }
         /* if not, we have operator */
         else {
             if (*ech != '(' && *ech != ')' && *ech != ',') {
@@ -852,15 +1033,31 @@ int sffe_parse(sffe **parser, const char *expression)
         /* lots of memory operations are done here but no memory leaks should
            occur */
         if (!err) {
-            /* add value slots for uses operators/functions */
+            /* One result slot per operation, after the leaves. From here on
+             * _parser->args must not move: the operands are held by pointer. */
+            _result_slot = _parser->argCount;
+            function_count = _parser->oprCount;
             ui1 = _parser->argCount + _parser->oprCount;
             _parser->args = (sfarg *)realloc(_parser->args, ui1 * sizeof(sfarg));
+            /* Zero the slots we just added: sffe_clear frees whatever they say
+             * they own, so an uninitialised one becomes a free() of garbage. */
             memset(_parser->args + _parser->argCount, 0,
-                   _parser->oprCount * sizeof(sfarg));
+                   (ui1 - _parser->argCount) * sizeof(sfarg));
             _parser->argCount = ui1;
-            _argument = _parser->args;
-            _parser->oprs = (sfopr *)malloc(_parser->oprCount * sizeof(sfopr));
+            /* room for the dispatch operations too; they produce no value and
+             * so have no result slot above */
+            _parser->oprs = (sfopr *)malloc((_parser->oprCount + lazy_calls) *
+                                            sizeof(sfopr));
+            /* An operation consumes at least one value and leaves one, so the
+             * stack never grows past the number of slots. */
+            _vstack = (sfarg **)malloc((ui1 + 1) * sizeof(sfarg *));
+            if (!_parser->args || !_parser->oprs || !_vstack) {
+                err = MemoryError;
+            }
             ch1 = NULL; /* number */
+            _depth = 0;
+            /* leaves are consumed in the order phase 2 appended them */
+            _argument = _parser->args;
 
             /* stacks ( stores operations and controls parameters count inside of
          * brackts blocks ) */
@@ -884,12 +1081,11 @@ int sffe_parse(sffe **parser, const char *expression)
                 case '*':
                 case '/':
                 case '^': {
-                    if (ch1) {
 #ifdef SFFE_DEVEL
+                    if (ch1) {
                         printf("%c", *ch1);
-#endif
-                        _argument += 1;
                     }
+#endif
 
                     unsigned char type = sf_priority(ech);
                     /* there is an operator on stack */
@@ -904,9 +1100,12 @@ int sffe_parse(sffe **parser, const char *expression)
                                    _expression->stck[_expression->size].c);
 #endif
 
-                            if (_expression->size == 0) {
+                            if (err || _expression->size == 0) {
                                 break;
                             }
+                        }
+                        if (err) {
+                            break;
                         }
 
                         _expression->stck = (struct _operator *)realloc(
@@ -924,6 +1123,12 @@ int sffe_parse(sffe **parser, const char *expression)
 
                     /* store operator priority */
                     _expression->stck[_expression->size].type = type;
+                    /* every infix operator in the table is binary */
+                    _expression->stck[_expression->size].args = 2;
+                    _expression->stck[_expression->size].variadic = false;
+                    _expression->stck[_expression->size].sel = NULL;
+                    _expression->stck[_expression->size].lazy = NULL;
+                    _expression->stck[_expression->size].name = function->name;
 
                     /* get function pointer */
 #ifdef SFFE_DIRECT_FPTR
@@ -951,11 +1156,21 @@ int sffe_parse(sffe **parser, const char *expression)
                     opstck->c = 'f';
 #endif
 
-                    unsigned char parcnt = function->parcnt & 0x1F;
+                    bool anyargs = (function->parcnt == SFFE_VARIADIC);
+                    unsigned char parcnt =
+                        anyargs ? 0 : (function->parcnt & 0x1F);
                     /* mark operator as a function, and store number of
-                     * available parameters (0 - unlimited) */
+                     * available parameters. A variadic call records 0, which
+                     * makes the fixed-arity checks below inert; its real
+                     * count is tallied in 'seen' as commas are consumed. */
                     opstck->type = 0x60 | parcnt;
                     opstck->args = parcnt;
+                    opstck->variadic = anyargs;
+                    opstck->seen = 1;
+                    opstck->name = function->name;
+                    /* the '(' that follows starts the lazy bookkeeping */
+                    opstck->sel = function->sel;
+                    opstck->lazy = NULL;
 
                     /* get function pointer */
 #ifdef SFFE_DIRECT_FPTR
@@ -976,8 +1191,64 @@ int sffe_parse(sffe **parser, const char *expression)
                     //                    }
 
                 } break; // skip to ( ???
+                    /* u - prefix sign */
+                case 'u': {
+                    _expression->stck = (struct _operator *)realloc(
+                        _expression->stck,
+                        (_expression->size + 1) * sizeof(struct _operator));
+
+                    struct _operator *opstck =
+                        &_expression->stck[_expression->size];
+#ifdef SFFE_DEVEL
+                    opstck->c = 'u';
+#endif
+
+                    /* A prefix operator takes what comes after it, so nothing
+                     * already on the stack can be resolved yet: unlike an infix
+                     * operator it pops nothing before pushing itself. That is
+                     * also what makes "--z" stack instead of cancelling out. */
+                    opstck->type = sf_priority(ech);
+                    opstck->args = 1;
+                    opstck->variadic = false;
+                    opstck->sel = NULL;
+                    opstck->lazy = NULL;
+                    opstck->name = (*_function)->name;
+
+#ifdef SFFE_DIRECT_FPTR
+                    opstck->fnc = (*_function)->fptr;
+#else
+                    opstck->fnc = *_function;
+#endif
+
+                    _expression->size += 1;
+
+                    _function += 1;
+                    ch1 = NULL;
+                } break;
                     /* (  */
                 case '(': {
+                    /* If this parenthesis opens the arguments of a lazy call,
+                     * reserve the dispatch operation that will stand in front
+                     * of them, and start recording where each argument's code
+                     * begins. */
+                    if (_expression->size) {
+                        struct _operator *call =
+                            &_expression->stck[_expression->size - 1];
+                        if (call->sel && !call->lazy) {
+                            call->lazy = sffe_lazy_new(_parser, call->sel);
+                            if (!call->lazy) {
+                                set_error(MemoryError);
+                            }
+                            _parser->oprs[ui1].arg = NULL;
+                            _parser->oprs[ui1].fnc = NULL;
+                            _parser->oprs[ui1].lazy = call->lazy;
+                            ui1 += 1;
+                            if (!sffe_lazy_bound(call->lazy, ui1)) {
+                                set_error(MemoryError);
+                            }
+                        }
+                    }
+
                     /* store current stack */
                     _tmp_exp = (struct __expression *)malloc(
                         sizeof(struct __expression));
@@ -995,33 +1266,59 @@ int sffe_parse(sffe **parser, const char *expression)
                 } break;
                     /*  ; */
                 case ',': {
-                    /* check if anything has been read !!! */
-                    if (ch1) {
 #ifdef SFFE_DEVEL
+                    if (ch1) {
                         printf("%c", *ch1);
-#endif
-                        _argument += 1;
-                        ch1 = NULL;
                     }
+#endif
+                    ch1 = NULL;
 
                     /* if there is something on stack, flush if we need to read
                      * next parameter */
-                    while (_expression->size) {
+                    while (_expression->size && !err) {
                         pop_expression();
 #ifdef SFFE_DEVEL
                         printf("%c", _expression->stck[_expression->size].c);
 #endif
                     }
+                    if (err) {
+                        break;
+                    }
 
                     struct __expression *pstack = _expression->prev;
+
+                    /* A comma only separates arguments of a call. Outside one
+                     * there is no enclosing stack to look at, and reading it
+                     * anyway is how "z,c" used to crash the parser. */
+                    if (!pstack || !pstack->size ||
+                        (pstack->stck[pstack->size - 1].type & 0xE0) != 0x60) {
+                        set_error_at(InvalidOperators, ",");
+                    }
+
                     struct _operator *opstck =
                         &pstack->stck[pstack->size -
                                       1]; // here is last function before
                         // opening new op stack
 
+                    /* one argument of a lazy call has just been compiled */
+                    if (opstck->lazy && !sffe_lazy_bound(opstck->lazy, ui1)) {
+                        set_error(MemoryError);
+                    }
+
+                    if (opstck->variadic) {
+                        /* no declared arity to check against, just tally one
+                         * more argument. The only ceiling is what 'seen' can
+                         * hold. */
+                        if (opstck->seen == 0xFF) {
+                            set_error_at(InvalidParameters, opstck->name);
+                        }
+                        opstck->seen += 1;
+                        break;
+                    }
+
                     /* wrong number of parameters */
                     if ((opstck->type & 0x1f) == 1) {
-                        set_error(InvalidParameters);
+                        set_error_at(InvalidParameters, opstck->name);
                     }
 
                     /* reduce a number of allowed parameters */
@@ -1029,21 +1326,23 @@ int sffe_parse(sffe **parser, const char *expression)
                 } break;
                     /* )  */
                 case ')': {
-                    if (ch1) {
 #ifdef SFFE_DEVEL
+                    if (ch1) {
                         printf("%c", *ch1);
-#endif
-                        _argument += 1;
                     }
+#endif
                     ch1 = NULL;
 
                     /* if there is something on stack, flush it we need to read
                      * next parameter */
-                    while (_expression->size) {
+                    while (_expression->size && !err) {
                         pop_expression();
 #ifdef SFFE_DEVEL
                         printf("%c", _expression->stck[_expression->size].c);
 #endif
+                    }
+                    if (err) {
+                        break;
                     }
 
                     /* no stack available = stack overrelesed */
@@ -1070,7 +1369,17 @@ int sffe_parse(sffe **parser, const char *expression)
 
                             /* wrong number of parameters */
                             if ((opstck->type & 0x1f) > 1) {
-                                set_error(InvalidParameters);
+                                set_error_at(InvalidParameters, opstck->name);
+                            }
+
+                            /* Close the lazy call: the last argument ends here
+                             * and this is also where the dispatch resumes, on
+                             * the call's own operation emitted just below. */
+                            if (!err && opstck->lazy) {
+                                if (!sffe_lazy_bound(opstck->lazy, ui1)) {
+                                    set_error(MemoryError);
+                                }
+                                sffe_lazy_close(opstck->lazy);
                             }
 
                             if (!err) {
@@ -1094,6 +1403,10 @@ int sffe_parse(sffe **parser, const char *expression)
                     /* n */
                 case 'n':
                     ch1 = ech;
+                    /* leaves were appended by phase 2 in this same order */
+                    _vstack[_depth] = _argument;
+                    _depth += 1;
+                    _argument += 1;
                     break;
                 }
                 ech += 1;
@@ -1101,16 +1414,15 @@ int sffe_parse(sffe **parser, const char *expression)
 
             if (!err) {
 
-                if (ch1) {
 #ifdef SFFE_DEVEL
+                if (ch1) {
                     printf("%c", *ch1);
-#endif
-                    _argument += 1;
                 }
+#endif
 
                 /*clean up _expression */
                 while (_expression) {
-                    while (_expression->size) {
+                    while (_expression->size && !err) {
                         pop_expression();
 #ifdef SFFE_DEVEL
                         printf("%c", _expression->stck[_expression->size].c);
@@ -1123,11 +1435,19 @@ int sffe_parse(sffe **parser, const char *expression)
                     _expression = _tmp_exp;
                 }
 
-                /* set up formula call stack */
-                (_parser->args)->parg = NULL;
+                /* Every operand must have been consumed by exactly one
+                 * operation, leaving just the result behind. Anything else
+                 * means the call stack we built does not match the arguments
+                 * we have, and sffe_eval would read past them. */
+                if (!err && _depth != 1) {
+                    err = _depth ? InvalidOperators : EmptyFormula;
+                    errctx = _parser->expression;
+                }
 
-                for (ui1 = 1; ui1 < _parser->argCount; ui1 += 1) {
-                    (_parser->args + ui1)->parg = (_parser->args + ui1 - 1);
+                /* ui1 counted the dispatch operations too, so it is the real
+                 * length of the program the evaluator has to run. */
+                if (!err) {
+                    _parser->oprCount = ui1;
                 }
 
 #ifdef SFFE_DEVEL
@@ -1145,15 +1465,22 @@ int sffe_parse(sffe **parser, const char *expression)
                     }
                 }
 
+                /* _functions holds what the tokenizer found, so it is indexed
+                 * by function_count and not by oprCount, which also counts the
+                 * dispatch operations the parser inserted. */
                 printf("\n| functions fnctbl:");
-                for (ui1 = 0; ui1 < _parser->oprCount; ui1 += 1) {
+                for (ui1 = 0; ui1 < function_count; ui1 += 1) {
                     printf(" 0x%.6X [%s]", (int)(size_t)_functions[ui1]->fptr,
                            _functions[ui1]->name);
                 }
 
                 printf("\n| functions used ptrs:");
                 for (ui1 = 0; ui1 < _parser->oprCount; ui1 += 1) {
-                    printf(" 0x%.6X", (int)(size_t)_parser->oprs[ui1].fnc);
+                    if (_parser->oprs[ui1].lazy) {
+                        printf(" [lazy dispatch]");
+                    } else {
+                        printf(" 0x%.6X", (int)(size_t)_parser->oprs[ui1].fnc);
+                    }
                 }
 
                 double time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
@@ -1177,19 +1504,31 @@ int sffe_parse(sffe **parser, const char *expression)
             }
 
             /* set up evaluation result pointer (result is stored in last operation
-         * return) */
-            _parser->result =
-                (sfNumber *)(_parser->oprs + _parser->oprCount - 1)->arg->value;
+         * return). Only the successful path has a fully built operation array;
+         * on error the tail of it is still uninitialised, and with no
+         * operations at all there is no last one to read. */
+            if (!err) {
+                if (!_parser->oprCount) {
+                    err = EmptyFormula;
+                } else {
+                    _parser->result =
+                        (sfNumber *)(_parser->oprs + _parser->oprCount - 1)
+                            ->arg->value;
 
-            if (!_parser->result)
-                err = MemoryError;
+                    if (!_parser->result)
+                        err = MemoryError;
+                }
+            }
         }
 
     if (err) {
+        /* ch1 only points at readable source text while phase 2 is running;
+         * phase 3 walks the tokenized form and names the culprit via errctx. */
+        char *context = (char *)(errctx ? errctx : ch1);
 #ifdef SFFE_DEVEL
-        sffe_print_error(err, ch1);
+        sffe_print_error(err, context);
 #endif
-        sffe_setup_error(_parser, err, ch1);
+        sffe_setup_error(_parser, err, context);
         sffe_clear(&_parser);
     }
 
@@ -1204,13 +1543,21 @@ int sffe_parse(sffe **parser, const char *expression)
     /* free lookup tables */
     free(tokens);
     free(_functions);
+    free(_vstack);
 
 #ifdef SFFE_DEVEL
     printf("\nparse - END\n");
 #endif
-    //TODO
-    delete _parser->expression;
-    _parser->expression = _tempexpr;
+
+    /* Hand back the formula as it was given to us. Phases 1 and 2 normalise
+     * and cut up the working copy, which is not what a caller reading
+     * parser->expression (to display or to save it) wants to see. On the error
+     * path sffe_clear has already released the working copy. */
+    if (_parser->expression) {
+        free((char *)_parser->expression);
+    }
+    _parser->expression = original;
+
     return err;
 }
 

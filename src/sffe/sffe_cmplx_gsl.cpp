@@ -15,116 +15,183 @@
 #include <gsl/gsl_complex_math.h>
 #include <math.h>
 
+/* Every entry is {implementation, argument count, name}, optionally followed by
+ * a selector that marks the arguments as lazily evaluated.
+ *
+ * The first sffnctsfirst entries are the operators. sffe_function only searches
+ * from there on, so an operator's spelling can never be reached as a name.
+ *
+ * Arguments are named below in the order they are written in a formula, f(a, b,
+ * c) -- note that the sfaramN macros number them the other way round.
+ *
+ * A few entries do not compute what their name suggests. They are marked as
+ * such: the behaviour stays because saved position files depend on it. */
 const sffunction sfcmplxfunc[sffnctscount] = {
-    /* operators */
-    {sfpow, 2, "^\0"},
-    {sfadd, 2, "+\0"},
-    {sfsub, 2, "-\0"},
-    {sfmul, 2, "*\0"},
-    {sfdiv, 2, "/\0"},
+    /* --- operators, reached through sffe_operator rather than by name --- */
+    {sfpow, 2, "^\0"}, /* a ^ b */
+    {sfadd, 2, "+\0"}, /* a + b */
+    {sfsub, 2, "-\0"}, /* a - b */
+    {sfmul, 2, "*\0"}, /* a * b */
+    {sfdiv, 2, "/\0"}, /* a / b */
+    /* prefix minus; shares the '-' spelling with sfsub but takes one operand.
+     * Not reachable by name: sffe_function only scans from sffnctsfirst. */
+    {sfneg, 1, "-\0"}, /* -a */
 
-    /* functions */
-    {sfsin, 1, "sin\0"},
-    {sfcos, 1, "cos\0"},
-    {sftan, 1, "tan\0"},
-    {sfcot, 1, "cot\0"},
-    {sfasin, 1, "asin\0"},
-    {sfacos, 1, "acos\0"},
-    {sfatan, 1, "atan\0"},
-    {sfacot, 1, "acot\0"},
+    /* --- trigonometry over the complex plane --- */
+    {sfsin, 1, "sin\0"},   /* sin(a) */
+    {sfcos, 1, "cos\0"},   /* cos(a) */
+    {sftan, 1, "tan\0"},   /* tan(a) */
+    {sfcot, 1, "cot\0"},   /* cot(a) */
+    {sfasin, 1, "asin\0"}, /* arcsin(a) */
+    {sfacos, 1, "acos\0"}, /* arccos(a) */
+    {sfatan, 1, "atan\0"}, /* arctan(a) */
+    {sfacot, 1, "acot\0"}, /* arccot(a) */
+    /* atan2(y, x): angle of the real parts, plus i times the angle of the
+     * imaginary parts. Two real arguments give the ordinary atan2. */
     {sfatan2, 2, "atan2\0"},
-    {sfsinh, 1, "sinh\0"},
-    {sfcosh, 1, "cosh\0"},
-    {sftanh, 1, "tanh\0"},
-    {sfcoth, 1, "coth\0"},
-    {sfexp, 1, "exp\0"},
-    {sflog, 1, "log\0"},
-    {sflog10, 1, "log10\0"},
-    {sflog2, 1, "log2\0"},
-    {sflogN, 2, "logn\0"},
-    {sflogN, 2, "logcn\0"},
-    /*power functions */
-    {sfpow, 2, "pow\0"},
-    {sfpowd, 2, "powd\0"},
-    {sfpow, 2, "powi\0"},
-    {sfpow, 2, "powdc\0"},
-    {sfsqr, 1, "sqr\0"},
-    {sfsqrt, 1, "sqrt\0"},
+
+    /* --- hyperbolic --- */
+    {sfsinh, 1, "sinh\0"}, /* sinh(a) */
+    {sfcosh, 1, "cosh\0"}, /* cosh(a) */
+    {sftanh, 1, "tanh\0"}, /* tanh(a) */
+    {sfcoth, 1, "coth\0"}, /* coth(a) */
+
+    /* --- exponential and logarithms --- */
+    {sfexp, 1, "exp\0"},     /* e ^ a */
+    {sflog, 1, "log\0"},     /* natural logarithm of a */
+    {sflog10, 1, "log10\0"}, /* logarithm of a in base 10 */
+    {sflog2, 1, "log2\0"},   /* logarithm of a in base 2 */
+    {sflogN, 2, "logn\0"},   /* logarithm of b in base a -- the base comes first */
+    {sflogN, 2, "logcn\0"},  /* the same function under a second name */
+
+    /* --- powers and roots --- */
+    {sfpow, 2, "pow\0"},   /* a ^ b */
+    {sfpowd, 2, "powd\0"}, /* a ^ real(b); the imaginary part of b is ignored */
+    {sfpow, 2, "powi\0"},  /* plain a ^ b: the name suggests an integer exponent
+                              but this is the same function as pow */
+    {sfpow, 2, "powdc\0"}, /* another plain a ^ b, alias of pow */
+    {sfsqr, 1, "sqr\0"}, /* a * a. This used to raise a to itself: sqr(3) was 27 */
+    {sfsqrt, 1, "sqrt\0"}, /* principal square root of a */
+    /* rtni(a, b, c): the c-th of the b b-th roots of a -- but it stores that
+     * root over its own first argument and evaluates to -1 instead of
+     * returning it. Kept for saved formulas; see sfrtni. Use rtni2 instead. */
     {sfrtni, 3, "rtni"},
-    {sfinv, 1, "inv\n"},
-    {sfceil, 1, "ceil\0"},
-    {sffloor, 1, "floor\0"},
-    {sfabs, 1, "abs\0"},
-    {sfrabs, 1, "rabs\0"},
-    {sfre, 1, "re\0"},
-    {sfim, 1, "im\0"},
-    {sfcarg, 1, "arg\0"},
-    {sfmod, 1, "mod\0"},
+    {sfrtni2, 3, "rtni2\0"}, /* the same root, returned the ordinary way */
+    /* 1 / a. The name used to end in \n rather than \0, which made it four
+     * characters long, so it never matched a three-character lookup and the
+     * function could not be called at all. */
+    {sfinv, 1, "inv\0"},
+
+    /* --- rounding, and pulling a value apart --- */
+    {sfceil, 1, "ceil\0"},   /* ceiling of each component */
+    {sffloor, 1, "floor\0"}, /* floor of each component */
+    {sfabs, 1, "abs\0"},     /* |a|, as a real */
+    {sfrabs, 1, "rabs\0"},   /* |real(a)|, as a real; the imaginary part is dropped */
+    {sfre, 1, "re\0"},       /* real(a), as a real */
+    {sfim, 1, "im\0"},       /* imag(a), as a real */
+    {sfcarg, 1, "arg\0"},    /* angle of a, as a real */
+    {sfmod, 1, "mod\0"},     /* fractional part of each component */
+    /* NOT the conjugate: conj(a) swaps the components, giving
+     * imag(a) + i*real(a) rather than real(a) - i*imag(a). */
     {sfconj, 1, "conj\0"},
 
-    {sfbship, 1, "bship\0"},
-    {sfbshipr, 1, "bshipr\0"},
-    {sfbshipi, 1, "bshipi\0"},
+    /* --- burning ship variants --- */
+    {sfbship, 1, "bship\0"},   /* |real(a)| + i*|imag(a)| */
+    {sfbshipr, 1, "bshipr\0"}, /* |real(a)| + i*imag(a) */
+    {sfbshipi, 1, "bshipi\0"}, /* real(a) + i*|imag(a)| */
 
-    {sfrect, 2, "rect\0"},
-    {sfpolar, 2, "polar\0"},
+    /* --- assembling one value out of two --- */
+    {sfrect, 2, "rect\0"},   /* real(b) + i*imag(a) */
+    {sfpolar, 2, "polar\0"}, /* |b| * e^(i*arg(a)) */
 
-    {sfmin, 2, "min\0"},
-    {sfminr, 2, "minr\0"},
-    {sfmini, 2, "mini\0"},
-    {sfminm, 2, "minm\0"},
+    /* --- smaller of two; the suffix says which part is compared --- */
+    {sfmin, 2, "min\0"},   /* smaller real part and smaller imaginary part */
+    {sfminr, 2, "minr\0"}, /* smaller real part; imaginary part taken from a */
+    {sfmini, 2, "mini\0"}, /* smaller imaginary part; real part taken from a */
+    {sfminm, 2, "minm\0"}, /* smaller modulus, held at the angle of a */
 
-    {sfmax, 2, "max\0"},
-    {sfmaxr, 2, "maxr\0"},
-    {sfmaxi, 2, "maxi\0"},
-    {sfmaxm, 2, "maxm\0"},
+    /* --- larger of two, same convention --- */
+    {sfmax, 2, "max\0"},   /* larger real part and larger imaginary part */
+    {sfmaxr, 2, "maxr\0"}, /* larger real part; imaginary part taken from a */
+    {sfmaxi, 2, "maxi\0"}, /* larger imaginary part; real part taken from a */
+    {sfmaxm, 2, "maxm\0"}, /* larger modulus, held at the angle of a */
 
-    {sfmid, 3, "mid\0"},
-    {sfmidr, 3, "midr\0"},
-    {sfmidi, 3, "midi\0"},
-    {sfmidm, 3, "midm\0"},
+    /* --- mid(a, b, c) confines a to the range b..c.
+     * With b < c it is a plain clamp. With b > c the range is inverted and a
+     * value outside it is sent to the opposite end: mid(0,10,1) is 10 while
+     * mid(99,10,1) is 1. --- */
+    {sfmid, 3, "mid\0"},   /* both components confined */
+    {sfmidr, 3, "midr\0"}, /* real part confined; imaginary part taken from a */
+    {sfmidi, 3, "midi\0"}, /* imaginary part confined; real part taken from a */
+    {sfmidm, 3, "midm\0"}, /* modulus confined, held at the angle of a */
 
-    {sfsincos, 1, "sincos\0"},
-    {sfcossin, 1, "cossin\0"},
-    {sfsinr, 1, "sinr\0"},
-    {sfcosr, 1, "cosr\0"},
-    {sfsini, 1, "sini\0"},
-    {sfcosi, 1, "cosi\0"},
+    /* --- real trigonometry applied to each component separately --- */
+    {sfsincos, 1, "sincos\0"}, /* sin(real(a)) + i*cos(imag(a)) */
+    {sfcossin, 1, "cossin\0"}, /* cos(real(a)) + i*sin(imag(a)) */
+    {sfsinr, 1, "sinr\0"},     /* sin(real(a)); imaginary part passes through */
+    {sfcosr, 1, "cosr\0"},     /* cos(real(a)); imaginary part passes through */
+    {sfsini, 1, "sini\0"},     /* sin(imag(a)); real part passes through */
+    {sfcosi, 1, "cosi\0"},     /* cos(imag(a)); real part passes through */
 
-    {sftancot, 1, "tancot\0"},
-    {sfcottan, 1, "cottan\0"},
-    {sftanr, 1, "tanr\0"},
-    {sfcotr, 1, "cotr\0"},
-    {sftani, 1, "tani\0"},
-    {sfcoti, 1, "coti\0"},
+    {sftancot, 1, "tancot\0"}, /* tan(real(a)) + i*cot(imag(a)) */
+    {sfcottan, 1, "cottan\0"}, /* cot(real(a)) + i*tan(imag(a)) */
+    {sftanr, 1, "tanr\0"},     /* tan(real(a)); imaginary part passes through */
+    {sfcotr, 1, "cotr\0"},     /* cot(real(a)); imaginary part passes through */
+    {sftani, 1, "tani\0"},     /* tan(imag(a)); real part passes through */
+    {sfcoti, 1, "coti\0"},     /* cot(imag(a)); real part passes through */
 
-    {sftrunc, 1, "trunc\0"},
-    {sfsawtooth, 1, "sawtooth\0"},
-    {sftwave, 1, "twave\0"},
+    /* --- waveforms, again component by component --- */
+    {sftrunc, 1, "trunc\0"},       /* each component truncated towards zero */
+    {sfsawtooth, 1, "sawtooth\0"}, /* x - floor(x), a ramp in [0, 1) */
+    {sftwave, 1, "twave\0"},       /* triangle wave of period 2, in [-1, 1] */
 
-    {sfjulian, 3, "julian\0"},
+    /* --- assorted --- */
+    {sfjulian, 3, "julian\0"}, /* |a|^b * e^(i*c*arg(a)) */
+    /* inveps(a, b): real(a)/(|a|^2 + real(b)) - i*imag(a)/(|a|^2 + imag(b)),
+     * an inverse softened by b so that it stays finite at the origin */
     {sfinveps, 2, "inveps\0"},
+    /* atan2s(y, x): atan2 of each pair of components. Differs from atan2 only
+     * on real arguments, where negating one gives a negative zero and
+     * atan2(-0, -0) is -pi rather than 0. */
     {sfatan2s, 2, "atan2s\0"},
 
-    {sfngon, 4, "ngon\0"}, //ngon(z, center, n, pow)
-    {sfparchment, 2, "parchment\0"}, //z, n
-    {sfparchmenta, 2, "parchmenta\0"}, //z, n
+    /* ngon(a, b, c, d): folds a about the centre b onto a c-sided polygon,
+     * the corner radius raised to the power d */
+    {sfngon, 4, "ngon\0"},
+    /* parchment(a, b): quantises the angle of a into |b| sectors, keeping |a| */
+    {sfparchment, 2, "parchment\0"},
+    /* parchmenta(a, b): as parchment, but mirroring alternate half sectors */
+    {sfparchmenta, 2, "parchmenta\0"},
 
-    {sftruncv, 2, "truncv\0"},
-    {sftruncc, 2, "truncc\0"},
-    {sftruncvr, 2, "truncvr\0"},
-    {sftruncvi, 2, "truncvi\0"},
-    {sftruncvm, 2, "truncvm\0"},
-    {sftruncva, 2, "truncva\0"},
+    /* --- snapping to a grid of step 1/n; n == 0 leaves the value alone --- */
+    {sftruncv, 2, "truncv\0"},   /* both components, step 1/|b| */
+    {sftruncc, 2, "truncc\0"},   /* real step 1/real(b), imaginary step 1/imag(b) */
+    {sftruncvr, 2, "truncvr\0"}, /* real component only, step 1/|b| */
+    {sftruncvi, 2, "truncvi\0"}, /* imaginary component only, step 1/|b| */
+    {sftruncvm, 2, "truncvm\0"}, /* the modulus, angle kept */
+    {sftruncva, 2, "truncva\0"}, /* the angle, modulus kept */
 
+    /* gamma(a): Lanczos approximation of the complex gamma function.
+     * Known defect: the series is scaled by log(sqrt(2*pi)) where the formula
+     * calls for sqrt(2*pi), so every result is 0.3666 times the true gamma --
+     * gamma(5) gives 8.798 instead of 24. */
     {sfgamma, 1, "gamma\0"},
-    {sflambertw, 1, "lambertw\0"},
+    {sflambertw, 1, "lambertw\0"}, /* principal branch of the Lambert W of a */
 
+    /* iteration-dependent selection; -1 parameters means variadic, and the
+     * selector marks the arguments as lazily evaluated */
+    {sfifiter, SFFE_VARIADIC, "ifiter\0", sfifiter_sel},
+    {sfifiterl, SFFE_VARIADIC, "ifiterl\0", sfifiterl_sel},
+
+    /* Names with no implementation behind them. sffe_parse turns a call to one
+     * of these into an unknown-function error rather than jumping through a
+     * null pointer, which is what it used to do. */
     {NULL, 1, "rad\0"},
     {NULL, 1, "deg\0"},
     {NULL, 1, "sign\0"},
-    {NULL, 1, "trunc\0"},
-    {sfrand, 1, "rand\0"}};
+    {NULL, 1, "trunc\0"}, /* shadowed by the working trunc listed above */
+
+    {sfrand, 1, "rand\0"}}; /* real(a) times a random number in [0, 1) */
 
 const char sfcnames[sfvarscount][6] = {"pi\0", "pi_2\0", "pi2\0",
                                        "e\0",  "i\0",    "rnd\0"};
@@ -141,6 +208,43 @@ sfarg *sfsub(sfarg *const p)
 { /* - */
     sfvalue(p) = gsl_complex_sub(sfvalue(sfaram2(p)), sfvalue(sfaram1(p)));
     return sfaram2(p);
+}
+
+sfarg *sfneg(sfarg *const p)
+{ /* unary - */
+    sfvalue(p) = gsl_complex_negative(sfvalue(sfaram1(p)));
+    return sfaram1(p);
+}
+
+/* Current iteration of the fractal loop, 0 on the first one. Maintained by the
+ * engine (see formulas.cpp); 0 for anyone evaluating a formula outside it. */
+thread_local unsigned int sffe_iteration = 0;
+
+/* The selectors run before any argument has been evaluated, to tell the
+ * evaluator which one to bother computing. They must therefore depend only on
+ * the iteration, never on the arguments -- which is exactly what these two do.
+ * The functions below then read the value that was actually produced. */
+unsigned int sfifiter_sel(unsigned int argc)
+{ /* ifiter: cycles through its arguments */
+    return sffe_iteration % argc;
+}
+
+unsigned int sfifiterl_sel(unsigned int argc)
+{ /* ifiterl: stays on the last argument once past it */
+    return sffe_iteration < argc ? sffe_iteration : argc - 1;
+}
+
+/* args are held right to left, so source index i sits at args[argc - 1 - i] */
+sfarg *sfifiter(sfarg *const p)
+{
+    sfvalue(p) = sfvalue(p->args[p->argc - 1 - sfifiter_sel(p->argc)]);
+    return p;
+}
+
+sfarg *sfifiterl(sfarg *const p)
+{
+    sfvalue(p) = sfvalue(p->args[p->argc - 1 - sfifiterl_sel(p->argc)]);
+    return p;
 }
 
 sfarg *sfmul(sfarg *const p)
@@ -204,8 +308,22 @@ sfarg *sfacot(sfarg *const p)
 }
 
 sfarg *sfatan2(sfarg *const p)
-{ /* atan2 */
-    return sfaram2(p);
+{ /* atan2(y, x) = angle of the real parts + i * angle of the imaginary parts */
+    sfNumber y = sfvalue(sfaram2(p));
+    sfNumber x = sfvalue(sfaram1(p));
+
+    double hor = atan2(GSL_REAL(y), GSL_REAL(x));
+
+    /* With real arguments the answer has to be the plain atan2, so a pair of
+     * zeros contributes nothing. Left to atan2 they would not: negating a real
+     * number gives a negative zero, and atan2(-0, -0) is -pi, not 0. */
+    double ver = 0.0;
+    if (GSL_IMAG(y) != 0 || GSL_IMAG(x) != 0) {
+        ver = atan2(GSL_IMAG(y), GSL_IMAG(x));
+    }
+
+    cmplxset(sfvalue(p), hor, ver);
+    return p;
 }
 
 sfarg *sfsinh(sfarg *const p)
@@ -279,8 +397,12 @@ sfarg *sfpowd(sfarg *const p)
 }
 
 sfarg *sfsqr(sfarg *const p)
-{ /* sqr */
-    sfvalue(p) = gsl_complex_pow(sfvalue(sfaram1(p)), sfvalue(sfaram1(p)));
+{ /* sqr: a squared.
+   *
+   * This used to compute gsl_complex_pow(a, a), a raised to itself, so sqr(3)
+   * answered 27. A multiplication is both the right answer and far cheaper
+   * than a complex power, which goes through a log and an exp. */
+    sfvalue(p) = gsl_complex_mul(sfvalue(sfaram1(p)), sfvalue(sfaram1(p)));
     return sfaram1(p);
 }
 
@@ -290,16 +412,47 @@ sfarg *sfsqrt(sfarg *const p)
     return sfaram1(p);
 }
 
+/* Modulus and angle of the i-th of the n n-th roots of z, for rtni/rtni2.
+ * Arguments are (z, n, i) as written, so sfaram3 is z and sfaram1 is i. */
+static void rtni_root(sfarg *const p, double *modulus, double *angle)
+{
+    double n = (double)(int)real(sfvalue(sfaram2(p)));
+    *modulus = pow(gsl_complex_abs(sfvalue(sfaram3(p))), 1.0 / n);
+    *angle = (gsl_complex_arg(sfvalue(sfaram3(p))) +
+              8 * atan(1.0) * (double)(int)real(sfvalue(sfaram1(p)))) /
+             n;
+}
+
 sfarg *sfrtni(sfarg *const p)
 { /* rtni */
-    double nrz = pow(gsl_complex_abs(sfvalue(sfaram3(p))),
-                     1.0 / (double)(int)real(sfvalue(sfaram2(p))));
-    double alfi = (gsl_complex_arg(sfvalue(sfaram3(p))) +
-                   8 * atan(1.0) * (double)(int)real(sfvalue(sfaram1(p)))) /
-                  (double)(int)real(sfvalue(sfaram2(p)));
+    double nrz, alfi;
+    rtni_root(p, &nrz, &alfi);
 
+    /* rtni does not hand its root back the way every other function does: it
+     * stores it over its own first argument and evaluates to -1. That is odd,
+     * and it means rtni(z,...) overwrites the variable z for the rest of the
+     * formula -- but saved position files were written against it, so the
+     * behaviour is kept deliberately.
+     *
+     * examples/Malczak/heart.xpf relies on exactly this. Its
+     * "RTNI(Z;12;6)(1-Z)+C" reads as -1 * (1 - the root just written over Z)
+     * + C; returning the root normally would draw a different fractal.
+     *
+     * The -1 used to be the placeholder the parser left in every unwritten
+     * result slot. Now that slots start at zero it has to be written here. */
     cmplxset(sfvalue(sfaram3(p)), nrz * cos(alfi), nrz * sin(alfi));
-    return sfaram3(p);
+    cmplxset(sfvalue(p), -1, 0);
+    return p;
+}
+
+sfarg *sfrtni2(sfarg *const p)
+{ /* rtni2: what rtni looks like written the ordinary way -- it returns the
+   * root and leaves its arguments alone. Prefer it in new formulas. */
+    double nrz, alfi;
+    rtni_root(p, &nrz, &alfi);
+
+    cmplxset(sfvalue(p), nrz * cos(alfi), nrz * sin(alfi));
+    return p;
 }
 
 sfarg *sfinv(sfarg *const p)
@@ -896,163 +1049,205 @@ sfarg *sftruncva(sfarg *const p)
     return sfaram2(p);
 }
 
+/* Lanczos coefficients for g = 7 with 9 terms, good to about 15 digits.
+ * Kept here rather than in the header: nothing else needs them, and a static
+ * array in a header gets a private copy in every translation unit. */
+static const int LANCZOS_G = 7;
+static const double LANCZOS_P[9] = {0.99999999999980993,
+                                    676.5203681218851,
+                                    -1259.1392167224028,
+                                    771.32342877765313,
+                                    -176.61502916214059,
+                                    12.507343278686905,
+                                    -0.13857109526572012,
+                                    9.9843695780195716e-6,
+                                    1.5056327351493116e-7};
+
+#define SQRT_2PI 2.5066282746310005024157652848110
+
 /**
- * @brief Calcola la funzione Gamma complessa Γ(z) usando l'approssimazione di Lanczos.
- * @details Questa è una funzione helper che implementa l'algoritmo.
- * Gestisce i poli e usa la formula di riflessione per Re(z) < 0.5.
- * @param z Il numero complesso di input.
- * @return Il valore di Γ(z).
+ * @brief Complex gamma function via the Lanczos approximation.
+ * @details Poles at the non-positive integers give NaN. For Re(z) < 0.5, where
+ * the series does not apply, the reflection formula is used instead; that
+ * recurses exactly once, since 1 - z then has real part above 0.5.
+ * @param z The argument.
+ * @return Gamma(z).
  */
 gsl_complex complex_gamma_lanczos(gsl_complex z)
 {
-    double real_z = GSL_REAL(z);
-    double imag_z = GSL_IMAG(z);
+    double zr = GSL_REAL(z);
+    double zi = GSL_IMAG(z);
     gsl_complex temp;
 
-    // Gestione dei poli per interi non positivi
-    if (real_z <= 0.0 && imag_z == 0.0 && floor(real_z) == real_z) {
+    /* poles at 0, -1, -2, ... */
+    if (zi == 0.0 && zr <= 0.0 && floor(zr) == zr) {
         GSL_SET_COMPLEX(&temp, NAN, NAN);
         return temp;
     }
 
-    // Formula di riflessione per Re(z) < 0.5
-    if (real_z < 0.5) {
-        // Γ(z) = π / (sin(πz) * Γ(1-z))
-        GSL_SET_COMPLEX(&temp, 1.0, 0.0);
-        gsl_complex one_minus_z = gsl_complex_sub(temp, z);
-        gsl_complex pi_z = gsl_complex_mul_real(z, M_PI);
-        gsl_complex sin_pi_z = gsl_complex_sin(pi_z);
-
-        gsl_complex gamma_one_minus_z = complex_gamma_lanczos(one_minus_z);
-
-        gsl_complex den = gsl_complex_mul(sin_pi_z, gamma_one_minus_z);
+    /* Gamma(z) = pi / (sin(pi z) * Gamma(1 - z)) */
+    if (zr < 0.5) {
+        gsl_complex one_minus_z;
+        GSL_SET_COMPLEX(&one_minus_z, 1.0 - zr, -zi);
+        gsl_complex den =
+            gsl_complex_mul(gsl_complex_sin(gsl_complex_mul_real(z, M_PI)),
+                            complex_gamma_lanczos(one_minus_z));
         GSL_SET_COMPLEX(&temp, M_PI, 0.0);
         return gsl_complex_div(temp, den);
     }
 
-    // Approssimazione di Lanczos per Re(z) >= 0.5
-    z = gsl_complex_sub_real(z, 1.0); // Corretto: sottrae un reale da un complesso
-    gsl_complex x;
-    GSL_SET_COMPLEX(&x, LANCZOS_P[0], 0.0);
+    z = gsl_complex_sub_real(z, 1.0);
+    zr = GSL_REAL(z);
+    zi = GSL_IMAG(z);
 
-    for (int i = 1; i < sizeof(LANCZOS_P) / sizeof(LANCZOS_P[0]); ++i) {
-        GSL_SET_COMPLEX(&temp, LANCZOS_P[i], 0.0);
-        gsl_complex term = gsl_complex_div( // Corretto: divisione tra complessi
-            temp,
-            gsl_complex_add_real(z, (double)i)
-            );
-        x = gsl_complex_add(x, term);
+    /* x = p[0] + sum p[i] / (z + i).
+     *
+     * Every numerator is real, so each term is p[i] * conj(z + i) / |z + i|^2:
+     * one division and a handful of multiplications, instead of the general
+     * complex division this used to go through. */
+    double xr = LANCZOS_P[0];
+    double xi = 0.0;
+    for (int i = 1; i < 9; ++i) {
+        double dr = zr + (double)i;
+        double s = LANCZOS_P[i] / (dr * dr + zi * zi);
+        xr += s * dr;
+        xi -= s * zi;
     }
+    gsl_complex x;
+    GSL_SET_COMPLEX(&x, xr, xi);
 
+    /* Gamma(z + 1) = sqrt(2 pi) * t^(z + 0.5) * e^-t * x, with t = z + g + 0.5.
+     *
+     * Folding the power and the exponential into a single exp((z + 0.5) *
+     * log(t) - t) saves one complex exponential: t^(z + 0.5) is itself an
+     * exp(log(...)) underneath.
+     *
+     * The scale factor is sqrt(2 pi). It used to be log(sqrt(2 pi)), which
+     * left every result multiplied by 0.3666 -- gamma(5) came out as 8.798
+     * rather than 24. */
     gsl_complex t = gsl_complex_add_real(z, LANCZOS_G + 0.5);
+    gsl_complex e = gsl_complex_sub(
+        gsl_complex_mul(gsl_complex_add_real(z, 0.5), gsl_complex_log(t)), t);
 
-    gsl_complex log_sqrt_2pi;
-    GSL_SET_COMPLEX(&log_sqrt_2pi, log(sqrt(2.0 * M_PI)), 0.0);
-
-    gsl_complex result = gsl_complex_mul(
-        log_sqrt_2pi,
-        gsl_complex_pow(t, gsl_complex_add_real(z, 0.5))
-        );
-    result = gsl_complex_mul(result, gsl_complex_exp(gsl_complex_mul_real(t, -1.0)));
-    result = gsl_complex_mul(result, x);
-
-    return result;
+    return gsl_complex_mul_real(gsl_complex_mul(gsl_complex_exp(e), x),
+                                SQRT_2PI);
 }
 
 /**
- * @brief Wrapper per la funzione Gamma complessa da usare in sFFe.
- * @param p Puntatore all'argomento della funzione. L'input è sfaram1(p).
- * @return Puntatore all'argomento di input, come da convenzione di sffe.
+ * @brief sFFe wrapper for the complex gamma function.
+ * @param p The call; its argument is sfaram1(p).
+ * @return Pointer to the input argument, per the sffe convention.
  */
 sfarg *sfgamma(sfarg *const p)
 {
-    gsl_complex z = sfvalue(sfaram1(p));
-    sfvalue(p) = complex_gamma_lanczos(z);
+    sfvalue(p) = complex_gamma_lanczos(sfvalue(sfaram1(p)));
     return sfaram1(p);
 }
 
-// --- Fine implementazione Funzione Gamma Complessa ---
-
 
 /**
- * @brief Calcola il ramo principale (W_0) della funzione W di Lambert complessa.
- * * La funzione W di Lambert è la soluzione dell'equazione z = w * exp(w).
- * Poiché GSL non fornisce una versione complessa, questa funzione la implementa
- * usando il metodo di Halley, che ha una convergenza cubica.
+ * @brief Principal branch W_0 of the complex Lambert W function.
+ * @details W solves w * e^w = z. GSL has no complex version, so this iterates
+ * Halley's method, which converges cubically.
  *
- * @param p Puntatore all'argomento della funzione. L'input è sfaram1(p).
- * @return Puntatore all'argomento di input, come da convenzione di sffe.
+ * The starting point is picked by region, because a single formula does not
+ * work everywhere: the series around the origin diverges past |z| = 1/e, and
+ * the asymptotic expansion needs log z to be well away from zero.
+ *
+ * This used to run Householder's order-3 method from w = log z. That has a
+ * stationary point: at z = 1 the start is w = 0, where the update's numerator
+ * 1 + l2*l1/2 vanishes exactly, so the step was zero and the iteration
+ * returned the starting guess. lambertw(1) came out as 0 instead of 0.5671.
+ * Halley's update has no such cancellation, and costs less per step.
+ *
+ * @param p The call; its argument is sfaram1(p).
+ * @return Pointer to the input argument, per the sffe convention.
  */
 sfarg *sflambertw(sfarg *const p)
 {
-    const int MAX_ITERATIONS = 50; // Meno iterazioni necessarie grazie alla convergenza più rapida
-    const double TOLERANCE = 1e-10;
+    /* Cubic convergence from these starting points settles in four or five
+     * steps; the cap only guards inputs that do not converge at all. */
+    const int MAX_ITERATIONS = 20;
+    const double TOLERANCE = 1e-15;
 
     gsl_complex z = sfvalue(sfaram1(p));
-    gsl_complex w; // La nostra stima corrente per W(z)
+    gsl_complex w;
 
-    // 1. Stima iniziale per w
-    if (gsl_complex_abs(z) < 1.0) {
-        // Per z vicino a 0, w ≈ z
-        w = z;
-    } else {
-        // Per |z| grande, w ≈ ln(z)
-        w = gsl_complex_log(z);
+    if (GSL_REAL(z) == 0.0 && GSL_IMAG(z) == 0.0) {
+        sfvalue(p) = z; /* W(0) = 0, and the iteration cannot start there */
+        return sfaram1(p);
     }
 
-    // 2. Iterazioni con il metodo di Householder (ordine 3, convergenza quartica)
-    for (int i = 0; i < MAX_ITERATIONS; ++i)
-    {
+    /* The starting point decides which branch Halley converges to, so these
+     * three regions are about correctness and not only about speed. */
+    gsl_complex ez1 = gsl_complex_add_real(gsl_complex_mul_real(z, M_E), 1.0);
+    if (gsl_complex_abs2(ez1) < 1.0) {
+        /* Around the branch point z = -1/e the two real branches meet, and an
+         * ordinary guess slides onto W_-1 -- for z = -0.3 that answers -1.7813
+         * instead of -0.4894. The expansion there is in p = sqrt(2(e z + 1)),
+         * where W_0 takes +p and W_-1 would take -p. */
+        gsl_complex q = gsl_complex_sqrt(gsl_complex_mul_real(ez1, 2.0));
+        gsl_complex q2 = gsl_complex_mul(q, q);
+        w = gsl_complex_add_real(q, -1.0);
+        w = gsl_complex_sub(w, gsl_complex_mul_real(q2, 1.0 / 3.0));
+        w = gsl_complex_add(
+            w, gsl_complex_mul_real(gsl_complex_mul(q2, q), 11.0 / 72.0));
+    } else if (gsl_complex_abs2(z) < 0.1296) {
+        /* |z| < 0.36, just inside the radius 1/e of the series about the
+         * origin, W = z - z^2 + 3z^3/2. Used any further out it lands in the
+         * wrong basin: at z = -0.67 - 0.02i it used to answer W_-2. The test
+         * comes after the branch point and not before it, because log z is
+         * large here and would send the asymptotic form below astray. */
+        gsl_complex z2 = gsl_complex_mul(z, z);
+        w = gsl_complex_add(gsl_complex_sub(z, z2),
+                            gsl_complex_mul_real(gsl_complex_mul(z2, z), 1.5));
+    } else if ((gsl_complex_abs2(gsl_complex_log(z)) > 4.0 &&
+                gsl_complex_abs2(z) > 0.81) ||
+               gsl_complex_abs2(gsl_complex_add_real(z, 1.0)) < 0.25) {
+        /* W = L1 - L2 + L2/L1 + ..., L1 = log z, L2 = log L1; keeping the
+         * third term is what saves the iterations.
+         *
+         * Both halves of the test earn their place. Selecting on |log z| alone
+         * lets in points of small modulus but large argument, where the
+         * expansion does not hold -- z = -0.30 - 0.44i started at -0.76 +
+         * 0.25i and converged to a far branch. Selecting on |z| alone lets in
+         * z near 1, where log z is nearly zero and L2 diverges: z = 1.05
+         * started at -63. The last clause covers z near -1, where the ratio
+         * below would divide by nearly nothing, and where this expansion
+         * happens to be good anyway. */
+        gsl_complex l1 = gsl_complex_log(z);
+        gsl_complex l2 = gsl_complex_log(l1);
+        w = gsl_complex_add(gsl_complex_sub(l1, l2), gsl_complex_div(l2, l1));
+    } else {
+        /* A band roughly between |z| = 0.36 and 1, plus the region around
+         * z = 1 the asymptotic form cannot serve. W is of order one there and
+         * z/(1+z) is the right size throughout. */
+        w = gsl_complex_div(z, gsl_complex_add_real(z, 1.0));
+    }
+
+    for (int i = 0; i < MAX_ITERATIONS; ++i) {
         gsl_complex ew = gsl_complex_exp(w);
         gsl_complex f = gsl_complex_sub(gsl_complex_mul(w, ew), z);
 
-        if (gsl_complex_abs(f) < TOLERANCE) {
+        /* Halley: step = f / (f' - f*f''/(2f')), which for f = w e^w - z is
+         * e^w (w+1) - (w+2) f / (2w+2). The exponential cancels out of the
+         * second derivative ratio, so no extra exp is needed. */
+        gsl_complex wp1 = gsl_complex_add_real(w, 1.0);
+        gsl_complex den = gsl_complex_sub(
+            gsl_complex_mul(ew, wp1),
+            gsl_complex_div(gsl_complex_mul(gsl_complex_add_real(w, 2.0), f),
+                            gsl_complex_mul_real(wp1, 2.0)));
+
+        if (gsl_complex_abs2(den) < 1e-300) {
             break;
         }
 
-        // Calcolo delle derivate necessarie
-        gsl_complex w_plus_1 = gsl_complex_add_real(w, 1.0);
-        gsl_complex w_plus_2 = gsl_complex_add_real(w, 2.0);
-        gsl_complex w_plus_3 = gsl_complex_add_real(w, 3.0);
-
-        gsl_complex fp = gsl_complex_mul(ew, w_plus_1);   // f'
-        gsl_complex fpp = gsl_complex_mul(ew, w_plus_2);  // f''
-        gsl_complex fppp = gsl_complex_mul(ew, w_plus_3); // f'''
-
-        if (gsl_complex_abs(fp) < 1e-300) { // Evita divisione per zero
-            break;
-        }
-
-        // Termini del metodo di Householder
-        gsl_complex l1 = gsl_complex_div(f, fp);      // l1 = f/f'
-        gsl_complex l2 = gsl_complex_div(fpp, fp);    // l2 = f''/f'
-        gsl_complex l3 = gsl_complex_div(fppp, fp);   // l3 = f'''/f'
-
-        // Numeratore del fattore di aggiornamento: 1 + 0.5 * l2 * l1
-        gsl_complex num_factor = gsl_complex_mul(l2, l1);
-        num_factor = gsl_complex_mul_real(num_factor, 0.5);
-        num_factor = gsl_complex_add_real(num_factor, 1.0);
-
-        // Denominatore del fattore di aggiornamento: 1 + l2*l1 + (1/6)*l3*l1^2
-        gsl_complex l1_sq = gsl_complex_mul(l1, l1);
-        gsl_complex den_term2 = gsl_complex_mul(l3, l1_sq);
-        den_term2 = gsl_complex_mul_real(den_term2, 1.0/6.0);
-
-        gsl_complex den_factor = gsl_complex_mul(l2, l1);
-        den_factor = gsl_complex_add_real(den_factor, 1.0);
-        den_factor = gsl_complex_add(den_factor, den_term2);
-
-        if (gsl_complex_abs(den_factor) < 1e-300) { // Evita divisione per zero
-            break;
-        }
-
-        // Calcolo del passo di aggiornamento
-        gsl_complex update_factor = gsl_complex_div(num_factor, den_factor);
-        gsl_complex step = gsl_complex_mul(l1, update_factor);
-
+        gsl_complex step = gsl_complex_div(f, den);
         w = gsl_complex_sub(w, step);
 
-        if (gsl_complex_abs(step) < TOLERANCE * gsl_complex_abs(w)) {
+        /* Squared moduli, to keep hypot out of the inner loop. */
+        if (gsl_complex_abs2(step) <=
+            TOLERANCE * TOLERANCE * (gsl_complex_abs2(w) + 1e-300)) {
             break;
         }
     }
@@ -1060,6 +1255,8 @@ sfarg *sflambertw(sfarg *const p)
     sfvalue(p) = w;
     return sfaram1(p);
 }
+
+
 
 // const eval
 void sfcPI(sfNumber *cnst) { GSL_SET_COMPLEX(cnst, 4 * atan(1), 0); }

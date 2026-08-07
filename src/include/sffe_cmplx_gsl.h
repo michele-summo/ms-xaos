@@ -13,28 +13,28 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
-#define sffnctscount 92
+#define sffnctscount 96
+/* sfcmplxfunc starts with the operators, which are reached through
+ * sffe_operator/sffe_unary_operator rather than by name. Lookups by name start
+ * after them. */
+#define sffnctsfirst 6
 #define sfvarscount 6
 #define cmplxset(c, r, i) GSL_SET_COMPLEX(&c, r, i)
 #define real(c) GSL_REAL((c))
 #define imag(c) GSL_IMAG((c))
 
-static const int LANCZOS_G = 7;
-static const double LANCZOS_P[] = {
-    0.99999999999980993,
-    676.5203681218851,
-    -1259.1392167224028,
-    771.32342877765313,
-    -176.61502916214059,
-    12.507343278686905,
-    -0.13857109526572012,
-    9.9843695780195716e-6,
-    1.5056327351493116e-7
-};
-
 
 sfarg *sfadd(sfarg *const p);   /*  +  */
 sfarg *sfsub(sfarg *const p);   /*  -  */
+sfarg *sfneg(sfarg *const p);   /* unary - */
+
+/* Iteration the fractal engine is currently on, counting from 0. Set it before
+ * evaluating a formula that uses ifiter/ifiterl. */
+extern thread_local unsigned int sffe_iteration;
+sfarg *sfifiter(sfarg *const p);  /* ifiter  - cycles through its arguments */
+sfarg *sfifiterl(sfarg *const p); /* ifiterl - holds on the last argument */
+unsigned int sfifiter_sel(unsigned int argc);
+unsigned int sfifiterl_sel(unsigned int argc);
 sfarg *sfmul(sfarg *const p);   /*  *  */
 sfarg *sfdiv(sfarg *const p);   /*  /  */
 sfarg *sfsin(sfarg *const p);   /* sin */
@@ -45,7 +45,10 @@ sfarg *sfasin(sfarg *const p);  /* asin */
 sfarg *sfacos(sfarg *const p);  /* acos */
 sfarg *sfatan(sfarg *const p);  /* atan */
 sfarg *sfacot(sfarg *const p);  /* actan */
-sfarg *sfatan2(sfarg *const p); /* atan2 */
+/* atan2(y, x): atan2 of the real parts + i*atan2 of the imaginary parts.
+ * Real arguments give the plain atan2, unlike atan2s. */
+sfarg *sfatan2(sfarg *const p);
+
 sfarg *sfsinh(sfarg *const p);  /* sinh */
 sfarg *sfcosh(sfarg *const p);  /* cosh */
 sfarg *sftanh(sfarg *const p);  /* tanh */
@@ -61,7 +64,9 @@ sfarg *sfpowi(sfarg *const p);  /* double pow */
 sfarg *sfpowdc(sfarg *const p); /* double to csflx pow */
 sfarg *sfsqr(sfarg *const p);   /* sqr */
 sfarg *sfsqrt(sfarg *const p);  /* sqrt */
-sfarg *sfrtni(sfarg *const p);  /* rtni */
+sfarg *sfrtni(sfarg *const p);  /* rtni  - stores its root over its first
+                                   argument and evaluates to -1 */
+sfarg *sfrtni2(sfarg *const p); /* rtni2 - the same root, returned normally */
 sfarg *sfinv(sfarg *const p);   /* cinv */
 sfarg *sfceil(sfarg *const p);  /* ceil */
 sfarg *sffloor(sfarg *const p); /* floor */
@@ -79,8 +84,10 @@ sfarg *sfbship(sfarg *const p);  /* bship - burning ship */
 sfarg *sfbshipr(sfarg *const p);  /* bshipr - burning ship only for real  */
 sfarg *sfbshipi(sfarg *const p);  /* bshipi - burning ship only for imag */
 
-sfarg *sfrect(sfarg *const p);  /* rect coordinates f(z1,z2) = r1+i*i2 */
-sfarg *sfpolar(sfarg *const p); /* polar coordinates f(z1,z2) = m1*e^(i*a2) */
+/* These two take their two halves from opposite arguments; the comments here
+ * used to claim the other way round. */
+sfarg *sfrect(sfarg *const p);  /* rect(z1,z2)  = real(z2) + i*imag(z1) */
+sfarg *sfpolar(sfarg *const p); /* polar(z1,z2) = |z2| * e^(i*arg(z1)) */
 
 /* Comparison function (r only by real value,
  * i only by imag, m by modulo, else by both real and imag) */

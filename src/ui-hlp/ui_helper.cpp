@@ -2205,19 +2205,20 @@ void uih_setformula(uih_context *c, int num)
 
 void uih_sffeset(uih_context *c, sffe *parser, const char *formula)
 {
-    char error[200];
-    char previous[200];
-    if (c->fcontext->userformula->expression)
-        strcpy(previous, c->fcontext->userformula->expression);
-    else
-        strcpy(previous, USER_FORMULA);
+    char error[SFFE_ERRORMSG_SIZE];
+    /* A user formula has no length limit, so the formula to fall back on goes
+     * on the heap; copying it into a fixed stack buffer overflowed it. */
+    char *previous = mystrdup(c->fcontext->userformula->expression
+                                  ? c->fcontext->userformula->expression
+                                  : USER_FORMULA);
     parser->errormsg = error;
     int errorcode = sffe_parse(&parser, formula);
     if (errorcode > 0) {
         if (errorcode != EmptyFormula || parser != c->fcontext->userinitial) {
             tl_update_time(); // otherwise error doesn't display long enough
             uih_error(c, error);
-            sffe_parse(&parser, previous);
+            if (previous)
+                sffe_parse(&parser, previous);
         }
     } else {
         if (parser->expression)
@@ -2229,6 +2230,7 @@ void uih_sffeset(uih_context *c, sffe *parser, const char *formula)
             uih_recalculate(c);
         }
     }
+    free(previous);
     parser->errormsg = NULL;
 }
 

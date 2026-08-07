@@ -1529,6 +1529,7 @@ void sffe_setlocal(fractal_context *c)
     }                                                                          \
     cmplxset(sffe_c, pre, pim);                                                \
     cmplxset(sffe_x, zre, zim);                                                \
+    sffe_iteration = 0;                                                        \
     if (sffe_initial_valid)                                                    \
         sffe_z = sffe_eval(sffe_initial_local);                                \
     else {                                                                     \
@@ -1555,7 +1556,8 @@ bool pndef = cfractalc.pndefault; unsigned int maxit                           \
         pim = imag(sffe_p[0]);                                                 \
         n = iter > 1 ? zre*zre - 2*zre*pre + zim*zim - 2*pim*zim + pre*pre + pim*pim : 0; \
     }                                                                          \
-    cmplxset(sffe_n, maxit - iter + 1, 0);
+    cmplxset(sffe_n, maxit - iter + 1, 0);                                     \
+    sffe_iteration += 1;
 #define BTEST newtok ?                                                         \
 greater_then_1Em6(n) \
     : less_than_4(zre *zre + zim * zim)
