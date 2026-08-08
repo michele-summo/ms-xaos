@@ -8,7 +8,7 @@
 // one says which it is. The name is only what gets displayed; the application
 // name Qt is given stays "XaoS" for both, since that is also what decides
 // where the settings are stored and the two should go on sharing those.
-#define XaoS_VERSION_BASE "4.3.3_MS_HACK6"
+#define XaoS_VERSION_BASE "4.3.3_MS_HACK7"
 #ifdef USE_FLOAT128
 #define XaoS_NAME "XaoS Quad"
 #define XaoS_VERSION XaoS_VERSION_BASE "_Quad"
