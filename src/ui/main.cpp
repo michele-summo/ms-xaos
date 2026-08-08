@@ -230,12 +230,14 @@ int ui_render(void)
         if (imgtype != NULL) {
             if (!strcmp("256", imgtype))
                 imagetype = C256;
-            else if (!strcmp("truecolor", imgtype)) {
+            else if (!strcmp("truecolor", imgtype))
+                imagetype = TRUECOLOR;
+            else
                 x_fatalerror("Unknown image type:%s", imgtype);
-            }
         }
-        if (defsize != NULL && !sscanf(defsize, "%ix%i", &width, &height) &&
-            (width <= 0 || height <= 0)) {
+        if (defsize != NULL &&
+            (sscanf(defsize, "%ix%i", &width, &height) != 2 || width <= 0 ||
+             height <= 0)) {
             x_fatalerror("Invalid size (use for example 320x200");
         }
         if (framerate <= 0)

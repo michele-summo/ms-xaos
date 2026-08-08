@@ -11,4 +11,5 @@ long int XaoS_random(void);
 char *mystrdup(const char *);
 
 number_t xstrtonum(const char *s, char **sp);
+const char *xnumtostr(char *buf, int size, number_t number, int digits);
 #endif

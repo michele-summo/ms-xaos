@@ -36,6 +36,11 @@ class FractalWidget : public QWidget
     FractalWidget();
     QSize sizeHint() const;
     QPointF mousePosition();
+    // The size the fractal image has to be calculated at, in real device
+    // pixels rather than the logical ones the widget is laid out in. The two
+    // differ by the display scaling factor, which is what Windows changes when
+    // the text size is raised above 100%.
+    QSize imageSize() const;
     void setImage(struct image *image);
 };
 

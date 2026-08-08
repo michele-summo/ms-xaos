@@ -16,7 +16,22 @@ FractalWidget::FractalWidget()
     setAttribute(Qt::WA_OpaquePaintEvent, true);
 }
 
-QPointF FractalWidget::mousePosition() { return m_mousePosition; }
+// Both of these convert from the logical coordinates Qt lays the widget out
+// in to the device pixels the fractal engine works in. They are the same thing
+// only while the display scaling is 100%; above that the engine has to be told
+// the real pixel count, or it computes a smaller image that then gets stretched
+// over the window and comes out blocky.
+QPointF FractalWidget::mousePosition()
+{
+    return m_mousePosition * devicePixelRatioF();
+}
+
+QSize FractalWidget::imageSize() const
+{
+    const qreal ratio = devicePixelRatioF();
+    return QSize(qMax(1, qRound(width() * ratio)),
+                 qMax(1, qRound(height() * ratio)));
+}
 
 void FractalWidget::setImage(struct image *image) { m_image = image; }
 
@@ -55,6 +70,11 @@ void FractalWidget::paintEvent(QPaintEvent */*event*/)
         QImage *qimage =
             reinterpret_cast<QImage **>(m_image->data)[m_image->currimage];
         painter.setCompositionMode(QPainter::CompositionMode_Source);
+        // The image is calculated in device pixels (see imageSize), so it has
+        // to be labelled as such: drawImage places it by its logical size, and
+        // an unlabelled image is taken to be one logical pixel per pixel and
+        // would be scaled up by the display factor.
+        qimage->setDevicePixelRatio(devicePixelRatioF());
         painter.drawImage(0, 0, *qimage);
     }
 }

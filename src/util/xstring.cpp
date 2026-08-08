@@ -1,5 +1,6 @@
 #include <cstring>
 #include <cstdlib>
+#include <cstdio>
 
 #include "config.h"
 #include "xio.h"
@@ -27,6 +28,35 @@ number_t xstrtonum(const char *s, char **sp)
     return strtod(s, sp);
 #endif
 #endif
+}
+
+/* The counterpart of xstrtonum: writes a number_t into buf with the requested
+ * number of significant digits, and returns buf so it can be used inline.
+ *
+ * %G rather than a fixed number of decimal places, because a view that has
+ * been zoomed into is far smaller than any fixed format can show -- printed as
+ * %1.12f, a size of 1e-13 reads as 0.000000000000, which is what the status
+ * bar used to display once past the first dozen digits of the zoom. */
+const char *xnumtostr(char *buf, int size, number_t number, int digits)
+{
+    char fs[16];
+    if (digits < 1)
+        digits = 1;
+    if (digits > NUMBER_DIGITS)
+        digits = NUMBER_DIGITS;
+#ifdef USE_FLOAT128
+    snprintf(fs, sizeof(fs), "%%.%iQG", digits);
+    quadmath_snprintf(buf, size, fs, (__float128)number);
+#else
+#ifdef USE_LONG_DOUBLE
+    snprintf(fs, sizeof(fs), "%%.%iLG", digits);
+    snprintf(buf, size, fs, (long double)number);
+#else
+    snprintf(fs, sizeof(fs), "%%.%iG", digits);
+    snprintf(buf, size, fs, (double)number);
+#endif
+#endif
+    return buf;
 }
 
 char *mystrdup(const char *c)

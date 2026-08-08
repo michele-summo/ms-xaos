@@ -470,7 +470,8 @@ void MainWindow::eventLoop()
         inmovement = 0;
 
         if (shouldResize) {
-            resizeImage(widget->size().width(), widget->size().height());
+            resizeImage(widget->imageSize().width(),
+                        widget->imageSize().height());
             shouldResize = false;
         }
     });
@@ -598,8 +599,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     if (!pixelheight)
         pixelheight = 2.54 / screen->physicalDotsPerInchY();
 
-    int width = widget->size().width();
-    int height = widget->size().height();
+    int width = widget->imageSize().width();
+    int height = widget->imageSize().height();
     struct image *image = makeImage(width, height);
     uih = uih_mkcontext(PIXELSIZE, image, ui_passfunc, ui_message,
                         ui_updatemenus);

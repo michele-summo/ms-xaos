@@ -2476,12 +2476,28 @@ static void uih_drawstatus(uih_context *uih, void * /*data*/)
 #endif
     xprint(uih->image, uih->font, 0, statusstart + h, str, FGCOLOR(uih),
            BGCOLOR(uih), 0);
-    sprintf(str, TR("Message", "View:[%1.12f,%1.12f]"),
-            (double)uih->fcontext->s.cr, (double)uih->fcontext->s.ci);
+    /* Both lines used a fixed twelve decimal places, taken through a double.
+     * That stops saying anything useful as soon as the view is zoomed past
+     * 1e-12: the size reads as 0.000000000000 and the centre is truncated
+     * long before the digits the build actually carries run out. How many
+     * digits of the centre are worth showing follows from how far in the view
+     * is -- the exponent of the size is where neighbouring pixels start to
+     * differ -- and reading that exponent back from a one-digit rendering
+     * avoids needing a log10 for whatever type number_t is. */
+    char cbuf[64], cbuf2[64], sbuf[64];
+    int digits = 12;
+    const char *exponent =
+        strchr(xnumtostr(sbuf, sizeof(sbuf), uih->fcontext->s.rr, 1), 'E');
+    if (exponent)
+        digits = 6 - atoi(exponent + 1);
+    sprintf(str, TR("Message", "View:[%s,%s]"),
+            xnumtostr(cbuf, sizeof(cbuf), uih->fcontext->s.cr, digits),
+            xnumtostr(cbuf2, sizeof(cbuf2), uih->fcontext->s.ci, digits));
     xprint(uih->image, uih->font, 0, statusstart + 2 * h, str, FGCOLOR(uih),
            BGCOLOR(uih), 0);
-    sprintf(str, TR("Message", "size:[%1.12f,%1.12f]"),
-            (double)uih->fcontext->s.rr, (double)uih->fcontext->s.ri);
+    sprintf(str, TR("Message", "size:[%s,%s]"),
+            xnumtostr(cbuf, sizeof(cbuf), uih->fcontext->s.rr, 6),
+            xnumtostr(cbuf2, sizeof(cbuf2), uih->fcontext->s.ri, 6));
     xprint(uih->image, uih->font, 0, statusstart + 3 * h, str, FGCOLOR(uih),
            BGCOLOR(uih), 0);
     sprintf(str, TR("Message", "Rotation:%4.2f   Screen size:%i:%i"),
