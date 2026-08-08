@@ -53,3 +53,33 @@ if(DEEPZOOM)
 endif(DEEPZOOM)
 
 add_test(NAME sffe_devel_build COMMAND sffe_test_devel)
+
+# Regression net for the fractal iteration loops. The formula table exposes
+# every loop as an iterationfunc, so they can be driven directly over a grid
+# without going through the renderer; the checksums cover the arithmetic and
+# the colouring that follows it. Compare against the recorded output to catch
+# an unintended change to any of them.
+add_executable(engine_ref
+   engine_ref.cpp
+   ${CMAKE_SOURCE_DIR}/src/engine/formulas.cpp
+   ${CMAKE_SOURCE_DIR}/src/sffe/sffe.cpp
+   ${CMAKE_SOURCE_DIR}/src/sffe/sffe_cmplx_gsl.cpp
+   ${CMAKE_SOURCE_DIR}/src/sffe/gsl_complex_math.c
+   ${CMAKE_SOURCE_DIR}/src/util/xstring.cpp
+)
+set_target_properties(engine_ref PROPERTIES AUTOMOC OFF AUTORCC OFF)
+target_compile_definitions(engine_ref PRIVATE _USE_MATH_DEFINES)
+target_include_directories(engine_ref PRIVATE ${CMAKE_SOURCE_DIR}/src/engine)
+if(DEEPZOOM)
+   target_link_libraries(engine_ref quadmath)
+endif(DEEPZOOM)
+
+# The recorded checksums are those of a long double build; a build at another
+# precision legitimately differs, so only compare when they should match.
+if(NOT DEEPZOOM)
+   add_test(NAME engine_unchanged
+            COMMAND ${CMAKE_COMMAND}
+                    -DEXE=$<TARGET_FILE:engine_ref>
+                    -DEXPECTED=${CMAKE_CURRENT_SOURCE_DIR}/engine_ref.expected
+                    -P ${CMAKE_CURRENT_SOURCE_DIR}/compare_engine.cmake)
+endif(NOT DEEPZOOM)
