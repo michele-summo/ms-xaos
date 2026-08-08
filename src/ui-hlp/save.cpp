@@ -674,6 +674,14 @@ int uih_save_enable(struct uih_context *uih, xio_file f, int mode)
                "\n"
                ";  - a realtime interactive fractal zoomer\n"
                ";Use xaos -loadpos <filename> to display it\n");
+#ifdef USE_FLOAT128
+    /* The quad build records what it computed at, before anything else. It is
+     * a command and not a comment so that a build which does not know it stops
+     * rather than opening the file and drawing a different picture: 113 bits
+     * of mantissa is not something a narrower build can reproduce, and saying
+     * so is worth losing the ability to open it there. */
+    save_intc(uih, "precision", NUMBER_MANTISSA_BITS);
+#endif
     uih_saveframe(uih);
     uih_updatemenus(uih, "save");
     xio_putc('\n', f);

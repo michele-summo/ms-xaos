@@ -665,6 +665,29 @@ void uih_playfilter(struct uih_context *uih, dialogparam *p)
     seterr(TR("Error", "Unknown filter"));
 }
 
+/* (precision N) -- N is the mantissa width of the build that saved the file.
+ *
+ * Only the quad build writes it, and it is a command rather than a comment on
+ * purpose: a version that does not know it refuses the file outright with
+ * "precision:unknown function", which is the intent. A position computed at
+ * 113 bits cannot be reproduced by a narrower build, and failing to open is
+ * more honest than opening it and drawing something else.
+ *
+ * Within this fork the file still opens, with a warning, since a build that
+ * knows the command can at least say what is being lost. */
+void uih_playprecision(struct uih_context *uih, int bits)
+{
+    if (bits > NUMBER_MANTISSA_BITS)
+        /* A message and not uih_error: the position does open, and what is
+         * wrong with it is that the last digits of every coordinate are gone,
+         * not that it failed to load. uih_error also records errstring, which
+         * the animation renderer reads as a failed frame. */
+        uih_message(uih,
+                    TR("Message",
+                       "Saved at higher precision than this build has: the "
+                       "picture will not be reproduced exactly."));
+}
+
 void uih_playdefpalette(struct uih_context *uih, int shift)
 {
     if (uih->zengine->fractalc->palette == NULL)

@@ -53,16 +53,23 @@
 // 20 for long double, one short in both cases, so a saved position came back
 // at a slightly different place than it was saved. Printing more than needed
 // only pads with zeros, printing fewer loses the view.
+//
+// NUMBER_MANTISSA_BITS is what a saved position records about the build that
+// wrote it, so that opening it somewhere narrower can say the picture will not
+// come back exactly rather than quietly drawing a different one.
 #ifdef USE_FLOAT128
 typedef __float128 number_t;
 #define NUMBER_DIGITS 36 /* 113 bits of mantissa */
+#define NUMBER_MANTISSA_BITS 113
 #else
 #ifdef USE_LONG_DOUBLE
 typedef long double number_t;
 #define NUMBER_DIGITS 21 /* 64 bits on x87 */
+#define NUMBER_MANTISSA_BITS 64
 #else
 typedef double number_t;
 #define NUMBER_DIGITS 17 /* 53 bits */
+#define NUMBER_MANTISSA_BITS 53
 #endif
 #endif
 

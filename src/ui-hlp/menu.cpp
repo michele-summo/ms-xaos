@@ -1201,6 +1201,10 @@ void uih_registermenus_i18n(void)
                  uih_playload, loaddialog);
     MENUDIALOG_I("palette", NULL, TR("Menu", "Default palette"),
                  "defaultpalette", MP, uih_playdefpalette, uih_numdialog);
+    /* Written only by the quad build, and only ever read back from a file --
+     * hence MP, which keeps it out of the menus. See uih_playprecision. */
+    MENUDIALOG_I("fractal", NULL, TR("Menu", "Precision"), "precision", MP,
+                 uih_playprecision, uih_numdialog);
     MENUDIALOG_I("fractal", NULL, TR("Menu", "Formula"), "formula", MP,
                  uih_play_formula, uih_formuladialog);
     MENUDIALOG_I("ui", NULL, TR("Menu", "Maximal zooming step"), "maxstep", MP,

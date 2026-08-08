@@ -22,6 +22,7 @@ void uih_playfilter(struct uih_context *uih, dialogparam *p);
 void uih_zoomcenter(struct uih_context *uih, number_t x, number_t y);
 void uih_playpalette(struct uih_context *uih);
 void uih_playdefpalette(struct uih_context *uih, int shift);
+void uih_playprecision(struct uih_context *uih, int bits);
 void uih_playusleep(struct uih_context *uih, int time);
 void uih_playtextsleep(struct uih_context *uih);
 void uih_playwait(struct uih_context *uih);
