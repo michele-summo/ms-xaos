@@ -246,30 +246,28 @@ static void save_nstringc(struct uih_context *uih, const char *name, int number,
     save_keystringc(uih, name, texts[number]);
 }
 
-static int ndecimals(struct uih_context *uih)
-{
-    number_t n = 10000;
-    number_t m = uih->fcontext->s.rr;
-    int i;
-    if (uih->fcontext->s.ri < m)
-        m = uih->fcontext->s.ri;
-    if (uih->fcontext->s.ri > 100 || uih->fcontext->s.rr > 100)
-        return (20);
-    for (i = 0; i < 20 && m < n; i++, n /= 10)
-        ;
-    return (i);
-}
-
+/* The view used to be written through ndecimals(), which counted how many
+ * decimal places the size needed and passed that as the digit count. Two
+ * things were wrong with it. The count went to a %.*G format, where it means
+ * significant digits rather than places after the point, so it under-reported
+ * for any centre of modulus above one. And it was capped well below what
+ * number_t holds: at a zoom of 1e-13 it asked for 17 digits of a coordinate
+ * carrying 21, so a deep position came back a fraction of a pixel away from
+ * where it was saved, which at a high iteration count is a visibly different
+ * picture.
+ *
+ * The view now goes out at full precision, like the juliaseed and the
+ * perturbation always have. It costs a few characters per line and buys a
+ * position that reloads exactly. */
 static void savepos(struct uih_context *uih);
 
 static void savepos(struct uih_context *uih)
 {
-    int n = ndecimals(uih);
     start_save(uih, "view");
-    save_float2(uih, uih->fcontext->s.cr, n);
-    save_float2(uih, uih->fcontext->s.ci, n);
-    save_float2(uih, uih->fcontext->s.rr, n);
-    save_float2(uih, uih->fcontext->s.ri, n);
+    save_float(uih, uih->fcontext->s.cr);
+    save_float(uih, uih->fcontext->s.ci);
+    save_float(uih, uih->fcontext->s.rr);
+    save_float(uih, uih->fcontext->s.ri);
     stop_save(uih);
     uih->savec->fcontext->s = uih->fcontext->s;
 }
@@ -278,12 +276,11 @@ static void savepos2(struct uih_context *uih);
 
 static void savepos2(struct uih_context *uih)
 {
-    int n = ndecimals(uih);
     start_save(uih, "animateview");
-    save_float2(uih, uih->fcontext->s.cr, n);
-    save_float2(uih, uih->fcontext->s.ci, n);
-    save_float2(uih, uih->fcontext->s.rr, n);
-    save_float2(uih, uih->fcontext->s.ri, n);
+    save_float(uih, uih->fcontext->s.cr);
+    save_float(uih, uih->fcontext->s.ci);
+    save_float(uih, uih->fcontext->s.rr);
+    save_float(uih, uih->fcontext->s.ri);
     stop_save(uih);
     uih->savec->fcontext->s = uih->fcontext->s;
 }
@@ -292,12 +289,11 @@ static void savepos3(struct uih_context *uih);
 
 static void savepos3(struct uih_context *uih)
 {
-    int n = ndecimals(uih);
     start_save(uih, "morphview");
-    save_float2(uih, uih->fcontext->s.cr, n);
-    save_float2(uih, uih->fcontext->s.ci, n);
-    save_float2(uih, uih->fcontext->s.rr, n);
-    save_float2(uih, uih->fcontext->s.ri, n);
+    save_float(uih, uih->fcontext->s.cr);
+    save_float(uih, uih->fcontext->s.ci);
+    save_float(uih, uih->fcontext->s.rr);
+    save_float(uih, uih->fcontext->s.ri);
     stop_save(uih);
     uih->savec->fcontext->s = uih->fcontext->s;
 }
@@ -313,23 +309,14 @@ void uih_saveframe(struct uih_context *uih)
             save_noparam(uih, "initstate");
         if (s->nonfractalscreen && !uih->nonfractalscreen)
             save_noparam(uih, "display"), s->nonfractalscreen = 0;
-        for (i = uih_nfilters; i >= 0; i--) {
-            if (uih->filter[i] != NULL) {
-                if (s->filter[i] != 1) {
-                    start_save(uih, "filter");
-                    save_keystring(uih, uih->filter[i]->action->shortname);
-                    save_onoff(uih, 1);
-                    s->filter[i] = 1;
-                    stop_save(uih);
-                }
-            } else if (s->filter[i] != 0) {
-                s->filter[i] = 0;
-                start_save(uih, "filter");
-                save_keystring(uih, uih_filters[i]->shortname);
-                save_onoff(uih, 0);
-                stop_save(uih);
-            }
-        }
+        /* The palette goes out before the filters, not after.
+         *
+         * Enabling the palette filter and then setting the palette does not
+         * leave the same state as doing it the other way round, and the file
+         * has to describe the order the state was actually built in. Written
+         * filters-first, examples/Hubicka/spiral.xpf -- default palette 34
+         * with the palette filter on -- came back with different colours than
+         * it was saved with, which is how this was found. */
         if (uih->palettechanged) {
             switch (uih->palettetype) {
                 case 0:
@@ -362,6 +349,23 @@ void uih_saveframe(struct uih_context *uih)
             save_intc(uih, "shiftpalette",
                       uih->manualpaletteshift - s->manualpaletteshift),
                 s->manualpaletteshift = uih->manualpaletteshift;
+        for (i = uih_nfilters; i >= 0; i--) {
+            if (uih->filter[i] != NULL) {
+                if (s->filter[i] != 1) {
+                    start_save(uih, "filter");
+                    save_keystring(uih, uih->filter[i]->action->shortname);
+                    save_onoff(uih, 1);
+                    s->filter[i] = 1;
+                    stop_save(uih);
+                }
+            } else if (s->filter[i] != 0) {
+                s->filter[i] = 0;
+                start_save(uih, "filter");
+                save_keystring(uih, uih_filters[i]->shortname);
+                save_onoff(uih, 0);
+                stop_save(uih);
+            }
+        }
         if (s->fcontext->currentformula != uih->fcontext->currentformula) {
             save_keystringc(uih, "formula",
                             uih->fcontext->currentformula->shortname),

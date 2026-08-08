@@ -72,6 +72,9 @@ foreach(prec ${XAOS_TEST_PRECISIONS})
                         sffe_precision.cpp ${SFFE_SOURCES})
    add_test(NAME sffe_precision_${suffix} COMMAND sffe_precision_${suffix})
 
+   # (this loop is per precision; the save/load check below is not, since it
+   #  drives the built binary rather than compiling anything of its own)
+
    # How accurate gamma and lambertw are, which the case table cannot say:
    # those cases compare against values a double holds, so an implementation
    # capped at fifteen digits passes them at every precision.
@@ -133,3 +136,20 @@ foreach(prec ${XAOS_TEST_PRECISIONS})
          "    engine_ref_${suffix} > tests/engine_ref.${suffix}.expected")
    endif()
 endforeach()
+
+# Saving a position and loading it back has to land on the same image. This
+# drives the built binary rather than compiling anything, so it lives outside
+# the per-precision loop and runs once, against whichever XaoS was built.
+#
+# It earns its keep: the palette used to be written after the filters, and a
+# position combining a palette with the palette emulation filter came back in
+# different colours -- one of the 169 shipped examples was affected, and
+# nothing would have reported it.
+if(TARGET XaoS)
+   add_test(NAME position_roundtrip
+            COMMAND ${CMAKE_COMMAND}
+                    -DXAOS=$<TARGET_FILE:XaoS>
+                    -DPOSITIONS=${CMAKE_CURRENT_SOURCE_DIR}/positions
+                    -DWORK=${CMAKE_CURRENT_BINARY_DIR}/roundtrip
+                    -P ${CMAKE_CURRENT_SOURCE_DIR}/roundtrip.cmake)
+endif()

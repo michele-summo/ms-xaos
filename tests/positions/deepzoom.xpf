@@ -1,0 +1,5 @@
+; Enough digits that a position written short would land somewhere else.
+(initstate)
+(formula 'mandel)
+(maxiter 3000)
+(view -0.743643887037158704752 0.131825904205311970493 1E-13 1E-13)

@@ -1,0 +1,10 @@
+; The case that found the bug: a palette together with the palette emulation
+; filter. Saved with the filter written first, this came back in other colours.
+(initstate)
+(defaultpalette 34)
+(formula 'mandel3)
+(filter 'palette #t)
+(juliaseed 0.062415825408122496282 -0.77685069099231027928)
+(maxiter 200)
+(julia #t)
+(view 0.0070184 0.003958 0.13512 0.13512)
