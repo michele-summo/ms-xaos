@@ -248,6 +248,59 @@ else()
     if(BUILD_QUAD_BINARY)
        xaos_add_binary(XaoS-quad USE_FLOAT128)
     endif(BUILD_QUAD_BINARY)
+
+    # Both binaries land in bin/ next to the sources, which is where the .pro
+    # build has always put its own and where the catalogs and examples are
+    # looked for when running from the tree.
+    set(XAOS_BIN_DIR ${CMAKE_SOURCE_DIR}/bin)
+    set(XAOS_BINARIES XaoS)
+    if(BUILD_QUAD_BINARY)
+       list(APPEND XAOS_BINARIES XaoS-quad)
+    endif(BUILD_QUAD_BINARY)
+    foreach(t ${XAOS_BINARIES})
+       set_target_properties(${t} PROPERTIES
+          RUNTIME_OUTPUT_DIRECTORY ${XAOS_BIN_DIR}
+          RUNTIME_OUTPUT_DIRECTORY_DEBUG ${XAOS_BIN_DIR}
+          RUNTIME_OUTPUT_DIRECTORY_RELEASE ${XAOS_BIN_DIR}
+          RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${XAOS_BIN_DIR}
+          RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL ${XAOS_BIN_DIR})
+    endforeach()
+
+    # 'deploy' fills bin/ with everything the binaries need to run on a machine
+    # without Qt installed. Kept as a target of its own rather than a post-build
+    # step because windeployqt takes a few seconds and there is no reason to pay
+    # that on every compile.
+    if(WIN32)
+       find_program(WINDEPLOYQT windeployqt HINTS ${QT_BIN_DIR}
+                    ${_qt_bin_dir} $<TARGET_FILE_DIR:Qt6::qmake>)
+       if(WINDEPLOYQT)
+          set(deploy_cmds "")
+          foreach(t ${XAOS_BINARIES})
+             list(APPEND deploy_cmds
+                  COMMAND ${WINDEPLOYQT} --compiler-runtime --no-translations
+                          $<TARGET_FILE:${t}>)
+          endforeach()
+          # windeployqt knows about Qt and the compiler runtime, but not about
+          # libquadmath: only XaoS-quad links it, and it comes from the
+          # toolchain rather than from Qt.
+          if(BUILD_QUAD_BINARY)
+             get_filename_component(_tc_bin ${CMAKE_CXX_COMPILER} DIRECTORY)
+             find_file(QUADMATH_DLL NAMES libquadmath-0.dll quadmath.dll
+                       HINTS ${_tc_bin})
+             if(QUADMATH_DLL)
+                list(APPEND deploy_cmds
+                     COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                             ${QUADMATH_DLL} ${XAOS_BIN_DIR})
+             else()
+                message(WARNING "libquadmath DLL not found next to the compiler; XaoS-quad will not run outside a MinGW shell until it is copied into bin/")
+             endif()
+          endif(BUILD_QUAD_BINARY)
+          add_custom_target(deploy DEPENDS ${XAOS_BINARIES} ${deploy_cmds}
+                            COMMENT "Filling bin/ with the Qt and compiler runtime")
+       else()
+          message(STATUS "windeployqt not found; the 'deploy' target is unavailable")
+       endif()
+    endif(WIN32)
 endif(EMSCRIPTEN)
 
 if(EMSCRIPTEN)

@@ -616,8 +616,9 @@ int sffe_parse(sffe **parser, const char *expression)
 
     /* Number of entries in _functions, which is one per function and operator
      * the tokenizer found. Not the same as the final _parser->oprCount: that
-     * one counts the dispatch operations too. */
-    unsigned int function_count;
+     * one counts the dispatch operations too. Only the SFFE_DEVEL tracing
+     * reads it back. */
+    [[maybe_unused]] unsigned int function_count;
 
     /**************used defines */
 

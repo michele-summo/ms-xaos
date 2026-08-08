@@ -80,6 +80,31 @@ RESOURCES += XaoS.qrc
 
 DESTDIR = $$PWD/bin
 
+# Add "deploy" to CONFIG to have the Qt and compiler runtime copied into
+# DESTDIR after linking, so that bin/ runs on a machine without Qt installed:
+#
+#   Projects -> Build Steps -> Additional arguments:  CONFIG+=quad CONFIG+=deploy
+#
+# It costs a few seconds per link, hence off by default. The CMake build has
+# the same thing as a separate 'deploy' target.
+#
+# This has to come after DESTDIR is set, since qmake reads the file in order,
+# and after the release block above, which assigns QMAKE_POST_LINK with '='
+# and would otherwise drop whatever was appended here.
+win32:deploy {
+    !isEmpty(QMAKE_POST_LINK): QMAKE_POST_LINK += &&
+    QMAKE_POST_LINK += $$shell_quote($$shell_path($$[QT_INSTALL_BINS]/windeployqt.exe)) \
+                       --compiler-runtime --no-translations \
+                       $$shell_quote($$shell_path($$DESTDIR/$${TARGET}.exe))
+    # windeployqt covers Qt and the compiler runtime, but not libquadmath:
+    # that comes from the toolchain, and only the quad build links it.
+    contains(DEFINES, USE_FLOAT128) {
+        QMAKE_POST_LINK += && $$QMAKE_COPY \
+            $$shell_quote($$shell_path($$dirname(QMAKE_CXX)/libquadmath-0.dll)) \
+            $$shell_quote($$shell_path($$DESTDIR))
+    }
+}
+
 include($$PWD/i18n/i18n.pri)
 include($$PWD/src/include/include.pri)
 include($$PWD/src/ui/ui.pri)
