@@ -933,17 +933,36 @@ static void uih_waitfunc(struct filter *f)
  * that shows the traces and reports none rules the theory out. */
 static FILE *uih_diag_log = NULL;
 static long uih_diag_calculations = 0, uih_diag_withoverlay = 0;
+static long uih_diag_mismatches = 0;
 
 static void uih_diag_summary(void)
 {
     if (uih_diag_log == NULL)
         return;
-    fprintf(uih_diag_log, "\n%ld calculations, %ld of them with the overlays "
-                          "still on the image.\n%s\n",
-            uih_diag_calculations, uih_diag_withoverlay,
-            uih_diag_withoverlay
-                ? "The overlays are reaching the engine: that is the fault."
-                : "The overlays were always cleared first: look elsewhere.");
+    fprintf(uih_diag_log,
+            "\n%ld calculations, %ld of them with the overlays still on the "
+            "image.\n%ld restores left the image different from how they "
+            "found it.\n%s\n",
+            uih_diag_calculations, uih_diag_withoverlay, uih_diag_mismatches,
+            uih_diag_withoverlay || uih_diag_mismatches
+                ? "The overlays are corrupting the image: that is the fault."
+                : "The overlays behaved: look elsewhere.");
+    fflush(uih_diag_log);
+}
+
+/* Called from wstack.cpp when the area an overlay covered did not come back
+ * the way it went in. Every occurrence means the image is left carrying
+ * pixels that belong to an earlier moment -- which the engine has no reason
+ * to recompute, so they stay, and the next zoom stretches them. */
+void uih_diag_restore_mismatch(int x, int y, int w, int h)
+{
+    uih_diag_mismatches++;
+    if (uih_diag_log == NULL || uih_diag_mismatches > 40)
+        return;
+    fprintf(uih_diag_log,
+            "restore of the %ix%i overlay at %i,%i did not put the image "
+            "back as it was (occurrence %ld, calculation %ld)\n",
+            w, h, x, y, uih_diag_mismatches, uih_diag_calculations);
     fflush(uih_diag_log);
 }
 

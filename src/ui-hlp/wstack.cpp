@@ -7,6 +7,30 @@
 #include "ui_helper.h"
 #include "grlib.h"
 
+#ifdef XAOS_TRACE_DIAG
+/* Diagnostic build only. The contract an overlay has with the image is that
+ * it leaves it exactly as it found it: what it covers is saved before it
+ * draws and put back when it goes. Checking the bookkeeping flag only says
+ * the code believes that happened. Hashing the covered area before the save
+ * and again after the restore says whether it actually did -- which is a
+ * different question once other threads are writing to the same image, or if
+ * a restore lands somewhere other than where the save was taken. */
+void uih_diag_restore_mismatch(int x, int y, int w, int h);
+
+static unsigned long long diag_hash(struct image *img, struct uih_window *w)
+{
+    unsigned long long hash = 14695981039346656037ULL;
+    int xskip = w->x * img->bytesperpixel;
+    int width = w->width * img->bytesperpixel;
+    for (int i = w->y; i < w->y + w->height; i++) {
+        unsigned char *d = (unsigned char *)img->currlines[i] + xskip;
+        for (int k = 0; k < width; k++)
+            hash = (hash ^ d[k]) * 1099511628211ULL;
+    }
+    return hash;
+}
+#endif
+
 /* The "windows" implemented here are just regions of the image, not user
  * interface windows.  They are used to save the pixels that are going to
  * be drawn over (e.g., with a text message) so they can be restored when the
@@ -153,6 +177,10 @@ void uih_clearwindows(struct uih_context *uih)
                     unsigned char *data = uih->image->currlines[i] + xskip;
                     memcpy(data, w->saveddata + (i - w->y) * width, width);
                 }
+#ifdef XAOS_TRACE_DIAG
+                if (diag_hash(uih->image, w) != w->diaghash)
+                    uih_diag_restore_mismatch(w->x, w->y, w->width, w->height);
+#endif
                 /* The buffer stays allocated for the next frame; only the
                  * marker is cleared. */
                 w->savedvalid = 0;
@@ -258,6 +286,9 @@ void uih_drawwindows(struct uih_context *uih)
                         w->savedsize = w->saveddata ? needed : 0;
                     }
                     if (w->saveddata != NULL) {
+#ifdef XAOS_TRACE_DIAG
+                        w->diaghash = diag_hash(img, w);
+#endif
                         for (i = w->y; i < w->y + w->height; i++) {
                             unsigned char *data = img->currlines[i] + xskip;
                             memcpy(w->saveddata + (i - w->y) * width, data,

@@ -290,6 +290,11 @@ struct uih_window {
      * to savedline because windows drawn without a getpos keep a colour in
      * that field. */
     int savedsize, savedvalid;
+#ifdef XAOS_TRACE_DIAG
+    /* Diagnostic build only: what the covered area hashed to when it was
+     * saved, so that the restore can be checked against it. */
+    unsigned long long diaghash;
+#endif
     void *data;
     int flags;
 };
