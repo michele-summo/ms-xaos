@@ -100,6 +100,7 @@ cmake_minimum_required(VERSION 3.14.0)
 project(XaoS)
 
 option(DEEPZOOM "Build the XaoS binary itself at 128-bit precision" OFF)
+option(DIAG "Also build XaoS-diag, which reports overlay/calculation ordering" OFF)
 option(QUAD "Also build a separate XaoS-quad binary at 128-bit precision" ON)
 option(OPENGL "Use OpenGL" OFF)
 
@@ -249,6 +250,16 @@ else()
        xaos_add_binary(XaoS-quad USE_FLOAT128)
     endif(BUILD_QUAD_BINARY)
 
+    # cmake -DDIAG=ON adds a third binary, identical to the first except that
+    # it reports whether a calculation ever starts with the status bar and the
+    # messages still drawn into the image -- see uih_diag_note in
+    # ui_helper.cpp. It writes xaos-diag.txt into the working directory, so it
+    # is a build to reach for while chasing something, not one to keep.
+    if(DIAG)
+       xaos_add_binary(XaoS-diag ${XAOS_PRECISION})
+       target_compile_definitions(XaoS-diag PRIVATE XAOS_TRACE_DIAG)
+    endif(DIAG)
+
     # Both binaries land in bin/ next to the sources, which is where the .pro
     # build has always put its own and where the catalogs and examples are
     # looked for when running from the tree.
@@ -257,6 +268,9 @@ else()
     if(BUILD_QUAD_BINARY)
        list(APPEND XAOS_BINARIES XaoS-quad)
     endif(BUILD_QUAD_BINARY)
+    if(DIAG)
+       list(APPEND XAOS_BINARIES XaoS-diag)
+    endif(DIAG)
     foreach(t ${XAOS_BINARIES})
        set_target_properties(${t} PROPERTIES
           RUNTIME_OUTPUT_DIRECTORY ${XAOS_BIN_DIR}

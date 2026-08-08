@@ -917,10 +917,77 @@ static void uih_waitfunc(struct filter *f)
     uih_clearwindows(uih);
 }
 
+#ifdef XAOS_TRACE_DIAG
+/* Built only into the diagnostic binary (cmake -DDIAG=ON).
+ *
+ * The status bar and the messages are drawn into the fractal image itself.
+ * Before the next calculation runs they have to be taken back off, because
+ * the frame they are sitting in is the one the zoom engine reuses rows from
+ * -- overlay pixels left in it come back out as fractal data and get
+ * stretched across the image, which is the smeared text being chased here.
+ *
+ * uih_clearwindows() is what takes them off, and it is reached through
+ * uih_prepare_image(), which does nothing at all unless uih->display is set.
+ * So the question this answers is simply whether a calculation ever starts
+ * with the overlays still on the image. Every occurrence is a defect; a run
+ * that shows the traces and reports none rules the theory out. */
+static FILE *uih_diag_log = NULL;
+static long uih_diag_calculations = 0, uih_diag_withoverlay = 0;
+
+static void uih_diag_summary(void)
+{
+    if (uih_diag_log == NULL)
+        return;
+    fprintf(uih_diag_log, "\n%ld calculations, %ld of them with the overlays "
+                          "still on the image.\n%s\n",
+            uih_diag_calculations, uih_diag_withoverlay,
+            uih_diag_withoverlay
+                ? "The overlays are reaching the engine: that is the fault."
+                : "The overlays were always cleared first: look elsewhere.");
+    fflush(uih_diag_log);
+}
+
+static void uih_diag_note(uih_context *c)
+{
+    if (uih_diag_log == NULL) {
+        uih_diag_log = fopen("xaos-diag.txt", "w");
+        if (uih_diag_log == NULL)
+            return;
+        fprintf(uih_diag_log, "XaoS overlay diagnostic -- %s\n\n",
+                XaoS_VERSION);
+        atexit(uih_diag_summary);
+    }
+    uih_diag_calculations++;
+    if (c->wdisplayed) {
+        uih_diag_withoverlay++;
+        if (uih_diag_withoverlay <= 40)
+            fprintf(uih_diag_log,
+                    "calculation %ld started with the overlays still on the "
+                    "image\n",
+                    uih_diag_calculations);
+        else if (uih_diag_withoverlay == 41)
+            fprintf(uih_diag_log,
+                    "(further occurrences counted but not listed)\n");
+    }
+    /* Written often enough that the file says something useful even if the
+     * program is killed rather than closed, which is a likely way to end a
+     * session spent reproducing a graphical fault. */
+    if (uih_diag_calculations % 25 == 0 || uih_diag_withoverlay == 1) {
+        fprintf(uih_diag_log, "  ... %ld calculations, %ld with overlays\n",
+                uih_diag_calculations, uih_diag_withoverlay);
+        fflush(uih_diag_log);
+    }
+}
+#endif
+
 void uih_do_fractal(uih_context *c)
 {
     int flags;
     int time;
+
+#ifdef XAOS_TRACE_DIAG
+    uih_diag_note(c);
+#endif
 
     c->interrupt = 0;
     c->display = 0;
