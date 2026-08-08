@@ -55,26 +55,57 @@ int xprint(struct image *image, void *font, int x, int y,
     return strlen(line);
 }
 
-int xtextwidth(struct image */*image*/, void *font, const char *text)
+/* Text metrics depend on the device they are taken for, so these have to be
+ * taken for the image the text is going to be drawn on -- which is what
+ * xprint above does. Measuring with no device at all describes a different
+ * string than the one that gets painted, and the two disagree by the display
+ * scaling factor, so raising the Windows text size above 100% is what makes
+ * it show.
+ *
+ * It matters more than a misplaced label, because these are also what an
+ * overlay's rectangle is built from, and that rectangle is the area saved
+ * before the overlay is drawn and put back when it goes. Anything painted
+ * outside it is never restored: it stays in the frame, which is the one the
+ * zoom engine reuses rows from, and gets stretched across the image. */
+static QFontMetrics imageMetrics(struct image *image, void *font)
+{
+    if (image != NULL && image->data != NULL) {
+        QImage *qimage =
+            reinterpret_cast<QImage **>(image->data)[image->currimage];
+        if (qimage != NULL)
+            return QFontMetrics(getFont(font), qimage);
+    }
+    return QFontMetrics(getFont(font));
+}
+
+int xtextwidth(struct image *image, void *font, const char *text)
 {
     char line[BUFSIZ];
     int pos = strcspn(text, "\n");
     strncpy(line, text, pos);
     line[pos] = '\0';
 
-    QFontMetrics metrics(getFont(font));
-    return metrics.horizontalAdvance(line) + 1;
+    QFontMetrics metrics = imageMetrics(image, font);
+    /* Glyphs can reach past the pen advance, and xprint draws the string a
+     * second time a pixel to the right for its shadow, so the area claimed
+     * has to be wide enough for both. */
+    QRect ink = metrics.boundingRect(line);
+    int right = metrics.horizontalAdvance(line);
+    if (ink.x() + ink.width() > right)
+        right = ink.x() + ink.width();
+    return right + 2;
 }
 
-int xtextheight(struct image */*image*/, void *font)
+int xtextheight(struct image *image, void *font)
 {
-    QFontMetrics metrics(getFont(font));
-    return metrics.height() + 1;
+    QFontMetrics metrics = imageMetrics(image, font);
+    /* Two rather than one, for the same shadow, drawn a pixel down. */
+    return metrics.height() + 2;
 }
 
-int xtextcharw(struct image */*image*/, void *font, const char c)
+int xtextcharw(struct image *image, void *font, const char c)
 {
-    QFontMetrics metrics(getFont(font));
+    QFontMetrics metrics = imageMetrics(image, font);
     return metrics.horizontalAdvance(c);
 }
 
