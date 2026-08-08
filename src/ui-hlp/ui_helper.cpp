@@ -1068,6 +1068,18 @@ static void uih_diag_compare(uih_context *c)
             "%i, image is %ix%i)\n",
             uih_diag_calculations + 1, minx, maxx, miny, maxy,
             c->messg.messagestart, img->width, img->height);
+    /* And what every overlay claimed to occupy, so that the difference can be
+     * placed: inside a claimed rectangle means the restore is incomplete,
+     * outside every one of them means something is drawing beyond the area it
+     * asked to have saved. */
+    {
+        int n = 0;
+        for (struct uih_window *w = c->wtop; w; w = w->next, n++)
+            fprintf(uih_diag_log,
+                    "    window %i claims x %i..%i, y %i..%i%s\n", n, w->x,
+                    w->x + w->width - 1, w->y, w->y + w->height - 1,
+                    w->getpos ? "" : " (line)");
+    }
     fflush(uih_diag_log);
 }
 
