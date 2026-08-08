@@ -1,0 +1,32 @@
+Mandelbrot               calc=6d79a966507a29a5 peri=6d79a966507a29a5 scalc=2b1a163be8602ebc speri=2b1a163be8602ebc
+Mandelbrot^3             calc=5ad181bd371aad43 peri=5ad181bd371aad43 scalc=e4b67f0afb11a215 speri=e4b67f0afb11a215
+Mandelbrot^4             calc=978cf89df3e99ac1 peri=978cf89df3e99ac1 scalc=1cf6c569ad6b354d speri=1cf6c569ad6b354d
+Mandelbrot^5             calc=02f69dacc03a8e42 peri=02f69dacc03a8e42 scalc=175a202f61197877 speri=175a202f61197877
+Mandelbrot^6             calc=2da3e370f6b96d7e peri=2da3e370f6b96d7e scalc=715049cc18098008 speri=715049cc18098008
+Newton                   calc=966b6395aefdce83 peri=0000000000000000 scalc=0000000000000000 speri=0000000000000000
+Newton^4                 calc=966b6395aefdce83 peri=0000000000000000 scalc=0000000000000000 speri=0000000000000000
+Barnsley1 Mandelbrot     calc=faa98e79a237b8c0 peri=0000000000000000 scalc=a347806eab10a70a speri=0000000000000000
+Barnsley2 Mandelbrot     calc=6065e41622804281 peri=0000000000000000 scalc=45e3376de1e44da0 speri=0000000000000000
+Barnsley3 Mandelbrot     calc=c45d34a932d376c4 peri=0000000000000000 scalc=f0b57d3d9424810a speri=0000000000000000
+Octo                     calc=33a260070cc47497 peri=0000000000000000 scalc=cea617a200a0855f speri=0000000000000000
+MandPhoenix              calc=e219407293fbfe9d peri=e219407293fbfe9d scalc=01f8b5b2761d430a speri=01f8b5b2761d430a
+Magnet                   calc=1760c5dd50f82d5b peri=1760c5dd50f82d5b scalc=7953bf6637e74c8e speri=7953bf6637e74c8e
+Magnet2                  calc=efe156c1270aeeb7 peri=efe156c1270aeeb7 scalc=96841163d103cd1f speri=96841163d103cd1f
+Triceratops              calc=c1a66852ab932d52 peri=c1a66852ab932d52 scalc=ac8739765224061c speri=ac8739765224061c
+Catseye                  calc=966b6395aefdce83 peri=966b6395aefdce83 scalc=b449e707e325bc83 speri=b449e707e325bc83
+Mandelbar                calc=af909bf4b497271f peri=af909bf4b497271f scalc=e01bc7c2f7bd4e35 speri=e01bc7c2f7bd4e35
+Lambda Mandelbrot        calc=5e29d8fd01393947 peri=5e29d8fd01393947 scalc=b21f0a6dda790e1f speri=b21f0a6dda790e1f
+Manowar                  calc=77d40a604ca62820 peri=0000000000000000 scalc=2525699e294ba303 speri=0000000000000000
+Spider                   calc=eaf2e34d2a2823c5 peri=0000000000000000 scalc=1e003d1509224ad1 speri=0000000000000000
+Sierpinski               calc=c35e893d64de6f83 peri=0000000000000000 scalc=0000000000000000 speri=0000000000000000
+Sierpinski Carpet        calc=c35e893d64de6f83 peri=0000000000000000 scalc=0000000000000000 speri=0000000000000000
+Koch Snowflake           calc=966b6395aefdce83 peri=0000000000000000 scalc=0000000000000000 speri=0000000000000000
+Spidron Hornflake        calc=5d3c61f5ffb04f6c peri=0000000000000000 scalc=0000000000000000 speri=0000000000000000
+Mandelbrot^9             calc=3861f454de755137 peri=3861f454de755137 scalc=bf41c2e84ffaf689 speri=bf41c2e84ffaf689
+Beryl                    calc=c35e893d64de6f83 peri=c35e893d64de6f83 scalc=0000000000000000 speri=0000000000000000
+Golden Sierpinski        calc=c35e893d64de6f83 peri=0000000000000000 scalc=0000000000000000 speri=0000000000000000
+Circle 7                 calc=c35e893d64de6f83 peri=0000000000000000 scalc=0000000000000000 speri=0000000000000000
+Clock                    calc=c35e893d64de6f83 peri=0000000000000000 scalc=0000000000000000 speri=0000000000000000
+Symmetric Barnsley M.    calc=e3a167fb0dd93209 peri=0000000000000000 scalc=0000000000000000 speri=0000000000000000
+User defined             calc=c35e893d64de6f83 peri=0000000000000000 scalc=0000000000000000 speri=0000000000000000
+formule: 31
