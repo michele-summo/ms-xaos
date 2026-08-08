@@ -282,6 +282,14 @@ struct uih_window {
     struct uih_window *previous;
     int savedline, savedpos;
     char *saveddata;
+    /* Bytes saveddata was allocated for, and whether it holds the area under
+     * the window as of the current frame. The area is saved and restored once
+     * per frame, so the buffer is kept between frames and only grown rather
+     * than allocated and released each time; the flag is what tells a restore
+     * that there is something current to put back, a job that cannot be given
+     * to savedline because windows drawn without a getpos keep a colour in
+     * that field. */
+    int savedsize, savedvalid;
     void *data;
     int flags;
 };

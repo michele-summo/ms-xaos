@@ -106,6 +106,9 @@ void uih_removew(struct uih_context *uih, struct uih_window *w)
     if (w->next != NULL) {
         w->next->previous = w->previous;
     }
+    /* The saved area outlives the frame it was taken in, so releasing the
+     * window is what releases it. */
+    free(w->saveddata);
     free(w);
 }
 
@@ -113,14 +116,8 @@ void uih_removew(struct uih_context *uih, struct uih_window *w)
 void uih_clearwindows(struct uih_context *uih)
 {
     struct uih_window *w = uih->wtop;
-    int savedline = 0;
-    int savedpos = 0;
-    int destwidth = uih->image->width * uih->image->bytesperpixel;
     if (!uih->wdisplayed)
         return;
-    if (!uih->image->bytesperpixel) {
-        destwidth = (w->x + uih->image->width + 7) / 8;
-    }
     uih->wdisplayed = 0;
     if (uih->wflipped)
         uih->image->flip(uih->image), uih->wflipped = 0;
@@ -133,7 +130,11 @@ void uih_clearwindows(struct uih_context *uih)
                 w->saveddata = NULL;
             }
         } else {
-            if (w->savedline != -1 || w->saveddata != NULL) {
+            /* savedvalid is the marker for "this window was saved during
+             * the current frame": drawwindows skips a window whose area
+             * another one already covers, and without the marker the stale
+             * contents of its buffer would be painted back over the image. */
+            if (w->savedvalid) {
                 int i;
                 int xskip = w->x * uih->image->bytesperpixel;
                 int width = w->width * uih->image->bytesperpixel;
@@ -147,40 +148,14 @@ void uih_clearwindows(struct uih_context *uih)
                 assert(w->y >= 0);
                 assert(w->x + w->width <= uih->image->width);
                 assert(w->y + w->height <= uih->image->height);
-                if (w->savedline != -1) {
-                    savedline = w->savedline;
-                    savedpos = w->savedpos;
-                    for (i = w->y; i < w->y + w->height; i++) {
-                        unsigned char *data = uih->image->currlines[i] + xskip;
-                        assert(savedline < uih->image->height);
-                        assert(savedline >= 0);
-                        assert(savedpos >= 0 && savedpos <= destwidth);
-                        if (width + savedpos > destwidth) {
-                            int width1;
-                            memcpy(data,
-                                   uih->image->oldlines[savedline] + savedpos,
-                                   destwidth - savedpos);
-                            savedline++;
-                            width1 = width - destwidth + savedpos;
-                            memcpy(data + (destwidth - savedpos),
-                                   uih->image->oldlines[savedline], width1);
-                            savedpos = width1;
-                        } else
-                            memcpy(data,
-                                   uih->image->oldlines[savedline] + savedpos,
-                                   width),
-                                savedpos += width;
-                    }
-                    w->savedline = -1;
-                } else {
-                    assert(w->saveddata);
-                    for (i = w->y; i < w->y + w->height; i++) {
-                        unsigned char *data = uih->image->currlines[i] + xskip;
-                        memcpy(data, w->saveddata + (i - w->y) * width, width);
-                    }
-                    free(w->saveddata);
-                    w->saveddata = NULL;
+                assert(w->saveddata);
+                for (i = w->y; i < w->y + w->height; i++) {
+                    unsigned char *data = uih->image->currlines[i] + xskip;
+                    memcpy(data, w->saveddata + (i - w->y) * width, width);
                 }
+                /* The buffer stays allocated for the next frame; only the
+                 * marker is cleared. */
+                w->savedvalid = 0;
             }
         }
         w = w->next;
@@ -191,14 +166,6 @@ void uih_drawwindows(struct uih_context *uih)
 {
     struct uih_window *w = uih->wtop;
     struct image *img = uih->image;
-    int size = 0;
-    int nocopy = 0;
-    int savedline = 0;
-    int savedpos = 0;
-    int destwidth = uih->image->width * uih->image->bytesperpixel;
-    if (!uih->image->bytesperpixel) {
-        destwidth = (w->x + uih->image->width + 7) / 8;
-    }
     if (uih->wdisplayed)
         return;
     uih->wdisplayed = 1;
@@ -221,10 +188,6 @@ void uih_drawwindows(struct uih_context *uih)
                 w->width = 0;
             if (w->height < 0)
                 w->height = 0;
-            size += w->width * w->height;
-            if (w->x == 0 && w->y == 0 && w->width == img->width &&
-                w->height == img->height)
-                nocopy = 1;
             assert(w->width >= 0);
             assert(w->height >= 0);
             assert(w->x >= 0);
@@ -234,17 +197,14 @@ void uih_drawwindows(struct uih_context *uih)
         }
         w = w->next;
     }
-    if (size > img->width * img->height / 2) {
-        int i;
-        int width = img->width * img->bytesperpixel;
-        if (!width)
-            width = (img->width + 7) / 8;
-        uih->wflipped = 1;
-        if (!nocopy)
-            for (i = 0; i < img->height; i++)
-                memcpy(img->oldlines[i], img->currlines[i], width);
-        uih->image->flip(uih->image);
-    } else {
+    /* Windows covering more than half the image used to be handled by copying
+     * the whole image into oldlines and flipping the two buffers, so that the
+     * restore was a pointer swap. That has the same flaw as parking the small
+     * saves there: oldlines is the previous frame, which the zoom engine
+     * still needs. Every window now saves what it covers into its own buffer,
+     * which costs one more copy back on the largest windows and nothing at
+     * all on a status bar. */
+    {
         int savedminx = -1;
         int savedmaxx = -1;
         int savedminy = -1;
@@ -253,7 +213,6 @@ void uih_drawwindows(struct uih_context *uih)
         w = uih->wtop;
         while (w) {
             int i;
-            assert(w->saveddata == NULL);
             if (w->getpos == NULL) {
                 if ((w->x < savedminx || w->y < savedminy ||
                      w->x + w->width > savedmaxx ||
@@ -265,7 +224,6 @@ void uih_drawwindows(struct uih_context *uih)
                                              w->width + w->x, w->height + w->y);
                 }
             } else {
-                assert(w->savedline == -1);
                 if (w->width && w->height &&
                     (w->x < savedminx || w->y < savedminy ||
                      w->x + w->width > savedmaxx ||
@@ -280,36 +238,32 @@ void uih_drawwindows(struct uih_context *uih)
                         xskip = w->x / 8;
                         width = (w->x + w->width + 7) / 8 - xskip;
                     }
-                    if (uih->image->flags & PROTECTBUFFERS) {
-                        w->saveddata = (char *)malloc(width * w->height + 1);
-                        if (w->saveddata != NULL)
-                            for (i = w->y; i < w->y + w->height; i++) {
-                                unsigned char *data = img->currlines[i] + xskip;
-                                memcpy(w->saveddata + (i - w->y) * width, data,
-                                       width);
-                            }
-
-                    } else {
-                        w->savedline = savedline;
-                        w->savedpos = savedpos;
+                    /* The area under the window goes into a buffer of its
+                     * own. It used to be parked in image->oldlines unless
+                     * PROTECTBUFFERS said otherwise, on the assumption that
+                     * the second buffer is free scratch -- and it is not: it
+                     * holds the previous frame, which is what moveoldpoints()
+                     * in zoom.cpp reads to reuse rows while zooming. Since
+                     * the progress callback draws the windows in the middle
+                     * of a calculation, the two ran over each other: the
+                     * engine picked the saved pixels up as if they were
+                     * fractal data and stretched them across the image, and
+                     * the restore afterwards read back whatever the engine
+                     * had written over the save. That is the smeared status
+                     * text, and the block of noise left behind it. */
+                    int needed = width * w->height + 1;
+                    if (w->savedsize < needed) {
+                        free(w->saveddata);
+                        w->saveddata = (char *)malloc(needed);
+                        w->savedsize = w->saveddata ? needed : 0;
+                    }
+                    if (w->saveddata != NULL) {
                         for (i = w->y; i < w->y + w->height; i++) {
                             unsigned char *data = img->currlines[i] + xskip;
-                            if (width + savedpos > destwidth) {
-                                int width1;
-                                memcpy(uih->image->oldlines[savedline] +
-                                           savedpos,
-                                       data, destwidth - savedpos);
-                                savedline++;
-                                width1 = width - destwidth + savedpos;
-                                memcpy(uih->image->oldlines[savedline],
-                                       data + (destwidth - savedpos), width1);
-                                savedpos = width1;
-                            } else
-                                memcpy(uih->image->oldlines[savedline] +
-                                           savedpos,
-                                       data, width),
-                                    savedpos += width;
+                            memcpy(w->saveddata + (i - w->y) * width, data,
+                                   width);
                         }
+                        w->savedvalid = 1;
                     }
                 }
             }
