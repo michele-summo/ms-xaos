@@ -19,13 +19,19 @@ QStringList fnames = {};
 QString CustomDialog::format(number_t number)
 {
     char buf[256];
+    char fs[10];
+    /* Shown to as many digits as the build actually carries: a field that
+     * prints fewer loses precision the moment the user presses OK. */
 #ifdef USE_FLOAT128
-    quadmath_snprintf(buf, 256, "%.34Qg", (__float128)number);
+    snprintf(fs, sizeof(fs), "%%.%iQg", NUMBER_DIGITS);
+    quadmath_snprintf(buf, 256, fs, (__float128)number);
 #else
 #ifdef USE_LONG_DOUBLE
-    snprintf(buf, 256, "%.20Lg", (long double)number);
+    snprintf(fs, sizeof(fs), "%%.%iLg", NUMBER_DIGITS);
+    snprintf(buf, 256, fs, (long double)number);
 #else
-    snprintf(buf, 256, "%.20g", (double)number);
+    snprintf(fs, sizeof(fs), "%%.%ig", NUMBER_DIGITS);
+    snprintf(buf, 256, fs, (double)number);
 #endif
 #endif
     return QString(buf);

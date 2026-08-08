@@ -32,13 +32,24 @@
 #define USE_PTHREAD
 
 // Numeric type
+//
+// NUMBER_DIGITS is how many significant decimal digits have to be printed for
+// a value to read back as itself. That is ceil(mantissa_bits * log10(2)) + 1,
+// the DECIMAL_DIG of the type -- one more than the digits it "carries", which
+// is the usual place to go wrong: the code here printed 34 for __float128 and
+// 20 for long double, one short in both cases, so a saved position came back
+// at a slightly different place than it was saved. Printing more than needed
+// only pads with zeros, printing fewer loses the view.
 #ifdef USE_FLOAT128
 typedef __float128 number_t;
+#define NUMBER_DIGITS 36 /* 113 bits of mantissa */
 #else
 #ifdef USE_LONG_DOUBLE
 typedef long double number_t;
+#define NUMBER_DIGITS 21 /* 64 bits on x87 */
 #else
 typedef double number_t;
+#define NUMBER_DIGITS 17 /* 53 bits */
 #endif
 #endif
 

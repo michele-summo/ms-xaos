@@ -24,8 +24,18 @@ contains(DEFINES, USE_OPENGL) {
     win32:LIBS += -lopengl32
 }
 
+# qmake builds one binary per invocation, so the quad version is a separate
+# build configuration rather than a second target: add "quad" to CONFIG (in Qt
+# Creator, Projects -> Build Steps -> Additional arguments: CONFIG+=quad) and
+# the result is called XaoS-quad, at 128-bit precision.
+#
+# The CMake build produces both at once; see the notes at the top of
+# CMakeLists.txt for what the difference buys and costs.
+quad: DEFINES += USE_FLOAT128
+
 contains(DEFINES, USE_FLOAT128) {
     LIBS += -lquadmath
+    TARGET = XaoS-quad
 } else {
     DEFINES += USE_LONG_DOUBLE
 }

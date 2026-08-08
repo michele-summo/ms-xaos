@@ -48,11 +48,16 @@
 #
 #   cd <INSTALLATION_PATH>; ./XaoS
 #
-# * To try the deep zoom feature out (it results in slower animations), add
+# * Two binaries are produced where the compiler provides __float128:
 #
-#   -DDEEPZOOM=ON
+#     XaoS       the ordinary one, at long double precision
+#     XaoS-quad  the same program at 128-bit precision, for deep zoom
 #
-#   on the cmake command line.
+#   The second one zooms far deeper -- about 1e33 against 1e18 -- but its
+#   arithmetic is emulated in software and runs roughly forty times slower, so
+#   it is a separate binary rather than the default. Pass -DQUAD=OFF to skip
+#   building it, or -DDEEPZOOM=ON to make the main binary quad instead, in
+#   which case no second one is built.
 #
 # * Alternatively, it is possible to build XaoS with the OpenGL driver. For this, you may need
 #   additional libraries:
@@ -94,14 +99,42 @@ cmake_minimum_required(VERSION 3.14.0)
 
 project(XaoS)
 
-option(DEEPZOOM "Use 128-bit float for deep zoom" OFF)
+option(DEEPZOOM "Build the XaoS binary itself at 128-bit precision" OFF)
+option(QUAD "Also build a separate XaoS-quad binary at 128-bit precision" ON)
 option(OPENGL "Use OpenGL" OFF)
 
+# 128-bit arithmetic is __float128 from libquadmath, a GCC extension. Clang on
+# macOS does not provide it, so the quad binary is only offered where it
+# actually compiles rather than failing the whole configure.
+include(CheckCXXSourceCompiles)
+set(CMAKE_REQUIRED_LIBRARIES quadmath)
+check_cxx_source_compiles("
+   #include <quadmath.h>
+   int main() { __float128 x = 1; char b[64];
+                quadmath_snprintf(b, sizeof(b), \"%Qg\", x); return 0; }"
+   HAVE_QUADMATH)
+unset(CMAKE_REQUIRED_LIBRARIES)
+
+if(DEEPZOOM AND NOT HAVE_QUADMATH)
+   message(FATAL_ERROR "DEEPZOOM needs __float128 and libquadmath, which this compiler does not provide")
+endif()
+
+# The precision is per target, not global: with QUAD on, the same sources are
+# built twice and the two definitions must not collide.
 if(DEEPZOOM)
-   add_definitions(-DUSE_FLOAT128) # may be unsupported on Mac, unless gcc/g++ is used
+   set(XAOS_PRECISION USE_FLOAT128)
 else(DEEPZOOM)
-   add_definitions(-DUSE_LONG_DOUBLE)
+   set(XAOS_PRECISION USE_LONG_DOUBLE)
 endif(DEEPZOOM)
+
+# A second binary would be identical to the first if that one is already quad.
+if(QUAD AND HAVE_QUADMATH AND NOT DEEPZOOM)
+   set(BUILD_QUAD_BINARY TRUE)
+   set(XAOS_EXTRA_PRECISIONS USE_FLOAT128)
+else()
+   set(BUILD_QUAD_BINARY FALSE)
+   set(XAOS_EXTRA_PRECISIONS "")
+endif()
 
 if(OPENGL)
    add_definitions(-DUSE_OPENGL)
@@ -189,23 +222,43 @@ if(EMSCRIPTEN)
     target_link_libraries(xaos PUBLIC Qt6::Widgets)
     target_link_options(xaos PUBLIC -sASYNCIFY -O3 -flto)
 else()
-    add_executable(XaoS MACOSX_BUNDLE
-       ${CXX_FILES}
-       ${C_FILES}
-       ${QM_FILES}
-       ${XaoS_ICON}
-       src/ui/XaoS.qrc
-       XaoS.qrc
-    )
-    target_link_libraries(XaoS Qt6::Widgets Qt6::PrintSupport)
+    # One recipe, used once for the ordinary binary and again for the quad one.
+    # The precision reaches the sources only through the definition set here,
+    # so the two builds share every line of code.
+    function(xaos_add_binary target precision)
+       add_executable(${target} MACOSX_BUNDLE
+          ${CXX_FILES}
+          ${C_FILES}
+          ${QM_FILES}
+          ${XaoS_ICON}
+          src/ui/XaoS.qrc
+          XaoS.qrc
+       )
+       target_compile_definitions(${target} PRIVATE ${precision})
+       target_link_libraries(${target} Qt6::Widgets Qt6::PrintSupport)
+       if(precision STREQUAL "USE_FLOAT128")
+          target_link_libraries(${target} quadmath)
+       endif()
+       if(OPENGL)
+          target_link_libraries(${target} Qt6::OpenGL Qt6::OpenGLWidgets)
+       endif(OPENGL)
+    endfunction()
+
+    xaos_add_binary(XaoS ${XAOS_PRECISION})
+    if(BUILD_QUAD_BINARY)
+       xaos_add_binary(XaoS-quad USE_FLOAT128)
+    endif(BUILD_QUAD_BINARY)
 endif(EMSCRIPTEN)
 
-if(DEEPZOOM)
-   target_link_libraries(XaoS quadmath)
-endif(DEEPZOOM)
-if(OPENGL)
-   target_link_libraries(XaoS Qt6::OpenGL Qt6::OpenGLWidgets)
-endif(OPENGL)
+if(EMSCRIPTEN)
+   target_compile_definitions(xaos PRIVATE ${XAOS_PRECISION})
+   if(XAOS_PRECISION STREQUAL "USE_FLOAT128")
+      target_link_libraries(xaos PUBLIC quadmath)
+   endif()
+   if(OPENGL)
+      target_link_libraries(xaos PUBLIC Qt6::OpenGL Qt6::OpenGLWidgets)
+   endif(OPENGL)
+endif(EMSCRIPTEN)
 
 if (EMSCRIPTEN)
     target_link_options(xaos PUBLIC "SHELL:
@@ -219,6 +272,9 @@ if (EMSCRIPTEN)
 else()
 # install bundle
 install(TARGETS XaoS DESTINATION bin)
+if(BUILD_QUAD_BINARY)
+   install(TARGETS XaoS-quad DESTINATION bin)
+endif(BUILD_QUAD_BINARY)
 
 # install catalogs and tutorial
 install(DIRECTORY catalogs tutorial DESTINATION .)

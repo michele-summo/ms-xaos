@@ -15,11 +15,11 @@ add_executable(sffe_test
 set_target_properties(sffe_test PROPERTIES AUTOMOC OFF AUTORCC OFF)
 
 # MinGW hides M_PI behind this when compiling to a strict standard.
-target_compile_definitions(sffe_test PRIVATE _USE_MATH_DEFINES)
+target_compile_definitions(sffe_test PRIVATE _USE_MATH_DEFINES ${XAOS_PRECISION})
 
-if(DEEPZOOM)
+if(XAOS_PRECISION STREQUAL "USE_FLOAT128")
    target_link_libraries(sffe_test quadmath)
-endif(DEEPZOOM)
+endif()
 
 # Keep in sync with the case table in sffe_test.cpp; the sffe_case_count test
 # fails with instructions if the two drift apart.
@@ -47,12 +47,33 @@ add_executable(sffe_test_devel
    ${CMAKE_SOURCE_DIR}/src/util/xstring.cpp
 )
 set_target_properties(sffe_test_devel PROPERTIES AUTOMOC OFF AUTORCC OFF)
-target_compile_definitions(sffe_test_devel PRIVATE _USE_MATH_DEFINES SFFE_DEVEL)
-if(DEEPZOOM)
+target_compile_definitions(sffe_test_devel PRIVATE _USE_MATH_DEFINES SFFE_DEVEL ${XAOS_PRECISION})
+if(XAOS_PRECISION STREQUAL "USE_FLOAT128")
    target_link_libraries(sffe_test_devel quadmath)
-endif(DEEPZOOM)
+endif()
 
 add_test(NAME sffe_devel_build COMMAND sffe_test_devel)
+
+# Saved positions survive only if the text they are written as carries every
+# digit number_t holds. Built once per precision the tree can produce, so that
+# the quad binary's formatting is covered even when the default build is not
+# quad itself.
+foreach(prec ${XAOS_PRECISION} ${XAOS_EXTRA_PRECISIONS})
+   string(TOLOWER ${prec} suffix)
+   add_executable(number_roundtrip_${suffix}
+      number_roundtrip.cpp
+      ${CMAKE_SOURCE_DIR}/src/util/xstring.cpp
+   )
+   set_target_properties(number_roundtrip_${suffix}
+                         PROPERTIES AUTOMOC OFF AUTORCC OFF)
+   target_compile_definitions(number_roundtrip_${suffix}
+                              PRIVATE _USE_MATH_DEFINES ${prec})
+   if(prec STREQUAL "USE_FLOAT128")
+      target_link_libraries(number_roundtrip_${suffix} quadmath)
+   endif()
+   add_test(NAME number_roundtrip_${suffix}
+            COMMAND number_roundtrip_${suffix})
+endforeach()
 
 # Regression net for the fractal iteration loops. The formula table exposes
 # every loop as an iterationfunc, so they can be driven directly over a grid
@@ -68,18 +89,18 @@ add_executable(engine_ref
    ${CMAKE_SOURCE_DIR}/src/util/xstring.cpp
 )
 set_target_properties(engine_ref PROPERTIES AUTOMOC OFF AUTORCC OFF)
-target_compile_definitions(engine_ref PRIVATE _USE_MATH_DEFINES)
+target_compile_definitions(engine_ref PRIVATE _USE_MATH_DEFINES ${XAOS_PRECISION})
 target_include_directories(engine_ref PRIVATE ${CMAKE_SOURCE_DIR}/src/engine)
-if(DEEPZOOM)
+if(XAOS_PRECISION STREQUAL "USE_FLOAT128")
    target_link_libraries(engine_ref quadmath)
-endif(DEEPZOOM)
+endif()
 
 # The recorded checksums are those of a long double build; a build at another
 # precision legitimately differs, so only compare when they should match.
-if(NOT DEEPZOOM)
+if(NOT XAOS_PRECISION STREQUAL "USE_FLOAT128")
    add_test(NAME engine_unchanged
             COMMAND ${CMAKE_COMMAND}
                     -DEXE=$<TARGET_FILE:engine_ref>
                     -DEXPECTED=${CMAKE_CURRENT_SOURCE_DIR}/engine_ref.expected
                     -P ${CMAKE_CURRENT_SOURCE_DIR}/compare_engine.cmake)
-endif(NOT DEEPZOOM)
+endif()

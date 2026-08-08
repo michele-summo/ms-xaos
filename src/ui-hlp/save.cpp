@@ -87,13 +87,19 @@ static void save_float(struct uih_context *uih, number_t number)
     else
         first = 0;
     char s[256];
+    char fs[10];
+    /* Full precision for the build, so that reloading the file puts the view
+     * back exactly where it was saved. */
 #ifdef USE_FLOAT128
-    quadmath_snprintf(s, 256, "%.34QG", (__float128)number);
+    snprintf(fs, sizeof(fs), "%%.%iQG", NUMBER_DIGITS);
+    quadmath_snprintf(s, 256, fs, (__float128)number);
 #else
 #ifdef USE_LONG_DOUBLE
-    snprintf(s, 256, "%.20LG", (long double)number);
+    snprintf(fs, sizeof(fs), "%%.%iLG", NUMBER_DIGITS);
+    snprintf(s, 256, fs, (long double)number);
 #else
-    snprintf(s, 256, "%.20G", (double)number);
+    snprintf(fs, sizeof(fs), "%%.%iG", NUMBER_DIGITS);
+    snprintf(s, 256, fs, (double)number);
 #endif
 #endif
     myputs(s);
@@ -108,19 +114,23 @@ static void save_float2(struct uih_context *uih, number_t number, int places)
         first = 0;
     if (places < 0)
         places = 0;
-    if (places > 20)
-        places = 20;
+    if (places > NUMBER_DIGITS)
+        places = NUMBER_DIGITS;
     char s[256];
 #ifdef USE_FLOAT128
-    snprintf(fs, 10, "%%.%iQG", places);
-    quadmath_snprintf(s, 256, "%.34QG", (__float128)number);
+    /* The format string is built from places and then used, which it was not:
+     * this branch composed fs and went on to print a hardcoded 34 digits, so
+     * asking for fewer had no effect. */
+    snprintf(fs, sizeof(fs), "%%.%iQG", places);
+    quadmath_snprintf(s, 256, fs, (__float128)number);
 #else
 #ifdef USE_LONG_DOUBLE
-    snprintf(fs, 10, "%%.%iLG", places);
+    snprintf(fs, sizeof(fs), "%%.%iLG", places);
     snprintf(s, 256, fs, (long double)number);
 #else
-    sprintf(fs, 10, "%%.%iG", places);
-    sprintf(s, 256, fs, (double)number);
+    /* ...and this one passed 10 and 256 as the format strings. */
+    snprintf(fs, sizeof(fs), "%%.%iG", places);
+    snprintf(s, 256, fs, (double)number);
 #endif
 #endif
     myputs(s);

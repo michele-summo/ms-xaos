@@ -11,6 +11,7 @@
 #include "ui_helper.h"
 #include "timers.h"
 #include "i18n.h"
+#include "misc-f.h"
 #include "xerror.h"
 #include "filter.h"
 #include "xthread.h"
@@ -1125,10 +1126,16 @@ void MainWindow::showDialog(const char *name)
                 qDialog->setLayout(dialogLayout);
                 connect(qDialog, &QDialog::accepted, qDialog,
                         [=](void){
+                            /* Read at the build's precision, as the coordinate
+                             * dialog in customdialog.cpp does. QString::toDouble
+                             * would have cut the value down to a double however
+                             * many digits the user typed, which matters as soon
+                             * as number_t is wider than one. */
+                            char *ps;
                             QLineEdit *real = qDialog->findChild<QLineEdit *>("real");
-                            param->dcoord[0] = real->text().toDouble();
+                            param->dcoord[0] = xstrtonum(real->text().toUtf8(), &ps);
                             QLineEdit *imag = qDialog->findChild<QLineEdit *>("imag");
-                            param->dcoord[1] = imag->text().toDouble();
+                            param->dcoord[1] = xstrtonum(imag->text().toUtf8(), &ps);
                             menuActivate(item, param);
                         });
                 qDialog->adjustSize(); // this is sometimes too high in WASM, FIXME, maybe Qt6 bug?
