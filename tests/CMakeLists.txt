@@ -72,6 +72,14 @@ foreach(prec ${XAOS_TEST_PRECISIONS})
                         sffe_precision.cpp ${SFFE_SOURCES})
    add_test(NAME sffe_precision_${suffix} COMMAND sffe_precision_${suffix})
 
+   # How accurate gamma and lambertw are, which the case table cannot say:
+   # those cases compare against values a double holds, so an implementation
+   # capped at fifteen digits passes them at every precision.
+   xaos_add_test_binary(special_functions_${suffix} ${prec}
+                        special_functions.cpp ${SFFE_SOURCES})
+   add_test(NAME special_functions_${suffix}
+            COMMAND special_functions_${suffix})
+
    # --- overlays over the image --------------------------------------------
    # The status bar and the messages are drawn into the fractal image, so what
    # they cover has to be saved and put back. Where it is saved matters: the

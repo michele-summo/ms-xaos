@@ -1118,9 +1118,82 @@ gsl_complex complex_gamma_lanczos(gsl_complex z)
  * @param p The call; its argument is sfaram1(p).
  * @return Pointer to the input argument, per the sffe convention.
  */
+#ifdef USE_FLOAT128
+/* The Lanczos approximation above is a fixed set of coefficients, chosen for
+ * about fifteen significant digits, and no amount of arithmetic behind it does
+ * better: measured against Gamma(n+1) = n!, which is exact, it holds 2.2e-15
+ * whether it runs at 64 or 113 bits of mantissa. That is the whole of a
+ * double's precision and roughly a five-thousandth of a quad's.
+ *
+ * So the quad build uses Stirling instead, which has no such ceiling: shift
+ * the argument up by the recurrence until it is large enough for the
+ * asymptotic series to converge, then take as many Bernoulli terms as the type
+ * needs. The series error is bounded by its first omitted term, and at
+ * Re(w) >= 50 the term after the last one kept here is below 1e-37.
+ *
+ * The coefficients are B(2k) / (2k (2k-1)), written as the exact integer
+ * ratios they are so that the division happens at whatever precision number_t
+ * has, rather than being transcribed as decimals that would reintroduce the
+ * ceiling this exists to remove. Every numerator fits a double exactly, so
+ * none of them is rounded on the way in. */
+static const number_t STIRLING_NUM[15] = {
+    1, -1, 1, -1, 1, -691, 1, -3617, 43867, -174611,
+    854513, -236364091, 8553103, -23749461029, 8615841276005};
+static const number_t STIRLING_DEN[15] = {
+    12, 360, 1260, 1680, 1188, 360360, 156, 122400, 244188, 125400,
+    63756, 1506960, 3900, 657720, 12460140};
+
+static gsl_complex complex_gamma_stirling(gsl_complex z)
+{
+    /* The series needs Re(w) large and positive, so the left half plane comes
+     * back through the reflection formula. One level deep only: 1 - z has real
+     * part at least 0.5 whenever z's is below it. */
+    /* GSL_COMPLEX_ONE and gsl_complex_rect are only defined under HAVE_INLINE,
+     * which this build does not set, so constants are built the way the rest
+     * of this file builds them. */
+    gsl_complex one, pi;
+    GSL_SET_COMPLEX(&one, 1, 0);
+    GSL_SET_COMPLEX(&pi, N_PI, 0);
+
+    if (GSL_REAL(z) < 0.5) {
+        gsl_complex s = gsl_complex_sin(gsl_complex_mul_real(z, N_PI));
+        gsl_complex g = complex_gamma_stirling(gsl_complex_sub(one, z));
+        return gsl_complex_div(pi, gsl_complex_mul(s, g));
+    }
+
+    /* Gamma(z) = Gamma(z + n) / (z (z+1) ... (z+n-1)) */
+    gsl_complex w = z;
+    gsl_complex denominator = one;
+    while (GSL_REAL(w) < 50) {
+        denominator = gsl_complex_mul(denominator, w);
+        w = gsl_complex_add_real(w, 1.0);
+    }
+
+    /* log Gamma(w) = (w - 1/2) log w - w + log(2 pi)/2 + sum B(2k) / (2k(2k-1)
+     * w^(2k-1)) */
+    gsl_complex lg = gsl_complex_sub(
+        gsl_complex_mul(gsl_complex_add_real(w, -0.5), gsl_complex_log(w)), w);
+    lg = gsl_complex_add_real(lg, nlog((number_t)2 * N_PI) / 2);
+
+    gsl_complex term = gsl_complex_inverse(w);
+    gsl_complex step = gsl_complex_mul(term, term);
+    for (int k = 0; k < 15; ++k) {
+        lg = gsl_complex_add(lg, gsl_complex_mul_real(term, STIRLING_NUM[k] /
+                                                                STIRLING_DEN[k]));
+        term = gsl_complex_mul(term, step);
+    }
+
+    return gsl_complex_div(gsl_complex_exp(lg), denominator);
+}
+#endif
+
 sfarg *sfgamma(sfarg *const p)
 {
+#ifdef USE_FLOAT128
+    sfvalue(p) = complex_gamma_stirling(sfvalue(sfaram1(p)));
+#else
     sfvalue(p) = complex_gamma_lanczos(sfvalue(sfaram1(p)));
+#endif
     return sfaram1(p);
 }
 
