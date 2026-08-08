@@ -72,6 +72,19 @@ foreach(prec ${XAOS_TEST_PRECISIONS})
                         sffe_precision.cpp ${SFFE_SOURCES})
    add_test(NAME sffe_precision_${suffix} COMMAND sffe_precision_${suffix})
 
+   # --- overlays over the image --------------------------------------------
+   # The status bar and the messages are drawn into the fractal image, so what
+   # they cover has to be saved and put back. Where it is saved matters: the
+   # second frame buffer is what the zoom engine reuses.
+   xaos_add_test_binary(wstack_test_${suffix} ${prec}
+                        wstack_test.cpp
+                        ${CMAKE_SOURCE_DIR}/src/ui-hlp/wstack.cpp
+                        ${CMAKE_SOURCE_DIR}/src/util/image.cpp
+                        ${CMAKE_SOURCE_DIR}/src/util/palette.cpp
+                        ${CMAKE_SOURCE_DIR}/src/util/random.cpp
+                        ${CMAKE_SOURCE_DIR}/src/util/xerror.cpp)
+   add_test(NAME wstack_${suffix} COMMAND wstack_test_${suffix})
+
    # --- saved positions ----------------------------------------------------
    # A position survives a save/load round trip only if the text it is written
    # as carries every digit number_t holds, which is a per-precision property.

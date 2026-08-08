@@ -16,6 +16,7 @@
 #include <qwidget.h>
 
 #include "config.h"
+#include "number_math.h"
 #include "filter.h"
 #include "ui_helper.h"
 #include "plane.h"
@@ -1345,7 +1346,12 @@ static inline void uih_zoomupdate(uih_context *uih)
 {
     number_t x;
     number_t y;
-    number_t mmul = pow((double)(1 - uih->step), (double)uih->mul);
+    /* The factor the view is scaled by every frame. Taking it through a
+     * double put a 17-digit ceiling on a ratio that then multiplies
+     * coordinates carrying up to 36, so the zoom drifted at a rate the type
+     * was chosen to avoid. mul is a frame-time ratio and is a double at
+     * source; only the arithmetic here has to be done at width. */
+    number_t mmul = npow((number_t)1 - uih->step, (number_t)uih->mul);
     number_t mc = uih->fcontext->s.cr - uih->fcontext->s.rr / 2;
     number_t nc = uih->fcontext->s.cr + uih->fcontext->s.rr / 2;
     number_t mi = uih->fcontext->s.ci - uih->fcontext->s.ri / 2;
