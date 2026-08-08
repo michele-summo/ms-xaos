@@ -934,6 +934,12 @@ static void uih_waitfunc(struct filter *f)
 static FILE *uih_diag_log = NULL;
 static long uih_diag_calculations = 0, uih_diag_withoverlay = 0;
 static long uih_diag_mismatches = 0;
+static long uih_diag_dirty = 0;
+/* How often the comparison actually ran. Without this, a check that never
+ * fires because its hook sits somewhere the program does not reach reads
+ * exactly like a check that fires and finds nothing -- which is the mistake
+ * the first version of this diagnostic made. */
+static long uih_diag_comparisons = 0;
 
 static void uih_diag_summary(void)
 {
@@ -942,11 +948,18 @@ static void uih_diag_summary(void)
     fprintf(uih_diag_log,
             "\n%ld calculations, %ld of them with the overlays still on the "
             "image.\n%ld restores left the image different from how they "
-            "found it.\n%s\n",
+            "found it.\n%ld calculations started from an image the overlay "
+            "had changed.\n%s\n",
             uih_diag_calculations, uih_diag_withoverlay, uih_diag_mismatches,
-            uih_diag_withoverlay || uih_diag_mismatches
+            uih_diag_dirty,
+            uih_diag_withoverlay || uih_diag_mismatches || uih_diag_dirty
                 ? "The overlays are corrupting the image: that is the fault."
-                : "The overlays behaved: look elsewhere.");
+                : (uih_diag_comparisons
+                       ? "The overlays behaved: look elsewhere."
+                       : "NOTHING WAS COMPARED: the check never ran, so this "
+                         "says nothing either way."));
+    fprintf(uih_diag_log, "(%ld image comparisons were actually made)\n",
+            uih_diag_comparisons);
     fflush(uih_diag_log);
 }
 
@@ -966,8 +979,101 @@ void uih_diag_restore_mismatch(int x, int y, int w, int h)
     fflush(uih_diag_log);
 }
 
+/* The decisive one, after the flag and the per-window hash both came back
+ * clean while the traces stayed on screen.
+ *
+ * Between the overlay being drawn at the end of one frame and the engine
+ * starting the next, the only thing that should have touched the image is
+ * the restore putting back what the overlay covered. So the image the engine
+ * starts from has to be byte-identical to the image as it was just before
+ * the overlay went on. Copy it at that point, compare it at this one, and
+ * report the bounding box of whatever differs -- which says not just that
+ * something is left behind but where, and so which overlay or which
+ * mechanism left it. */
+static unsigned char *uih_diag_shadow = NULL;
+static int uih_diag_shadow_size = 0;
+static int uih_diag_shadow_valid = 0;
+
+static int uih_diag_rowbytes(struct image *img)
+{
+    return img->bytesperpixel ? img->width * img->bytesperpixel
+                              : (img->width + 7) / 8;
+}
+
+void uih_diag_snapshot(uih_context *c)
+{
+    struct image *img = c->image;
+    int row = uih_diag_rowbytes(img);
+    int need = row * img->height;
+
+    /* Palette cycling rewrites the image on its own, and would report as a
+     * difference that has nothing to do with overlays. */
+    if (c->cycling) {
+        uih_diag_shadow_valid = 0;
+        return;
+    }
+    if (uih_diag_shadow_size < need) {
+        free(uih_diag_shadow);
+        uih_diag_shadow = (unsigned char *)malloc(need);
+        uih_diag_shadow_size = uih_diag_shadow ? need : 0;
+    }
+    if (!uih_diag_shadow) {
+        uih_diag_shadow_valid = 0;
+        return;
+    }
+    for (int y = 0; y < img->height; y++)
+        memcpy(uih_diag_shadow + (size_t)y * row, img->currlines[y], row);
+    uih_diag_shadow_valid = 1;
+}
+
+static void uih_diag_compare(uih_context *c)
+{
+    struct image *img = c->image;
+    int row = uih_diag_rowbytes(img);
+    int minx = -1, maxx = -1, miny = -1, maxy = -1;
+
+    if (!uih_diag_shadow_valid || c->cycling)
+        return;
+    if (uih_diag_shadow_size < row * img->height)
+        return;
+    uih_diag_shadow_valid = 0;
+    uih_diag_comparisons++;
+
+    for (int y = 0; y < img->height; y++) {
+        unsigned char *have = img->currlines[y];
+        unsigned char *want = uih_diag_shadow + (size_t)y * row;
+        if (!memcmp(have, want, row))
+            continue;
+        if (miny < 0)
+            miny = y;
+        maxy = y;
+        for (int x = 0; x < row; x++)
+            if (have[x] != want[x]) {
+                int px = img->bytesperpixel ? x / img->bytesperpixel : x * 8;
+                if (minx < 0 || px < minx)
+                    minx = px;
+                if (px > maxx)
+                    maxx = px;
+            }
+    }
+    if (miny < 0)
+        return;
+
+    uih_diag_dirty++;
+    if (uih_diag_log == NULL || uih_diag_dirty > 40)
+        return;
+    fprintf(uih_diag_log,
+            "calculation %ld starts from an image that differs from before "
+            "the overlay was drawn: x %i..%i, y %i..%i (messages start at row "
+            "%i, image is %ix%i)\n",
+            uih_diag_calculations + 1, minx, maxx, miny, maxy,
+            c->messg.messagestart, img->width, img->height);
+    fflush(uih_diag_log);
+}
+
 static void uih_diag_note(uih_context *c)
 {
+    uih_diag_compare(c);
     if (uih_diag_log == NULL) {
         uih_diag_log = fopen("xaos-diag.txt", "w");
         if (uih_diag_log == NULL)
@@ -2505,6 +2611,9 @@ void uih_updatestatus(uih_context *uih)
         (uih->fcontext->currentformula->v.rr) / (uih->fcontext->s.rr);
     double timesnop = log(times) / log(10.0);
     double speed;
+#ifdef XAOS_TRACE_DIAG
+    uih_diag_snapshot(uih);
+#endif
     uih_drawwindows(uih);
     uih_cycling_continue(uih);
     speed = uih_displayed(uih);
