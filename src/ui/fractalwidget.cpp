@@ -70,12 +70,21 @@ void FractalWidget::paintEvent(QPaintEvent */*event*/)
         QImage *qimage =
             reinterpret_cast<QImage **>(m_image->data)[m_image->currimage];
         painter.setCompositionMode(QPainter::CompositionMode_Source);
-        // The image is calculated in device pixels (see imageSize), so it has
-        // to be labelled as such: drawImage places it by its logical size, and
-        // an unlabelled image is taken to be one logical pixel per pixel and
-        // would be scaled up by the display factor.
-        qimage->setDevicePixelRatio(devicePixelRatioF());
-        painter.drawImage(0, 0, *qimage);
+        // The image is calculated in device pixels (see imageSize), so drawing
+        // it across the widget's logical rectangle lands it one image pixel
+        // per device pixel, with no resampling.
+        //
+        // Not by setting a device pixel ratio on the image, which is how this
+        // was first done: that is not a passive label. It changes the unit
+        // every later QPainter on the image works in, and the overlays -- the
+        // status bar, the messages -- are drawn through exactly such a
+        // painter, in xprint(). They ended up placed and sized in logical
+        // units while the engine and the save/restore in wstack.cpp address
+        // the buffer by raw pixel, so at 125% scaling the text was drawn a
+        // quarter further right and a quarter wider than the area saved for
+        // it. Whatever fell outside was never restored, and the zoom smeared
+        // it across the image.
+        painter.drawImage(QRectF(0, 0, width(), height()), *qimage);
     }
 }
 #endif
