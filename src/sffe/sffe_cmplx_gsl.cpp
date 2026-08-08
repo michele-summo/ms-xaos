@@ -15,6 +15,8 @@
 #include <gsl/gsl_complex_math.h>
 #include <math.h>
 
+#include "number_math.h"
+
 /* Every entry is {implementation, argument count, name}, optionally followed by
  * a selector that marks the arguments as lazily evaluated.
  *
@@ -38,22 +40,22 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sfneg, 1, "-\0"}, /* -a */
 
     /* --- trigonometry over the complex plane --- */
-    {sfsin, 1, "sin\0"},   /* sin(a) */
-    {sfcos, 1, "cos\0"},   /* cos(a) */
-    {sftan, 1, "tan\0"},   /* tan(a) */
+    {sfsin, 1, "sin\0"},   /* nsin(a) */
+    {sfcos, 1, "cos\0"},   /* ncos(a) */
+    {sftan, 1, "tan\0"},   /* ntan(a) */
     {sfcot, 1, "cot\0"},   /* cot(a) */
     {sfasin, 1, "asin\0"}, /* arcsin(a) */
     {sfacos, 1, "acos\0"}, /* arccos(a) */
     {sfatan, 1, "atan\0"}, /* arctan(a) */
     {sfacot, 1, "acot\0"}, /* arccot(a) */
-    /* atan2(y, x): angle of the real parts, plus i times the angle of the
+    /* natan2(y, x): angle of the real parts, plus i times the angle of the
      * imaginary parts. Two real arguments give the ordinary atan2. */
     {sfatan2, 2, "atan2\0"},
 
     /* --- hyperbolic --- */
-    {sfsinh, 1, "sinh\0"}, /* sinh(a) */
-    {sfcosh, 1, "cosh\0"}, /* cosh(a) */
-    {sftanh, 1, "tanh\0"}, /* tanh(a) */
+    {sfsinh, 1, "sinh\0"}, /* nsinh(a) */
+    {sfcosh, 1, "cosh\0"}, /* ncosh(a) */
+    {sftanh, 1, "tanh\0"}, /* ntanh(a) */
     {sfcoth, 1, "coth\0"}, /* coth(a) */
 
     /* --- exponential and logarithms --- */
@@ -122,23 +124,23 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sfmidm, 3, "midm\0"}, /* modulus confined, held at the angle of a */
 
     /* --- real trigonometry applied to each component separately --- */
-    {sfsincos, 1, "sincos\0"}, /* sin(real(a)) + i*cos(imag(a)) */
-    {sfcossin, 1, "cossin\0"}, /* cos(real(a)) + i*sin(imag(a)) */
-    {sfsinr, 1, "sinr\0"},     /* sin(real(a)); imaginary part passes through */
-    {sfcosr, 1, "cosr\0"},     /* cos(real(a)); imaginary part passes through */
-    {sfsini, 1, "sini\0"},     /* sin(imag(a)); real part passes through */
-    {sfcosi, 1, "cosi\0"},     /* cos(imag(a)); real part passes through */
+    {sfsincos, 1, "sincos\0"}, /* nsin(real(a)) + i*ncos(imag(a)) */
+    {sfcossin, 1, "cossin\0"}, /* ncos(real(a)) + i*nsin(imag(a)) */
+    {sfsinr, 1, "sinr\0"},     /* nsin(real(a)); imaginary part passes through */
+    {sfcosr, 1, "cosr\0"},     /* ncos(real(a)); imaginary part passes through */
+    {sfsini, 1, "sini\0"},     /* nsin(imag(a)); real part passes through */
+    {sfcosi, 1, "cosi\0"},     /* ncos(imag(a)); real part passes through */
 
-    {sftancot, 1, "tancot\0"}, /* tan(real(a)) + i*cot(imag(a)) */
-    {sfcottan, 1, "cottan\0"}, /* cot(real(a)) + i*tan(imag(a)) */
-    {sftanr, 1, "tanr\0"},     /* tan(real(a)); imaginary part passes through */
+    {sftancot, 1, "tancot\0"}, /* ntan(real(a)) + i*cot(imag(a)) */
+    {sfcottan, 1, "cottan\0"}, /* cot(real(a)) + i*ntan(imag(a)) */
+    {sftanr, 1, "tanr\0"},     /* ntan(real(a)); imaginary part passes through */
     {sfcotr, 1, "cotr\0"},     /* cot(real(a)); imaginary part passes through */
-    {sftani, 1, "tani\0"},     /* tan(imag(a)); real part passes through */
+    {sftani, 1, "tani\0"},     /* ntan(imag(a)); real part passes through */
     {sfcoti, 1, "coti\0"},     /* cot(imag(a)); real part passes through */
 
     /* --- waveforms, again component by component --- */
     {sftrunc, 1, "trunc\0"},       /* each component truncated towards zero */
-    {sfsawtooth, 1, "sawtooth\0"}, /* x - floor(x), a ramp in [0, 1) */
+    {sfsawtooth, 1, "sawtooth\0"}, /* x - nfloor(x), a ramp in [0, 1) */
     {sftwave, 1, "twave\0"},       /* triangle wave of period 2, in [-1, 1] */
 
     /* --- assorted --- */
@@ -148,7 +150,7 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sfinveps, 2, "inveps\0"},
     /* atan2s(y, x): atan2 of each pair of components. Differs from atan2 only
      * on real arguments, where negating one gives a negative zero and
-     * atan2(-0, -0) is -pi rather than 0. */
+     * natan2(-0, -0) is -pi rather than 0. */
     {sfatan2s, 2, "atan2s\0"},
 
     /* ngon(a, b, c, d): folds a about the centre b onto a c-sided polygon,
@@ -168,8 +170,8 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sftruncva, 2, "truncva\0"}, /* the angle, modulus kept */
 
     /* gamma(a): Lanczos approximation of the complex gamma function.
-     * Known defect: the series is scaled by log(sqrt(2*pi)) where the formula
-     * calls for sqrt(2*pi), so every result is 0.3666 times the true gamma --
+     * Known defect: the series is scaled by nlog(nsqrt(2*pi)) where the formula
+     * calls for nsqrt(2*pi), so every result is 0.3666 times the true gamma --
      * gamma(5) gives 8.798 instead of 24. */
     {sfgamma, 1, "gamma\0"},
     {sflambertw, 1, "lambertw\0"}, /* principal branch of the Lambert W of a */
@@ -304,18 +306,18 @@ sfarg *sfacot(sfarg *const p)
 }
 
 sfarg *sfatan2(sfarg *const p)
-{ /* atan2(y, x) = angle of the real parts + i * angle of the imaginary parts */
+{ /* natan2(y, x) = angle of the real parts + i * angle of the imaginary parts */
     sfNumber y = sfvalue(sfaram2(p));
     sfNumber x = sfvalue(sfaram1(p));
 
-    double hor = atan2(GSL_REAL(y), GSL_REAL(x));
+    number_t hor = natan2(GSL_REAL(y), GSL_REAL(x));
 
     /* With real arguments the answer has to be the plain atan2, so a pair of
      * zeros contributes nothing. Left to atan2 they would not: negating a real
-     * number gives a negative zero, and atan2(-0, -0) is -pi, not 0. */
-    double ver = 0.0;
+     * number gives a negative zero, and natan2(-0, -0) is -pi, not 0. */
+    number_t ver = 0.0;
     if (GSL_IMAG(y) != 0 || GSL_IMAG(x) != 0) {
-        ver = atan2(GSL_IMAG(y), GSL_IMAG(x));
+        ver = natan2(GSL_IMAG(y), GSL_IMAG(x));
     }
 
     cmplxset(sfvalue(p), hor, ver);
@@ -418,13 +420,13 @@ sfarg *sfrtni(sfarg *const p)
    * caller's variable, so rtni(z,...) silently redefined z for the rest of the
    * formula: rtni(z,12,6)+z answered -2.0595 instead of 0.9405, because the
    * second z read the root as well. */
-    double n = (double)(int)real(sfvalue(sfaram2(p)));
-    double nrz = pow(gsl_complex_abs(sfvalue(sfaram3(p))), 1.0 / n);
-    double alfi = (gsl_complex_arg(sfvalue(sfaram3(p))) +
-                   8 * atan(1.0) * (double)(int)real(sfvalue(sfaram1(p)))) /
+    number_t n = (number_t)(int)real(sfvalue(sfaram2(p)));
+    number_t nrz = npow(gsl_complex_abs(sfvalue(sfaram3(p))), 1.0 / n);
+    number_t alfi = (gsl_complex_arg(sfvalue(sfaram3(p))) +
+                   8 * natan(1.0) * (number_t)(int)real(sfvalue(sfaram1(p)))) /
                   n;
 
-    cmplxset(sfvalue(p), nrz * cos(alfi), nrz * sin(alfi));
+    cmplxset(sfvalue(p), nrz * ncos(alfi), nrz * nsin(alfi));
     return p;
 }
 
@@ -436,23 +438,23 @@ sfarg *sfinv(sfarg *const p)
 
 sfarg *sfceil(sfarg *const p)
 { /* ceil */
-    // sfvalue(p) = ceil( sfvalue( sfaram1(p) ) );
-    GSL_REAL(sfvalue(p)) = ceil(GSL_REAL(sfvalue(sfaram1(p))));
-    GSL_IMAG(sfvalue(p)) = ceil(GSL_IMAG(sfvalue(sfaram1(p))));
+    // sfvalue(p) = nceil( sfvalue( sfaram1(p) ) );
+    GSL_REAL(sfvalue(p)) = nceil(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = nceil(GSL_IMAG(sfvalue(sfaram1(p))));
     return sfaram1(p);
 }
 
 sfarg *sffloor(sfarg *const p)
 { /* floor */
-    // sfvalue(p) = floor( sfvalue( sfaram1(p) ) );
-    GSL_REAL(sfvalue(p)) = floor(GSL_REAL(sfvalue(sfaram1(p))));
-    GSL_IMAG(sfvalue(p)) = floor(GSL_IMAG(sfvalue(sfaram1(p))));
+    // sfvalue(p) = nfloor( sfvalue( sfaram1(p) ) );
+    GSL_REAL(sfvalue(p)) = nfloor(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = nfloor(GSL_IMAG(sfvalue(sfaram1(p))));
     return sfaram1(p);
 }
 
 sfarg *sfcarg(sfarg *const p)
 { /* floor */
-    // sfvalue(p) = floor( sfvalue( sfaram1(p) ) );
+    // sfvalue(p) = nfloor( sfvalue( sfaram1(p) ) );
     GSL_REAL(sfvalue(p)) = gsl_complex_arg(sfvalue(sfaram1(p)));
     GSL_IMAG(sfvalue(p)) = 0.0;
     return sfaram1(p);
@@ -460,9 +462,9 @@ sfarg *sfcarg(sfarg *const p)
 
 sfarg *sfmod(sfarg *const p)
 { /* floor */
-    // sfvalue(p) = floor( sfvalue( sfaram1(p) ) );
-    GSL_REAL(sfvalue(p)) = fmod(GSL_REAL(sfvalue(sfaram1(p))), 1);
-    GSL_IMAG(sfvalue(p)) = fmod(GSL_IMAG(sfvalue(sfaram1(p))), 1);
+    // sfvalue(p) = nfloor( sfvalue( sfaram1(p) ) );
+    GSL_REAL(sfvalue(p)) = nfmod(GSL_REAL(sfvalue(sfaram1(p))), 1);
+    GSL_IMAG(sfvalue(p)) = nfmod(GSL_IMAG(sfvalue(sfaram1(p))), 1);
     return sfaram1(p);
 }
 
@@ -508,7 +510,7 @@ sfarg *sfim(sfarg *const p)
 sfarg *sfrand(sfarg *const p)
 { /* rand */
     GSL_REAL(sfvalue(p)) =
-        GSL_REAL(sfvalue(sfaram1(p))) * (double)rand() / (double)RAND_MAX;
+        GSL_REAL(sfvalue(sfaram1(p))) * (number_t)rand() / (number_t)RAND_MAX;
     GSL_IMAG(sfvalue(p)) = 0;
     return sfaram1(p);
 }
@@ -549,19 +551,19 @@ sfarg *sfrect(sfarg *const p)
 
 sfarg *sfpolar(sfarg *const p)
 { /* polar(a, b) = |a| * e^(i*arg(b)) */
-    double radius = gsl_complex_abs(sfvalue(sfaram2(p)));
-    double theta = gsl_complex_arg(sfvalue(sfaram1(p)));
+    number_t radius = gsl_complex_abs(sfvalue(sfaram2(p)));
+    number_t theta = gsl_complex_arg(sfvalue(sfaram1(p)));
     sfvalue(p) = gsl_complex_polar(radius, theta);
     return sfaram2(p);
 }
 
 sfarg *sfmax(sfarg *const p)
 {
-    double r1 = GSL_REAL(sfvalue(sfaram2(p)));
-    double r2 = GSL_REAL(sfvalue(sfaram1(p)));
+    number_t r1 = GSL_REAL(sfvalue(sfaram2(p)));
+    number_t r2 = GSL_REAL(sfvalue(sfaram1(p)));
 
-    double i1 = GSL_IMAG(sfvalue(sfaram2(p)));
-    double i2 = GSL_IMAG(sfvalue(sfaram1(p)));
+    number_t i1 = GSL_IMAG(sfvalue(sfaram2(p)));
+    number_t i2 = GSL_IMAG(sfvalue(sfaram1(p)));
 
     GSL_REAL(sfvalue(p)) = r1 < r2 ? r2 : r1;
     GSL_IMAG(sfvalue(p)) = i1 < i2 ? i2 : i1;
@@ -570,8 +572,8 @@ sfarg *sfmax(sfarg *const p)
 
 sfarg *sfmaxr(sfarg *const p)
 {
-    double r1 = GSL_REAL(sfvalue(sfaram2(p)));
-    double r2 = GSL_REAL(sfvalue(sfaram1(p)));
+    number_t r1 = GSL_REAL(sfvalue(sfaram2(p)));
+    number_t r2 = GSL_REAL(sfvalue(sfaram1(p)));
 
     GSL_REAL(sfvalue(p)) = r1 < r2 ? r2 : r1;
     GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram2(p)));
@@ -580,8 +582,8 @@ sfarg *sfmaxr(sfarg *const p)
 
 sfarg *sfmaxi(sfarg *const p)
 {
-    double i1 = GSL_IMAG(sfvalue(sfaram2(p)));
-    double i2 = GSL_IMAG(sfvalue(sfaram1(p)));
+    number_t i1 = GSL_IMAG(sfvalue(sfaram2(p)));
+    number_t i2 = GSL_IMAG(sfvalue(sfaram1(p)));
 
     GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram2(p)));
     GSL_IMAG(sfvalue(p)) = i1 < i2 ? i2 : i1;
@@ -590,9 +592,9 @@ sfarg *sfmaxi(sfarg *const p)
 
 sfarg *sfmaxm(sfarg *const p)
 {
-    double r1 = gsl_complex_abs(sfvalue(sfaram2(p)));
-    double r2 = gsl_complex_abs(sfvalue(sfaram1(p)));
-    double theta = gsl_complex_arg(sfvalue(sfaram2(p)));
+    number_t r1 = gsl_complex_abs(sfvalue(sfaram2(p)));
+    number_t r2 = gsl_complex_abs(sfvalue(sfaram1(p)));
+    number_t theta = gsl_complex_arg(sfvalue(sfaram2(p)));
 
     sfvalue(p) = gsl_complex_polar(r1 < r2 ? r2 : r1, theta);
     return sfaram2(p);
@@ -600,11 +602,11 @@ sfarg *sfmaxm(sfarg *const p)
 
 sfarg *sfmin(sfarg *const p)
 {
-    double r1 = GSL_REAL(sfvalue(sfaram2(p)));
-    double r2 = GSL_REAL(sfvalue(sfaram1(p)));
+    number_t r1 = GSL_REAL(sfvalue(sfaram2(p)));
+    number_t r2 = GSL_REAL(sfvalue(sfaram1(p)));
 
-    double i1 = GSL_IMAG(sfvalue(sfaram2(p)));
-    double i2 = GSL_IMAG(sfvalue(sfaram1(p)));
+    number_t i1 = GSL_IMAG(sfvalue(sfaram2(p)));
+    number_t i2 = GSL_IMAG(sfvalue(sfaram1(p)));
 
     GSL_REAL(sfvalue(p)) = r1 < r2 ? r1 : r2;
     GSL_IMAG(sfvalue(p)) = i1 < i2 ? i1 : i2;
@@ -613,8 +615,8 @@ sfarg *sfmin(sfarg *const p)
 
 sfarg *sfminr(sfarg *const p)
 {
-    double r1 = GSL_REAL(sfvalue(sfaram2(p)));
-    double r2 = GSL_REAL(sfvalue(sfaram1(p)));
+    number_t r1 = GSL_REAL(sfvalue(sfaram2(p)));
+    number_t r2 = GSL_REAL(sfvalue(sfaram1(p)));
 
     GSL_REAL(sfvalue(p)) = r1 < r2 ? r1 : r2;
     GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram2(p)));
@@ -623,8 +625,8 @@ sfarg *sfminr(sfarg *const p)
 
 sfarg *sfmini(sfarg *const p)
 {
-    double i1 = GSL_IMAG(sfvalue(sfaram2(p)));
-    double i2 = GSL_IMAG(sfvalue(sfaram1(p)));
+    number_t i1 = GSL_IMAG(sfvalue(sfaram2(p)));
+    number_t i2 = GSL_IMAG(sfvalue(sfaram1(p)));
 
     GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram2(p)));
     GSL_IMAG(sfvalue(p)) = i1 < i2 ? i1 : i2;
@@ -633,15 +635,15 @@ sfarg *sfmini(sfarg *const p)
 
 sfarg *sfminm(sfarg *const p)
 {
-    double r1 = gsl_complex_abs(sfvalue(sfaram2(p)));
-    double r2 = gsl_complex_abs(sfvalue(sfaram1(p)));
-    double theta = gsl_complex_arg(sfvalue(sfaram2(p)));
+    number_t r1 = gsl_complex_abs(sfvalue(sfaram2(p)));
+    number_t r2 = gsl_complex_abs(sfvalue(sfaram1(p)));
+    number_t theta = gsl_complex_arg(sfvalue(sfaram2(p)));
 
     sfvalue(p) = gsl_complex_polar(r1 < r2 ? r1 : r2, theta);
     return sfaram2(p);
 }
 
-double calc_mid(double v1, double v2, double v3) {
+number_t calc_mid(number_t v1, number_t v2, number_t v3) {
     if (v2 < v3) {
         if (v1 < v2) {
             return v2;
@@ -663,13 +665,13 @@ double calc_mid(double v1, double v2, double v3) {
 
 sfarg *sfmid(sfarg *const p)
 {
-    double r1 = GSL_REAL(sfvalue(sfaram3(p)));
-    double r2 = GSL_REAL(sfvalue(sfaram2(p)));
-    double r3 = GSL_REAL(sfvalue(sfaram1(p)));
+    number_t r1 = GSL_REAL(sfvalue(sfaram3(p)));
+    number_t r2 = GSL_REAL(sfvalue(sfaram2(p)));
+    number_t r3 = GSL_REAL(sfvalue(sfaram1(p)));
 
-    double i1 = GSL_IMAG(sfvalue(sfaram3(p)));
-    double i2 = GSL_IMAG(sfvalue(sfaram2(p)));
-    double i3 = GSL_IMAG(sfvalue(sfaram1(p)));
+    number_t i1 = GSL_IMAG(sfvalue(sfaram3(p)));
+    number_t i2 = GSL_IMAG(sfvalue(sfaram2(p)));
+    number_t i3 = GSL_IMAG(sfvalue(sfaram1(p)));
 
     GSL_REAL(sfvalue(p)) = calc_mid(r1, r2, r3);
     GSL_IMAG(sfvalue(p)) = calc_mid(i1, i2, i3);
@@ -678,9 +680,9 @@ sfarg *sfmid(sfarg *const p)
 
 sfarg *sfmidr(sfarg *const p)
 {
-    double r1 = GSL_REAL(sfvalue(sfaram3(p)));
-    double r2 = GSL_REAL(sfvalue(sfaram2(p)));
-    double r3 = GSL_REAL(sfvalue(sfaram1(p)));
+    number_t r1 = GSL_REAL(sfvalue(sfaram3(p)));
+    number_t r2 = GSL_REAL(sfvalue(sfaram2(p)));
+    number_t r3 = GSL_REAL(sfvalue(sfaram1(p)));
 
     GSL_REAL(sfvalue(p)) = calc_mid(r1, r2, r3);
     GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram3(p)));
@@ -689,9 +691,9 @@ sfarg *sfmidr(sfarg *const p)
 
 sfarg *sfmidi(sfarg *const p)
 {
-    double i1 = GSL_IMAG(sfvalue(sfaram3(p)));
-    double i2 = GSL_IMAG(sfvalue(sfaram2(p)));
-    double i3 = GSL_IMAG(sfvalue(sfaram1(p)));
+    number_t i1 = GSL_IMAG(sfvalue(sfaram3(p)));
+    number_t i2 = GSL_IMAG(sfvalue(sfaram2(p)));
+    number_t i3 = GSL_IMAG(sfvalue(sfaram1(p)));
 
     GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram3(p)));
     GSL_IMAG(sfvalue(p)) = calc_mid(i1, i2, i3);
@@ -700,10 +702,10 @@ sfarg *sfmidi(sfarg *const p)
 
 sfarg *sfmidm(sfarg *const p)
 {
-    double r1 = gsl_complex_abs(sfvalue(sfaram3(p)));
-    double r2 = gsl_complex_abs(sfvalue(sfaram2(p)));
-    double r3 = gsl_complex_abs(sfvalue(sfaram1(p)));
-    double theta = gsl_complex_arg(sfvalue(sfaram3(p)));
+    number_t r1 = gsl_complex_abs(sfvalue(sfaram3(p)));
+    number_t r2 = gsl_complex_abs(sfvalue(sfaram2(p)));
+    number_t r3 = gsl_complex_abs(sfvalue(sfaram1(p)));
+    number_t theta = gsl_complex_arg(sfvalue(sfaram3(p)));
 
     sfvalue(p) = gsl_complex_polar(calc_mid(r1, r2, r3), theta);
     return sfaram3(p);
@@ -711,28 +713,28 @@ sfarg *sfmidm(sfarg *const p)
 
 sfarg *sfsincos(sfarg *const p)
 {
-    GSL_REAL(sfvalue(p)) = sin(GSL_REAL(sfvalue(sfaram1(p))));
-    GSL_IMAG(sfvalue(p)) = cos(GSL_IMAG(sfvalue(sfaram1(p))));
+    GSL_REAL(sfvalue(p)) = nsin(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = ncos(GSL_IMAG(sfvalue(sfaram1(p))));
     return sfaram1(p);
 }
 
 sfarg *sfcossin(sfarg *const p)
 {
-    GSL_REAL(sfvalue(p)) = cos(GSL_REAL(sfvalue(sfaram1(p))));
-    GSL_IMAG(sfvalue(p)) = sin(GSL_IMAG(sfvalue(sfaram1(p))));
+    GSL_REAL(sfvalue(p)) = ncos(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = nsin(GSL_IMAG(sfvalue(sfaram1(p))));
     return sfaram1(p);
 }
 
 sfarg *sfsinr(sfarg *const p)
 {
-    GSL_REAL(sfvalue(p)) = sin(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_REAL(sfvalue(p)) = nsin(GSL_REAL(sfvalue(sfaram1(p))));
     GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram1(p)));
     return sfaram1(p);
 }
 
 sfarg *sfcosr(sfarg *const p)
 {
-    GSL_REAL(sfvalue(p)) = cos(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_REAL(sfvalue(p)) = ncos(GSL_REAL(sfvalue(sfaram1(p))));
     GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram1(p)));
     return sfaram1(p);
 }
@@ -740,24 +742,24 @@ sfarg *sfcosr(sfarg *const p)
 sfarg *sfsini(sfarg *const p)
 {
     GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram1(p)));
-    GSL_IMAG(sfvalue(p)) = sin(GSL_IMAG(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = nsin(GSL_IMAG(sfvalue(sfaram1(p))));
     return sfaram1(p);
 }
 
 sfarg *sfcosi(sfarg *const p)
 {
     GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram1(p)));
-    GSL_IMAG(sfvalue(p)) = cos(GSL_IMAG(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = ncos(GSL_IMAG(sfvalue(sfaram1(p))));
     return sfaram1(p);
 }
 
-double cot(double x) {
-    return cos(x)/sin(x);
+number_t cot(number_t x) {
+    return ncos(x)/nsin(x);
 }
 
 sfarg *sftancot(sfarg *const p)
 {
-    GSL_REAL(sfvalue(p)) = tan(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_REAL(sfvalue(p)) = ntan(GSL_REAL(sfvalue(sfaram1(p))));
     GSL_IMAG(sfvalue(p)) = cot(GSL_IMAG(sfvalue(sfaram1(p))));
     return sfaram1(p);
 }
@@ -765,13 +767,13 @@ sfarg *sftancot(sfarg *const p)
 sfarg *sfcottan(sfarg *const p)
 {
     GSL_REAL(sfvalue(p)) = cot(GSL_REAL(sfvalue(sfaram1(p))));
-    GSL_IMAG(sfvalue(p)) = tan(GSL_IMAG(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = ntan(GSL_IMAG(sfvalue(sfaram1(p))));
     return sfaram1(p);
 }
 
 sfarg *sftanr(sfarg *const p)
 {
-    GSL_REAL(sfvalue(p)) = tan(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_REAL(sfvalue(p)) = ntan(GSL_REAL(sfvalue(sfaram1(p))));
     GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram1(p)));
     return sfaram1(p);
 }
@@ -786,7 +788,7 @@ sfarg *sfcotr(sfarg *const p)
 sfarg *sftani(sfarg *const p)
 {
     GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram1(p)));
-    GSL_IMAG(sfvalue(p)) = tan(GSL_IMAG(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = ntan(GSL_IMAG(sfvalue(sfaram1(p))));
     return sfaram1(p);
 }
 
@@ -799,13 +801,13 @@ sfarg *sfcoti(sfarg *const p)
 
 sfarg *sftrunc(sfarg *const p)
 {
-    GSL_REAL(sfvalue(p)) = trunc(GSL_REAL(sfvalue(sfaram1(p))));
-    GSL_IMAG(sfvalue(p)) = trunc(GSL_IMAG(sfvalue(sfaram1(p))));
+    GSL_REAL(sfvalue(p)) = ntrunc(GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = ntrunc(GSL_IMAG(sfvalue(sfaram1(p))));
     return sfaram1(p);
 }
 
-double sawtooth(double x) {
-    return x - floor(x);
+number_t sawtooth(number_t x) {
+    return x - nfloor(x);
 }
 
 sfarg *sfsawtooth(sfarg *const p)
@@ -815,9 +817,9 @@ sfarg *sfsawtooth(sfarg *const p)
     return sfaram1(p);
 }
 
-double twave(double x) {
-    double xf = x/2.0;
-    return 2.0*abs(2.0*(xf-floor(xf+0.5)))-1.0;
+number_t twave(number_t x) {
+    number_t xf = x/2.0;
+    return 2.0*abs(2.0*(xf-nfloor(xf+0.5)))-1.0;
 }
 
 sfarg *sftwave(sfarg *const p)
@@ -834,13 +836,13 @@ sfarg *sfjulian(sfarg *const p)
     GSL_SET_COMPLEX(&m, gsl_complex_abs(z), 0);
     m = gsl_complex_pow(m, sfvalue(sfaram2(p)));
     gsl_complex b = sfvalue(sfaram1(p));
-    double mx = GSL_REAL(m);
-    double my = GSL_IMAG(m);
-    double arg = gsl_complex_arg(z);
-    double byg = exp(-GSL_IMAG(b)*arg);
-    double bxg = arg * GSL_REAL(b);
-    double cosbxg = cos(bxg);
-    double sinbxg = sin(bxg);
+    number_t mx = GSL_REAL(m);
+    number_t my = GSL_IMAG(m);
+    number_t arg = gsl_complex_arg(z);
+    number_t byg = nexp(-GSL_IMAG(b)*arg);
+    number_t bxg = arg * GSL_REAL(b);
+    number_t cosbxg = ncos(bxg);
+    number_t sinbxg = nsin(bxg);
 
     GSL_REAL(sfvalue(p)) = byg*(mx*cosbxg - my*sinbxg);
     GSL_IMAG(sfvalue(p)) = byg*(my*cosbxg + mx*sinbxg);
@@ -849,9 +851,9 @@ sfarg *sfjulian(sfarg *const p)
 
 sfarg *sfinveps(sfarg *const p)
 { /* cinv */
-    double x = GSL_REAL(sfvalue(sfaram2(p)));
-    double y = GSL_IMAG(sfvalue(sfaram2(p)));
-    double delta = (x*x + y*y);
+    number_t x = GSL_REAL(sfvalue(sfaram2(p)));
+    number_t y = GSL_IMAG(sfvalue(sfaram2(p)));
+    number_t delta = (x*x + y*y);
     GSL_REAL(sfvalue(p)) = x/(delta + GSL_REAL(sfvalue(sfaram1(p))));
     GSL_IMAG(sfvalue(p)) = -y/(delta + GSL_IMAG(sfvalue(sfaram1(p))));
     return sfaram2(p);
@@ -859,13 +861,11 @@ sfarg *sfinveps(sfarg *const p)
 
 sfarg *sfatan2s(sfarg *const p)
 { /* cinv */
-    GSL_REAL(sfvalue(p)) = atan2(GSL_REAL(sfvalue(sfaram2(p))), GSL_REAL(sfvalue(sfaram1(p))));
-    GSL_IMAG(sfvalue(p)) = atan2(GSL_IMAG(sfvalue(sfaram2(p))), GSL_IMAG(sfvalue(sfaram1(p))));
+    GSL_REAL(sfvalue(p)) = natan2(GSL_REAL(sfvalue(sfaram2(p))), GSL_REAL(sfvalue(sfaram1(p))));
+    GSL_IMAG(sfvalue(p)) = natan2(GSL_IMAG(sfvalue(sfaram2(p))), GSL_IMAG(sfvalue(sfaram1(p))));
     return sfaram2(p);
 }
 
-#define M_1_2PI     0.15915494309189533576888376337251
-#define M_2PI       6.283185307179586476925286766559
 
 sfarg *sfngon(sfarg *const p)
 {
@@ -874,15 +874,15 @@ sfarg *sfngon(sfarg *const p)
 
     gsl_complex n = sfvalue(sfaram2(p));
     gsl_complex zc = gsl_complex_sub(sfvalue(sfaram4(p)), sfvalue(sfaram3(p)));
-    double t = gsl_complex_arg(zc);
-    gsl_complex tn = gsl_complex_mul_real(n, t * M_1_2PI);
+    number_t t = gsl_complex_arg(zc);
+    gsl_complex tn = gsl_complex_mul_real(n, t * N_1_2PI);
     tn = gsl_complex_add_real(tn, 0.5);
-    GSL_REAL(tn) = floor(GSL_REAL(tn));
-    GSL_IMAG(tn) = floor(GSL_IMAG(tn));
-    tn = gsl_complex_mul_real(tn, M_2PI);
+    GSL_REAL(tn) = nfloor(GSL_REAL(tn));
+    GSL_IMAG(tn) = nfloor(GSL_IMAG(tn));
+    tn = gsl_complex_mul_real(tn, N_2PI);
     tn = gsl_complex_div(tn, n);
-    double cr = cos(t);
-    double sr = sin(t);
+    number_t cr = ncos(t);
+    number_t sr = nsin(t);
     gsl_complex ccn = gsl_complex_cos(tn);
     gsl_complex scn = gsl_complex_sin(tn);
     gsl_complex rn = gsl_complex_add(gsl_complex_mul_real(ccn, cr),
@@ -898,18 +898,18 @@ sfarg *sfngon(sfarg *const p)
 sfarg *sfparchment(sfarg *const p)
 {
     gsl_complex z = sfvalue(sfaram2(p));
-    double n = gsl_complex_abs(sfvalue(sfaram1(p)));
+    number_t n = gsl_complex_abs(sfvalue(sfaram1(p)));
     //if (n == 2 && abs(GSL_REAL(z) - (-1.5)) < 0.1  && abs(GSL_IMAG(z) - (-1)) < 0.1) {
     //    int vb = 1;
     //}
 
-    double t = gsl_complex_arg(z);
-    double dN = n * M_1_2PI;
-    double nN = 1/dN;
+    number_t t = gsl_complex_arg(z);
+    number_t dN = n * N_1_2PI;
+    number_t nN = 1/dN;
 
-    double trc = ceil(t * dN) * nN;
+    number_t trc = nceil(t * dN) * nN;
 
-    double trm = t - trc + nN;
+    number_t trm = t - trc + nN;
 
     sfvalue(p) = gsl_complex_polar(gsl_complex_abs(z), trm);
     return sfaram2(p);
@@ -918,21 +918,21 @@ sfarg *sfparchment(sfarg *const p)
 sfarg *sfparchmenta(sfarg *const p)
 {
     gsl_complex z = sfvalue(sfaram2(p));
-    double n = gsl_complex_abs(sfvalue(sfaram1(p)));
+    number_t n = gsl_complex_abs(sfvalue(sfaram1(p)));
     //if (n == 5 && abs(GSL_REAL(z) - (-1.5)) < 0.1  && abs(GSL_IMAG(z) - (-1)) < 0.1) {
     //    int vb = 1;
     //}
 
-    double t = gsl_complex_arg(z);
-    double dN = n * M_1_2PI;
-    double nN = 1/dN;
-    double trc = ceil(t * dN) * nN;
+    number_t t = gsl_complex_arg(z);
+    number_t dN = n * N_1_2PI;
+    number_t nN = 1/dN;
+    number_t trc = nceil(t * dN) * nN;
 
     dN = dN*2;
     nN = 1/dN;
-    double trc2 = ceil(t * dN) * nN;
+    number_t trc2 = nceil(t * dN) * nN;
 
-    double trm = trc < trc2 + 0.1 / n ? trc2 - t : t + nN - trc2;
+    number_t trm = trc < trc2 + 0.1 / n ? trc2 - t : t + nN - trc2;
 
     sfvalue(p) = gsl_complex_polar(gsl_complex_abs(z), trm);
     return sfaram2(p);
@@ -940,11 +940,11 @@ sfarg *sfparchmenta(sfarg *const p)
 
 sfarg *sftruncv(sfarg *const p)
 {
-    double n = gsl_complex_abs(sfvalue(sfaram1(p)));
+    number_t n = gsl_complex_abs(sfvalue(sfaram1(p)));
 
     if (n != 0) {
-        GSL_REAL(sfvalue(p)) = trunc(GSL_REAL(sfvalue(sfaram2(p))) * n) / n;
-        GSL_IMAG(sfvalue(p)) = trunc(GSL_IMAG(sfvalue(sfaram2(p))) * n) / n;
+        GSL_REAL(sfvalue(p)) = ntrunc(GSL_REAL(sfvalue(sfaram2(p))) * n) / n;
+        GSL_IMAG(sfvalue(p)) = ntrunc(GSL_IMAG(sfvalue(sfaram2(p))) * n) / n;
     } else {
         GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram2(p)));
         GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram2(p)));
@@ -954,17 +954,17 @@ sfarg *sftruncv(sfarg *const p)
 
 sfarg *sftruncc(sfarg *const p)
 {
-    double nr = GSL_REAL(sfvalue(sfaram1(p)));
-    double ni = GSL_IMAG(sfvalue(sfaram1(p)));
+    number_t nr = GSL_REAL(sfvalue(sfaram1(p)));
+    number_t ni = GSL_IMAG(sfvalue(sfaram1(p)));
 
     if (nr != 0) {
-        GSL_REAL(sfvalue(p)) = trunc(GSL_REAL(sfvalue(sfaram2(p))) * nr) / nr;
+        GSL_REAL(sfvalue(p)) = ntrunc(GSL_REAL(sfvalue(sfaram2(p))) * nr) / nr;
     } else {
         GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram2(p)));
     }
 
     if (ni != 0) {
-        GSL_IMAG(sfvalue(p)) = trunc(GSL_IMAG(sfvalue(sfaram2(p))) * ni) / ni;
+        GSL_IMAG(sfvalue(p)) = ntrunc(GSL_IMAG(sfvalue(sfaram2(p))) * ni) / ni;
     } else {
         GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram2(p)));
     }
@@ -973,10 +973,10 @@ sfarg *sftruncc(sfarg *const p)
 
 sfarg *sftruncvr(sfarg *const p)
 {
-    double n = gsl_complex_abs(sfvalue(sfaram1(p)));
+    number_t n = gsl_complex_abs(sfvalue(sfaram1(p)));
 
     if (n != 0) {
-        GSL_REAL(sfvalue(p)) = trunc(GSL_REAL(sfvalue(sfaram2(p))) * n) / n;
+        GSL_REAL(sfvalue(p)) = ntrunc(GSL_REAL(sfvalue(sfaram2(p))) * n) / n;
     } else {
         GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram2(p)));
     }
@@ -986,11 +986,11 @@ sfarg *sftruncvr(sfarg *const p)
 
 sfarg *sftruncvi(sfarg *const p)
 {
-    double n = gsl_complex_abs(sfvalue(sfaram1(p)));
+    number_t n = gsl_complex_abs(sfvalue(sfaram1(p)));
 
     GSL_REAL(sfvalue(p)) = GSL_REAL(sfvalue(sfaram2(p)));
     if (n != 0) {
-        GSL_IMAG(sfvalue(p)) = trunc(GSL_IMAG(sfvalue(sfaram2(p))) * n) / n;
+        GSL_IMAG(sfvalue(p)) = ntrunc(GSL_IMAG(sfvalue(sfaram2(p))) * n) / n;
     } else {
         GSL_IMAG(sfvalue(p)) = GSL_IMAG(sfvalue(sfaram2(p)));
     }
@@ -999,12 +999,12 @@ sfarg *sftruncvi(sfarg *const p)
 
 sfarg *sftruncvm(sfarg *const p)
 {
-    double n = gsl_complex_abs(sfvalue(sfaram1(p)));
-    double m;
-    double a;
+    number_t n = gsl_complex_abs(sfvalue(sfaram1(p)));
+    number_t m;
+    number_t a;
 
     if (n != 0) {
-        m = trunc(gsl_complex_abs(sfvalue(sfaram2(p))) * n) / n;
+        m = ntrunc(gsl_complex_abs(sfvalue(sfaram2(p))) * n) / n;
     } else {
         m = gsl_complex_abs(sfvalue(sfaram2(p)));
     }
@@ -1015,13 +1015,13 @@ sfarg *sftruncvm(sfarg *const p)
 
 sfarg *sftruncva(sfarg *const p)
 {
-    double n = gsl_complex_abs(sfvalue(sfaram1(p)));
-    double m;
-    double a;
+    number_t n = gsl_complex_abs(sfvalue(sfaram1(p)));
+    number_t m;
+    number_t a;
 
     m = gsl_complex_abs(sfvalue(sfaram2(p)));
     if (n != 0) {
-        a = trunc(gsl_complex_arg(sfvalue(sfaram2(p))) * n) / n;
+        a = ntrunc(gsl_complex_arg(sfvalue(sfaram2(p))) * n) / n;
     } else {
         a = gsl_complex_arg(sfvalue(sfaram2(p)));
     }
@@ -1033,7 +1033,7 @@ sfarg *sftruncva(sfarg *const p)
  * Kept here rather than in the header: nothing else needs them, and a static
  * array in a header gets a private copy in every translation unit. */
 static const int LANCZOS_G = 7;
-static const double LANCZOS_P[9] = {0.99999999999980993,
+static const number_t LANCZOS_P[9] = {0.99999999999980993,
                                     676.5203681218851,
                                     -1259.1392167224028,
                                     771.32342877765313,
@@ -1055,24 +1055,24 @@ static const double LANCZOS_P[9] = {0.99999999999980993,
  */
 gsl_complex complex_gamma_lanczos(gsl_complex z)
 {
-    double zr = GSL_REAL(z);
-    double zi = GSL_IMAG(z);
+    number_t zr = GSL_REAL(z);
+    number_t zi = GSL_IMAG(z);
     gsl_complex temp;
 
     /* poles at 0, -1, -2, ... */
-    if (zi == 0.0 && zr <= 0.0 && floor(zr) == zr) {
+    if (zi == 0.0 && zr <= 0.0 && nfloor(zr) == zr) {
         GSL_SET_COMPLEX(&temp, NAN, NAN);
         return temp;
     }
 
-    /* Gamma(z) = pi / (sin(pi z) * Gamma(1 - z)) */
+    /* Gamma(z) = pi / (nsin(pi z) * Gamma(1 - z)) */
     if (zr < 0.5) {
         gsl_complex one_minus_z;
         GSL_SET_COMPLEX(&one_minus_z, 1.0 - zr, -zi);
         gsl_complex den =
-            gsl_complex_mul(gsl_complex_sin(gsl_complex_mul_real(z, M_PI)),
+            gsl_complex_mul(gsl_complex_sin(gsl_complex_mul_real(z, N_PI)),
                             complex_gamma_lanczos(one_minus_z));
-        GSL_SET_COMPLEX(&temp, M_PI, 0.0);
+        GSL_SET_COMPLEX(&temp, N_PI, 0.0);
         return gsl_complex_div(temp, den);
     }
 
@@ -1085,24 +1085,24 @@ gsl_complex complex_gamma_lanczos(gsl_complex z)
      * Every numerator is real, so each term is p[i] * conj(z + i) / |z + i|^2:
      * one division and a handful of multiplications, instead of the general
      * complex division this used to go through. */
-    double xr = LANCZOS_P[0];
-    double xi = 0.0;
+    number_t xr = LANCZOS_P[0];
+    number_t xi = 0.0;
     for (int i = 1; i < 9; ++i) {
-        double dr = zr + (double)i;
-        double s = LANCZOS_P[i] / (dr * dr + zi * zi);
+        number_t dr = zr + (number_t)i;
+        number_t s = LANCZOS_P[i] / (dr * dr + zi * zi);
         xr += s * dr;
         xi -= s * zi;
     }
     gsl_complex x;
     GSL_SET_COMPLEX(&x, xr, xi);
 
-    /* Gamma(z + 1) = sqrt(2 pi) * t^(z + 0.5) * e^-t * x, with t = z + g + 0.5.
+    /* Gamma(z + 1) = nsqrt(2 pi) * t^(z + 0.5) * e^-t * x, with t = z + g + 0.5.
      *
-     * Folding the power and the exponential into a single exp((z + 0.5) *
-     * log(t) - t) saves one complex exponential: t^(z + 0.5) is itself an
-     * exp(log(...)) underneath.
+     * Folding the power and the exponential into a single nexp((z + 0.5) *
+     * nlog(t) - t) saves one complex exponential: t^(z + 0.5) is itself an
+     * nexp(nlog(...)) underneath.
      *
-     * The scale factor is sqrt(2 pi). It used to be log(sqrt(2 pi)), which
+     * The scale factor is nsqrt(2 pi). It used to be nlog(nsqrt(2 pi)), which
      * left every result multiplied by 0.3666 -- gamma(5) came out as 8.798
      * rather than 24. */
     gsl_complex t = gsl_complex_add_real(z, LANCZOS_G + 0.5);
@@ -1148,7 +1148,7 @@ sfarg *sflambertw(sfarg *const p)
     /* Cubic convergence from these starting points settles in four or five
      * steps; the cap only guards inputs that do not converge at all. */
     const int MAX_ITERATIONS = 20;
-    const double TOLERANCE = 1e-15;
+    const number_t TOLERANCE = 1e-15;
 
     gsl_complex z = sfvalue(sfaram1(p));
     gsl_complex w;
@@ -1160,11 +1160,11 @@ sfarg *sflambertw(sfarg *const p)
 
     /* The starting point decides which branch Halley converges to, so these
      * three regions are about correctness and not only about speed. */
-    gsl_complex ez1 = gsl_complex_add_real(gsl_complex_mul_real(z, M_E), 1.0);
+    gsl_complex ez1 = gsl_complex_add_real(gsl_complex_mul_real(z, N_E), 1.0);
     if (gsl_complex_abs2(ez1) < 1.0) {
         /* Around the branch point z = -1/e the two real branches meet, and an
          * ordinary guess slides onto W_-1 -- for z = -0.3 that answers -1.7813
-         * instead of -0.4894. The expansion there is in p = sqrt(2(e z + 1)),
+         * instead of -0.4894. The expansion there is in p = nsqrt(2(e z + 1)),
          * where W_0 takes +p and W_-1 would take -p. */
         gsl_complex q = gsl_complex_sqrt(gsl_complex_mul_real(ez1, 2.0));
         gsl_complex q2 = gsl_complex_mul(q, q);
@@ -1239,13 +1239,13 @@ sfarg *sflambertw(sfarg *const p)
 
 
 // const eval
-void sfcPI(sfNumber *cnst) { GSL_SET_COMPLEX(cnst, 4 * atan(1), 0); }
+void sfcPI(sfNumber *cnst) { GSL_SET_COMPLEX(cnst, 4 * natan(1), 0); }
 
-void sfcPI2(sfNumber *cnst) { GSL_SET_COMPLEX(cnst, 2 * atan(1), 0); }
+void sfcPI2(sfNumber *cnst) { GSL_SET_COMPLEX(cnst, 2 * natan(1), 0); }
 
-void sfc2PI(sfNumber *cnst) { GSL_SET_COMPLEX(cnst, 8 * atan(1), 0); }
+void sfc2PI(sfNumber *cnst) { GSL_SET_COMPLEX(cnst, 8 * natan(1), 0); }
 
-void sfcE(sfNumber *cnst) { GSL_SET_COMPLEX(cnst, exp(1), 0); }
+void sfcE(sfNumber *cnst) { GSL_SET_COMPLEX(cnst, nexp(1), 0); }
 
 void sfcI(sfNumber *cnst) { GSL_SET_COMPLEX(cnst, 0, 1); }
 

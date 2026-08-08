@@ -21,6 +21,8 @@
 #ifndef __GSL_COMPLEX_H__
 #define __GSL_COMPLEX_H__
 
+#include "config.h" /* number_t */
+
 #undef __BEGIN_DECLS
 #undef __END_DECLS
 #ifdef __cplusplus
@@ -68,8 +70,12 @@ typedef struct {
     long double dat[2];
 } gsl_complex_long_double;
 
+/* This carries the value of every user-defined formula, so it is what decides
+ * how deep such a formula can be zoomed into. It used to be a plain double no
+ * matter how XaoS was built, which capped user formulas at 53 bits of mantissa
+ * while the built-in ones used the full width of number_t. */
 typedef struct {
-    double dat[2];
+    number_t dat[2];
 } gsl_complex;
 
 typedef struct {

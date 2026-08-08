@@ -64,6 +64,14 @@ foreach(prec ${XAOS_TEST_PRECISIONS})
    target_compile_definitions(sffe_test_devel_${suffix} PRIVATE SFFE_DEVEL)
    add_test(NAME sffe_devel_build_${suffix} COMMAND sffe_test_devel_${suffix})
 
+   # The parser has to evaluate at the precision it was built for, which is
+   # not covered by the cases above: those compare against values a double
+   # holds exactly, so they passed just as well when everything underneath ran
+   # in double.
+   xaos_add_test_binary(sffe_precision_${suffix} ${prec}
+                        sffe_precision.cpp ${SFFE_SOURCES})
+   add_test(NAME sffe_precision_${suffix} COMMAND sffe_precision_${suffix})
+
    # --- saved positions ----------------------------------------------------
    # A position survives a save/load round trip only if the text it is written
    # as carries every digit number_t holds, which is a per-precision property.
