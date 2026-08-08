@@ -581,7 +581,10 @@ void MainWindow::chooseFont()
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     menuBarRef = menuBar();
-    setWindowTitle(QCoreApplication::applicationName());
+    /* XaoS_NAME rather than the application name: the quad build shows which
+     * one it is, while the name given to Qt stays the same for both so that
+     * they go on sharing their settings. */
+    setWindowTitle(XaoS_NAME);
     setMouseTracking(true);
 
     widget = new FractalWidget();
@@ -1419,10 +1422,9 @@ void MainWindow::showStatus(const char *text)
 
 #ifdef STATUS_VIA_WINDOWTITLE
     if (strlen(text))
-        setWindowTitle(
-            QCoreApplication::applicationName().append(" - ").append(text));
+        setWindowTitle(QString(XaoS_NAME).append(" - ").append(text));
     else
-        setWindowTitle(QCoreApplication::applicationName());
+        setWindowTitle(XaoS_NAME);
 #endif
 
 #ifdef STATUS_VIA_STDOUT
