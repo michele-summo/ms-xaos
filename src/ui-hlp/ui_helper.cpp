@@ -1038,6 +1038,12 @@ static void uih_diag_compare(uih_context *c)
         return;
     uih_diag_shadow_valid = 0;
     uih_diag_comparisons++;
+    /* Before the first calculation the image holds nothing in particular, so
+     * the first snapshot has nothing meaningful to be compared against and
+     * reports the whole image as changed. Counting that would leave every
+     * clean run claiming one fault. */
+    if (uih_diag_comparisons == 1)
+        return;
 
     for (int y = 0; y < img->height; y++) {
         unsigned char *have = img->currlines[y];
