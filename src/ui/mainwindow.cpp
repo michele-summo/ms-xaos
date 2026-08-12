@@ -848,18 +848,25 @@ void MainWindow::buildMenu(const char *name, QMenu *parent, bool numbered)
             buildMenu(item->shortname, menu, numbered);
         } else {
             QAction *action = new QAction(itemName, parent);
-            /* Ctrl and plus or minus is what zooms nearly everywhere else, and
-             * adding Shift makes the step the larger one -- so the four read
-             * as two pairs rather than four unrelated keys. They cannot come
-             * from keyForItem, which can only return the standard keys Qt
-             * names, and of those only ZoomIn and ZoomOut are about zoom at
-             * all. */
+            /* Ctrl and plus or minus is what zooms nearly everywhere else,
+             * and Alt marks the larger step, so the four read as two pairs
+             * rather than four unrelated keys.
+             *
+             * Alt and not Shift, which was the first choice and was wrong: on
+             * most layouts plus is already a shifted key, so Ctrl++ and
+             * Ctrl+Shift++ arrive as the same physical event and Qt reports
+             * an ambiguous overload -- with two actions claiming it, neither
+             * fires reliably.
+             *
+             * They cannot come from keyForItem either, which returns only the
+             * standard keys Qt names; of those just ZoomIn and ZoomOut concern
+             * zoom, and ZoomIn already belongs to the autopilot. */
             const QString custom =
                 item->shortname == QString("zoomin2")    ? "Ctrl++"
                 : item->shortname == QString("zoomout2") ? "Ctrl+-"
-                : item->shortname == QString("zoomin10") ? "Ctrl+Shift++"
+                : item->shortname == QString("zoomin10") ? "Ctrl+Alt++"
                 : item->shortname == QString("zoomout10")
-                    ? "Ctrl+Shift+-"
+                    ? "Ctrl+Alt+-"
                     : QString();
             if (!custom.isEmpty())
                 action->setShortcut(QKeySequence(custom));
