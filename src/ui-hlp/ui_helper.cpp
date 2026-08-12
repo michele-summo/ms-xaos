@@ -1593,6 +1593,14 @@ void uih_scaleview(uih_context *c, number_t factor)
     uih_saveundo(c);
     c->fcontext->s.rr *= factor;
     c->fcontext->s.ri *= factor;
+    /* A recalculation and not an animation step. uih_animate_image marks the
+     * frame as animated, which lets the engine reuse the previous one and
+     * stretch it into the new view -- fine for the continuous zoom, where each
+     * frame moves by a fraction of a pixel, and wrong for a jump of two or ten
+     * times, where most of what is now on screen was never computed. Zooming
+     * out showed it worst: the edges of the old view smeared outward until
+     * something forced a redraw. */
+    uih_recalculate(c);
     uih_animate_image(c);
 }
 
