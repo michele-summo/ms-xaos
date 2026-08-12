@@ -1675,12 +1675,27 @@ void uih_zoomout10(uih_context *c) { uih_scaleview(c, (number_t)10); }
  * sensible reading of it that means "go further out". */
 int uih_selectionzoom_mode = 0;
 
-void uih_selectionzoom(uih_context *c, int onoff)
+void uih_selectionzoom(uih_context *c)
 {
-    uih_selectionzoom_mode = onoff;
+    /* No argument: MENUNOPCB_I registers a MENU_NOPARAM item, so the handler
+     * is called with the context alone and has to flip the state itself. It
+     * used to take the new state as a parameter that was never passed, which
+     * is why the mode could be switched on and then not off again. */
+    uih_selectionzoom_mode = !uih_selectionzoom_mode;
     /* Whatever the continuous zoom had built up stops here, or the view would
      * go on drifting after the mode is turned on. */
     c->step = 0;
+    if (uih_selectionzoom_mode && c->juliamode) {
+        /* Fast julia follows the pointer across the image, and a selection is
+         * dragged across the same image with the same button. Both at once
+         * means the preview jumps about while the rectangle is being drawn and
+         * the release lands on whichever of the two claims it, so the two
+         * modes are exclusive rather than merely awkward together. */
+        uih_disablejulia(c);
+        uih_message(c, TR("Message",
+                          "Fast julia mode turned off: it follows the same "
+                          "drag as the selection."));
+    }
     uih_updatemenus(c, "selectionzoom");
 }
 

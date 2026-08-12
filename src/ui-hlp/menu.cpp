@@ -1007,8 +1007,14 @@ static void uih_rcyclingsw(struct uih_context *c)
 
 static void uih_juliasw(struct uih_context *c)
 {
-    if (!c->juliamode)
+    if (!c->juliamode) {
+        /* The other half of the exclusion in uih_selectionzoom: whichever of
+         * the two is switched on last turns the other off, rather than one of
+         * them silently refusing to start. */
+        if (uih_selectionzoom_mode)
+            uih_selectionzoom(c);
         uih_enablejulia(c);
+    }
     else
         uih_disablejulia(c);
 }
