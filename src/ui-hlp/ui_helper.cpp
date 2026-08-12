@@ -1578,6 +1578,109 @@ static inline void uih_zoomupdate(uih_context *uih)
     uih_animate_image(uih);
 }
 
+/* Scale the view about its own centre. Below one this moves in, above it out;
+ * the centre does not move, which is what makes these repeatable -- pressing
+ * "in 2x" then "out 2x" returns exactly where it started, give or take the
+ * rounding of one multiplication and one division.
+ *
+ * Nothing here needs the rotation angle: s.rr and s.ri are the extents along
+ * the screen axes whatever the fractal is turned to, so scaling them leaves
+ * the picture pointing the same way. */
+void uih_scaleview(uih_context *c, number_t factor)
+{
+    if (factor <= 0)
+        return;
+    uih_saveundo(c);
+    c->fcontext->s.rr *= factor;
+    c->fcontext->s.ri *= factor;
+    uih_animate_image(c);
+}
+
+/* Zoom to a rectangle the user dragged out, given in image pixels.
+ *
+ * The rectangle is forced to the aspect ratio of the image before anything
+ * else, by growing the short side rather than cropping the long one, so that
+ * everything selected stays visible: a selection is a promise about what will
+ * be on screen, and cropping it would break that promise silently.
+ *
+ * Rotation needs no special case, which is worth saying because it looks as
+ * though it should. The new size comes from the rectangle as a fraction of the
+ * image, and s.rr and s.ri are already measured along the screen axes. The new
+ * centre comes from uih_getcoord, which ends in rotateback and so returns the
+ * fractal coordinate under a screen pixel however the view is turned. Both
+ * halves are therefore stated in the frame the user actually dragged in.
+ */
+void uih_zoomrectangle(uih_context *c, int x1, int y1, int x2, int y2)
+{
+    int width = c->image->width, height = c->image->height;
+    number_t cr, ci;
+
+    if (x2 < x1) {
+        int t = x1;
+        x1 = x2;
+        x2 = t;
+    }
+    if (y2 < y1) {
+        int t = y1;
+        y1 = y2;
+        y2 = t;
+    }
+    if (x2 - x1 < 2 || y2 - y1 < 2 || width <= 0 || height <= 0)
+        return; /* a click rather than a drag */
+
+    {
+        number_t rw = (number_t)(x2 - x1), rh = (number_t)(y2 - y1);
+        number_t want = (number_t)width / (number_t)height;
+        number_t mx = (x1 + x2) / (number_t)2, my = (y1 + y2) / (number_t)2;
+        if (rw / rh < want)
+            rw = rh * want;
+        else
+            rh = rw / want;
+        x1 = (int)(mx - rw / 2);
+        x2 = (int)(mx + rw / 2);
+        y1 = (int)(my - rh / 2);
+        y2 = (int)(my + rh / 2);
+    }
+
+    uih_saveundo(c);
+    uih_getcoord(c, (x1 + x2) / 2, (y1 + y2) / 2, &cr, &ci);
+    c->fcontext->s.rr *= (number_t)(x2 - x1) / (number_t)width;
+    c->fcontext->s.ri *= (number_t)(y2 - y1) / (number_t)height;
+    c->fcontext->s.cr = cr;
+    c->fcontext->s.ci = ci;
+    uih_animate_image(c);
+}
+
+/* The four fixed steps. Ultra Fractal offers the same pair of magnitudes, and
+ * they are the useful ones: two to move by a noticeable amount without losing
+ * your place, ten to cross a decade in one press. */
+void uih_zoomin2(uih_context *c) { uih_scaleview(c, (number_t)1 / 2); }
+void uih_zoomin10(uih_context *c) { uih_scaleview(c, (number_t)1 / 10); }
+void uih_zoomout2(uih_context *c) { uih_scaleview(c, (number_t)2); }
+void uih_zoomout10(uih_context *c) { uih_scaleview(c, (number_t)10); }
+
+/* Selection zoom: drag out a rectangle and go there, instead of the continuous
+ * zoom XaoS does while a button is held. The engine knows only whether the
+ * mode is on; the rectangle is drawn and measured by the user interface, which
+ * is also what stops feeding the continuous zoom while it is. Zoom in only --
+ * a rectangle drawn on the screen says what to look at, and there is no
+ * sensible reading of it that means "go further out". */
+int uih_selectionzoom_mode = 0;
+
+void uih_selectionzoom(uih_context *c, int onoff)
+{
+    uih_selectionzoom_mode = onoff;
+    /* Whatever the continuous zoom had built up stops here, or the view would
+     * go on drifting after the mode is turned on. */
+    c->step = 0;
+    uih_updatemenus(c, "selectionzoom");
+}
+
+int uih_selectionzoomenabled(uih_context *)
+{
+    return uih_selectionzoom_mode;
+}
+
 /*main uih loop */
 
 int uih_update(uih_context *c, int mousex, int mousey, int mousebuttons)

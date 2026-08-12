@@ -20,6 +20,14 @@ class FractalWidget : public QWidget
     struct image *m_image = NULL;
     QSize m_sizeHint;
     QPointF m_mousePosition = QPointF(0.0, 0.0);
+    /* Selection zoom. The rectangle lives here, in device pixels like
+     * everything the engine is told about, and is drawn by this widget rather
+     * than into the fractal image: an overlay in the image would have to be
+     * saved and restored around every frame, which is the machinery that
+     * smears text across the picture when it goes wrong. */
+    struct uih_context *m_uih = NULL;
+    QPointF m_selectionStart;
+    bool m_selecting = false;
 
   protected:
     void mouseMoveEvent(QMouseEvent *event);
@@ -42,6 +50,10 @@ class FractalWidget : public QWidget
     // the text size is raised above 100%.
     QSize imageSize() const;
     void setImage(struct image *image);
+    void setContext(struct uih_context *uih) { m_uih = uih; }
+    /* The dragged rectangle, forced to the widget's aspect ratio, in device
+     * pixels; null while nothing is being dragged. */
+    QRectF selection() const;
 };
 
 #endif // FRACTALWIDGET_H

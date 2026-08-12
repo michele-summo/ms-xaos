@@ -546,6 +546,15 @@ void uih_noconstantframetime(uih_context *c);
 
 /*undo and redo*/
 void uih_saveundo(uih_context *c);
+void uih_scaleview(uih_context *c, number_t factor);
+void uih_zoomrectangle(uih_context *c, int x1, int y1, int x2, int y2);
+void uih_zoomin2(uih_context *c);
+void uih_zoomin10(uih_context *c);
+void uih_zoomout2(uih_context *c);
+void uih_zoomout10(uih_context *c);
+void uih_selectionzoom(uih_context *c, int onoff);
+int uih_selectionzoomenabled(uih_context *c);
+extern int uih_selectionzoom_mode;
 void uih_undo(uih_context *c);
 void uih_redo(uih_context *c);
 

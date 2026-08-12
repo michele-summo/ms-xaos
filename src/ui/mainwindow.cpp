@@ -281,7 +281,9 @@ void MainWindow::processEvents(bool wait)
 
     int mousex = widget->mousePosition().x();
     int mousey = widget->mousePosition().y();
-    int buttons = mouseButtons();
+    /* While a rectangle is being dragged the engine must not see the button,
+     * or it would zoom continuously underneath the selection. */
+    int buttons = uih_selectionzoom_mode ? 0 : mouseButtons();
     int key = keyCombination();
     tl_update_time();
     assert(!((key) & ~(KEYLEFT | KEYRIGHT | KEYUP | KEYDOWN)) &&
@@ -608,6 +610,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     uih = uih_mkcontext(PIXELSIZE, image, ui_passfunc, ui_message,
                         ui_updatemenus);
     uih->data = this;
+    widget->setContext(uih);
     uih->font = &messageFont;
     buildMenu(uih->menuroot);
     uih->fcontext->version++;

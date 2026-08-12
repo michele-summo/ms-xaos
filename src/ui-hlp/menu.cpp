@@ -1254,6 +1254,18 @@ void uih_registermenus_i18n(void)
     SUBMENU_I("root", "e", TR("Menu", "Filters"), "mfilter");
     SUBMENU_I("root", NULL, TR("Menu", "Action"), "action");
     SUBMENU_I("root", NULL, TR("Menu", "View"), "ui");
+    MENUSEPARATOR_I("ui");
+    MENUNOPCB_I("ui", NULL, TR("Menu", "Selection zoom (drag a rectangle)"),
+                "selectionzoom", MENUFLAG_INTERRUPT | MENUFLAG_NOPLAY,
+                uih_selectionzoom, uih_selectionzoomenabled);
+    MENUNOP_I("ui", NULL, TR("Menu", "Zoom in 2x"), "zoomin2",
+              MENUFLAG_INTERRUPT, uih_zoomin2);
+    MENUNOP_I("ui", NULL, TR("Menu", "Zoom in 10x"), "zoomin10",
+              MENUFLAG_INTERRUPT, uih_zoomin10);
+    MENUNOP_I("ui", NULL, TR("Menu", "Zoom out 2x"), "zoomout2",
+              MENUFLAG_INTERRUPT, uih_zoomout2);
+    MENUNOP_I("ui", NULL, TR("Menu", "Zoom out 10x"), "zoomout10",
+              MENUFLAG_INTERRUPT, uih_zoomout10);
     SUBMENU_I("root", NULL, TR("Menu", "Help"), "helpmenu");
     SUBMENU_I("helpmenu", NULL, TR("Menu", "Tutorials"), "tutor");
     SUBMENUNOOPT_I("animroot", "f", TR("Menu", "File"), "file");

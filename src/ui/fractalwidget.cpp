@@ -7,6 +7,7 @@
 
 #include "ui.h"
 #include "filter.h"
+#include "ui_helper.h"
 
 FractalWidget::FractalWidget()
 {
@@ -85,25 +86,86 @@ void FractalWidget::paintEvent(QPaintEvent */*event*/)
         // it. Whatever fell outside was never restored, and the zoom smeared
         // it across the image.
         painter.drawImage(QRectF(0, 0, width(), height()), *qimage);
+
+        /* The selection goes on top of the image and nowhere near it: drawn
+         * here every paint, it leaves no trace to be cleaned up and cannot
+         * reach the buffers the zoom engine reuses. */
+        QRectF r = selection();
+        if (!r.isNull()) {
+            painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+            painter.setPen(QPen(Qt::white, 1, Qt::DashLine));
+            painter.drawRect(r);
+            painter.setPen(QPen(Qt::black, 1, Qt::DashLine));
+            painter.drawRect(r.adjusted(1, 1, -1, -1));
+        }
     }
 }
 #endif
 
+/* Forced to the widget's aspect ratio by growing the short side, never by
+ * cropping the long one: a selection is a promise about what will be on
+ * screen, and trimming it would quietly break that promise. The engine is told
+ * the same rectangle, so what is drawn here and what is zoomed to agree. */
+QRectF FractalWidget::selection() const
+{
+    if (!m_selecting)
+        return QRectF();
+    QRectF r = QRectF(m_selectionStart, m_mousePosition).normalized();
+    if (height() <= 0 || r.height() <= 0 || r.width() <= 0)
+        return QRectF();
+    const qreal want = (qreal)width() / (qreal)height();
+    QPointF middle = r.center();
+    qreal w = r.width(), h = r.height();
+    if (w / h < want)
+        w = h * want;
+    else
+        h = w / want;
+    return QRectF(middle.x() - w / 2, middle.y() - h / 2, w, h);
+}
+
 void FractalWidget::mousePressEvent(QMouseEvent *event)
 {
     m_mousePosition = event->pos();
+    if (uih_selectionzoom_mode && event->button() == Qt::LeftButton) {
+        m_selectionStart = event->pos();
+        m_selecting = true;
+        update();
+        event->accept();
+        return;
+    }
     event->ignore();
 }
 
 void FractalWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     m_mousePosition = event->pos();
+    if (m_selecting) {
+        QRectF r = selection();
+        m_selecting = false;
+        update();
+        if (m_uih != NULL && !r.isNull()) {
+            /* Into device pixels, which is what the engine measures the image
+             * in. */
+            const qreal ratio = devicePixelRatioF();
+            uih_zoomrectangle(m_uih, qRound(r.left() * ratio),
+                              qRound(r.top() * ratio),
+                              qRound(r.right() * ratio),
+                              qRound(r.bottom() * ratio));
+        }
+        event->accept();
+        return;
+    }
     event->ignore();
 }
 
 void FractalWidget::mouseMoveEvent(QMouseEvent *event)
 {
     m_mousePosition = event->pos();
+    if (m_selecting) {
+        update();
+        event->accept();
+        return;
+    }
     event->ignore();
 }
 
