@@ -793,8 +793,15 @@ QKeySequence::StandardKey MainWindow::keyForItem(const QString &name)
         return QKeySequence::SaveAs;
     if (name == "fractalinfo")
         return QKeySequence::WhatsThis;
-    if (name == "autopilot")
+    /* ZoomIn and ZoomOut are Ctrl++ and Ctrl+- on this platform -- asked of
+     * QKeySequence::keyBindings rather than assumed -- so they belong to the
+     * commands that zoom. They used to be spent on the autopilot, which does
+     * not zoom in in any sense, and that left two actions claiming Ctrl++:
+     * Qt calls it an ambiguous overload and then honours neither. */
+    if (name == "zoomin2")
         return QKeySequence::ZoomIn;
+    if (name == "zoomout2")
+        return QKeySequence::ZoomOut;
 
     return QKeySequence::UnknownKey;
 }
@@ -863,23 +870,14 @@ void MainWindow::buildMenu(const char *name, QMenu *parent, bool numbered)
             buildMenu(item->shortname, menu, numbered);
         } else {
             QAction *action = new QAction(itemName, parent);
-            /* Ctrl and plus or minus is what zooms nearly everywhere else,
-             * and Alt marks the larger step, so the four read as two pairs
-             * rather than four unrelated keys.
-             *
-             * Alt and not Shift, which was the first choice and was wrong: on
-             * most layouts plus is already a shifted key, so Ctrl++ and
-             * Ctrl+Shift++ arrive as the same physical event and Qt reports
-             * an ambiguous overload -- with two actions claiming it, neither
-             * fires reliably.
-             *
-             * They cannot come from keyForItem either, which returns only the
-             * standard keys Qt names; of those just ZoomIn and ZoomOut concern
-             * zoom, and ZoomIn already belongs to the autopilot. */
+            /* The two-times steps take Qt's own ZoomIn and ZoomOut, through
+             * keyForItem above. Only the ten-times pair needs a sequence of
+             * its own, and it takes the same keys with Alt added -- so the
+             * four read as two pairs. Alt and not Shift: plus is itself a
+             * shifted key on most layouts, so Ctrl+Shift++ would arrive as
+             * the same event as Ctrl++. */
             const QString custom =
-                item->shortname == QString("zoomin2")    ? "Ctrl++"
-                : item->shortname == QString("zoomout2") ? "Ctrl+-"
-                : item->shortname == QString("zoomin10") ? "Ctrl+Alt++"
+                item->shortname == QString("zoomin10") ? "Ctrl+Alt++"
                 : item->shortname == QString("zoomout10")
                     ? "Ctrl+Alt+-"
                     : QString();
