@@ -801,6 +801,21 @@ QKeySequence::StandardKey MainWindow::keyForItem(const QString &name)
 
 void MainWindow::buildMenu(const char *name)
 {
+    /* clear() takes the menus off the bar but leaves them owned by it, and a
+     * QAction keeps its shortcut registered on the window for as long as it
+     * exists. Rebuilding without destroying them therefore leaves a second
+     * action claiming every sequence, and a third, and so on -- which Qt
+     * reports as an ambiguous shortcut overload and then honours for none of
+     * them. The menus are rebuilt whenever a checkable item changes, so this
+     * accumulated steadily; it only became visible once a menu item carried a
+     * shortcut that anyone pressed.
+     *
+     * deleteLater rather than delete: a rebuild can be triggered from inside a
+     * menu action, and destroying the menu that is emitting would take the
+     * ground out from under it. */
+    for (QAction *action : menuBarRef->actions())
+        if (QMenu *menu = action->menu())
+            menu->deleteLater();
     menuBarRef->clear();
     foreach (QAction *action, actions())
         removeAction(action);
