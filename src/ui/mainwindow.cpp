@@ -821,8 +821,18 @@ void MainWindow::buildMenu(const char *name)
      * menu action, and destroying the menu that is emitting would take the
      * ground out from under it. */
     for (QAction *action : menuBarRef->actions())
-        if (QMenu *menu = action->menu())
+        if (QMenu *menu = action->menu()) {
+            /* Unparented before it is scheduled for deletion, not merely
+             * scheduled: deleteLater defers the destruction to the next turn
+             * of the event loop, and until then the old menu is still a child
+             * of the bar. toggleMenu finds the action to tick by name with
+             * findChild, which searches children -- so it could find a stale
+             * one and set its state while the visible item kept the old tick.
+             * Checkboxes changed from code, rather than by being clicked,
+             * were the ones that showed it. */
+            menu->setParent(nullptr);
             menu->deleteLater();
+        }
     menuBarRef->clear();
     foreach (QAction *action, actions())
         removeAction(action);
