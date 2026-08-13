@@ -1674,6 +1674,11 @@ void uih_zoomout10(uih_context *c) { uih_scaleview(c, (number_t)10); }
  * a rectangle drawn on the screen says what to look at, and there is no
  * sensible reading of it that means "go further out". */
 int uih_selectionzoom_mode = 0;
+/* Set while fast julia is borrowing the drag, so that leaving julia gives the
+ * mode back to whoever had it. Without this the two are merely exclusive, and
+ * turning julia off leaves the user in neither mode -- having asked for
+ * neither change. */
+static int selectionzoom_suspended = 0;
 
 void uih_selectionzoom(uih_context *c)
 {
@@ -1682,6 +1687,10 @@ void uih_selectionzoom(uih_context *c)
      * used to take the new state as a parameter that was never passed, which
      * is why the mode could be switched on and then not off again. */
     uih_selectionzoom_mode = !uih_selectionzoom_mode;
+    /* Pressing the item is a decision, and it replaces whatever the suspend
+     * below had remembered: turning the mode off by hand while fast julia
+     * holds it should not see it come back when julia ends. */
+    selectionzoom_suspended = 0;
     /* Whatever the continuous zoom had built up stops here, or the view would
      * go on drifting after the mode is turned on. */
     c->step = 0;
@@ -1696,6 +1705,32 @@ void uih_selectionzoom(uih_context *c)
                           "Fast julia mode turned off: it follows the same "
                           "drag as the selection."));
     }
+    uih_updatemenus(c, "selectionzoom");
+}
+
+/* Fast julia follows the pointer across the image, and a selection is dragged
+ * across the same image with the same button; both at once means the preview
+ * jumps about while the rectangle is drawn and the release lands on whichever
+ * claims it. So julia borrows the mode rather than cancelling it, and hands it
+ * back on the way out -- which is only visible when it was on to begin with,
+ * and does nothing at all when it was not. */
+void uih_selectionzoom_suspend(uih_context *c)
+{
+    if (!uih_selectionzoom_mode)
+        return;
+    selectionzoom_suspended = 1;
+    uih_selectionzoom_mode = 0;
+    c->step = 0;
+    uih_updatemenus(c, "selectionzoom");
+}
+
+void uih_selectionzoom_restore(uih_context *c)
+{
+    if (!selectionzoom_suspended)
+        return;
+    selectionzoom_suspended = 0;
+    uih_selectionzoom_mode = 1;
+    c->step = 0;
     uih_updatemenus(c, "selectionzoom");
 }
 

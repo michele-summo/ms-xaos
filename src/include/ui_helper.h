@@ -553,6 +553,8 @@ void uih_zoomin10(uih_context *c);
 void uih_zoomout2(uih_context *c);
 void uih_zoomout10(uih_context *c);
 void uih_selectionzoom(uih_context *c);
+void uih_selectionzoom_suspend(uih_context *c);
+void uih_selectionzoom_restore(uih_context *c);
 int uih_selectionzoomenabled(uih_context *c);
 extern int uih_selectionzoom_mode;
 void uih_undo(uih_context *c);
