@@ -1667,76 +1667,48 @@ void uih_zoomin10(uih_context *c) { uih_scaleview(c, (number_t)1 / 10); }
 void uih_zoomout2(uih_context *c) { uih_scaleview(c, (number_t)2); }
 void uih_zoomout10(uih_context *c) { uih_scaleview(c, (number_t)10); }
 
-/* Selection zoom: drag out a rectangle and go there, instead of the continuous
- * zoom XaoS does while a button is held. The engine knows only whether the
- * mode is on; the rectangle is drawn and measured by the user interface, which
- * is also what stops feeding the continuous zoom while it is. Zoom in only --
- * a rectangle drawn on the screen says what to look at, and there is no
- * sensible reading of it that means "go further out". */
+/* Selection zoom: drag a rectangle and go there, instead of the continuous
+ * zoom XaoS does while a button is held. Zoom in only -- a rectangle drawn on
+ * the screen says what to look at, and there is no reading of it that means
+ * "go further out".
+ *
+ * Two states rather than one, which is the whole of it. The flag below is what
+ * the user asked for and is what the menu shows ticked; whether the mode is in
+ * force is derived, because fast julia needs the same drag and takes it while
+ * it runs.
+ *
+ * Nothing is saved and restored. An earlier attempt had julia borrow the mode
+ * and hand it back, which needed a second flag and still got the interesting
+ * cases wrong: asking for the mode while julia held the drag went nowhere, and
+ * withdrawing it left a remembered value to spring back later. Deriving the
+ * answer instead means a request always registers -- the box ticks, and the
+ * mode starts the moment julia stops wanting the pointer -- and a withdrawal
+ * is simply gone.
+ */
 int uih_selectionzoom_mode = 0;
-/* Set while fast julia is borrowing the drag, so that leaving julia gives the
- * mode back to whoever had it. Without this the two are merely exclusive, and
- * turning julia off leaves the user in neither mode -- having asked for
- * neither change. */
-static int selectionzoom_suspended = 0;
 
 void uih_selectionzoom(uih_context *c)
 {
     /* No argument: MENUNOPCB_I registers a MENU_NOPARAM item, so the handler
-     * is called with the context alone and has to flip the state itself. It
-     * used to take the new state as a parameter that was never passed, which
-     * is why the mode could be switched on and then not off again. */
+     * is called with the context alone and flips the state itself. */
     uih_selectionzoom_mode = !uih_selectionzoom_mode;
-    /* Pressing the item is a decision, and it replaces whatever the suspend
-     * below had remembered: turning the mode off by hand while fast julia
-     * holds it should not see it come back when julia ends. */
-    selectionzoom_suspended = 0;
     /* Whatever the continuous zoom had built up stops here, or the view would
      * go on drifting after the mode is turned on. */
     c->step = 0;
-    if (uih_selectionzoom_mode && c->juliamode) {
-        /* Fast julia follows the pointer across the image, and a selection is
-         * dragged across the same image with the same button. Both at once
-         * means the preview jumps about while the rectangle is being drawn and
-         * the release lands on whichever of the two claims it, so the two
-         * modes are exclusive rather than merely awkward together. */
-        uih_disablejulia(c);
-        uih_message(c, TR("Message",
-                          "Fast julia mode turned off: it follows the same "
-                          "drag as the selection."));
-    }
     uih_updatemenus(c, "selectionzoom");
 }
 
-/* Fast julia follows the pointer across the image, and a selection is dragged
- * across the same image with the same button; both at once means the preview
- * jumps about while the rectangle is drawn and the release lands on whichever
- * claims it. So julia borrows the mode rather than cancelling it, and hands it
- * back on the way out -- which is only visible when it was on to begin with,
- * and does nothing at all when it was not. */
-void uih_selectionzoom_suspend(uih_context *c)
-{
-    if (!uih_selectionzoom_mode)
-        return;
-    selectionzoom_suspended = 1;
-    uih_selectionzoom_mode = 0;
-    c->step = 0;
-    uih_updatemenus(c, "selectionzoom");
-}
-
-void uih_selectionzoom_restore(uih_context *c)
-{
-    if (!selectionzoom_suspended)
-        return;
-    selectionzoom_suspended = 0;
-    uih_selectionzoom_mode = 1;
-    c->step = 0;
-    uih_updatemenus(c, "selectionzoom");
-}
-
+/* What the menu ticks: the request, not its effect. Someone who asks for the
+ * mode while fast julia is running should see that they were heard. */
 int uih_selectionzoomenabled(uih_context *)
 {
     return uih_selectionzoom_mode;
+}
+
+/* Whether the drag belongs to the selection right now. */
+int uih_selectionzoom_active(uih_context *c)
+{
+    return uih_selectionzoom_mode && c != NULL && !c->juliamode;
 }
 
 /*main uih loop */

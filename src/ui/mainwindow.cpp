@@ -283,7 +283,7 @@ void MainWindow::processEvents(bool wait)
     int mousey = widget->mousePosition().y();
     /* While a rectangle is being dragged the engine must not see the button,
      * or it would zoom continuously underneath the selection. */
-    int buttons = uih_selectionzoom_mode ? 0 : mouseButtons();
+    int buttons = uih_selectionzoom_active(uih) ? 0 : mouseButtons();
     int key = keyCombination();
     tl_update_time();
     assert(!((key) & ~(KEYLEFT | KEYRIGHT | KEYUP | KEYDOWN)) &&

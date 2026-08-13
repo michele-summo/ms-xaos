@@ -126,7 +126,8 @@ QRectF FractalWidget::selection() const
 void FractalWidget::mousePressEvent(QMouseEvent *event)
 {
     m_mousePosition = event->pos();
-    if (uih_selectionzoom_mode && event->button() == Qt::LeftButton) {
+    if (uih_selectionzoom_active(m_uih) &&
+        event->button() == Qt::LeftButton) {
         m_selectionStart = event->pos();
         m_selecting = true;
         update();

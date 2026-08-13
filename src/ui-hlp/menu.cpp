@@ -1007,15 +1007,13 @@ static void uih_rcyclingsw(struct uih_context *c)
 
 static void uih_juliasw(struct uih_context *c)
 {
-    if (!c->juliamode) {
-        /* Borrow the selection mode rather than cancel it, so that leaving
-         * julia puts the user back where they were. */
-        uih_selectionzoom_suspend(c);
+    /* Nothing to say to selection zoom, which asks whether julia is running
+     * rather than being told: both orders of pressing then behave, and the
+     * tick stays where the user last put it. */
+    if (!c->juliamode)
         uih_enablejulia(c);
-    } else {
+    else
         uih_disablejulia(c);
-        uih_selectionzoom_restore(c);
-    }
 }
 
 static int uih_juliaselected(struct uih_context *c)
