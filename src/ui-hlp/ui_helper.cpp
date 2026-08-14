@@ -1096,7 +1096,7 @@ static void uih_diag_note(uih_context *c)
         uih_diag_log = fopen("xaos-diag.txt", "w");
         if (uih_diag_log == NULL)
             return;
-        fprintf(uih_diag_log, "XaoS overlay diagnostic -- %s\n\n",
+        fprintf(uih_diag_log, "%s overlay diagnostic -- %s\n\n", XaoS_NAME,
                 XaoS_VERSION);
         atexit(uih_diag_summary);
     }

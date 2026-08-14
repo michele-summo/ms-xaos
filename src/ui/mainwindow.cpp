@@ -661,7 +661,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     }
 
     char welcome[80];
-    sprintf(welcome, TR("Message", "Welcome to XaoS version %s"), XaoS_VERSION);
+    sprintf(welcome, TR("Message", "Welcome to %s version %s"), XaoS_NAME,
+            XaoS_VERSION);
     uih_message(uih, welcome);
     if (printspeed)
         printSpeed();
