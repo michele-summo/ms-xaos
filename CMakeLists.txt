@@ -235,6 +235,16 @@ else()
           src/ui/XaoS.qrc
           XaoS.qrc
        )
+       # A Windows executable is linked into the console subsystem unless it
+       # says otherwise, and then opens a console window beside itself. The
+       # tree used qt_add_executable before this function existed, which sets
+       # this by itself; plain add_executable does not, so release builds
+       # started showing a console that had never been there.
+       #
+       # Debug keeps it, which is what the qmake build does too -- there it is
+       # somewhere for the tracing to go, rather than an accident.
+       set_target_properties(${target} PROPERTIES
+          WIN32_EXECUTABLE $<NOT:$<CONFIG:Debug>>)
        target_compile_definitions(${target} PRIVATE ${precision})
        target_link_libraries(${target} Qt6::Widgets Qt6::PrintSupport)
        if(precision STREQUAL "USE_FLOAT128")
