@@ -35,6 +35,7 @@
 
 #include "config.h"
 #include "mainwindow.h"
+#include "formulahelp.h"
 #include "filter.h"
 #include "ui_helper.h"
 #include "ui.h"
@@ -560,6 +561,8 @@ static void ui_registermenus_i18n(void)
               ui_help);
     MENUNOP_I("helpmenu", NULL, TR("Menu", "Info on current fractal"), "fractalinfo",
               MENUFLAG_INCALC, ui_fractalinfo);
+    MENUNOP_I("helpmenu", NULL, TR("Menu", "User formula reference"),
+              "formulahelp", MENUFLAG_INCALC, ui_formulahelp);
     MENUNOP_I("helpmenu", NULL, TR("Menu", "Send Feedback"), "feedback", MENUFLAG_INCALC,
               ui_feedback);
     MENUNOP_I("helpmenu", NULL, TR("Menu", "Get Updates"), "updates", MENUFLAG_INCALC,

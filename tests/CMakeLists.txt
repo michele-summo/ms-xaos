@@ -83,6 +83,16 @@ foreach(prec ${XAOS_TEST_PRECISIONS})
    add_test(NAME special_functions_${suffix}
             COMMAND special_functions_${suffix})
 
+   # The help window's function list is a second copy of the parser's table,
+   # and a second copy drifts. This compares them.
+   xaos_add_test_binary(formula_help_${suffix} ${prec}
+                        formula_help_test.cpp
+                        ${CMAKE_SOURCE_DIR}/src/ui/formulahelp_data.cpp
+                        ${SFFE_SOURCES})
+   target_include_directories(formula_help_${suffix}
+                              PRIVATE ${CMAKE_SOURCE_DIR}/src/ui)
+   add_test(NAME formula_help_${suffix} COMMAND formula_help_${suffix})
+
    # --- overlays over the image --------------------------------------------
    # The status bar and the messages are drawn into the fractal image, so what
    # they cover has to be saved and put back. Where it is saved matters: the
