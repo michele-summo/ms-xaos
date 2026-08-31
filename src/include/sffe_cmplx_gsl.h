@@ -13,7 +13,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
-#define sffnctscount 89
+#define sffnctscount 90
 /* sfcmplxfunc starts with the operators, which are reached through
  * sffe_operator/sffe_unary_operator rather than by name. Lookups by name start
  * after them. */
@@ -31,6 +31,9 @@ sfarg *sfneg(sfarg *const p);   /* unary - */
 /* Iteration the fractal engine is currently on, counting from 0. Set it before
  * evaluating a formula that uses ifiter/ifiterl. */
 extern thread_local unsigned int sffe_iteration;
+/* The point being iterated. randsc hashes this rather than z, which
+ * diverges between precisions; the engine sets it each pass. */
+extern thread_local cmplx sffe_position;
 sfarg *sfifiter(sfarg *const p);  /* ifiter  - cycles through its arguments */
 sfarg *sfifiterl(sfarg *const p); /* ifiterl - holds on the last argument */
 unsigned int sfifiter_sel(unsigned int argc);
@@ -136,6 +139,7 @@ sfarg *sftruncvm(sfarg *const p); //Magnitude
 sfarg *sftruncva(sfarg *const p); //Argument
 
 sfarg *sferf(sfarg *const p);
+sfarg *sfrandsc(sfarg *const p);
 sfarg *sfgamma(sfarg *const p);
 sfarg *sflambertw(sfarg *const p);
 

@@ -83,6 +83,11 @@ foreach(prec ${XAOS_TEST_PRECISIONS})
    add_test(NAME special_functions_${suffix}
             COMMAND special_functions_${suffix})
 
+   # randsc: coherent noise over the point, and the properties that make it
+   # worth having rather than a plain hash.
+   xaos_add_test_binary(randsc_${suffix} ${prec} randsc_test.cpp ${SFFE_SOURCES})
+   add_test(NAME randsc_${suffix} COMMAND randsc_${suffix})
+
    # The help window's function list is a second copy of the parser's table,
    # and a second copy drifts. This compares them.
    xaos_add_test_binary(formula_help_${suffix} ${prec}

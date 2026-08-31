@@ -15,6 +15,8 @@
 #include <gsl/gsl_complex_math.h>
 #include <math.h>
 
+#include <cstdint>
+
 #include "number_math.h"
 
 /* Every entry is {implementation, argument count, name}, optionally followed by
@@ -182,7 +184,10 @@ const sffunction sfcmplxfunc[sffnctscount] = {
      * of these into an unknown-function error rather than jumping through a
      * null pointer, which is what it used to do. */
 
-    {sfrand, 1, "rand\0"}}; /* real(a) times a random number in [0, 1) */
+    {sfrand, 1, "rand\0"},
+    /* coherent noise over the position; 1 to 3 arguments, hence
+     * variadic -- see sfrandsc for what each one does */
+    {sfrandsc, SFFE_VARIADIC, "randsc\0"}}; /* real(a) times a random number in [0, 1) */
 
 const char sfcnames[sfvarscount][6] = {"pi\0", "pi_2\0", "pi2\0",
                                        "e\0",  "i\0",    "rnd\0"};
@@ -1246,6 +1251,149 @@ sfarg *sferf(sfarg *const p)
     if (negate)
         r = gsl_complex_negative(r);
     sfvalue(p) = r;
+    return sfaram1(p);
+}
+
+/* The point being iterated, set by the engine before each formula is
+ * evaluated. It lives here rather than being read from formulas.cpp so that
+ * the parser stays linkable on its own -- the test binaries build it without
+ * the engine -- and so that a test can place a point directly.
+ *
+ * The position and not z: z diverges between a long double and a quad build
+ * after enough iterations, by construction, so anything hashed from it differs
+ * between the two. The position is computed from the view in a few operations
+ * that do not amplify, and agrees to the last bit or two. */
+thread_local cmplx sffe_position = {{0, 0}};
+
+/* A hash of integers, which is the same at any precision: the alternative,
+ * hashing a float through sin(), depends on the exact sin() of the build and
+ * would give the two binaries different pictures. */
+static uint64_t randsc_hash(int64_t i, int64_t j, uint64_t seed)
+{
+    uint64_t x = (uint64_t)i * 0x9E3779B97F4A7C15ULL ^
+                 (uint64_t)j * 0xC2B2AE3D27D4EB4FULL ^ seed;
+    x ^= x >> 33;
+    x *= 0xFF51AFD7ED558CCDULL;
+    x ^= x >> 33;
+    x *= 0xC4CEB9FE1A85EC53ULL;
+    x ^= x >> 33;
+    return x;
+}
+
+static number_t randsc_unit(uint64_t x)
+{
+    return (number_t)(x >> 11) / (number_t)((uint64_t)1 << 53);
+}
+
+/* A real seed has to survive being written once and read by two builds:
+ * "0.525" lands just below the exact value at long double and just above it at
+ * quad, so the two differ around 1e-20 and a hash of them shares nothing.
+ * Keeping the leading 40 bits puts both in the same bucket -- the quantum,
+ * about 9e-13, is seven orders coarser than the disagreement. An integer seed
+ * needs none of this and is exact, which is the reason to prefer one. */
+static uint64_t randsc_seed(cmplx seed)
+{
+    number_t scale = nldexp((number_t)1, 40);
+    int64_t a = (int64_t)nfloor(GSL_REAL(seed) * scale);
+    int64_t b = (int64_t)nfloor(GSL_IMAG(seed) * scale);
+    return randsc_hash(a, b, 0x5DEECE66DULL);
+}
+
+/**
+ * @brief Coherent noise over the position, seeded and reproducible.
+ * @details randsc(seed), randsc(seed; size), randsc(seed; size; degradation).
+ *
+ * Value noise: the plane is cut into cells, each corner is hashed to a number,
+ * and the value between them is interpolated with a smooth curve. Nearby
+ * points therefore give nearby values -- blobs rather than the per-pixel snow
+ * a plain hash gives -- and that continuity is also what makes the result
+ * stable. A difference in the input produces a difference of the same order in
+ * the output, so the two precisions agree to about 1e-19 where a raw hash
+ * would agree not at all. It is also why the cell boundary is not visible:
+ * leaving one cell with weight 1 gives the same corner value as entering the
+ * next with weight 0.
+ *
+ * size, default 1+i, is the average width of a blob along the real axis and
+ * its height along the imaginary one.
+ *
+ * degradation, default 1+i, shrinks the blobs as the iteration proceeds: the
+ * size in force is size * degradation^n, taken component by component, so
+ * degradation 0.5+0.2i with size 1+i gives 1+i on the first pass, then
+ * 0.5+0.2i, then 0.25+0.04i. Component by component and not as a complex
+ * power, which would give 0.21+0.2i for the third.
+ *
+ * A zero in either component of either argument would divide by zero once the
+ * degradation reached it, so the function returns zero instead of computing.
+ *
+ * The result is real, in [0, 1), with the imaginary part left at zero, as rand
+ * does. Two independent fields are two calls with different seeds.
+ *
+ * @param p The call; the arguments are read right to left, see sfaramN.
+ * @return Pointer to the last argument, per the sffe convention.
+ */
+sfarg *sfrandsc(sfarg *const p)
+{
+    cmplx size, degradation, seed;
+    GSL_SET_COMPLEX(&size, 1, 1);
+    GSL_SET_COMPLEX(&degradation, 1, 1);
+    GSL_SET_COMPLEX(&seed, 0, 0);
+
+    /* sfaram1 is the last argument written, so which one is which depends on
+     * how many were given. */
+    switch (p->argc) {
+        case 3:
+            degradation = sfvalue(sfaram1(p));
+            size = sfvalue(sfaram2(p));
+            seed = sfvalue(sfaram3(p));
+            break;
+        case 2:
+            size = sfvalue(sfaram1(p));
+            seed = sfvalue(sfaram2(p));
+            break;
+        case 1:
+            seed = sfvalue(sfaram1(p));
+            break;
+        default:
+            GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
+            return sfaram1(p);
+    }
+
+    if (GSL_REAL(size) == 0 || GSL_IMAG(size) == 0 ||
+        GSL_REAL(degradation) == 0 || GSL_IMAG(degradation) == 0) {
+        GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
+        return sfaram1(p);
+    }
+
+    /* size * degradation^n, per component. Repeated multiplication rather than
+     * npow: n is small and rises by one per iteration, and this keeps the two
+     * builds doing the same arithmetic in the same order. */
+    number_t wr = GSL_REAL(size), wi = GSL_IMAG(size);
+    for (unsigned int k = 0; k < sffe_iteration; k++) {
+        wr *= GSL_REAL(degradation);
+        wi *= GSL_IMAG(degradation);
+        if (wr == 0 || wi == 0) { /* shrunk past what the type can hold */
+            GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
+            return sfaram1(p);
+        }
+    }
+
+    number_t X = GSL_REAL(sffe_position) / wr;
+    number_t Y = GSL_IMAG(sffe_position) / wi;
+    number_t fx = nfloor(X), fy = nfloor(Y);
+    int64_t cx = (int64_t)fx, cy = (int64_t)fy;
+    number_t u = X - fx, v = Y - fy;
+    u = u * u * (3 - 2 * u); /* smoothstep: flat at both ends, so the value */
+    v = v * v * (3 - 2 * v); /* meets its neighbour without a crease */
+
+    uint64_t h = randsc_seed(seed);
+    number_t a = randsc_unit(randsc_hash(cx, cy, h));
+    number_t b = randsc_unit(randsc_hash(cx + 1, cy, h));
+    number_t c = randsc_unit(randsc_hash(cx, cy + 1, h));
+    number_t d = randsc_unit(randsc_hash(cx + 1, cy + 1, h));
+    number_t lo = a + (b - a) * u;
+    number_t hi = c + (d - c) * u;
+
+    GSL_SET_COMPLEX(&sfvalue(p), lo + (hi - lo) * v, 0);
     return sfaram1(p);
 }
 

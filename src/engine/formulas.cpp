@@ -1529,6 +1529,9 @@ void sffe_setlocal(fractal_context *c)
     }                                                                          \
     cmplxset(sffe_c, pre, pim);                                                \
     cmplxset(sffe_x, zre, zim);                                                \
+    /* What randsc hashes: the same value as c, but reached without a          \
+     * registered variable, so the parser and its tests need no engine. */     \
+    cmplxset(sffe_position, pre, pim);                                         \
     sffe_iteration = 0;                                                        \
     if (sffe_initial_valid)                                                    \
         sffe_z = sffe_eval(sffe_initial_local);                                \

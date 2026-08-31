@@ -112,7 +112,8 @@ const struct formula_help_row formula_help_functions[] = {
     {"lambertw", "principal branch of the Lambert W of a", NULL}, /* 1 */
     {"ifiter", "picks one argument by iteration number, cycling; only that one is evaluated", NULL}, /* variadic */
     {"ifiterl", "as ifiter, but holding the last argument once the iterations pass the end", NULL}, /* variadic */
-    {"rand", "real(a) times a random number in [0, 1)", NULL}, /* 1 */
+    {"rand", "real(a) times a random number in [0, 1)", NULL},
+    {"randsc", "coherent noise over the point: randsc(seed; size; degradation), the last two optional", NULL}, /* 1 */
     {NULL, NULL, NULL}};
 
 /* The variables the engine registers before parsing a user formula; see the
