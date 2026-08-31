@@ -57,6 +57,7 @@ class MainWindow : public QMainWindow
     void wheelEvent(QWheelEvent *event);
     void keyPressEvent(QKeyEvent *event);
     void keyReleaseEvent(QKeyEvent *event);
+    bool eventFilter(QObject *object, QEvent *event) override;
     void resizeEvent(QResizeEvent *event);
 #ifndef Q_OS_MACOS
 #ifndef USE_OPENGL

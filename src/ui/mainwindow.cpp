@@ -1494,6 +1494,22 @@ void MainWindow::showStatus(const char *text)
 
     if (newProgress) {
         qProgressDialog = new QProgressDialog(this);
+        /* This window reports, it does not ask. Shown the ordinary way it
+         * becomes the active window and takes the keyboard with it, so
+         * every key pressed while a calculation is running -- z to
+         * interrupt it above all -- went to a progress bar that has no use
+         * for keys, and the calculation carried on. One had to click back
+         * on the fractal first, which is a poor thing to ask of someone
+         * trying to stop what they are looking at.
+         *
+         * WA_ShowWithoutActivating is what keeps the fractal window active
+         * when this one appears. The event filter covers the other way in:
+         * if it is clicked on anyway, its keys are handed to the window
+         * they were meant for. */
+        qProgressDialog->setWindowModality(Qt::NonModal);
+        qProgressDialog->setAttribute(Qt::WA_ShowWithoutActivating);
+        qProgressDialog->setFocusPolicy(Qt::NoFocus);
+        qProgressDialog->installEventFilter(this);
     } else {
         qProgressDialog->setValue(progress);
         qProgressDialog->setMinimumDuration(0);
@@ -1518,6 +1534,26 @@ void MainWindow::showStatus(const char *text)
         qProgressDialog->show();
     }
 #endif
+}
+
+/* Keys typed at the progress window belong to the fractal: it is a
+ * read-out of a calculation, and the keys one reaches for while a
+ * calculation is running are the ones that steer or stop it. Passing them
+ * on rather than letting the dialog swallow them also means Escape no
+ * longer closes a window that has nothing to cancel. */
+bool MainWindow::eventFilter(QObject *object, QEvent *event)
+{
+    if (object == qProgressDialog) {
+        if (event->type() == QEvent::KeyPress) {
+            keyPressEvent(static_cast<QKeyEvent *>(event));
+            return true;
+        }
+        if (event->type() == QEvent::KeyRelease) {
+            keyReleaseEvent(static_cast<QKeyEvent *>(event));
+            return true;
+        }
+    }
+    return QMainWindow::eventFilter(object, event);
 }
 
 int MainWindow::mouseButtons()
