@@ -62,6 +62,8 @@ int main(void)
     sffe *full = compile("randsc({7,0};{1,1};{1,1})");
     sffe *fade = compile("randsc({7,0};{1,1};{0.5,0.2})");
     sffe *sized = compile("randsc({7,0};{0.5,0.2};{1,1})");
+    sffe *half = compile("randsc({7,0};{1,1};{0.5,1})");
+    sffe *fifth = compile("randsc({7,0};{0.03125,1};{1,1})");
     sffe *zsize = compile("randsc({7,0};{0,1})");
     sffe *zfade = compile("randsc({7,0};{1,1};{1,0})");
     if (failures)
@@ -82,6 +84,13 @@ int main(void)
           "a later pass uses a smaller size");
     check(at(fade, 0.3, 0.7, 1) != at(bare, 0.3, 0.7, 1),
           "and not the size it started with");
+
+    /* One component degraded and the other not. Both are raised to the power
+     * together now, so the untouched one is multiplied by a one rather than
+     * left alone; that is exact, and this says so. 0.5^5 is 0.03125 with no
+     * rounding either, so the two spellings must agree to the bit. */
+    check(at(half, 0.3, 0.7, 5) == at(fifth, 0.3, 0.7, 5),
+          "a degradation of one on one component leaves it alone");
 
     /* With degradation 1+i nothing shrinks, so pass nine is still size 1+i. */
     check(at(full, 0.3, 0.7, 9) == at(bare, 0.3, 0.7, 9),
