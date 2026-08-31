@@ -167,9 +167,24 @@ struct symmetryinfo2 {
 #define SFFE_FRACTAL 8
 #endif
 
+#ifdef USE_SFFE
+/* Set when the user formula calls randsc or randscq. Boundary tracing walks
+ * the edge of a region, finds one colour all the way round and fills the
+ * inside without computing it -- true of a fractal, false of a noise field,
+ * where the inside is whatever the noise says. Left on, some pixels are
+ * filled rather than computed and the noise is wrong there; and since the
+ * flag that enables tracing differs between mandelbrot and julia mode, the
+ * two modes disagreed about which pixels those were. */
+extern int sffe_formula_noise;
+#define BTRACE_NOISE_OK (!sffe_formula_noise)
+#else
+#define BTRACE_NOISE_OK 1
+#endif
+
 #define BTRACEOK                                                               \
     ((cformula.flags & (2 << cfractalc.mandelbrot)) &&                         \
-     !cfractalc.incoloringmode && cfractalc.coloringmode != OutColormodeType::ColOut_potential)
+     !cfractalc.incoloringmode && BTRACE_NOISE_OK &&                           \
+     cfractalc.coloringmode != OutColormodeType::ColOut_potential)
 #define my_rotate(f, x, y)                                                        \
     {                                                                          \
         number_t tmp;                                                          \

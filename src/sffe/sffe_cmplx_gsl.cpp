@@ -1437,6 +1437,27 @@ sfarg *sfrandsc(sfarg *const p)
  * @param p The call; the arguments are read right to left, see sfaramN.
  * @return Pointer to the last argument, per the sffe convention.
  */
+/* Whether a parsed formula calls randsc or randscq.
+ *
+ * The engine asks because boundary tracing has to be turned off for such a
+ * formula: it walks the edge of a region, finds one colour all the way round,
+ * and fills the inside without computing it. That holds for a fractal, whose
+ * bands really are solid, and not for a noise field, where the inside is
+ * whatever the noise says. Left on, some pixels are filled rather than
+ * computed and the noise is simply wrong there.
+ *
+ * Walking the operation list rather than searching the text: the text would
+ * also match a name that merely contains "randsc", and this cannot. */
+int sffe_uses_noise(sffe *const parser)
+{
+    if (parser == NULL)
+        return 0;
+    for (unsigned int i = 0; i < parser->oprCount; i++)
+        if (parser->oprs[i].fnc == sfrandsc || parser->oprs[i].fnc == sfrandscq)
+            return 1;
+    return 0;
+}
+
 sfarg *sfrandscq(sfarg *const p)
 {
     int64_t cx, cy;

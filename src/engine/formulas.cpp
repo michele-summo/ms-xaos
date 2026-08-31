@@ -69,8 +69,9 @@ const char *const incolorname[] = {"0",
                                    NULL};
 
 /* Names for the bailout shapes, in the order of the BAILOUT_ constants. */
-const char *const bailoutname[] = {"circle", "square", "diamond",
-                                   "real",   "imag",   "both"};
+const char *const bailoutname[] = {"Circle (classic)", "Square",
+                                   "Diamond",          "Real axis",
+                                   "Imaginary axis",   "Both axes"};
 
 const char *const outcolorname[] = {"iter",
                                     "iter+real",
@@ -1498,6 +1499,8 @@ thread_local sffe *sffe_formula_local = NULL;
 thread_local bool sffe_initial_valid = false;
 thread_local sffe *sffe_initial_local = NULL;
 thread_local cmplx sffe_z, sffe_c, sffe_n, sffe_x;
+/* Set when the user formula calls randsc or randscq; read by BTRACEOK. */
+int sffe_formula_noise = 0;
 thread_local cmplx sffe_p[NUM_P];
 
 // Copy the formula from the main parser to this thread's local parser
@@ -1524,6 +1527,11 @@ void sffe_setmine(void *data, struct taskinfo * /*task*/, int /*r1*/,
             sffe_formula_valid = true;
         else
             sffe_formula_valid = false;
+        /* Boundary tracing fills a region it found one colour around without
+         * computing it. True of a fractal, false of a noise field, so a
+         * formula that calls randsc or randscq turns it off. */
+        sffe_formula_noise = sffe_formula_valid &&
+                             sffe_uses_noise(sffe_formula_local);
     }
 
     if (!sffe_initial_local) {
@@ -1565,9 +1573,6 @@ void sffe_setlocal(fractal_context *c)
     }                                                                          \
     cmplxset(sffe_c, pre, pim);                                                \
     cmplxset(sffe_x, zre, zim);                                                \
-    /* What randsc hashes: the same value as c, but reached without a          \
-     * registered variable, so the parser and its tests need no engine. */     \
-    cmplxset(sffe_position, pre, pim);                                         \
     sffe_iteration = 0;                                                        \
     if (sffe_initial_valid)                                                    \
         sffe_z = sffe_eval(sffe_initial_local);                                \

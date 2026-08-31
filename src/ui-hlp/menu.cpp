@@ -1412,7 +1412,6 @@ void uih_registermenus_i18n(void)
     MENUDIALOG_I("calc", NULL, TR("Menu", "Bailout mode"), "bailoutmode",
                  MENUFLAG_NOMENU | MENUFLAG_INTERRUPT, uih_setbailoutmode,
                  uih_numdialog);
-    SUBMENU_I("calc", NULL, TR("Menu", "Bailout shape"), "mbailout");
     MENUDIALOG_I("fractal", NULL, TR("Menu", "Inside truecolor coloring mode"),
                  "intcoloring", MENUFLAG_NOMENU | MENUFLAG_INTERRUPT,
                  uih_setintcolor, uih_numdialog);
@@ -1503,6 +1502,8 @@ void uih_registermenus_i18n(void)
                   MENUFLAG_INTERRUPT, uih_setmaxiter, uih_getiterdialog);
     MENUCDIALOG_I("calc", NULL, TR("Menu", "Bailout"), "bailout",
                   MENUFLAG_INTERRUPT, uih_setbailout, uih_getbailoutdialog);
+    /* Directly under Bailout, which is what it qualifies. */
+    SUBMENU_I("calc", NULL, TR("Menu", "Bailout mode"), "mbailout");
     MENUCDIALOG_I("calc", NULL, TR("Menu", "Newton convergence"), "newtonconvergence",
                   MENUFLAG_INTERRUPT, uih_setnewtonconvergence, uih_getnewtonconvergencedialog);
     MENUCDIALOGCB_I("calc", "b", TR("Menu", "Perturbation"), "uiperturbation",
@@ -1763,7 +1764,7 @@ void uih_registermenus(void)
 
     /* The region the iteration has to leave. The circle is what every
      * version before this one used, so it stays first and stays the default. */
-    menu_genernumbered(BAILOUTMODES - 1, "mbailout", bailoutname, NULL,
+    menu_genernumbered(BAILOUTMODES, "mbailout", bailoutname, NULL,
                        MENU_INT, UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
                        uih_setbailoutmode, uih_selectedbailoutmode, "bail");
 

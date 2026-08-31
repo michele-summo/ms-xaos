@@ -141,6 +141,7 @@ sfarg *sftruncva(sfarg *const p); //Argument
 sfarg *sferf(sfarg *const p);
 sfarg *sfrandsc(sfarg *const p);
 sfarg *sfrandscq(sfarg *const p);
+int sffe_uses_noise(sffe *const parser);
 sfarg *sfgamma(sfarg *const p);
 sfarg *sflambertw(sfarg *const p);
 
