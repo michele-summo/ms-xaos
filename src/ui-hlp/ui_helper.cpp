@@ -1089,6 +1089,19 @@ static void uih_diag_compare(uih_context *c)
     fflush(uih_diag_log);
 }
 
+/* Says whether choosing a bailout shape from the menu reaches the engine. */
+void uih_diag_note_bailout(int mode)
+{
+    if (uih_diag_log == NULL) {
+        uih_diag_log = fopen("xaos-diag.txt", "w");
+        if (uih_diag_log == NULL)
+            return;
+        atexit(uih_diag_summary);
+    }
+    fprintf(uih_diag_log, "bailout mode set to %d\n", mode);
+    fflush(uih_diag_log);
+}
+
 static void uih_diag_note(uih_context *c)
 {
     uih_diag_compare(c);
@@ -2299,7 +2312,17 @@ void uih_setbailoutmode(uih_context *c, int mode)
     c->fcontext->bailoutmode = mode;
     c->fcontext->version++;
     uih_newimage(c);
-    uih_updatemenus(c, "bailoutmode");
+    /* The radio item, not the hidden command a saved file names: passing the
+     * latter meant the tick never moved, so choosing a shape looked as though
+     * nothing had happened. */
+    {
+        char item[16];
+        sprintf(item, "bail%i", mode);
+        uih_updatemenus(c, item);
+    }
+#ifdef XAOS_TRACE_DIAG
+    uih_diag_note_bailout(mode);
+#endif
 }
 
 int uih_selectedbailoutmode(uih_context *c, int mode)
