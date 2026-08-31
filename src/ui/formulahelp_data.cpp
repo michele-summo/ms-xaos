@@ -119,6 +119,8 @@ const struct formula_help_row formula_help_functions[] = {
     {"randsc", "coherent noise over the point: soft blobs, size wide and size high", NULL},
     {"randscq", "the same field with no interpolation: a mosaic of flat square cells", NULL},
     {"randscp", "the same field cut into irregular flat polygons, with straight edges", NULL},
+    {"randsch", "the same field cut into hexagons: a honeycomb of flat cells", NULL},
+    {"randsct", "the same field cut into equilateral triangles, alternating in orientation", NULL},
     {NULL, NULL, NULL}};
 
 /* The variables the engine registers before parsing a user formula; see the

@@ -15,6 +15,7 @@
  */
 
 #include <cstdio>
+#include <cstring>
 
 #include "config.h"
 #include "number_math.h"
@@ -119,8 +120,10 @@ int main(void)
         sffe *slow = compile("randsc({13,0};{0.3,0.3};{0.99,0.99})");
         sffe *heldq = compile("randscq({13,0};{0.3,0.3};{1,1})");
         sffe *heldp = compile("randscp({13,0};{0.3,0.3};{1,1})");
+        sffe *heldh = compile("randsch({13,0};{0.3,0.3};{1,1})");
+        sffe *heldt = compile("randsct({13,0};{0.3,0.3};{1,1})");
         if (!failures) {
-            int mheld = 0, mslow = 0, mq = 0, mp = 0;
+            int mheld = 0, mslow = 0, mq = 0, mp = 0, mh = 0, mt = 0;
             for (unsigned int n = 0; n < 20; n++) {
                 if (at(held, 0.3, 0.7, n) != at(held, 0.3, 0.7, n + 1))
                     mheld++;
@@ -130,11 +133,17 @@ int main(void)
                     mq++;
                 if (at(heldp, 0.3, 0.7, n) != at(heldp, 0.3, 0.7, n + 1))
                     mp++;
+                if (at(heldh, 0.3, 0.7, n) != at(heldh, 0.3, 0.7, n + 1))
+                    mh++;
+                if (at(heldt, 0.3, 0.7, n) != at(heldt, 0.3, 0.7, n + 1))
+                    mt++;
             }
             check(mheld == 20, "randsc moves every pass at degradation 1");
             check(mslow == 20, "randsc moves every pass at degradation 0.99");
             check(mq == 20, "randscq moves every pass at degradation 1");
             check(mp == 20, "randscp moves every pass at degradation 1");
+            check(mh == 20, "randsch moves every pass at degradation 1");
+            check(mt == 20, "randsct moves every pass at degradation 1");
 
             /* Moves, and by a real amount: consecutive passes are unrelated
              * fields, not the same one nudged. */
@@ -149,55 +158,79 @@ int main(void)
         }
     }
 
-    /* randscq and randscp share every argument and all of randsc_setup with
+    /* The four mosaics share every argument and all of randsc_setup with
      * randsc; what differs is the last step, so that is what is checked. */
     {
-        sffe *square = compile("randscq({7,0})");
-        sffe *poly = compile("randscp({7,0})");
+        struct {
+            const char *name;
+            sffe *cells;
+            sffe *zero;
+        } mosaic[] = {
+            {"randscq", compile("randscq({7,0})"),
+             compile("randscq({7,0};{0,1})")},
+            {"randscp", compile("randscp({7,0})"),
+             compile("randscp({7,0};{1,1};{1,0})")},
+            {"randsch", compile("randsch({7,0})"),
+             compile("randsch({7,0};{0,1})")},
+            {"randsct", compile("randsct({7,0})"),
+             compile("randsct({7,0};{1,1};{1,0})")},
+        };
+        const int nmosaic = (int)(sizeof(mosaic) / sizeof(mosaic[0]));
         sffe *smooth = compile("randsc({7,0})");
-        sffe *qzero = compile("randscq({7,0};{0,1})");
-        sffe *pzero = compile("randscp({7,0};{1,1};{1,0})");
-        if (!failures) {
-            check(at(qzero, 0.3, 0.7, 0) == 0,
-                  "randscq declines to compute on a zero");
-            check(at(pzero, 0.3, 0.7, 0) == 0,
-                  "randscp declines to compute on a zero");
+        number_t step = (number_t)1 / 1000;
+        char what[80];
+
+        for (int m = 0; !failures && m < nmosaic; m++) {
+            sprintf(what, "%s declines to compute on a zero", mosaic[m].name);
+            check(at(mosaic[m].zero, 0.3, 0.7, 0) == 0, what);
 
             /* Flat cells: within one cell the value does not move, where the
              * interpolated field does. */
-            number_t step = (number_t)1 / 1000;
-            check(at(square, 0.3, 0.7, 0) ==
-                      at(square, (number_t)0.3 + step, 0.7, 0),
-                  "randscq is flat across a cell");
-            check(at(poly, 0.3, 0.7, 0) ==
-                      at(poly, (number_t)0.3 + step, 0.7, 0),
-                  "randscp is flat across a cell");
+            sprintf(what, "%s is flat across a cell", mosaic[m].name);
+            check(at(mosaic[m].cells, 0.3, 0.7, 0) ==
+                      at(mosaic[m].cells, (number_t)0.3 + step, 0.7, 0),
+                  what);
+
+            /* Four ways of cutting the plane, four different fields. */
+            for (int n = m + 1; n < nmosaic; n++) {
+                int alike = 0;
+                for (int i = -8; i <= 8; i++)
+                    for (int j = -8; j <= 8; j++) {
+                        number_t x = (number_t)i / 3, y = (number_t)j / 3;
+                        if (at(mosaic[m].cells, x, y, 0) ==
+                            at(mosaic[n].cells, x, y, 0))
+                            alike++;
+                    }
+                sprintf(what, "%s and %s are different mosaics",
+                        mosaic[m].name, mosaic[n].name);
+                check(alike == 0, what);
+            }
+        }
+
+        if (!failures)
             check(at(smooth, 0.3, 0.7, 0) !=
                       at(smooth, (number_t)0.3 + step, 0.7, 0),
                   "randsc is not flat across a cell");
 
-            /* The two mosaics are cut differently and coloured differently,
-             * so they agree nowhere to speak of. */
-            int alike = 0;
-            for (int i = -8; i <= 8; i++)
-                for (int j = -8; j <= 8; j++) {
-                    number_t x = (number_t)i / 3, y = (number_t)j / 3;
-                    if (at(square, x, y, 0) == at(poly, x, y, 0))
-                        alike++;
-                }
-            check(alike == 0, "randscq and randscp are different mosaics");
-
-            /* What makes randscp a Voronoi diagram rather than noise with
-             * hard edges: one flat region per cell of the grid, no more and
-             * no fewer. Sampling four cells by four, the sixteen seeds inside
-             * must all own a region, and only cells just outside the square
-             * can reach in, so the count cannot run away. */
-            number_t seen[64];
+        /* One cell to the unit square, whatever its shape.
+         *
+         * randsc, randscq and randscp lay one cell over each unit square of
+         * the degraded size and so have cells of unit area; a hexagon of
+         * circumradius one and a triangle of side one do not, and are scaled
+         * to match. Without that, changing one letter of a formula changed
+         * the scale of the picture by a factor of six from end to end.
+         *
+         * Counting the flat regions over an area of 144 measures it: the
+         * count is the area plus whatever the border cuts through, which is
+         * of the order of the perimeter. Well away from a sixfold error.
+         */
+        for (int m = 0; !failures && m < nmosaic; m++) {
+            number_t seen[400];
             int nseen = 0;
-            for (int i = 0; i < 200 && nseen < 64; i++)
-                for (int j = 0; j < 200 && nseen < 64; j++) {
-                    number_t val = at(poly, (number_t)i / 50,
-                                      (number_t)j / 50, 0);
+            for (int i = 0; i < 300 && nseen < 400; i++)
+                for (int j = 0; j < 300 && nseen < 400; j++) {
+                    number_t val =
+                        at(mosaic[m].cells, (number_t)i / 25, (number_t)j / 25, 0);
                     int k;
                     for (k = 0; k < nseen; k++)
                         if (seen[k] == val)
@@ -205,8 +238,9 @@ int main(void)
                     if (k == nseen)
                         seen[nseen++] = val;
                 }
-            check(nseen >= 16 && nseen <= 40,
-                  "randscp gives one region per cell of the grid");
+            sprintf(what, "%s gives one cell per unit square (%d over 144)",
+                    mosaic[m].name, nseen);
+            check(nseen >= 144 && nseen <= 260, what);
         }
     }
 

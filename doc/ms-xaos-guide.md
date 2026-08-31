@@ -68,9 +68,30 @@ square cells instead of blobs. Same arguments, same meaning.
 **`randscp(...)`** — the same field again with the curves taken out but not the
 irregularity: one seed is scattered inside each cell and every position takes
 the value of the nearest seed, which draws a Voronoi diagram — flat convex
-polygons with straight edges, no two the same shape. Between the three:
-`randsc` is soft and curved, `randscq` is hard and regular, `randscp` is hard
-and irregular.
+polygons with straight edges, no two the same shape.
+
+**`randsch(...)`** — the same again on hexagons: a honeycomb of flat cells. Of
+the regular polygons that tile the plane this is the one without a grain —
+every cell has the same six neighbours at the same six angles — so it reads as
+a material rather than as a grid.
+
+**`randsct(...)`** — equilateral triangles, alternating in orientation. A
+triangular mosaic does have a grain, and that is what one asks for by choosing
+it.
+
+| | |
+| --- | --- |
+| `randsc` | soft, curved |
+| `randscq` | hard, regular, square |
+| `randscp` | hard, irregular |
+| `randsch` | hard, regular, hexagonal |
+| `randsct` | hard, regular, triangular |
+
+All five lay one cell over each unit square of the size in force, so `size`
+means the same thing throughout: changing one letter changes the shape of the
+cells and not the scale of the picture. A hexagon of circumradius one covers
+2.6 unit squares and a triangle of side one covers 0.43, so those two grids are
+scaled to match the rest rather than left as they come.
 
 Each pass gets a field of its own. The iteration is hashed along with the
 position, so a formula calling one of these once per iteration gets a new
@@ -78,12 +99,12 @@ value every time — including at a degradation of one, which leaves the size
 alone. Degradation sets how big the blobs are on a given pass; it is not
 what makes the pass different.
 
-All three hash the position of the point and the iteration, never `z`, and
+All of them hash the position of the point and the iteration, never `z`, and
 never any global state. So the same picture comes back on every redraw, at
 any thread count, and in Mandelbrot or Julia mode alike. `randsc` is
-continuous, so the two precisions agree to about 1e-19; `randscq` and
-`randscp` are step functions and they can disagree on a hairline along the
-cell edges, which is inherent in asking for hard edges.
+continuous, so the two precisions agree to about 1e-19; the mosaics are step
+functions and they can disagree on a hairline along the cell edges, which is
+inherent in asking for hard edges.
 
 A formula calling any of them turns boundary tracing off. That optimisation
 fills a region it found one colour around without computing it — true of a
@@ -102,6 +123,8 @@ perturb an iteration that does escape:
     randsc(13;{0.15,0.15};{0.5,0.5})*2.5      brownian motion
     randscq(13;{0.15,0.15};{0.5,0.5})*2.5     scattered squares, shrinking
     z+randscp(13;{0.3,0.3};{1,1})*0.25        irregular polygons
+    z+randsch(13;{0.3,0.3};{1,1})*0.25        a honeycomb
+    z+randsct(13;{0.3,0.3};{1,1})*0.25        triangles
     z^2+c+randsc(13;{0.25,0.25};{1,1})*1.2    the set itself deformed
 
 A degradation of 0.5 halves the blobs every pass, so after twenty iterations

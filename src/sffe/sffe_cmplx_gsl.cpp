@@ -186,11 +186,14 @@ const sffunction sfcmplxfunc[sffnctscount] = {
 
     {sfrand, 1, "rand\0"}, /* real(a) times a random number in [0, 1) */
     /* Coherent noise over the position, 1 to 3 arguments and so
-     * variadic. randsc interpolates and gives blobs; randscq does not
-     * and gives a mosaic of flat cells. See the two for the rest. */
+     * variadic. randsc interpolates and gives blobs; the rest do not and
+     * give a mosaic of flat cells, differing only in how they cut the
+     * plane up. See each of them for the rest. */
     {sfrandsc, SFFE_VARIADIC, "randsc\0"},
     {sfrandscq, SFFE_VARIADIC, "randscq\0"},
-    {sfrandscp, SFFE_VARIADIC, "randscp\0"}};
+    {sfrandscp, SFFE_VARIADIC, "randscp\0"},
+    {sfrandsch, SFFE_VARIADIC, "randsch\0"},
+    {sfrandsct, SFFE_VARIADIC, "randsct\0"}};
 
 const char sfcnames[sfvarscount][6] = {"pi\0", "pi_2\0", "pi2\0",
                                        "e\0",  "i\0",    "rnd\0"};
@@ -1580,7 +1583,9 @@ int sffe_uses_noise(sffe *const parser)
     for (unsigned int i = 0; i < parser->oprCount; i++)
         if (parser->oprs[i].fnc == sfrandsc ||
             parser->oprs[i].fnc == sfrandscq ||
-            parser->oprs[i].fnc == sfrandscp)
+            parser->oprs[i].fnc == sfrandscp ||
+            parser->oprs[i].fnc == sfrandsch ||
+            parser->oprs[i].fnc == sfrandsct)
             return 1;
     return 0;
 }
@@ -1597,6 +1602,138 @@ sfarg *sfrandscq(sfarg *const p)
     }
 
     GSL_SET_COMPLEX(&sfvalue(p), randsc_unit(randsc_hash(cx, cy, h)), 0);
+    return sfaram1(p);
+}
+
+/* sqrt(3), for the two tilings whose cells are not axis-aligned. Worked out
+ * once at the precision in use: a decimal literal would be a double and would
+ * cap both grids at sixteen digits in the quad build. */
+static const number_t RANDSC_SQRT3 = nsqrt((number_t)3);
+
+/* size means the same thing across the whole family, so that changing one
+ * letter of a formula changes the shape of the cells and not their scale.
+ *
+ * randsc, randscq and randscp all lay one cell over each unit square of the
+ * degraded size, so their cells have unit area. A hexagon of circumradius one
+ * has an area of 3*sqrt(3)/2, near enough 2.6, and an equilateral triangle of
+ * side one has sqrt(3)/4, near enough 0.43; laid out as they come, the two
+ * would be six times apart from each other and both wrong against the rest.
+ * These factors scale each grid to unit cells: the reciprocal of the square
+ * root of the area of one cell of a lattice of pitch one. */
+static const number_t RANDSCH_PITCH = nsqrt(3 * nsqrt((number_t)3) / 2);
+static const number_t RANDSCT_PITCH = nsqrt(nsqrt((number_t)3) / 4);
+
+/* A salt apiece, so that a cell index landing on the same pair of integers in
+ * two tilings does not hand back the same value in both. Without them the
+ * hexagons and the triangles agreed with the squares wherever the indices
+ * happened to meet, which is often enough near the origin. */
+#define RANDSCH_SALT 0xD1B54A32D192ED03ULL
+#define RANDSCT_SALT 0x8CB92BA72F3D8DD7ULL
+#define RANDSCT_UPPER 0xA5A5A5A5A5A5A5A5ULL
+
+/**
+ * @brief The same mosaic on a hexagonal grid: a honeycomb of flat cells.
+ * @details randsch takes the arguments randsc takes and means the same by
+ * them. It is randscq with the squares replaced by hexagons.
+ *
+ * Of the three regular polygons that tile the plane, squares are randscq
+ * already and triangles alternate in orientation, which reads as a pattern
+ * rather than a texture. A honeycomb has no such grain: every cell has the
+ * same six neighbours at the same six angles, so it looks less like a grid and
+ * more like a material.
+ *
+ * The point is taken to the axial coordinates of a pointy-topped grid and
+ * rounded through cube coordinates -- three numbers summing to zero, of which
+ * the one that moved furthest is given whatever the other two leave over.
+ * Rounding the two axial numbers on their own would land on the nearest
+ * rhombus of the grid, which is not the nearest hexagon.
+ *
+ * @param p The call; the arguments are read right to left, see sfaramN.
+ * @return Pointer to the last argument, per the sffe convention.
+ */
+sfarg *sfrandsch(sfarg *const p)
+{
+    int64_t cx, cy;
+    number_t u, v;
+    uint64_t h;
+
+    if (!randsc_setup(p, &cx, &cy, &u, &v, &h)) {
+        GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
+        return sfaram1(p);
+    }
+
+    /* randsc_setup hands back the square cell and where the point sits inside
+     * it; adding them recovers the position in units of the degraded size,
+     * which is what the hexagon grid is laid out in. */
+    number_t X = ((number_t)cx + u) * RANDSCH_PITCH;
+    number_t Y = ((number_t)cy + v) * RANDSCH_PITCH;
+
+    number_t q = RANDSC_SQRT3 / 3 * X - (number_t)1 / 3 * Y;
+    number_t r = (number_t)2 / 3 * Y;
+
+    number_t ax = q, az = r, ay = -q - r;
+    number_t rx = nround(ax), ry = nround(ay), rz = nround(az);
+    number_t dx = nfabs(rx - ax), dy = nfabs(ry - ay), dz = nfabs(rz - az);
+    if (dx > dy && dx > dz)
+        rx = -ry - rz;
+    else if (dy > dz)
+        ry = -rx - rz;
+    else
+        rz = -rx - ry;
+
+    GSL_SET_COMPLEX(&sfvalue(p),
+                    randsc_unit(randsc_hash((int64_t)rx, (int64_t)rz,
+                                            h ^ RANDSCH_SALT)),
+                    0);
+    return sfaram1(p);
+}
+
+/**
+ * @brief The same mosaic on a triangular grid: flat equilateral triangles.
+ * @details randsct takes the arguments randsc takes and means the same by
+ * them. It is randscq with the squares replaced by triangles.
+ *
+ * The triangular tiling is the rhombic one cut in half. Taking the point to
+ * the basis (1, 0) and (1/2, sqrt(3)/2) gives a lattice of rhombi with every
+ * side 1; the diagonal joining the two far corners of a rhombus is also 1, so
+ * it cuts the rhombus into two equilateral triangles. Which side of that
+ * diagonal the point falls on is the sum of its two fractional coordinates
+ * against one, and that bit goes into the hash along with the rhombus.
+ *
+ * Unlike the hexagons the two orientations alternate, which is a property of
+ * the tiling and not of the noise: a triangular mosaic has a grain, and that
+ * is what one asks for by choosing it.
+ *
+ * @param p The call; the arguments are read right to left, see sfaramN.
+ * @return Pointer to the last argument, per the sffe convention.
+ */
+sfarg *sfrandsct(sfarg *const p)
+{
+    int64_t cx, cy;
+    number_t u, v;
+    uint64_t h;
+
+    if (!randsc_setup(p, &cx, &cy, &u, &v, &h)) {
+        GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
+        return sfaram1(p);
+    }
+
+    number_t X = ((number_t)cx + u) * RANDSCT_PITCH;
+    number_t Y = ((number_t)cy + v) * RANDSCT_PITCH;
+
+    /* The inverse of the basis above: the rhombus is the unit square of these
+     * two coordinates. */
+    number_t a = X - Y / RANDSC_SQRT3;
+    number_t b = (number_t)2 * Y / RANDSC_SQRT3;
+    number_t fa = nfloor(a), fb = nfloor(b);
+    int upper = (a - fa) + (b - fb) >= 1;
+
+    GSL_SET_COMPLEX(
+        &sfvalue(p),
+        randsc_unit(randsc_hash((int64_t)fa, (int64_t)fb,
+                                upper ? h ^ RANDSCT_SALT ^ RANDSCT_UPPER
+                                      : h ^ RANDSCT_SALT)),
+        0);
     return sfaram1(p);
 }
 
