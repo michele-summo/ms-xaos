@@ -113,7 +113,8 @@ const struct formula_help_row formula_help_functions[] = {
     {"ifiter", "picks one argument by iteration number, cycling; only that one is evaluated", NULL}, /* variadic */
     {"ifiterl", "as ifiter, but holding the last argument once the iterations pass the end", NULL}, /* variadic */
     {"rand", "real(a) times a random number in [0, 1)", NULL},
-    {"randsc", "coherent noise over the point: randsc(seed; size; degradation), the last two optional", NULL}, /* 1 */
+    {"randsc", "coherent noise over the point: randsc(seed; size; degradation), the last two optional", NULL},
+    {"randscq", "the same field without interpolation: a mosaic of flat square cells", NULL}, /* 1 */
     {NULL, NULL, NULL}};
 
 /* The variables the engine registers before parsing a user formula; see the

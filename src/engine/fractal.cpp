@@ -307,6 +307,7 @@ fractal_context *make_fractalc(const int formula, float wi, float he)
     new_ctxt->windowheight = he;
     new_ctxt->maxiter = DEFAULT_MAX_ITER;
     new_ctxt->bailout = DEFAULT_BAILOUT;
+    new_ctxt->bailoutmode = 0; /* the circle, as it always was */
     new_ctxt->coloringmode = OutColormodeType::ColOut_iter;
     new_ctxt->intcolor = 0;
     new_ctxt->outtcolor = 0;

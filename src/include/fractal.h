@@ -96,6 +96,17 @@ struct formula {
 
 
 
+/* The region the iteration has to leave for a point to count as escaped. It
+ * has always been a circle; the shape is visible in the bands outside the set,
+ * so the others are as much a drawing tool as a numerical one. */
+#define BAILOUT_CIRCLE 0  /* |re|^2 + |im|^2  -- what every version did */
+#define BAILOUT_SQUARE 1  /* either component alone */
+#define BAILOUT_DIAMOND 2 /* |re| + |im| */
+#define BAILOUT_REAL 3    /* the real component only */
+#define BAILOUT_IMAG 4    /* the imaginary component only */
+#define BAILOUT_BOTH 5    /* both components at once */
+#define BAILOUTMODES 6
+
 struct fractal_context {
     number_t pre, pim;
     number_t bre, bim;
@@ -108,6 +119,10 @@ struct fractal_context {
     int periodicity;
     unsigned int maxiter;
     number_t bailout;
+    /* Which shape the bailout tests against; see the BAILOUT_ constants
+     * below. Zero is the circle every version before this one used, so a
+     * context never told otherwise behaves as it always did. */
+    int bailoutmode;
     OutColormodeType coloringmode;
     int incoloringmode;
     int intcolor, outtcolor;

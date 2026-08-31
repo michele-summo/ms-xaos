@@ -469,6 +469,13 @@ void uih_saveframe(struct uih_context *uih)
         if (s->fcontext->bailout != uih->fcontext->bailout)
             save_floatc(uih, "bailout", uih->fcontext->bailout),
                 s->fcontext->bailout = uih->fcontext->bailout;
+        /* Written only when it is not the circle every earlier version used,
+         * so a position that does not ask for a shape stays loadable by them.
+         * A file that does ask carries a command they do not know, and they
+         * refuse it -- which is right, since they would draw it differently. */
+        if (s->fcontext->bailoutmode != uih->fcontext->bailoutmode)
+            save_intc(uih, "bailoutmode", uih->fcontext->bailoutmode),
+                s->fcontext->bailoutmode = uih->fcontext->bailoutmode;
         if (uih->save || s->fcontext->coloringmode != uih->fcontext->coloringmode)
             save_intc(uih, "outcoloring", uih->fcontext->coloringmode.AsInt()),
                 s->fcontext->coloringmode = uih->fcontext->coloringmode;

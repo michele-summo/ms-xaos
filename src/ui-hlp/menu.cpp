@@ -1407,6 +1407,12 @@ void uih_registermenus_i18n(void)
     MENUDIALOG_I("fractal", NULL, TR("Menu", "Outside coloring mode"),
                  "outcoloring", MENUFLAG_NOMENU | MENUFLAG_INTERRUPT,
                  uih_setoutcoloringmode, uih_numdialog);
+    /* Hidden: this is the one a saved file names. The shapes themselves are a
+     * radio group under Calculation, generated below. */
+    MENUDIALOG_I("calc", NULL, TR("Menu", "Bailout mode"), "bailoutmode",
+                 MENUFLAG_NOMENU | MENUFLAG_INTERRUPT, uih_setbailoutmode,
+                 uih_numdialog);
+    SUBMENU_I("calc", NULL, TR("Menu", "Bailout shape"), "mbailout");
     MENUDIALOG_I("fractal", NULL, TR("Menu", "Inside truecolor coloring mode"),
                  "intcoloring", MENUFLAG_NOMENU | MENUFLAG_INTERRUPT,
                  uih_setintcolor, uih_numdialog);
@@ -1754,6 +1760,12 @@ void uih_registermenus(void)
     menu_genernumbered(TCOLOR - 1, "tincoloring", tcolorname, NULL, MENU_INT,
                        UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
                        uih_setintruecolor, uih_selectedintcoloring, "int");
+
+    /* The region the iteration has to leave. The circle is what every
+     * version before this one used, so it stays first and stays the default. */
+    menu_genernumbered(BAILOUTMODES - 1, "mbailout", bailoutname, NULL,
+                       MENU_INT, UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
+                       uih_setbailoutmode, uih_selectedbailoutmode, "bail");
 
     menu_genernumbered(OUTCOLORING - 1, "moutcoloring", outcolorname, NULL,
                        MENU_INT, UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,

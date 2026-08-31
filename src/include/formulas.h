@@ -31,6 +31,7 @@
 
 extern const char *const incolorname[];
 extern const struct formula formulas[];
+extern const char *const bailoutname[];
 extern const char *const outcolorname[];
 extern const char *const tcolorname[];
 extern const char *const colorfun[];

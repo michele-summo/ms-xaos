@@ -184,10 +184,12 @@ const sffunction sfcmplxfunc[sffnctscount] = {
      * of these into an unknown-function error rather than jumping through a
      * null pointer, which is what it used to do. */
 
-    {sfrand, 1, "rand\0"},
-    /* coherent noise over the position; 1 to 3 arguments, hence
-     * variadic -- see sfrandsc for what each one does */
-    {sfrandsc, SFFE_VARIADIC, "randsc\0"}}; /* real(a) times a random number in [0, 1) */
+    {sfrand, 1, "rand\0"}, /* real(a) times a random number in [0, 1) */
+    /* Coherent noise over the position, 1 to 3 arguments and so
+     * variadic. randsc interpolates and gives blobs; randscq does not
+     * and gives a mosaic of flat cells. See the two for the rest. */
+    {sfrandsc, SFFE_VARIADIC, "randsc\0"},
+    {sfrandscq, SFFE_VARIADIC, "randscq\0"}};
 
 const char sfcnames[sfvarscount][6] = {"pi\0", "pi_2\0", "pi2\0",
                                        "e\0",  "i\0",    "rnd\0"};
@@ -1300,6 +1302,66 @@ static uint64_t randsc_seed(cmplx seed)
 }
 
 /**
+/* Shared by randsc and randscq: reads the arguments, applies the degradation
+ * for the iteration reached, and returns the cell the position falls in along
+ * with where inside it. Zero means the caller should not compute -- a zero in
+ * either component of either argument divides by zero once the degradation
+ * gets there.
+ *
+ * The arguments are read right to left, so which is which depends on how many
+ * were given; see sfaramN. */
+static int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, number_t *u,
+                        number_t *v, uint64_t *hash)
+{
+    cmplx size, degradation, seed;
+    GSL_SET_COMPLEX(&size, 1, 1);
+    GSL_SET_COMPLEX(&degradation, 1, 1);
+    GSL_SET_COMPLEX(&seed, 0, 0);
+
+    switch (p->argc) {
+        case 3:
+            degradation = sfvalue(sfaram1(p));
+            size = sfvalue(sfaram2(p));
+            seed = sfvalue(sfaram3(p));
+            break;
+        case 2:
+            size = sfvalue(sfaram1(p));
+            seed = sfvalue(sfaram2(p));
+            break;
+        case 1:
+            seed = sfvalue(sfaram1(p));
+            break;
+        default:
+            return 0;
+    }
+
+    if (GSL_REAL(size) == 0 || GSL_IMAG(size) == 0 ||
+        GSL_REAL(degradation) == 0 || GSL_IMAG(degradation) == 0)
+        return 0;
+
+    /* size * degradation^n, per component. Repeated multiplication rather than
+     * npow: n rises by one per iteration, and this keeps both precisions doing
+     * the same arithmetic in the same order. */
+    number_t wr = GSL_REAL(size), wi = GSL_IMAG(size);
+    for (unsigned int k = 0; k < sffe_iteration; k++) {
+        wr *= GSL_REAL(degradation);
+        wi *= GSL_IMAG(degradation);
+        if (wr == 0 || wi == 0) /* shrunk past what the type can hold */
+            return 0;
+    }
+
+    number_t X = GSL_REAL(sffe_position) / wr;
+    number_t Y = GSL_IMAG(sffe_position) / wi;
+    number_t fx = nfloor(X), fy = nfloor(Y);
+    *cx = (int64_t)fx;
+    *cy = (int64_t)fy;
+    *u = X - fx;
+    *v = Y - fy;
+    *hash = randsc_seed(seed);
+    return 1;
+}
+
+/**
  * @brief Coherent noise over the position, seeded and reproducible.
  * @details randsc(seed), randsc(seed; size), randsc(seed; size; degradation).
  *
@@ -1333,59 +1395,18 @@ static uint64_t randsc_seed(cmplx seed)
  */
 sfarg *sfrandsc(sfarg *const p)
 {
-    cmplx size, degradation, seed;
-    GSL_SET_COMPLEX(&size, 1, 1);
-    GSL_SET_COMPLEX(&degradation, 1, 1);
-    GSL_SET_COMPLEX(&seed, 0, 0);
+    int64_t cx, cy;
+    number_t u, v;
+    uint64_t h;
 
-    /* sfaram1 is the last argument written, so which one is which depends on
-     * how many were given. */
-    switch (p->argc) {
-        case 3:
-            degradation = sfvalue(sfaram1(p));
-            size = sfvalue(sfaram2(p));
-            seed = sfvalue(sfaram3(p));
-            break;
-        case 2:
-            size = sfvalue(sfaram1(p));
-            seed = sfvalue(sfaram2(p));
-            break;
-        case 1:
-            seed = sfvalue(sfaram1(p));
-            break;
-        default:
-            GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
-            return sfaram1(p);
-    }
-
-    if (GSL_REAL(size) == 0 || GSL_IMAG(size) == 0 ||
-        GSL_REAL(degradation) == 0 || GSL_IMAG(degradation) == 0) {
+    if (!randsc_setup(p, &cx, &cy, &u, &v, &h)) {
         GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
         return sfaram1(p);
     }
 
-    /* size * degradation^n, per component. Repeated multiplication rather than
-     * npow: n is small and rises by one per iteration, and this keeps the two
-     * builds doing the same arithmetic in the same order. */
-    number_t wr = GSL_REAL(size), wi = GSL_IMAG(size);
-    for (unsigned int k = 0; k < sffe_iteration; k++) {
-        wr *= GSL_REAL(degradation);
-        wi *= GSL_IMAG(degradation);
-        if (wr == 0 || wi == 0) { /* shrunk past what the type can hold */
-            GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
-            return sfaram1(p);
-        }
-    }
-
-    number_t X = GSL_REAL(sffe_position) / wr;
-    number_t Y = GSL_IMAG(sffe_position) / wi;
-    number_t fx = nfloor(X), fy = nfloor(Y);
-    int64_t cx = (int64_t)fx, cy = (int64_t)fy;
-    number_t u = X - fx, v = Y - fy;
     u = u * u * (3 - 2 * u); /* smoothstep: flat at both ends, so the value */
     v = v * v * (3 - 2 * v); /* meets its neighbour without a crease */
 
-    uint64_t h = randsc_seed(seed);
     number_t a = randsc_unit(randsc_hash(cx, cy, h));
     number_t b = randsc_unit(randsc_hash(cx + 1, cy, h));
     number_t c = randsc_unit(randsc_hash(cx, cy + 1, h));
@@ -1394,6 +1415,40 @@ sfarg *sfrandsc(sfarg *const p)
     number_t hi = c + (d - c) * u;
 
     GSL_SET_COMPLEX(&sfvalue(p), lo + (hi - lo) * v, 0);
+    return sfaram1(p);
+}
+
+/**
+ * @brief The same field without the interpolation: a mosaic of flat cells.
+ * @details randscq takes the arguments randsc takes and means the same by
+ * them, but returns the value of the cell the point falls in rather than a
+ * blend of the four around it. Each cell is therefore one flat colour and the
+ * result is a grid of squares, size wide and size high, instead of blobs.
+ *
+ * What is gained in look is paid for in stability, and it is worth being plain
+ * about it. randsc is continuous, so a difference of 1e-20 between a long
+ * double and a quad build moves the result by 1e-20. randscq is a step
+ * function: two builds that place a point on opposite sides of a cell edge
+ * return values with nothing to do with each other. The two binaries therefore
+ * agree everywhere except on a hairline along the cell edges, and a zoom that
+ * reuses a row whose coordinate has drifted within its tolerance can flicker
+ * there. That is inherent in asking for hard edges, not a defect to be fixed.
+ *
+ * @param p The call; the arguments are read right to left, see sfaramN.
+ * @return Pointer to the last argument, per the sffe convention.
+ */
+sfarg *sfrandscq(sfarg *const p)
+{
+    int64_t cx, cy;
+    number_t u, v;
+    uint64_t h;
+
+    if (!randsc_setup(p, &cx, &cy, &u, &v, &h)) {
+        GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
+        return sfaram1(p);
+    }
+
+    GSL_SET_COMPLEX(&sfvalue(p), randsc_unit(randsc_hash(cx, cy, h)), 0);
     return sfaram1(p);
 }
 

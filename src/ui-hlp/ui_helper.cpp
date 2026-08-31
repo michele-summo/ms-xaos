@@ -2287,6 +2287,28 @@ void uih_setfastmode(uih_context *c, int mode)
     uih_updatemenus(c, names[mode]);
 }
 
+/* Which shape the bailout tests against. Out of range wraps rather than
+ * refusing, so that a file written by a later version with more shapes still
+ * opens and draws something rather than nothing. */
+void uih_setbailoutmode(uih_context *c, int mode)
+{
+    if (mode < 0 || mode >= BAILOUTMODES)
+        mode = 0;
+    if (c->fcontext->bailoutmode == mode)
+        return;
+    c->fcontext->bailoutmode = mode;
+    c->fcontext->version++;
+    uih_newimage(c);
+    uih_updatemenus(c, "bailoutmode");
+}
+
+int uih_selectedbailoutmode(uih_context *c, int mode)
+{
+    if (c == NULL)
+        return 0;
+    return c->fcontext->bailoutmode == mode;
+}
+
 void uih_setoutcoloringmode(uih_context *c, int mode)
 {
     // Not sure where negative values might come from

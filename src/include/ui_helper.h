@@ -434,6 +434,8 @@ void uih_perbutation(uih_context *c, int mousex, int mousey);
 void uih_setmaxiter(uih_context *c, int maxiter);
 void uih_setbailout(uih_context *c, number_t bailout);
 void uih_setincoloringmode(uih_context *c, int mode);
+void uih_setbailoutmode(uih_context *c, int mode);
+int uih_selectedbailoutmode(uih_context *c, int mode);
 void uih_setoutcoloringmode(uih_context *c, int mode);
 void uih_setintcolor(uih_context *c, int mode);
 void uih_setouttcolor(uih_context *c, int mode);
