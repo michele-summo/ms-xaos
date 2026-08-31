@@ -1302,6 +1302,22 @@ static uint64_t randsc_seed(cmplx seed)
 }
 
 /**
+/* base^n for a whole n, by squaring: about twenty multiplications where the
+ * exponent reaches a thousand, rather than a thousand. The order of the
+ * operations depends only on n, so the two precisions still do the same thing
+ * in the same order as each other. */
+static number_t randsc_ipow(number_t base, unsigned int n)
+{
+    number_t result = 1;
+    while (n) {
+        if (n & 1u)
+            result *= base;
+        base *= base;
+        n >>= 1;
+    }
+    return result;
+}
+
 /* Shared by randsc and randscq: reads the arguments, applies the degradation
  * for the iteration reached, and returns the cell the position falls in along
  * with where inside it. Zero means the caller should not compute -- a zero in
@@ -1339,16 +1355,24 @@ static int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, number_t *u,
         GSL_REAL(degradation) == 0 || GSL_IMAG(degradation) == 0)
         return 0;
 
-    /* size * degradation^n, per component. Repeated multiplication rather than
-     * npow: n rises by one per iteration, and this keeps both precisions doing
-     * the same arithmetic in the same order. */
+    /* size * degradation^n, per component.
+     *
+     * By squaring, not by multiplying n times. The plain loop was n
+     * multiplications on iteration n, so a pixel taking N iterations paid
+     * N(N+1)/2 of them -- half a million at a thousand iterations, for a
+     * quantity that only needed twenty. It was chosen to keep both precisions
+     * doing the same arithmetic in the same order; squaring keeps that
+     * property, since the sequence of operations depends only on n.
+     *
+     * A degradation of one is the default and the common case, and needs
+     * nothing at all. */
     number_t wr = GSL_REAL(size), wi = GSL_IMAG(size);
-    for (unsigned int k = 0; k < sffe_iteration; k++) {
-        wr *= GSL_REAL(degradation);
-        wi *= GSL_IMAG(degradation);
-        if (wr == 0 || wi == 0) /* shrunk past what the type can hold */
-            return 0;
-    }
+    if (GSL_REAL(degradation) != 1)
+        wr *= randsc_ipow(GSL_REAL(degradation), sffe_iteration);
+    if (GSL_IMAG(degradation) != 1)
+        wi *= randsc_ipow(GSL_IMAG(degradation), sffe_iteration);
+    if (wr == 0 || wi == 0) /* shrunk past what the type can hold */
+        return 0;
 
     number_t X = GSL_REAL(sffe_position) / wr;
     number_t Y = GSL_IMAG(sffe_position) / wi;
