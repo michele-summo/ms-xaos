@@ -27,6 +27,7 @@
 #include <cassert>
 #include <cmath>
 #include "config.h"
+#include "number_math.h"
 #include "filter.h"
 #include "cmplx.h"
 #include "plane.h"
@@ -181,6 +182,30 @@ void set_fractalc(fractal_context *context, struct image *img)
 
     if (cfractalc.bailout < 0)
         cfractalc.bailout = 0;
+
+    /* The bailout polygon, worked out here so the inner loop does not have to.
+     * The apothem is the square root of the bailout, which puts a polygon's
+     * sides where the circle of the same bailout would be. */
+    {
+        int sides = 0;
+        number_t turn = 0;
+        switch (cfractalc.bailoutmode) {
+            case BAILOUT_TRIANGLE0: sides = 3; turn = 0; break;
+            case BAILOUT_TRIANGLE90: sides = 3; turn = N_PI / 2; break;
+            case BAILOUT_TRIANGLEM90: sides = 3; turn = -N_PI / 2; break;
+            case BAILOUT_HEXAGON0: sides = 6; turn = 0; break;
+            case BAILOUT_HEXAGON90: sides = 6; turn = N_PI / 2; break;
+            case BAILOUT_OCTAGON: sides = 8; turn = 0; break;
+            default: break;
+        }
+        cfractalc.bailoutsides = sides;
+        cfractalc.bailoutapothem = nsqrt(cfractalc.bailout);
+        for (int k = 0; k < sides; k++) {
+            number_t t = turn + (number_t)k * 2 * N_PI / (number_t)sides;
+            cfractalc.bailoutnx[k] = ncos(t);
+            cfractalc.bailoutny[k] = nsin(t);
+        }
+    }
 
     if (cfractalc.periodicity) {
         if (!cformula.hasperiodicity || cfractalc.incoloringmode ||

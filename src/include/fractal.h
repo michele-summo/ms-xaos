@@ -105,7 +105,20 @@ struct formula {
 #define BAILOUT_REAL 3    /* the real component only */
 #define BAILOUT_IMAG 4    /* the imaginary component only */
 #define BAILOUT_BOTH 5    /* both components at once */
-#define BAILOUTMODES 6
+/* Regular polygons, measured by their apothem -- the distance from the centre
+ * to the middle of a side, which is what the bailout value gives, so that a
+ * polygon and the circle of the same bailout touch at the sides rather than
+ * at the corners. The orientation is part of the shape: a triangle turned by
+ * 120 degrees is the same triangle, so 0, 90 and -90 are three different
+ * ones, while a hexagon repeats every 60 and an octagon every 45. */
+#define BAILOUT_TRIANGLE0 6
+#define BAILOUT_TRIANGLE90 7
+#define BAILOUT_TRIANGLEM90 8
+#define BAILOUT_HEXAGON0 9
+#define BAILOUT_HEXAGON90 10
+#define BAILOUT_OCTAGON 11
+#define BAILOUTMODES 12
+#define BAILOUT_MAXSIDES 8
 
 struct fractal_context {
     number_t pre, pim;
@@ -123,6 +136,14 @@ struct fractal_context {
      * below. Zero is the circle every version before this one used, so a
      * context never told otherwise behaves as it always did. */
     int bailoutmode;
+    /* Derived from bailoutmode and bailout by set_fractalc, never saved and
+     * set by nothing else: the outward normals of the bailout polygon and its
+     * apothem. Precomputed because the alternative is a sine and a cosine per
+     * side on every iteration. bailoutsides is zero for the shapes that need
+     * none of this. */
+    number_t bailoutnx[BAILOUT_MAXSIDES], bailoutny[BAILOUT_MAXSIDES];
+    number_t bailoutapothem;
+    int bailoutsides;
     OutColormodeType coloringmode;
     int incoloringmode;
     int intcolor, outtcolor;

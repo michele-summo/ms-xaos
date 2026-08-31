@@ -69,9 +69,13 @@ const char *const incolorname[] = {"0",
                                    NULL};
 
 /* Names for the bailout shapes, in the order of the BAILOUT_ constants. */
-const char *const bailoutname[] = {"Circle (classic)", "Square",
-                                   "Diamond",          "Real axis",
-                                   "Imaginary axis",   "Both axes"};
+const char *const bailoutname[] = {
+    "Circle (classic)",   "Square",
+    "Diamond",            "Real axis",
+    "Imaginary axis",     "Both axes",
+    "Triangle, 0 deg",    "Triangle, 90 deg",
+    "Triangle, -90 deg",  "Hexagon, 0 deg",
+    "Hexagon, 90 deg",    "Octagon"};
 
 const char *const outcolorname[] = {"iter",
                                     "iter+real",
@@ -131,8 +135,13 @@ const char *const colorfun[] = {
  * the diamond needs a root. The mode is one value for a whole image, so the
  * branch below predicts perfectly and costs about what the load of
  * cfractalc.bailout beside it costs. */
-/* True while the point is still inside, which is the sense BTEST is used in. */
-static inline int bailout_inside(number_t rp, number_t ip)
+/* True while the point is still inside, which is the sense BTEST is used in.
+ *
+ * Takes the components as well as their squares: the squares are what the
+ * first few shapes want and are already to hand, while a polygon needs the
+ * signs, since a side faces one way only. */
+static inline int bailout_inside(number_t zre, number_t zim, number_t rp,
+                                 number_t ip)
 {
     const number_t b = cfractalc.bailout;
     switch (cfractalc.bailoutmode) {
@@ -146,8 +155,20 @@ static inline int bailout_inside(number_t rp, number_t ip)
             return ip < b;
         case BAILOUT_BOTH:
             return rp < b || ip < b;
-        default:
+        case BAILOUT_CIRCLE:
             return rp + ip < b;
+        default: {
+            /* A regular polygon: still inside while every side's outward
+             * normal projects the point short of the apothem. Three to eight
+             * multiply-adds, with the normals worked out in set_fractalc. */
+            const number_t a = cfractalc.bailoutapothem;
+            for (int k = 0; k < cfractalc.bailoutsides; k++)
+                if (zre * cfractalc.bailoutnx[k] +
+                        zim * cfractalc.bailoutny[k] >=
+                    a)
+                    return 0;
+            return 1;
+        }
     }
 }
 
@@ -749,7 +770,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
  * -- Zoltan, 2009-07-30
  */
 
-#define BTEST bailout_inside(rp, ip)
+#define BTEST bailout_inside(zre, zim, rp, ip)
 #define SMOOTH
 #define SCALC smand_calc
 #define SPERI smand_peri
@@ -767,7 +788,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
     zre = rp + pre;                                                            \
     rp = zre * zre;                                                            \
     ip = zim * zim;
-#define BTEST bailout_inside(rp, ip)
+#define BTEST bailout_inside(zre, zim, rp, ip)
 #define SMOOTH
 #define SCALC smand3_calc
 #define SPERI smand3_peri
@@ -868,7 +889,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
 #define RPIP
 #include "docalc.h"
 
-#define BTEST bailout_inside(rp, ip)
+#define BTEST bailout_inside(zre, zim, rp, ip)
 #define FORMULA                                                                \
     rp = rp * rp - 6 * rp * ip + ip * ip + pre;                                \
     zim = 4 * zre * zre * zre * zim - 4 * zre * ip * zim + pim;                \
@@ -886,7 +907,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
 #include "docalc.h"
 
 #define VARIABLES number_t t;
-#define BTEST bailout_inside(rp, ip)
+#define BTEST bailout_inside(zre, zim, rp, ip)
 #define FORMULA                                                                \
     c_pow4(zre, zim, rp, ip);                                                  \
     c_mul(zre, zim, rp, ip, t, zim);                                           \
@@ -905,7 +926,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
 #include "docalc.h"
 
 #define VARIABLES number_t t;
-#define BTEST bailout_inside(rp, ip)
+#define BTEST bailout_inside(zre, zim, rp, ip)
 #define FORMULA                                                                \
     c_pow3(zre, zim, rp, ip);                                                  \
     c_mul(rp, ip, rp, ip, t, zim);                                             \
@@ -924,7 +945,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
 #include "docalc.h"
 
 #define VARIABLES number_t t;
-#define BTEST bailout_inside(rp, ip)
+#define BTEST bailout_inside(zre, zim, rp, ip)
 #define FORMULA                                                                \
     c_pow3(zre, zim, rp, ip);                                                  \
     c_pow3(rp, ip, t, zim);                                                    \
@@ -943,7 +964,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
 #include "docalc.h"
 
 #define VARIABLES
-#define BTEST bailout_inside(rp, ip)
+#define BTEST bailout_inside(zre, zim, rp, ip)
 #define FORMULA                                                                \
     zim = zre * zim + zim / 2 + pim;                                           \
     zre = (rp - ip + zre) / 2 + pre;                                           \
@@ -984,7 +1005,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
 #include "docalc.h"
 
 #define VARIABLES
-#define BTEST bailout_inside(rp, ip)
+#define BTEST bailout_inside(zre, zim, rp, ip)
 #define FORMULA                                                                \
     zim = (zim * zre) * (-2.0) + pim;                                          \
     zre = rp - ip + pre;                                                       \
@@ -1008,7 +1029,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
     ip = zim;                                                                  \
     zim = pim;                                                                 \
     pim = ip;
-#define BTEST bailout_inside(rp, ip)
+#define BTEST bailout_inside(zre, zim, rp, ip)
 #define FORMULA                                                                \
     rp = ip - rp + zre;                                                        \
     ip = zim - 2 * zre * zim;                                                  \
@@ -1028,7 +1049,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
 #define INIT                                                                   \
     zre1 = zre;                                                                \
     zim1 = zim;
-#define BTEST bailout_inside(rp, ip)
+#define BTEST bailout_inside(zre, zim, rp, ip)
 #define FORMULA                                                                \
     zre2 = zre;                                                                \
     zim2 = zim;                                                                \
@@ -1049,7 +1070,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
 #define INIT                                                                   \
     zre1 = pre;                                                                \
     zim1 = pim;
-#define BTEST bailout_inside(rp, ip)
+#define BTEST bailout_inside(zre, zim, rp, ip)
 #define FORMULA                                                                \
     zim = (zim * zre) * 2 + zim1;                                              \
     zre = rp - ip + zre1;                                                      \
@@ -1332,7 +1353,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
 #include "docalc.h"
 
 #define VARIABLES
-#define BTEST bailout_inside(rp, ip)
+#define BTEST bailout_inside(zre, zim, rp, ip)
 #define FORMULA                                                                \
     if (less_than_0(zre)) {                                                    \
         rp = zre + 1;                                                          \
@@ -1351,7 +1372,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
 #include "docalc.h"
 
 #define VARIABLES
-#define BTEST bailout_inside(rp, ip)
+#define BTEST bailout_inside(zre, zim, rp, ip)
 #define FORMULA                                                                \
     if (less_than_0(zre * pim + zim * pre)) {                                  \
         rp = zre + 1;                                                          \
@@ -1370,7 +1391,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
 #include "docalc.h"
 
 #define VARIABLES
-#define BTEST bailout_inside(rp, ip)
+#define BTEST bailout_inside(zre, zim, rp, ip)
 #define FORMULA                                                                \
     if (!less_than_0(-zre)) {                                                  \
         zim = 2 * zre * zim + pim * zre;                                       \
@@ -1435,7 +1456,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
 #define SAVE szpr = zpr, szip = zip;
 #define RESTORE zpr = szpr, zip = szip;
 #define INIT zpr = zip = (number_t)0;
-#define BTEST bailout_inside(rp, ip)
+#define BTEST bailout_inside(zre, zim, rp, ip)
 #define FORMULA                                                                \
     rp = rp - ip + pre + pim * zpr;                                            \
     ip = 2 * zre * zim + pim * zip;                                            \
@@ -1610,7 +1631,7 @@ bool pndef = cfractalc.pndefault; unsigned int maxit                           \
  * user formula, which is the one place it is most wanted. */
 #define BTEST newtok ?                                                         \
 greater_then_1Em6(n) \
-    : bailout_inside(zre * zre, zim * zim)
+    : bailout_inside(zre, zim, zre * zre, zim * zim)
 #define CALC sffe_calc
 #define JULIA sffe_julia
 //#define SCALC ssffe_calc

@@ -108,6 +108,17 @@ outside the set, so it is as much a drawing tool as a numerical one.
 | Real axis | the real component alone |
 | Imaginary axis | the imaginary component alone |
 | Both axes | both components at once |
+| Triangle 0° / 90° / −90° | the point leaves a triangle of that orientation |
+| Hexagon 0° / 90° | the point leaves a hexagon of that orientation |
+| Octagon | the point leaves an octagon |
+
+The polygons are measured by their **apothem** — the distance from the centre
+to the middle of a side — so a polygon and the circle of the same bailout
+touch along the sides rather than at the corners. Orientation is part of the
+shape: a triangle turned by 120° is the same triangle, so 0°, 90° and −90° are
+three different ones, while a hexagon repeats every 60° and an octagon every
+45°. Their normals are worked out once per frame, so the inner loop costs
+three to eight multiply-adds rather than a sine and a cosine per side.
 
 Against the circle, the diamond changes about 39% of pixels and the real axis
 44%. The silhouette of the set does not move — that is decided by what never
