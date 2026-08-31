@@ -59,6 +59,7 @@ int main(void)
     sffe *bare = compile("randsc({7,0})");
     sffe *full = compile("randsc({7,0};{1,1};{1,1})");
     sffe *fade = compile("randsc({7,0};{1,1};{0.5,0.2})");
+    sffe *sized = compile("randsc({7,0};{0.5,0.2};{1,1})");
     sffe *zsize = compile("randsc({7,0};{0,1})");
     sffe *zfade = compile("randsc({7,0};{1,1};{1,0})");
     if (failures)
@@ -71,11 +72,17 @@ int main(void)
      * written -- which is the bare call with no degradation at all. */
     check(at(fade, 0.3, 0.7, 0) == at(bare, 0.3, 0.7, 0),
           "the first pass uses the size as given");
-    check(at(fade, 0.3, 0.7, 1) != at(fade, 0.3, 0.7, 0),
-          "a later pass uses a smaller size");
 
-    /* With degradation 1+i nothing shrinks, so every pass is alike. */
-    check(at(full, 0.3, 0.7, 0) == at(full, 0.3, 0.7, 9),
+    /* The pass after it uses size * degradation, which is that size written
+     * out and left alone. Compared at the same pass, because the pass is part
+     * of the hash: two fields can only be told apart within one of them. */
+    check(at(fade, 0.3, 0.7, 1) == at(sized, 0.3, 0.7, 1),
+          "a later pass uses a smaller size");
+    check(at(fade, 0.3, 0.7, 1) != at(bare, 0.3, 0.7, 1),
+          "and not the size it started with");
+
+    /* With degradation 1+i nothing shrinks, so pass nine is still size 1+i. */
+    check(at(full, 0.3, 0.7, 9) == at(bare, 0.3, 0.7, 9),
           "degradation 1+i leaves the size alone");
 
     check(at(zsize, 0.3, 0.7, 0) == 0, "a zero in size declines to compute");
@@ -97,6 +104,50 @@ int main(void)
 
     /* Same input, same answer -- no hidden state, unlike rand. */
     check(at(bare, 0.3, 0.7, 0) == a, "the same point always gives the same value");
+
+    /* A new field every pass, whatever the degradation is doing.
+     *
+     * This is the point of hashing the iteration and not merely scaling by it.
+     * With the size alone carrying the pass, a degradation of one froze the
+     * field -- the same point returned the same value for ever -- and one of
+     * 0.99 shifted the grid by a percent, which is the same picture again. A
+     * formula that calls one of these once per iteration is asking for a new
+     * value each time.
+     */
+    {
+        sffe *held = compile("randsc({13,0};{0.3,0.3};{1,1})");
+        sffe *slow = compile("randsc({13,0};{0.3,0.3};{0.99,0.99})");
+        sffe *heldq = compile("randscq({13,0};{0.3,0.3};{1,1})");
+        sffe *heldp = compile("randscp({13,0};{0.3,0.3};{1,1})");
+        if (!failures) {
+            int mheld = 0, mslow = 0, mq = 0, mp = 0;
+            for (unsigned int n = 0; n < 20; n++) {
+                if (at(held, 0.3, 0.7, n) != at(held, 0.3, 0.7, n + 1))
+                    mheld++;
+                if (at(slow, 0.3, 0.7, n) != at(slow, 0.3, 0.7, n + 1))
+                    mslow++;
+                if (at(heldq, 0.3, 0.7, n) != at(heldq, 0.3, 0.7, n + 1))
+                    mq++;
+                if (at(heldp, 0.3, 0.7, n) != at(heldp, 0.3, 0.7, n + 1))
+                    mp++;
+            }
+            check(mheld == 20, "randsc moves every pass at degradation 1");
+            check(mslow == 20, "randsc moves every pass at degradation 0.99");
+            check(mq == 20, "randscq moves every pass at degradation 1");
+            check(mp == 20, "randscp moves every pass at degradation 1");
+
+            /* Moves, and by a real amount: consecutive passes are unrelated
+             * fields, not the same one nudged. */
+            number_t spread = 0;
+            for (unsigned int n = 0; n < 20; n++) {
+                number_t a = at(held, 0.3, 0.7, n);
+                number_t b = at(held, 0.3, 0.7, n + 1);
+                spread += a > b ? a - b : b - a;
+            }
+            check(spread / 20 > (number_t)1 / 10,
+                  "consecutive passes are unrelated, not nudged");
+        }
+    }
 
     /* randscq and randscp share every argument and all of randsc_setup with
      * randsc; what differs is the last step, so that is what is checked. */

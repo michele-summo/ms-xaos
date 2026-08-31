@@ -1382,7 +1382,16 @@ static int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, number_t *u,
     *cy = (int64_t)fy;
     *u = X - fx;
     *v = Y - fy;
-    *hash = randsc_seed(seed);
+    /* The iteration goes into the hash, not only into the size above.
+     * Without it the field is fixed once the size is: a degradation of one
+     * never changes the size, so every pass returned the very same value at
+     * the same point, and a degradation near one -- 0.99, say -- moved the
+     * grid by a percent and returned very nearly it. Hashing the iteration
+     * gives each pass a field of its own, which is what a formula asks for
+     * when it calls this once per iteration. Space is untouched by it: for
+     * a fixed pass the hash is a constant, so the noise is as coherent from
+     * point to point as it ever was. */
+    *hash = randsc_hash((int64_t)sffe_iteration, 0, randsc_seed(seed));
     return 1;
 }
 

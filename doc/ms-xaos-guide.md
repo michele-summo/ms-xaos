@@ -72,6 +72,12 @@ polygons with straight edges, no two the same shape. Between the three:
 `randsc` is soft and curved, `randscq` is hard and regular, `randscp` is hard
 and irregular.
 
+Each pass gets a field of its own. The iteration is hashed along with the
+position, so a formula calling one of these once per iteration gets a new
+value every time — including at a degradation of one, which leaves the size
+alone. Degradation sets how big the blobs are on a given pass; it is not
+what makes the pass different.
+
 All three hash the position of the point and the iteration, never `z`, and
 never any global state. So the same picture comes back on every redraw, at
 any thread count, and in Mandelbrot or Julia mode alike. `randsc` is

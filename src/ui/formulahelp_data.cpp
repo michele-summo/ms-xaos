@@ -114,7 +114,7 @@ const struct formula_help_row formula_help_functions[] = {
     {NULL, NULL, "choosing by iteration"},
     {"ifiter", "picks one argument by iteration number, cycling; only that one is evaluated", NULL}, /* variadic */
     {"ifiterl", "as ifiter, but holding the last argument once the iterations pass the end", NULL}, /* variadic */
-    {NULL, NULL, "randomness; the randsc family takes (seed; size; degradation), the last two optional"},
+    {NULL, NULL, "randomness; the randsc family takes (seed; size; degradation), the last two optional, and draws a new field every iteration"},
     {"rand", "real(a) times a random number in [0, 1); depends on call order, so a redraw differs", NULL},
     {"randsc", "coherent noise over the point: soft blobs, size wide and size high", NULL},
     {"randscq", "the same field with no interpolation: a mosaic of flat square cells", NULL},
