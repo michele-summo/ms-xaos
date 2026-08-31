@@ -99,6 +99,16 @@ value every time — including at a degradation of one, which leaves the size
 alone. Degradation sets how big the blobs are on a given pass; it is not
 what makes the pass different.
 
+There is a floor under the size. A cell is found by dividing the position by
+the size and the answer has to land in an integer, so the size cannot usefully
+go below about the position over what an integer holds — a billionth of a
+billionth of it. A degradation of a half reaches that in some sixty passes.
+Past it there is no cell structure left to resolve and the field is one flat
+value over the whole plane; it still changes on every pass and still differs
+between the five functions, so a formula subtracting one from another does not
+settle on zero and iterate to the limit for nothing. For a fade that stays a
+picture the whole way, use a degradation near one.
+
 All of them hash the position of the point and the iteration, never `z`, and
 never any global state. So the same picture comes back on every redraw, at
 any thread count, and in Mandelbrot or Julia mode alike. `randsc` is

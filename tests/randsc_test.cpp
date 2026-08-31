@@ -57,6 +57,7 @@ static number_t at(sffe *parser, number_t x, number_t y, unsigned int n)
 
 int main(void)
 {
+    char what[96];
     sffe *bare = compile("randsc({7,0})");
     sffe *full = compile("randsc({7,0};{1,1};{1,1})");
     sffe *fade = compile("randsc({7,0};{1,1};{0.5,0.2})");
@@ -178,7 +179,6 @@ int main(void)
         const int nmosaic = (int)(sizeof(mosaic) / sizeof(mosaic[0]));
         sffe *smooth = compile("randsc({7,0})");
         number_t step = (number_t)1 / 1000;
-        char what[80];
 
         for (int m = 0; !failures && m < nmosaic; m++) {
             sprintf(what, "%s declines to compute on a zero", mosaic[m].name);
@@ -241,6 +241,85 @@ int main(void)
             sprintf(what, "%s gives one cell per unit square (%d over 144)",
                     mosaic[m].name, nseen);
             check(nseen >= 144 && nseen <= 260, what);
+        }
+    }
+
+    /* Past the resolution of the grid.
+     *
+     * A cell is the position divided by the size, and it has to end up in an
+     * integer, so the size cannot usefully go below about the position over
+     * what an integer holds. A degradation of a half reaches that in some
+     * sixty passes. What the field does there is not much of a choice -- one
+     * flat value over the whole plane, there being no cell structure left to
+     * resolve -- but two things about it matter, and both were wrong once.
+     */
+    {
+        sffe *bh = compile("randsch({13,0};{0.3,0.3};{0.5,0.5})");
+        sffe *bt = compile("randsct({14,0};{0.3,0.3};{0.5,0.5})");
+        sffe *bq = compile("randscq({13,0};{0.3,0.3};{0.5,0.5})");
+        if (!failures) {
+            check(at(bh, 0.7, 0.4, 200) == at(bh, -1.3, 0.9, 200),
+                  "past the resolution the field is flat");
+
+            /* It must still change from pass to pass. It did not, once: the
+             * hash was assigned after the range check and the caller read an
+             * uninitialised one, which held the same value for every pass and
+             * every seed. A formula then sat on one number to the iteration
+             * limit. */
+            int moved = 0;
+            for (unsigned int n = 200; n < 220; n++)
+                if (at(bh, 0.7, 0.4, n) != at(bh, 0.7, 0.4, n + 1))
+                    moved++;
+            check(moved == 20, "past the resolution it still moves each pass");
+
+            /* And the functions must still differ from one another, or a
+             * formula subtracting one from another reaches exactly zero and
+             * iterates to the limit for nothing. */
+            check(at(bh, 0.7, 0.4, 200) != at(bt, 0.7, 0.4, 200) &&
+                      at(bh, 0.7, 0.4, 200) != at(bq, 0.7, 0.4, 200) &&
+                      at(bt, 0.7, 0.4, 200) != at(bq, 0.7, 0.4, 200),
+                  "past the resolution they still differ from each other");
+        }
+    }
+
+    /* The values themselves, over a grid.
+     *
+     * floorl and roundl were replaced by integer conversions, which is where
+     * most of the cost of one call was; the substitution is only sound if not
+     * one value moved. The behaviour above says what the functions are for;
+     * this says they are still computing the same numbers, which is what
+     * keeps a saved picture drawing the same way. Per precision, since the
+     * mosaics are step functions and the two builds are entitled to disagree
+     * along a cell edge.
+     */
+    {
+        static const struct {
+            const char *name;
+            unsigned long long expected[2]; /* 64 bits, 113 bits */
+        } golden[] = {
+            {"randsc", {0xe44c35d1b7e00368ULL, 0x599f28f8e0bb8b39ULL}},
+            {"randscq", {0xb9b30f3fbedb4800ULL, 0xb9b30f3fbedb4800ULL}},
+            {"randscp", {0x6d540398e03f4800ULL, 0x6d540398e03f4800ULL}},
+            {"randsch", {0x174f609c68321800ULL, 0x174f609c68321800ULL}},
+            {"randsct", {0xa82a262574eb5000ULL, 0xa82a262574eb5000ULL}},
+        };
+        const int which = NUMBER_MANTISSA_BITS == 113 ? 1 : 0;
+        for (int g = 0; g < 5; g++) {
+            char expr[64];
+            sprintf(expr, "%s({7,0};{0.4,0.6};{0.9,0.95})", golden[g].name);
+            sffe *f = compile(expr);
+            if (!f)
+                break;
+            unsigned long long sum = 0;
+            for (int i = -20; i < 20; i++)
+                for (int j = -20; j < 20; j++)
+                    for (unsigned int n = 0; n < 3; n++) {
+                        number_t val = at(f, (number_t)i / 7, (number_t)j / 9, n);
+                        sum = sum * 0x100000001B3ULL +
+                              (unsigned long long)(val * 18446744073709551616.0);
+                    }
+            sprintf(what, "%s draws what it drew (%#llx)", golden[g].name, sum);
+            check(sum == golden[g].expected[which], what);
         }
     }
 

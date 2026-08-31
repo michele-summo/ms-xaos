@@ -1297,11 +1297,88 @@ static number_t randsc_unit(uint64_t x)
  * Keeping the leading 40 bits puts both in the same bucket -- the quantum,
  * about 9e-13, is seven orders coarser than the disagreement. An integer seed
  * needs none of this and is exact, which is the reason to prefer one. */
+/* What randsc_setup returns.
+ *
+ * RANDSC_BEYOND says the cells have been degraded finer than the grid can
+ * address, so the cell handed back is the one saturated index rather than a
+ * position in the plane. Each function then hashes it with its own salt and
+ * stops: there is nothing for a tiling to do with a single cell, and the
+ * transforms would only run the same numbers off the scale again.
+ *
+ * The field is flat there, and that is not a choice made here -- a cell a
+ * millionth of a pixel wide has no picture left to give. What matters is that
+ * the five functions still differ from one another, since a formula
+ * subtracting one from another would otherwise reach exactly zero and iterate
+ * to the limit for nothing. */
+#define RANDSC_STOP 0
+#define RANDSC_OK 1
+#define RANDSC_BEYOND 2
+
+/* How far a grid coordinate may go before it stops being one.
+ *
+ * Every one of these functions ends by hashing a pair of integers, so a
+ * position divided by a cell size has to fit in one. It stops fitting when the
+ * degradation has shrunk the cells far enough -- 0.3 * 0.5^n against a
+ * position of order one runs out at about the sixty-fifth pass -- and what
+ * happened then was the worst of both: the conversion overflowed, every point
+ * in the plane landed on the same saturated index, and the field quietly went
+ * flat while costing five times as much to compute, since arithmetic on
+ * astronomical values is the slow path of the library floor.
+ *
+ * So the size running out of integers is treated as the size running out
+ * altogether, which the code already had a case for. The limit is a quarter of
+ * what an int64 holds, which leaves room for the coordinate transforms the
+ * hexagons and the triangles apply on top -- at most a factor of 1.6 -- and
+ * costs nothing: a cell that fine is far below any pixel that could show it.
+ */
+#define RANDSC_INDEX_LIMIT ((number_t)2.0e18)
+
+/* floor(x) as an integer index, with the fraction left over, or 0 if the
+ * value is not one an index can hold. NaN fails the comparison and is
+ * rejected with the rest.
+ *
+ * This is floorl followed by a conversion, without the library call: the
+ * conversion truncates toward zero, which is floor for anything not negative
+ * and one too many otherwise. x - (number_t)c is exact, the two being within
+ * one of each other. Measured at a fifth of what floorl costs, and a
+ * twentieth of what floorl costs on the values the guard now refuses. */
+static int randsc_cell(number_t x, int64_t *cell, number_t *frac)
+{
+    if (!(x > -RANDSC_INDEX_LIMIT && x < RANDSC_INDEX_LIMIT))
+        return 0;
+    int64_t c = (int64_t)x;
+    number_t t = (number_t)c;
+    if (t > x) {
+        c--;
+        t -= 1;
+    }
+    *cell = c;
+    *frac = x - t;
+    return 1;
+}
+
+/* roundl without the library call, half away from zero, exact for anything
+ * the guard above lets through: the truncation and the remainder are both
+ * exact there, so the comparison against a half decides it. */
+static number_t randsc_round(number_t x)
+{
+    number_t t = (number_t)(int64_t)x;
+    number_t d = x - t;
+    if (d >= (number_t)0.5)
+        return t + 1;
+    if (d <= (number_t)-0.5)
+        return t - 1;
+    return t;
+}
+
+static const number_t RANDSC_SEED_SCALE = nldexp((number_t)1, 40);
+
 static uint64_t randsc_seed(cmplx seed)
 {
-    number_t scale = nldexp((number_t)1, 40);
-    int64_t a = (int64_t)nfloor(GSL_REAL(seed) * scale);
-    int64_t b = (int64_t)nfloor(GSL_IMAG(seed) * scale);
+    int64_t a = 0, b = 0;
+    number_t unused;
+    randsc_cell(GSL_REAL(seed) * RANDSC_SEED_SCALE, &a, &unused);
+    randsc_cell(GSL_IMAG(seed) * RANDSC_SEED_SCALE, &b, &unused);
     return randsc_hash(a, b, 0x5DEECE66DULL);
 }
 
@@ -1352,12 +1429,12 @@ static int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, number_t *u,
             seed = sfvalue(sfaram1(p));
             break;
         default:
-            return 0;
+            return RANDSC_STOP;
     }
 
     if (GSL_REAL(size) == 0 || GSL_IMAG(size) == 0 ||
         GSL_REAL(degradation) == 0 || GSL_IMAG(degradation) == 0)
-        return 0;
+        return RANDSC_STOP;
 
     /* size * degradation^n, per component.
      *
@@ -1376,15 +1453,8 @@ static int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, number_t *u,
     if (GSL_IMAG(degradation) != 1)
         wi *= randsc_ipow(GSL_IMAG(degradation), sffe_iteration);
     if (wr == 0 || wi == 0) /* shrunk past what the type can hold */
-        return 0;
+        return RANDSC_STOP;
 
-    number_t X = GSL_REAL(sffe_position) / wr;
-    number_t Y = GSL_IMAG(sffe_position) / wi;
-    number_t fx = nfloor(X), fy = nfloor(Y);
-    *cx = (int64_t)fx;
-    *cy = (int64_t)fy;
-    *u = X - fx;
-    *v = Y - fy;
     /* The iteration goes into the hash, not only into the size above.
      * Without it the field is fixed once the size is: a degradation of one
      * never changes the size, so every pass returned the very same value at
@@ -1395,7 +1465,17 @@ static int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, number_t *u,
      * a fixed pass the hash is a constant, so the noise is as coherent from
      * point to point as it ever was. */
     *hash = randsc_hash((int64_t)sffe_iteration, 0, randsc_seed(seed));
-    return 1;
+    if (!randsc_cell(GSL_REAL(sffe_position) / wr, cx, u) ||
+        !randsc_cell(GSL_IMAG(sffe_position) / wi, cy, v)) {
+        /* Past the resolution of the grid. Not an error and not a refusal:
+         * the caller gets one flat cell over the whole plane, which is what
+         * it got before by accident, and gets it for the price of a
+         * comparison. See RANDSC_BEYOND. */
+        *cx = *cy = INT64_MIN;
+        *u = *v = 0;
+        return RANDSC_BEYOND;
+    }
+    return RANDSC_OK;
 }
 
 /**
@@ -1436,8 +1516,14 @@ sfarg *sfrandsc(sfarg *const p)
     number_t u, v;
     uint64_t h;
 
-    if (!randsc_setup(p, &cx, &cy, &u, &v, &h)) {
+    int state = randsc_setup(p, &cx, &cy, &u, &v, &h);
+    if (state == RANDSC_STOP) {
         GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
+        return sfaram1(p);
+    }
+    if (state == RANDSC_BEYOND) {
+        GSL_SET_COMPLEX(&sfvalue(p),
+                        randsc_unit(randsc_hash(cx, cy, h)), 0);
         return sfaram1(p);
     }
 
@@ -1516,8 +1602,14 @@ sfarg *sfrandscp(sfarg *const p)
     number_t u, v;
     uint64_t h;
 
-    if (!randsc_setup(p, &cx, &cy, &u, &v, &h)) {
+    int state = randsc_setup(p, &cx, &cy, &u, &v, &h);
+    if (state == RANDSC_STOP) {
         GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
+        return sfaram1(p);
+    }
+    if (state == RANDSC_BEYOND) {
+        GSL_SET_COMPLEX(&sfvalue(p),
+                        randsc_unit(randsc_remix(randsc_hash(cx, cy, h))), 0);
         return sfaram1(p);
     }
 
@@ -1596,8 +1688,14 @@ sfarg *sfrandscq(sfarg *const p)
     number_t u, v;
     uint64_t h;
 
-    if (!randsc_setup(p, &cx, &cy, &u, &v, &h)) {
+    int state = randsc_setup(p, &cx, &cy, &u, &v, &h);
+    if (state == RANDSC_STOP) {
         GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
+        return sfaram1(p);
+    }
+    if (state == RANDSC_BEYOND) {
+        GSL_SET_COMPLEX(&sfvalue(p),
+                        randsc_unit(randsc_hash(cx, cy, h)), 0);
         return sfaram1(p);
     }
 
@@ -1657,8 +1755,14 @@ sfarg *sfrandsch(sfarg *const p)
     number_t u, v;
     uint64_t h;
 
-    if (!randsc_setup(p, &cx, &cy, &u, &v, &h)) {
+    int state = randsc_setup(p, &cx, &cy, &u, &v, &h);
+    if (state == RANDSC_STOP) {
         GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
+        return sfaram1(p);
+    }
+    if (state == RANDSC_BEYOND) {
+        GSL_SET_COMPLEX(&sfvalue(p),
+                        randsc_unit(randsc_hash(cx, cy, h ^ RANDSCH_SALT)), 0);
         return sfaram1(p);
     }
 
@@ -1672,7 +1776,8 @@ sfarg *sfrandsch(sfarg *const p)
     number_t r = (number_t)2 / 3 * Y;
 
     number_t ax = q, az = r, ay = -q - r;
-    number_t rx = nround(ax), ry = nround(ay), rz = nround(az);
+    number_t rx = randsc_round(ax), ry = randsc_round(ay),
+             rz = randsc_round(az);
     number_t dx = nfabs(rx - ax), dy = nfabs(ry - ay), dz = nfabs(rz - az);
     if (dx > dy && dx > dz)
         rx = -ry - rz;
@@ -1713,8 +1818,14 @@ sfarg *sfrandsct(sfarg *const p)
     number_t u, v;
     uint64_t h;
 
-    if (!randsc_setup(p, &cx, &cy, &u, &v, &h)) {
+    int state = randsc_setup(p, &cx, &cy, &u, &v, &h);
+    if (state == RANDSC_STOP) {
         GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
+        return sfaram1(p);
+    }
+    if (state == RANDSC_BEYOND) {
+        GSL_SET_COMPLEX(&sfvalue(p),
+                        randsc_unit(randsc_hash(cx, cy, h ^ RANDSCT_SALT)), 0);
         return sfaram1(p);
     }
 
@@ -1725,12 +1836,15 @@ sfarg *sfrandsct(sfarg *const p)
      * two coordinates. */
     number_t a = X - Y / RANDSC_SQRT3;
     number_t b = (number_t)2 * Y / RANDSC_SQRT3;
-    number_t fa = nfloor(a), fb = nfloor(b);
-    int upper = (a - fa) + (b - fb) >= 1;
+    int64_t ia, ib;
+    number_t fa, fb;
+    randsc_cell(a, &ia, &fa);
+    randsc_cell(b, &ib, &fb);
+    int upper = fa + fb >= 1;
 
     GSL_SET_COMPLEX(
         &sfvalue(p),
-        randsc_unit(randsc_hash((int64_t)fa, (int64_t)fb,
+        randsc_unit(randsc_hash(ia, ib,
                                 upper ? h ^ RANDSCT_SALT ^ RANDSCT_UPPER
                                       : h ^ RANDSCT_SALT)),
         0);
