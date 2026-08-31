@@ -1602,10 +1602,15 @@ bool pndef = cfractalc.pndefault; unsigned int maxit                           \
     }                                                                          \
     cmplxset(sffe_n, maxit - iter + 1, 0);                                     \
     sffe_iteration += 1;
+/* The escape half goes through the shape selector like every other
+ * escape-time formula; the convergence half above it is a different test
+ * and a shape means nothing there. This one was missed when the other
+ * fifteen were converted, because it spells the sum out rather than
+ * using rp and ip -- so choosing a bailout mode did nothing at all for a
+ * user formula, which is the one place it is most wanted. */
 #define BTEST newtok ?                                                         \
 greater_then_1Em6(n) \
-    : less_than_4(zre *zre + zim * zim)
-// less_than_4(rp+ip)
+    : bailout_inside(zre * zre, zim * zim)
 #define CALC sffe_calc
 #define JULIA sffe_julia
 //#define SCALC ssffe_calc
