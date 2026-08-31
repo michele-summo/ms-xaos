@@ -39,8 +39,11 @@ colouring mode and filter round-trip pixel for pixel.
 
 **Reference.** Help → User formula reference lists every function, variable and
 notation the formula language accepts, in a window that can be left open beside
-the formula being written. The list is checked against the parser's own table
-by a test, so it cannot drift.
+the formula being written. It is grouped by what the functions are for, with the
+special functions — `erf`, `gamma`, `lambertw` — in a section of their own,
+since none of them is elementary and one does not reach for them by accident.
+The list is checked against the parser's own table by a test, so it cannot
+drift.
 
 **Removed.** `powi`, `powdc` and `logcn` were second names for `pow` and
 `logn`; `rad`, `deg` and `sign` were listed with no implementation behind them,
@@ -62,16 +65,23 @@ by zero. Only the seed is required.
 **`randscq(...)`** — the same field without the interpolation: a mosaic of flat
 square cells instead of blobs. Same arguments, same meaning.
 
-Both hash the position of the point and the iteration, never `z`, and never any
-global state. So the same picture comes back on every redraw, at any thread
-count, and in Mandelbrot or Julia mode alike. `randsc` is continuous, so the
-two precisions agree to about 1e-19; `randscq` is a step function and they can
-disagree on a hairline along the cell edges, which is inherent in asking for
-hard edges.
+**`randscp(...)`** — the same field again with the curves taken out but not the
+irregularity: one seed is scattered inside each cell and every position takes
+the value of the nearest seed, which draws a Voronoi diagram — flat convex
+polygons with straight edges, no two the same shape. Between the three:
+`randsc` is soft and curved, `randscq` is hard and regular, `randscp` is hard
+and irregular.
 
-A formula calling either turns boundary tracing off. That optimisation fills a
-region it found one colour around without computing it — true of a fractal,
-false of a noise field.
+All three hash the position of the point and the iteration, never `z`, and
+never any global state. So the same picture comes back on every redraw, at
+any thread count, and in Mandelbrot or Julia mode alike. `randsc` is
+continuous, so the two precisions agree to about 1e-19; `randscq` and
+`randscp` are step functions and they can disagree on a hairline along the
+cell edges, which is inherent in asking for hard edges.
+
+A formula calling any of them turns boundary tracing off. That optimisation
+fills a region it found one colour around without computing it — true of a
+fractal, false of a noise field.
 
 The old `rand` is unchanged and still depends on how many times it has been
 called, so the same position does not redraw the same way. Prefer `randsc`.
@@ -85,6 +95,7 @@ perturb an iteration that does escape:
     z+randsc(13;{0.35,0.35};{1,1})*0.25       blobs
     randsc(13;{0.15,0.15};{0.5,0.5})*2.5      brownian motion
     randscq(13;{0.15,0.15};{0.5,0.5})*2.5     scattered squares, shrinking
+    z+randscp(13;{0.3,0.3};{1,1})*0.25        irregular polygons
     z^2+c+randsc(13;{0.25,0.25};{1,1})*1.2    the set itself deformed
 
 A degradation of 0.5 halves the blobs every pass, so after twenty iterations

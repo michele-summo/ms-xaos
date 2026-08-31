@@ -98,6 +98,67 @@ int main(void)
     /* Same input, same answer -- no hidden state, unlike rand. */
     check(at(bare, 0.3, 0.7, 0) == a, "the same point always gives the same value");
 
+    /* randscq and randscp share every argument and all of randsc_setup with
+     * randsc; what differs is the last step, so that is what is checked. */
+    {
+        sffe *square = compile("randscq({7,0})");
+        sffe *poly = compile("randscp({7,0})");
+        sffe *smooth = compile("randsc({7,0})");
+        sffe *qzero = compile("randscq({7,0};{0,1})");
+        sffe *pzero = compile("randscp({7,0};{1,1};{1,0})");
+        if (!failures) {
+            check(at(qzero, 0.3, 0.7, 0) == 0,
+                  "randscq declines to compute on a zero");
+            check(at(pzero, 0.3, 0.7, 0) == 0,
+                  "randscp declines to compute on a zero");
+
+            /* Flat cells: within one cell the value does not move, where the
+             * interpolated field does. */
+            number_t step = (number_t)1 / 1000;
+            check(at(square, 0.3, 0.7, 0) ==
+                      at(square, (number_t)0.3 + step, 0.7, 0),
+                  "randscq is flat across a cell");
+            check(at(poly, 0.3, 0.7, 0) ==
+                      at(poly, (number_t)0.3 + step, 0.7, 0),
+                  "randscp is flat across a cell");
+            check(at(smooth, 0.3, 0.7, 0) !=
+                      at(smooth, (number_t)0.3 + step, 0.7, 0),
+                  "randsc is not flat across a cell");
+
+            /* The two mosaics are cut differently and coloured differently,
+             * so they agree nowhere to speak of. */
+            int alike = 0;
+            for (int i = -8; i <= 8; i++)
+                for (int j = -8; j <= 8; j++) {
+                    number_t x = (number_t)i / 3, y = (number_t)j / 3;
+                    if (at(square, x, y, 0) == at(poly, x, y, 0))
+                        alike++;
+                }
+            check(alike == 0, "randscq and randscp are different mosaics");
+
+            /* What makes randscp a Voronoi diagram rather than noise with
+             * hard edges: one flat region per cell of the grid, no more and
+             * no fewer. Sampling four cells by four, the sixteen seeds inside
+             * must all own a region, and only cells just outside the square
+             * can reach in, so the count cannot run away. */
+            number_t seen[64];
+            int nseen = 0;
+            for (int i = 0; i < 200 && nseen < 64; i++)
+                for (int j = 0; j < 200 && nseen < 64; j++) {
+                    number_t val = at(poly, (number_t)i / 50,
+                                      (number_t)j / 50, 0);
+                    int k;
+                    for (k = 0; k < nseen; k++)
+                        if (seen[k] == val)
+                            break;
+                    if (k == nseen)
+                        seen[nseen++] = val;
+                }
+            check(nseen >= 16 && nseen <= 40,
+                  "randscp gives one region per cell of the grid");
+        }
+    }
+
     if (failures)
         printf("\n%d check(s) failed\n", failures);
     return failures != 0;

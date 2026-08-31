@@ -189,7 +189,8 @@ const sffunction sfcmplxfunc[sffnctscount] = {
      * variadic. randsc interpolates and gives blobs; randscq does not
      * and gives a mosaic of flat cells. See the two for the rest. */
     {sfrandsc, SFFE_VARIADIC, "randsc\0"},
-    {sfrandscq, SFFE_VARIADIC, "randscq\0"}};
+    {sfrandscq, SFFE_VARIADIC, "randscq\0"},
+    {sfrandscp, SFFE_VARIADIC, "randscp\0"}};
 
 const char sfcnames[sfvarscount][6] = {"pi\0", "pi_2\0", "pi2\0",
                                        "e\0",  "i\0",    "rnd\0"};
@@ -1442,6 +1443,97 @@ sfarg *sfrandsc(sfarg *const p)
     return sfaram1(p);
 }
 
+/* Where the seed of a cell may sit, as a fraction of the cell: the middle
+ * 60%. See sfrandscp for why it is not the whole cell. */
+#define RANDSCP_JITTER_LOW ((number_t)0.2)
+#define RANDSCP_JITTER_SPAN ((number_t)0.6)
+
+/* A 32-bit field turned into [0, 1), for the two halves of one hash. */
+static number_t randsc_unit32(uint32_t x)
+{
+    return (number_t)x / (number_t)((uint64_t)1 << 32);
+}
+
+/* The splitmix64 finalizer, to get a value out of a hash already spent on
+ * placing a seed without the two being related. */
+static uint64_t randsc_remix(uint64_t x)
+{
+    x ^= x >> 30;
+    x *= 0xBF58476D1CE4E5B9ULL;
+    x ^= x >> 27;
+    x *= 0x94D049BB133111EBULL;
+    x ^= x >> 31;
+    return x;
+}
+
+/**
+ * @brief The same field again with straight edges: irregular flat polygons.
+ * @details randscp takes the arguments randsc takes and means the same by
+ * them. Where randsc smooths between the corners of a cell and randscq leaves
+ * the cell itself flat, this scatters one point inside each cell and gives
+ * every position the value of the nearest of them.
+ *
+ * What that draws is a Voronoi diagram: the boundary between two neighbouring
+ * points is the perpendicular bisector of the segment joining them, so every
+ * cell is a convex polygon with straight sides, and no two are the same shape.
+ * It is the same underlying grid as randsc -- so size and degradation stretch
+ * and shrink it identically -- with the curves taken out and the regularity of
+ * randscq's mosaic taken out with them.
+ *
+ * The nearest point is looked for in the nine cells around the one the point
+ * falls in. That is enough only because the scatter is held to the middle 60%
+ * of each cell: the furthest a point can be from its own cell's seed is then
+ * sqrt(2) * 0.8 = 1.13 cells, while the closest seed two cells away is 1.2, so
+ * nothing outside the nine can win. Letting the seeds reach the cell edges
+ * would be more irregular and occasionally wrong.
+ *
+ * One hash per cell serves for both coordinates of its seed -- the two halves
+ * of a 64-bit mix are independent enough -- and the winner is mixed once more
+ * for the value, so that a cell's colour does not follow where its seed sits.
+ *
+ * Being a step function it shares randscq's caveat: two builds that place a
+ * point on opposite sides of an edge return unrelated values, so they agree
+ * everywhere but a hairline along the edges.
+ *
+ * @param p The call; the arguments are read right to left, see sfaramN.
+ * @return Pointer to the last argument, per the sffe convention.
+ */
+sfarg *sfrandscp(sfarg *const p)
+{
+    int64_t cx, cy;
+    number_t u, v;
+    uint64_t h;
+
+    if (!randsc_setup(p, &cx, &cy, &u, &v, &h)) {
+        GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
+        return sfaram1(p);
+    }
+
+    /* Larger than any distance the nine cells can produce. */
+    number_t bestd = 16;
+    uint64_t besth = 0;
+
+    for (int j = -1; j <= 1; j++)
+        for (int i = -1; i <= 1; i++) {
+            uint64_t hh = randsc_hash(cx + i, cy + j, h);
+            number_t fx = RANDSCP_JITTER_LOW +
+                          RANDSCP_JITTER_SPAN * randsc_unit32((uint32_t)hh);
+            number_t fy =
+                RANDSCP_JITTER_LOW +
+                RANDSCP_JITTER_SPAN * randsc_unit32((uint32_t)(hh >> 32));
+            number_t dx = (number_t)i + fx - u;
+            number_t dy = (number_t)j + fy - v;
+            number_t d = dx * dx + dy * dy;
+            if (d < bestd) {
+                bestd = d;
+                besth = hh;
+            }
+        }
+
+    GSL_SET_COMPLEX(&sfvalue(p), randsc_unit(randsc_remix(besth)), 0);
+    return sfaram1(p);
+}
+
 /**
  * @brief The same field without the interpolation: a mosaic of flat cells.
  * @details randscq takes the arguments randsc takes and means the same by
@@ -1477,7 +1569,9 @@ int sffe_uses_noise(sffe *const parser)
     if (parser == NULL)
         return 0;
     for (unsigned int i = 0; i < parser->oprCount; i++)
-        if (parser->oprs[i].fnc == sfrandsc || parser->oprs[i].fnc == sfrandscq)
+        if (parser->oprs[i].fnc == sfrandsc ||
+            parser->oprs[i].fnc == sfrandscq ||
+            parser->oprs[i].fnc == sfrandscp)
             return 1;
     return 0;
 }

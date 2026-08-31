@@ -107,14 +107,18 @@ const struct formula_help_row formula_help_functions[] = {
     {"truncvi", "imaginary component only, step 1/|b|", NULL}, /* 2 */
     {"truncvm", "the modulus, angle kept", NULL}, /* 2 */
     {"truncva", "the angle, modulus kept", NULL}, /* 2 */
+    {NULL, NULL, "special functions, none of them elementary"},
     {"erf", "error function over the complex plane", NULL}, /* 1 */
     {"gamma", "the gamma function over the complex plane", NULL}, /* 1 */
     {"lambertw", "principal branch of the Lambert W of a", NULL}, /* 1 */
+    {NULL, NULL, "choosing by iteration"},
     {"ifiter", "picks one argument by iteration number, cycling; only that one is evaluated", NULL}, /* variadic */
     {"ifiterl", "as ifiter, but holding the last argument once the iterations pass the end", NULL}, /* variadic */
-    {"rand", "real(a) times a random number in [0, 1)", NULL},
-    {"randsc", "coherent noise over the point: randsc(seed; size; degradation), the last two optional", NULL},
-    {"randscq", "the same field without interpolation: a mosaic of flat square cells", NULL}, /* 1 */
+    {NULL, NULL, "randomness; the randsc family takes (seed; size; degradation), the last two optional"},
+    {"rand", "real(a) times a random number in [0, 1); depends on call order, so a redraw differs", NULL},
+    {"randsc", "coherent noise over the point: soft blobs, size wide and size high", NULL},
+    {"randscq", "the same field with no interpolation: a mosaic of flat square cells", NULL},
+    {"randscp", "the same field cut into irregular flat polygons, with straight edges", NULL},
     {NULL, NULL, NULL}};
 
 /* The variables the engine registers before parsing a user formula; see the

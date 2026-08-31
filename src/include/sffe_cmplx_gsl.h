@@ -13,7 +13,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
-#define sffnctscount 91
+#define sffnctscount 92
 /* sfcmplxfunc starts with the operators, which are reached through
  * sffe_operator/sffe_unary_operator rather than by name. Lookups by name start
  * after them. */
@@ -141,6 +141,7 @@ sfarg *sftruncva(sfarg *const p); //Argument
 sfarg *sferf(sfarg *const p);
 sfarg *sfrandsc(sfarg *const p);
 sfarg *sfrandscq(sfarg *const p);
+sfarg *sfrandscp(sfarg *const p);
 int sffe_uses_noise(sffe *const parser);
 sfarg *sfgamma(sfarg *const p);
 sfarg *sflambertw(sfarg *const p);
