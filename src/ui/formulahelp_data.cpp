@@ -37,12 +37,9 @@ const struct formula_help_row formula_help_functions[] = {
     {"log10", "logarithm of a in base 10", NULL}, /* 1 */
     {"log2", "logarithm of a in base 2", NULL}, /* 1 */
     {"logn", "logarithm of b in base a -- the base comes first", NULL}, /* 2 */
-    {"logcn", "the same function under a second name", NULL}, /* 2 */
     {NULL, NULL, "powers and roots"},
     {"pow", "a ^ b", NULL}, /* 2 */
     {"powd", "a ^ real(b); the imaginary part of b is ignored", NULL}, /* 2 */
-    {"powi", "plain a ^ b: the name suggests an integer exponent", NULL}, /* 2 */
-    {"powdc", "another plain a ^ b, alias of pow", NULL}, /* 2 */
     {"sqr", "a * a. This used to raise a to itself: sqr(3) was 27", NULL}, /* 1 */
     {"sqrt", "principal square root of a", NULL}, /* 1 */
     {"rtni", "the c-th of the b b-th roots of a", NULL}, /* 3 */
@@ -115,11 +112,7 @@ const struct formula_help_row formula_help_functions[] = {
     {"lambertw", "principal branch of the Lambert W of a", NULL}, /* 1 */
     {"ifiter", "picks one argument by iteration number, cycling; only that one is evaluated", NULL}, /* variadic */
     {"ifiterl", "as ifiter, but holding the last argument once the iterations pass the end", NULL}, /* variadic */
-    {"rad", "declared but not implemented: calling it is an unknown-function error", NULL}, /* 1 */
-    {"deg", "declared but not implemented: calling it is an unknown-function error", NULL}, /* 1 */
-    {"sign", "declared but not implemented: calling it is an unknown-function error", NULL}, /* 1 */
-    {"trunc", "shadowed by the working trunc listed above", NULL}, /* 1 */
-    {"rand", "declared but not implemented: calling it is an unknown-function error", NULL}, /* 1 */
+    {"rand", "real(a) times a random number in [0, 1)", NULL}, /* 1 */
     {NULL, NULL, NULL}};
 
 /* The variables the engine registers before parsing a user formula; see the

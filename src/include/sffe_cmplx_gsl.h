@@ -13,7 +13,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
-#define sffnctscount 96
+#define sffnctscount 89
 /* sfcmplxfunc starts with the operators, which are reached through
  * sffe_operator/sffe_unary_operator rather than by name. Lookups by name start
  * after them. */

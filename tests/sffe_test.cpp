@@ -118,9 +118,9 @@ static const testcase cases[] = {
     T_VAL("atan2({0,2},{0,4})", 0, 0.463647609000806116,
           "a zero horizontal pair contributes nothing"),
 
-    T_ERR("rad(z)", UnknownFunction, "listed with no implementation"),
-    T_ERR("deg(z)", UnknownFunction, "listed with no implementation"),
-    T_ERR("sign(z)", UnknownFunction, "listed with no implementation"),
+    T_ERR("rad(z)", UnknownFunction, "removed at 1.0: it never had an implementation"),
+    T_ERR("deg(z)", UnknownFunction, "removed at 1.0: it never had an implementation"),
+    T_ERR("sign(z)", UnknownFunction, "removed at 1.0: it never had an implementation"),
     T_OK("logn(z,-c)", "unary minus after a comma"),
     T_OK("logn(-z,c)", "unary minus as first argument"),
 
@@ -263,7 +263,8 @@ static const testcase cases[] = {
     T_OK("LOGN(5;Z^2)+C", "shipped"),
     T_OK("POWD(SINH(POWD(Z;1.2));2.8)+C", "shipped: nested calls"),
     T_OK("POWD(SINH(POWD(Z;1.2));2.8)+C-0.2P^2", "shipped: implicit 0.2*P"),
-    T_VAL("POWI(RABS(Z)+I*RABS(IM(Z));2)+C", 7, 0, "shipped"),
+    T_VAL("POW(RABS(Z)+I*RABS(IM(Z));2)+C", 7, 0,
+          "shipped; was POWI, an alias of POW removed at 1.0"),
     T_OK("RTNI(Z;12;6)(1-Z)+C", "shipped: implicit multiplication after ')'"),
     T_VAL("z+(1/z)*(-1)^n", 2.5, 0, "shipped: (-1)^n"),
     T_VAL("(abs(re(z))+i*abs(im(z)))^2+c", 7, 0, "shipped: USER_FORMULA default"),

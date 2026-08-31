@@ -4,7 +4,7 @@
 (initstate)
 (defaultpalette 0)
 (formula 'user)
-(usrform "POWI(RABS(Z)+I*RABS(IM(Z));2)+C")
+(usrform "POW(RABS(Z)+I*RABS(IM(Z));2)+C")
 (usrformInit "")
 (bailout 120)
 (view -1.758 -0.038464 0.11233 0.11233)

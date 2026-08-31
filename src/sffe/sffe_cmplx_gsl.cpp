@@ -64,14 +64,10 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sflog10, 1, "log10\0"}, /* logarithm of a in base 10 */
     {sflog2, 1, "log2\0"},   /* logarithm of a in base 2 */
     {sflogN, 2, "logn\0"},   /* logarithm of b in base a -- the base comes first */
-    {sflogN, 2, "logcn\0"},  /* the same function under a second name */
 
     /* --- powers and roots --- */
     {sfpow, 2, "pow\0"},   /* a ^ b */
     {sfpowd, 2, "powd\0"}, /* a ^ real(b); the imaginary part of b is ignored */
-    {sfpow, 2, "powi\0"},  /* plain a ^ b: the name suggests an integer exponent
-                              but this is the same function as pow */
-    {sfpow, 2, "powdc\0"}, /* another plain a ^ b, alias of pow */
     {sfsqr, 1, "sqr\0"}, /* a * a. This used to raise a to itself: sqr(3) was 27 */
     {sfsqrt, 1, "sqrt\0"}, /* principal square root of a */
     /* the c-th of the b b-th roots of a. This used to store that root over its
@@ -185,10 +181,6 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     /* Names with no implementation behind them. sffe_parse turns a call to one
      * of these into an unknown-function error rather than jumping through a
      * null pointer, which is what it used to do. */
-    {NULL, 1, "rad\0"},
-    {NULL, 1, "deg\0"},
-    {NULL, 1, "sign\0"},
-    {NULL, 1, "trunc\0"}, /* shadowed by the working trunc listed above */
 
     {sfrand, 1, "rand\0"}}; /* real(a) times a random number in [0, 1) */
 
