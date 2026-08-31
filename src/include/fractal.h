@@ -117,7 +117,11 @@ struct formula {
 #define BAILOUT_HEXAGON0 9
 #define BAILOUT_HEXAGON90 10
 #define BAILOUT_OCTAGON 11
-#define BAILOUTMODES 12
+/* Appended rather than slotted in beside the other triangles: the number is
+ * what a saved position carries, so inserting one would move every shape
+ * after it and quietly change what old files draw. */
+#define BAILOUT_TRIANGLE180 12
+#define BAILOUTMODES 13
 #define BAILOUT_MAXSIDES 8
 
 struct fractal_context {

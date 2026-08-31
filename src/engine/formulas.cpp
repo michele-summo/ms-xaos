@@ -68,14 +68,6 @@ const char *const incolorname[] = {"0",
                                    "True-color",
                                    NULL};
 
-/* Names for the bailout shapes, in the order of the BAILOUT_ constants. */
-const char *const bailoutname[] = {
-    "Circle (classic)",   "Square",
-    "Diamond",            "Real axis",
-    "Imaginary axis",     "Both axes",
-    "Triangle, 0 deg",    "Triangle, 90 deg",
-    "Triangle, -90 deg",  "Hexagon, 0 deg",
-    "Hexagon, 90 deg",    "Octagon"};
 
 const char *const outcolorname[] = {"iter",
                                     "iter+real",

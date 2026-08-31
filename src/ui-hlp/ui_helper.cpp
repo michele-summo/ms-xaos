@@ -2312,13 +2312,18 @@ void uih_setbailoutmode(uih_context *c, int mode)
     c->fcontext->bailoutmode = mode;
     c->fcontext->version++;
     uih_newimage(c);
-    /* The radio item, not the hidden command a saved file names: passing the
-     * latter meant the tick never moved, so choosing a shape looked as though
-     * nothing had happened. */
+    /* Every shape, not just the chosen one, and the radio items rather than
+     * the hidden command a saved file names -- passing the latter meant the
+     * tick never moved at all. All of them because the shapes with several
+     * orientations live in submenus of their own, and Qt's exclusivity only
+     * reaches within one menu: leaving the others alone would show a triangle
+     * and a hexagon both ticked. */
     {
         char item[16];
-        sprintf(item, "bail%i", mode);
-        uih_updatemenus(c, item);
+        for (int k = 0; k < BAILOUTMODES; k++) {
+            sprintf(item, "bail%i", k);
+            uih_updatemenus(c, item);
+        }
     }
 #ifdef XAOS_TRACE_DIAG
     uih_diag_note_bailout(mode);

@@ -1147,7 +1147,12 @@ static const menuitem *menuitems; /*XaoS menu specifications */
    It's quite possible it could have been causing other subtle bugs
    elsewhere in the program. */
 
-#define MAX_MENUITEMS_I18N 250
+/* The i18n menu items are written into a fixed array and the count is checked
+ * only afterwards, by which time an overflow has already happened -- and the
+ * complaint goes to stderr, which a GUI build has nowhere to show, so the
+ * symptom is the program exiting at once with nothing said. Keep this
+ * comfortably above the true count; the bailout shapes took it past 250. */
+#define MAX_MENUITEMS_I18N 320
 static menuitem menuitems_i18n[MAX_MENUITEMS_I18N];
 int uih_no_menuitems_i18n;
 
@@ -1502,8 +1507,33 @@ void uih_registermenus_i18n(void)
                   MENUFLAG_INTERRUPT, uih_setmaxiter, uih_getiterdialog);
     MENUCDIALOG_I("calc", NULL, TR("Menu", "Bailout"), "bailout",
                   MENUFLAG_INTERRUPT, uih_setbailout, uih_getbailoutdialog);
-    /* Directly under Bailout, which is what it qualifies. */
+    /* Directly under Bailout, which is what it qualifies. The shapes with
+     * more than one useful orientation get a level of their own rather than
+     * spelling every turn out in one long list: a triangle repeats every 120
+     * degrees and so has four, a hexagon every 60 and so has two, and an
+     * octagon every 45, which leaves it nothing to choose. */
     SUBMENU_I("calc", NULL, TR("Menu", "Bailout mode"), "mbailout");
+#define BAILRB(menu, name, short, mode)                                        \
+    MENUINTRB_I(menu, NULL, TR("Menu", name), short,                           \
+                UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,                      \
+                uih_setbailoutmode, mode,                                      \
+                uih_selectedbailoutmode)
+    BAILRB("mbailout", "Circle (classic)", "bail0", BAILOUT_CIRCLE);
+    BAILRB("mbailout", "Square", "bail1", BAILOUT_SQUARE);
+    BAILRB("mbailout", "Diamond", "bail2", BAILOUT_DIAMOND);
+    BAILRB("mbailout", "Real axis", "bail3", BAILOUT_REAL);
+    BAILRB("mbailout", "Imaginary axis", "bail4", BAILOUT_IMAG);
+    BAILRB("mbailout", "Both axes", "bail5", BAILOUT_BOTH);
+    SUBMENU_I("mbailout", NULL, TR("Menu", "Triangle"), "mbailtri");
+    SUBMENU_I("mbailout", NULL, TR("Menu", "Hexagon"), "mbailhex");
+    BAILRB("mbailout", "Octagon", "bail11", BAILOUT_OCTAGON);
+    BAILRB("mbailtri", "0 degrees", "bail6", BAILOUT_TRIANGLE0);
+    BAILRB("mbailtri", "90 degrees", "bail7", BAILOUT_TRIANGLE90);
+    BAILRB("mbailtri", "180 degrees", "bail12", BAILOUT_TRIANGLE180);
+    BAILRB("mbailtri", "-90 degrees", "bail8", BAILOUT_TRIANGLEM90);
+    BAILRB("mbailhex", "0 degrees", "bail9", BAILOUT_HEXAGON0);
+    BAILRB("mbailhex", "90 degrees", "bail10", BAILOUT_HEXAGON90);
+#undef BAILRB
     MENUCDIALOG_I("calc", NULL, TR("Menu", "Newton convergence"), "newtonconvergence",
                   MENUFLAG_INTERRUPT, uih_setnewtonconvergence, uih_getnewtonconvergencedialog);
     MENUCDIALOGCB_I("calc", "b", TR("Menu", "Perturbation"), "uiperturbation",
@@ -1762,11 +1792,6 @@ void uih_registermenus(void)
                        UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
                        uih_setintruecolor, uih_selectedintcoloring, "int");
 
-    /* The region the iteration has to leave. The circle is what every
-     * version before this one used, so it stays first and stays the default. */
-    menu_genernumbered(BAILOUTMODES, "mbailout", bailoutname, NULL,
-                       MENU_INT, UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
-                       uih_setbailoutmode, uih_selectedbailoutmode, "bail");
 
     menu_genernumbered(OUTCOLORING - 1, "moutcoloring", outcolorname, NULL,
                        MENU_INT, UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
