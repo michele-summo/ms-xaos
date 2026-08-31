@@ -8,7 +8,7 @@
 // one says which it is. The name is only what gets displayed; the application
 // name Qt is given stays "XaoS" for both, since that is also what decides
 // where the settings are stored and the two should go on sharing those.
-#define XaoS_VERSION_BASE "1.0"
+#define XaoS_VERSION_BASE "1.1"
 #ifdef USE_FLOAT128
 #define XaoS_NAME "MS XaoS Quad"
 #define XaoS_VERSION XaoS_VERSION_BASE "_Quad"
@@ -18,10 +18,16 @@
 #endif
 
 // URLs
-#define HELP_URL "https://github.com/xaos-project/XaoS/wiki"
+//
+// Help and Feedback point at this fork, since what they are about -- the
+// noise functions, the bailout shapes, the selection zoom, the quad binary --
+// is not in the upstream wiki and reporting it there would be a nuisance to
+// people who cannot act on it. Fractal types, the web site and the forum are
+// upstream's and still describe what they describe.
+#define HELP_URL "https://github.com/michele-summo/ms-xaos/blob/master/doc/ms-xaos-guide.md"
 #define WEB_URL "http://xaos.sourceforge.net/"
-#define DOWNLOAD_URL "https://github.com/xaos-project/XaoS/releases"
-#define FEEDBACK_URL "https://github.com/xaos-project/XaoS/issues"
+#define DOWNLOAD_URL "https://github.com/michele-summo/ms-xaos/releases"
+#define FEEDBACK_URL "https://github.com/michele-summo/ms-xaos/issues"
 #define FORUM_URL "https://groups.google.com/d/forum/xaos-users"
 #define FRACTALINFO_URL "https://github.com/xaos-project/XaoS/wiki/Fractal-Types#"
 

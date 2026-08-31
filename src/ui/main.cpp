@@ -324,15 +324,14 @@ static void ui_about(struct uih_context *uih)
         window = reinterpret_cast<MainWindow *>(uih->data);
     QMessageBox::about(
         window, TR("Menu", "About"),
-        "<a href=\"https://xaos-project.github.io/\">" +
-            QCoreApplication::applicationName() + "</a> " +
-            QCoreApplication::applicationVersion() + " (" +
+        "<a href=\"https://github.com/michele-summo/ms-xaos\">" XaoS_NAME "</a> " XaoS_VERSION " (" +
             QSysInfo::kernelType() + " " +
+
             // QSysInfo::kernelVersion() + " "
             // QSysInfo::buildAbi() + " " +
             QSysInfo::buildCpuArchitecture() + ", Qt " + QT_VERSION_STR +
 #ifdef USE_FLOAT128
-            + ", deep zoom"
+            + ", quad precision"
 #endif
 
 #ifdef USE_OPENGL
@@ -341,7 +340,11 @@ static void ui_about(struct uih_context *uih)
 
             ")"
             "<br>"
-            "Fast interactive real-time fractal zoomer/morpher<br><br>"
+            "Fast interactive real-time fractal zoomer/morpher<br>"
+            "A fork of <a href=\"https://github.com/xaos-project/XaoS\">XaoS</a> 4.3.3, with "
+            "128-bit deep zoom, coherent noise in user formulas, selectable "
+            "bailout shapes and rectangle zoom. "
+            "<a href=\"https://github.com/michele-summo/ms-xaos/blob/master/doc/ms-xaos-guide.md\">What is new</a>.<br><br>"
             "Original Authors: Jan Hubička and Thomas Marsh<br>"
             "Copyright © 1996-2024 <a href=\"https://github.com/xaos-project/XaoS/blob/master/CREDITS.md\">XaoS Contributors</a><br>"
             "<br>"
