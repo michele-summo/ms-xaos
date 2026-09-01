@@ -15,6 +15,28 @@
 #include "config.h"
 #include "formulahelp.h"
 
+/* A table that measures its rows again whenever its width changes.
+ *
+ * A wrapped cell is as tall as the width lets it be, and the width is not
+ * known while the table is being built: resizeRowsToContents there measures
+ * against a width the table will not have, so the first layout was right only
+ * by accident and every resize afterwards left the descriptions either clipped
+ * or floating in rows far too tall. Measuring on the resize is what makes the
+ * columns fit the window.
+ */
+class WrappingTable : public QTableWidget
+{
+  public:
+    WrappingTable(int rows, int columns) : QTableWidget(rows, columns) {}
+
+  protected:
+    void resizeEvent(QResizeEvent *event) override
+    {
+        QTableWidget::resizeEvent(event);
+        resizeRowsToContents();
+    }
+};
+
 /* One tab: a two-column table of names and descriptions, with the section
  * rows spanning both columns.
  *
@@ -28,7 +50,7 @@ static QWidget *buildTable(const struct formula_help_row *rows,
     for (const struct formula_help_row *r = rows; r->name || r->section; r++)
         count++;
 
-    QTableWidget *table = new QTableWidget(count, 2);
+    QTableWidget *table = new WrappingTable(count, 2);
     table->setHorizontalHeaderLabels(QStringList()
                                      << nameHeading
                                      << QObject::tr("What it does"));
@@ -37,8 +59,26 @@ static QWidget *buildTable(const struct formula_help_row *rows,
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
     table->setAlternatingRowColors(true);
     table->setWordWrap(true);
-    table->horizontalHeader()->setSectionResizeMode(0,
-                                                    QHeaderView::ResizeToContents);
+    /* Nothing is cut short and nothing is pushed sideways: the description
+     * column wraps to whatever width is left instead. */
+    table->setTextElideMode(Qt::ElideNone);
+    table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    /* The name column is as wide as the longest name and no wider.
+     *
+     * Sizing it to its contents instead is what burst the window: a section
+     * heading is a cell of column zero spanning into column one, so the
+     * heading counted as content of the name column and made it as wide as
+     * the longest sentence in the table, leaving the descriptions no room at
+     * all -- the second column simply disappeared. Measuring the names is
+     * both what was meant and immune to whatever the headings say. */
+    QFont fixed = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    QFontMetrics metrics(fixed);
+    int names = metrics.horizontalAdvance(nameHeading);
+    for (const struct formula_help_row *r = rows; r->name || r->section; r++)
+        if (r->name)
+            names = qMax(names, metrics.horizontalAdvance(QString(r->name)));
+    table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
+    table->setColumnWidth(0, names + 3 * metrics.horizontalAdvance(QChar('m')));
     table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
 
     int row = 0;
@@ -57,7 +97,6 @@ static QWidget *buildTable(const struct formula_help_row *rows,
             continue;
         }
         QTableWidgetItem *name = new QTableWidgetItem(QString(r->name));
-        QFont fixed = QFontDatabase::systemFont(QFontDatabase::FixedFont);
         name->setFont(fixed);
         table->setItem(row, 0, name);
         table->setItem(row, 1, new QTableWidgetItem(QObject::tr(r->summary)));
@@ -84,6 +123,8 @@ void ui_formulahelp(struct uih_context * /*uih*/)
                      QObject::tr("Variables"));
         tabs->addTab(buildTable(formula_help_notation, QObject::tr("Written as")),
                      QObject::tr("Notation"));
+        tabs->addTab(buildTable(formula_help_values, QObject::tr("Value")),
+                     QObject::tr("Values"));
 
         QVBoxLayout *layout = new QVBoxLayout(window);
         layout->addWidget(tabs);

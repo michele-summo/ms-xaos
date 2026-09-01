@@ -112,20 +112,46 @@ const struct formula_help_row formula_help_functions[] = {
     {"gamma", "the gamma function over the complex plane", NULL}, /* 1 */
     {"lambertw", "principal branch of the Lambert W of a", NULL}, /* 1 */
     {NULL, NULL, "choosing by iteration"},
-    {"ifiter", "picks one argument by iteration number, cycling; only that one is evaluated", NULL}, /* variadic */
-    {"ifiterl", "as ifiter, but holding the last argument once the iterations pass the end", NULL}, /* variadic */
-    {"ifiterf", "ifiterf(a; b): b on the last iteration the limit allows, a on every other; only the chosen one is evaluated", NULL}, /* 2 */
-    {"ifiterr", "ifiterr(a; b; n): a while the iteration is below n, b from n onwards; only the chosen one is evaluated", NULL}, /* 3 */
-    {NULL, NULL, "randomness; the randsc family takes (seed; size; degradation; kaleidoscope; mode), all but the seed optional, and draws a new field every iteration. Kaleidoscope folds the plane into that many wedges, 1 leaving it alone; mode 0 mirrors each wedge about its bisector and 1 the other way about"},
+    {"ifiter", "picks one argument by iteration number, cycling; only that one runs", NULL}, /* variadic */
+    {"ifiterl", "as ifiter, but holding the last argument once the iterations run out", NULL}, /* variadic */
+    {"ifiterf", "b on the last iteration the limit allows, a on the rest; only the chosen one runs", NULL}, /* 2 */
+    {"ifiterr", "a while the iteration is below n, b from n on; only the chosen one runs", NULL}, /* 3 */
+    {NULL, NULL, "randomness: randsc(seed; size; degradation; kaleidoscope; mode), all but the seed optional, a new field every iteration -- the last two are in the Values tab"},
     {"rand", "real(a) times a random number in [0, 1); depends on call order, so a redraw differs", NULL},
     {"randsc", "coherent noise over the point: soft blobs, size wide and size high", NULL},
     {"randscq", "the same field with no interpolation: a mosaic of flat square cells", NULL},
     {"randscp", "the same field cut into irregular flat polygons, with straight edges", NULL},
     {"randsch", "the same field cut into hexagons: a honeycomb of flat cells", NULL},
     {"randsct", "the same field cut into equilateral triangles, alternating in orientation", NULL},
-    {NULL, NULL, "watching the orbit: both hand back their argument until the last iteration the limit allows, and what they gathered on it, so the inside colouring modes draw it"},
-    {"trap", "trap(a; shape; centre; size): how near the orbit came to a shape -- 0 the centre, 1 a horizontal line, 2 a vertical one, 3 a cross, 4 a ring, 5 a square, 6 a diamond", NULL},
-    {"stripe", "stripe(a; density): the average of (sin(density*arg a)+1)/2 along the orbit; density defaults to 4 and wants to be a whole number", NULL},
+    {NULL, NULL, "watching the orbit: both hand back their argument until the last iteration, and what they gathered on it, which the inside colouring modes then draw"},
+    {"trap", "trap(a; shape; centre; size): how near the orbit came to a shape; the shapes are in the Values tab", NULL},
+    {"stripe", "stripe(a; density): the average of (sin(density*arg a)+1)/2 along the orbit, density a whole number", NULL},
+    {NULL, NULL, NULL}};
+
+/* The numbers that appear as arguments and mean something particular.
+ *
+ * They were written into the description of the function that takes them,
+ * which made those descriptions long enough to burst the column and left the
+ * numbers themselves undocumented anywhere one would think to look. A tab of
+ * their own is where one looks. Not compared against the parser -- there is
+ * nothing in the parser to compare it with -- so it is kept by hand.
+ */
+const struct formula_help_row formula_help_values[] = {
+    {NULL, NULL, "trap: which shape the orbit is measured against"},
+    {"0", "the centre itself, a point", NULL},
+    {"1", "a horizontal line through the centre", NULL},
+    {"2", "a vertical line through the centre", NULL},
+    {"3", "both of them, a cross", NULL},
+    {"4", "a ring of radius size", NULL},
+    {"5", "a square of half-side size", NULL},
+    {"6", "a diamond of half-diagonal size", NULL},
+    {NULL, NULL, "randsc family: how many wedges the kaleidoscope folds the plane into"},
+    {"1", "no folding at all, which is what a call that says nothing gets", NULL},
+    {"2 or more", "that many wedges around the origin, the field taken from one", NULL},
+    {NULL, NULL, "randsc family: which mirror the kaleidoscope folds with"},
+    {"0", "the far half of each wedge mirrors the near half, so a wedge is symmetric about its bisector", NULL},
+    {"1", "the same the other way about, the near half mirroring the far one", NULL},
+    {"anything else", "folds the way 0 does", NULL},
     {NULL, NULL, NULL}};
 
 /* The variables the engine registers before parsing a user formula; see the

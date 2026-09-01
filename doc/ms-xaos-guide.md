@@ -42,8 +42,11 @@ notation the formula language accepts, in a window that can be left open beside
 the formula being written. It is grouped by what the functions are for, with the
 special functions — `erf`, `gamma`, `lambertw` — in a section of their own,
 since none of them is elementary and one does not reach for them by accident.
-The list is checked against the parser's own table by a test, so it cannot
-drift.
+A fourth tab lists the numbers that appear as arguments and mean something
+particular — which shape a trap measures against, which mirror the
+kaleidoscope folds with — rather than burying them in the description of the
+function that takes them. The function list is checked against the parser’s own
+table by a test, so it cannot drift.
 
 **`ifiterf(a; b)`** — evaluates `a` on every pass but the final one and `b`
 on that. The final pass is the last the iteration limit allows: a formula has

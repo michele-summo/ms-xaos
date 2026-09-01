@@ -20,6 +20,10 @@ struct formula_help_row {
 extern const struct formula_help_row formula_help_functions[];
 extern const struct formula_help_row formula_help_variables[];
 extern const struct formula_help_row formula_help_notation[];
+/* Not compared against the parser: these are argument values, not names. */
+extern const struct formula_help_row formula_help_values[];
+/* Not compared against the parser: these are argument values, not names. */
+extern const struct formula_help_row formula_help_values[];
 
 struct uih_context;
 void ui_formulahelp(struct uih_context *uih);
