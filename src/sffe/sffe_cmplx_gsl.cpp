@@ -1404,9 +1404,15 @@ static uint64_t randsc_seed(cmplx seed)
  * matters: the operations performed depend only on n, so two builds and two
  * threads do the same arithmetic in the same order and draw the same picture.
  *
- * Remembering the answer instead was tried and is slower. The natural place
- * to keep it is thread-local storage, and on this compiler reaching that is a
- * function call: the lookup cost more than the loop it saved. */
+ * Remembering the answer instead was tried and is slower here, though not for
+ * the reason first supposed: thread-local storage is cheap to read on this
+ * compiler, and what cost was the lookup -- comparing two long doubles per
+ * slot, on a branch that cannot be predicted. Advancing the power by one
+ * multiplication per pass would beat this outright and would not grow with
+ * the iteration limit at all, but it needs somewhere to keep the running
+ * value that belongs to the one call site, and it answers a slightly
+ * different number: reaching d^n by n multiplications is not the same
+ * rounding as reaching it by squaring, by about three parts in 10^18. */
 static void randsc_degrade(number_t re, number_t im, unsigned int n,
                            number_t *pre, number_t *pim)
 {
@@ -1432,7 +1438,19 @@ static void randsc_degrade(number_t re, number_t im, unsigned int n,
  *
  * The arguments are read right to left, so which is which depends on how many
  * were given; see sfaramN. */
-static int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, number_t *u,
+/* Forced, not suggested. This is the preamble of all five functions and the
+ * compiler kept it out of line, which meant writing six values to memory --
+ * two cells, two fractions, a hash and a state -- and reading them straight
+ * back. Inlined it costs the formula a twentieth less. */
+#if defined(__GNUC__)
+#define RANDSC_INLINE inline __attribute__((always_inline))
+#elif defined(_MSC_VER)
+#define RANDSC_INLINE __forceinline
+#else
+#define RANDSC_INLINE inline
+#endif
+
+static RANDSC_INLINE int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, number_t *u,
                         number_t *v, uint64_t *hash)
 {
     cmplx size, degradation, seed;
