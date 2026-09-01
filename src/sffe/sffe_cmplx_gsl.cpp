@@ -179,6 +179,11 @@ const sffunction sfcmplxfunc[sffnctscount] = {
      * selector marks the arguments as lazily evaluated */
     {sfifiter, SFFE_VARIADIC, "ifiter\0", sfifiter_sel},
     {sfifiterl, SFFE_VARIADIC, "ifiterl\0", sfifiterl_sel},
+    {sfifiterf, 2, "ifiterf\0", sfifiterf_sel},
+    /* ifiterr takes its threshold as an argument, and the selector is
+     * consulted before any argument has been evaluated, so this one cannot be
+     * lazy: both formulas are computed and one is chosen. */
+    {sfifiterr, 3, "ifiterr\0"},
 
     /* Names with no implementation behind them. sffe_parse turns a call to one
      * of these into an unknown-function error rather than jumping through a
@@ -236,6 +241,20 @@ unsigned int sfifiterl_sel(unsigned int argc)
     return sffe_iteration < argc ? sffe_iteration : argc - 1;
 }
 
+/* How many passes the picture allows, which is what "the last one" means.
+ *
+ * A formula cannot know it is on its final pass by escaping -- that is decided
+ * by the value it is about to produce -- so the last pass has to mean the last
+ * one the iteration limit allows. The engine sets this beside sffe_iteration
+ * at the head of every pixel. Zero says nobody has set it, and then ifiterf
+ * simply never fires, which is what a test or a bare parser wants. */
+thread_local unsigned int sffe_maxiter = 0;
+
+unsigned int sfifiterf_sel(unsigned int argc)
+{ /* ifiterf: the last argument on the final pass, the first on all the rest */
+    return (sffe_maxiter && sffe_iteration + 1 >= sffe_maxiter) ? argc - 1 : 0;
+}
+
 /* args are held right to left, so source index i sits at args[argc - 1 - i] */
 sfarg *sfifiter(sfarg *const p)
 {
@@ -247,6 +266,47 @@ sfarg *sfifiterl(sfarg *const p)
 {
     sfvalue(p) = sfvalue(p->args[p->argc - 1 - sfifiterl_sel(p->argc)]);
     return p;
+}
+
+/**
+ * @brief The second formula on the last pass, the first on every other.
+ * @details ifiterf(a; b) evaluates a on every pass but the final one, and b on
+ * that. The final pass is the last the iteration limit allows, since a formula
+ * has no way of knowing which pass will be the one that escapes -- that
+ * depends on the value it has not produced yet.
+ *
+ * Only the chosen one is evaluated, as with ifiter: the selector is consulted
+ * before either argument has run.
+ *
+ * @param p The call; the arguments are read right to left, see sfaramN.
+ * @return Pointer to the first argument written, unused by the evaluator.
+ */
+sfarg *sfifiterf(sfarg *const p)
+{
+    sfvalue(p) = sfvalue(p->args[p->argc - 1 - sfifiterf_sel(p->argc)]);
+    return p;
+}
+
+/**
+ * @brief The second formula once the passes reach a count, the first before.
+ * @details ifiterr(a; b; n) evaluates a while the pass number is below n and b
+ * from n onwards. n is read as a real number and may be any expression.
+ *
+ * Unlike ifiter and ifiterf this evaluates both arguments and then chooses.
+ * The lazy mechanism decides which block to run before any of them has been
+ * evaluated, so it cannot consult a threshold that is itself an argument;
+ * making it able to is a change to the parser rather than to this table, and
+ * is not worth it until something asks for it.
+ *
+ * @param p The call; the arguments are read right to left, see sfaramN.
+ * @return Pointer to the first argument written, unused by the evaluator.
+ */
+sfarg *sfifiterr(sfarg *const p)
+{
+    number_t after = GSL_REAL(sfvalue(sfaram1(p)));
+    sfvalue(p) = (number_t)sffe_iteration < after ? sfvalue(sfaram3(p))
+                                                  : sfvalue(sfaram2(p));
+    return sfaram3(p);
 }
 
 sfarg *sfmul(sfarg *const p)
@@ -1391,6 +1451,57 @@ static uint64_t randsc_seed(cmplx seed)
  *
  * The arguments are read right to left, so which is which depends on how many
  * were given; see sfaramN. */
+/* The point folded into one wedge of a kaleidoscope.
+ *
+ * The plane is cut into level equal wedges around the origin and every point
+ * is brought back into the first of them, so the field is sampled from one
+ * wedge and the picture repeats around the origin. What the mode chooses is
+ * which mirror does the folding:
+ *
+ *   0 (and anything else)  the far half of each wedge is a mirror of the near
+ *                          half, so every wedge is symmetric about its own
+ *                          bisector;
+ *   1                      the same the other way about, the near half
+ *                          mirroring the far one;
+ *   2                      no fold inside a wedge, but every other wedge is
+ *                          mirrored, which is what the mirrors of a real
+ *                          kaleidoscope do -- neighbours are reflections and
+ *                          the pattern runs continuously around.
+ *
+ * Every one of the three is continuous across the joins, so the noise stays
+ * coherent and the two precisions go on agreeing; a fold that met itself
+ * unevenly would show as a seam.
+ *
+ * This is the only part of the family that costs trigonometry, and it is only
+ * reached when a level of two or more is asked for. At a level of one --
+ * which is what a call that says nothing gets -- there is a comparison and
+ * nothing else.
+ */
+static void randsc_kaleido(number_t *px, number_t *py, int level, int mode)
+{
+    number_t x = *px, y = *py;
+    number_t radius = nsqrt(x * x + y * y);
+    number_t angle = natan2(y, x);
+    number_t sector = 2 * N_PI / (number_t)level;
+    number_t turns = nfloor(angle / sector);
+    number_t s = angle - sector * turns;
+    number_t half = sector / 2;
+
+    if (mode == 1) {
+        if (s < half)
+            s = sector - s;
+    } else if (mode == 2) {
+        if ((int64_t)turns & 1)
+            s = sector - s;
+    } else {
+        if (s > half)
+            s = sector - s;
+    }
+
+    *px = radius * ncos(s);
+    *py = radius * nsin(s);
+}
+
 /* Forced, not suggested. This is the preamble of all five functions and the
  * compiler kept it out of line, which meant writing six values to memory --
  * two cells, two fractions, a hash and a state -- and reading them straight
@@ -1410,8 +1521,22 @@ static RANDSC_INLINE int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, 
     GSL_SET_COMPLEX(&size, 1, 1);
     GSL_SET_COMPLEX(&degradation, 1, 1);
     GSL_SET_COMPLEX(&seed, 0, 0);
+    int level = 1, mode = 0;
 
     switch (p->argc) {
+        case 5:
+            mode = (int)GSL_REAL(sfvalue(sfaram1(p)));
+            level = (int)GSL_REAL(sfvalue(sfaram2(p)));
+            degradation = sfvalue(sfaram3(p));
+            size = sfvalue(sfaram4(p));
+            seed = sfvalue(sfaram5(p));
+            break;
+        case 4:
+            level = (int)GSL_REAL(sfvalue(sfaram1(p)));
+            degradation = sfvalue(sfaram2(p));
+            size = sfvalue(sfaram3(p));
+            seed = sfvalue(sfaram4(p));
+            break;
         case 3:
             degradation = sfvalue(sfaram1(p));
             size = sfvalue(sfaram2(p));
@@ -1483,8 +1608,11 @@ static RANDSC_INLINE int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, 
      * a fixed pass the hash is a constant, so the noise is as coherent from
      * point to point as it ever was. */
     *hash = randsc_hash((int64_t)sffe_iteration, 0, randsc_seed(seed));
-    if (!randsc_cell(GSL_REAL(sffe_position) / wr, cx, u) ||
-        !randsc_cell(GSL_IMAG(sffe_position) / wi, cy, v)) {
+    number_t px = GSL_REAL(sffe_position), py = GSL_IMAG(sffe_position);
+    if (level >= 2)
+        randsc_kaleido(&px, &py, level, mode);
+
+    if (!randsc_cell(px / wr, cx, u) || !randsc_cell(py / wi, cy, v)) {
         /* Past the resolution of the grid. Not an error and not a refusal:
          * the caller gets one flat cell over the whole plane, which is what
          * it got before by accident, and gets it for the price of a

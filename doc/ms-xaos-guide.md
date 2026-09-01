@@ -45,6 +45,16 @@ since none of them is elementary and one does not reach for them by accident.
 The list is checked against the parser's own table by a test, so it cannot
 drift.
 
+**`ifiterf(a; b)`** — evaluates `a` on every pass but the final one and `b`
+on that. The final pass is the last the iteration limit allows: a formula has
+no way of knowing which pass will be the one that escapes, that depending on
+the value it has not produced yet. Only the chosen one is evaluated.
+
+**`ifiterr(a; b; n)`** — evaluates `a` while the pass number is below `n`
+and `b` from `n` onwards. Unlike `ifiter` and `ifiterf` this evaluates both and
+then chooses: the lazy mechanism picks a branch before any argument has run, so
+it cannot consult a threshold that is itself an argument.
+
 **Removed.** `powi`, `powdc` and `logcn` were second names for `pow` and
 `logn`; `rad`, `deg` and `sign` were listed with no implementation behind them,
 and a second `trunc` was shadowed by the working one. A formula using a removed
@@ -53,14 +63,15 @@ alias should use the name that remains — the function is identical.
 **`erf(z)`** — the error function over the complex plane. Accurate to about
 three ulp inside a bailout of two, where a fractal actually iterates.
 
-**`randsc(seed; size; degradation)`** — coherent noise over the point, giving
-blobs rather than per-pixel snow. `size` (default `1+i`) is the average width
-of a blob along the real axis and its height along the imaginary one.
+**`randsc(seed; size; degradation; kaleidoscope; mode)`** — coherent
+noise over the point, giving blobs rather than per-pixel snow. `size`
+(default `1+i`) is the average width of a blob along the real axis and its
+height along the imaginary one.
 `degradation` (default `1+i`) shrinks them as the iteration proceeds: the
 size is multiplied by it at every pass, component by component, so `0.5+0.2i`
 over `1+i` gives `1+i` on the first pass, then `0.5+0.2i`, then `0.25+0.04i`.
 A zero in either component of either argument returns zero rather than dividing
-by zero. Only the seed is required.
+by zero. The last two are the kaleidoscope, below. Only the seed is required.
 
 **`randscq(...)`** — the same field without the interpolation: a mosaic of flat
 square cells instead of blobs. Same arguments, same meaning.
@@ -122,6 +133,29 @@ fractal, false of a noise field.
 
 The old `rand` is unchanged and still depends on how many times it has been
 called, so the same position does not redraw the same way. Prefer `randsc`.
+
+### Kaleidoscopes
+
+The two arguments after the degradation fold the plane before the field is
+sampled from it. The first is how many wedges to fold it into, `1` — the
+default — leaving it alone; the second is which mirror does the folding:
+
+| mode | |
+| --- | --- |
+| `0` (and anything else) | the far half of each wedge mirrors the near half, so every wedge is symmetric about its own bisector |
+| `1` | the same the other way about, the near half mirroring the far one |
+| `2` | no fold inside a wedge, but every other wedge is mirrored — what the mirrors of a real kaleidoscope do, so that neighbours are reflections of one another |
+
+    randsc(13;{0.6,0.6};{1,1};6;0)     six wedges, each a mirror of itself
+    randsc(13;{0.6,0.6};{1,1};6;2)     six wedges mirrored in pairs
+
+All three folds are continuous where the wedges meet, so the noise stays
+coherent and the two precisions go on agreeing; a fold that met itself unevenly
+would show as a seam.
+
+This is the only part of the family that costs trigonometry, and only a level
+of two or more reaches it. A call that says nothing about it pays one
+comparison.
 
 ### Getting a picture out of the noise
 

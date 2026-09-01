@@ -114,7 +114,9 @@ const struct formula_help_row formula_help_functions[] = {
     {NULL, NULL, "choosing by iteration"},
     {"ifiter", "picks one argument by iteration number, cycling; only that one is evaluated", NULL}, /* variadic */
     {"ifiterl", "as ifiter, but holding the last argument once the iterations pass the end", NULL}, /* variadic */
-    {NULL, NULL, "randomness; the randsc family takes (seed; size; degradation), the last two optional, and draws a new field every iteration"},
+    {"ifiterf", "ifiterf(a; b): b on the last iteration the limit allows, a on every other; only the chosen one is evaluated", NULL}, /* 2 */
+    {"ifiterr", "ifiterr(a; b; n): a while the iteration is below n, b from n onwards; both are evaluated", NULL}, /* 3 */
+    {NULL, NULL, "randomness; the randsc family takes (seed; size; degradation; kaleidoscope; mode), all but the seed optional, and draws a new field every iteration. Kaleidoscope folds the plane into that many wedges, 1 leaving it alone; mode 0 mirrors each wedge about its bisector, 1 the other way about, 2 mirrors whole wedges"},
     {"rand", "real(a) times a random number in [0, 1); depends on call order, so a redraw differs", NULL},
     {"randsc", "coherent noise over the point: soft blobs, size wide and size high", NULL},
     {"randscq", "the same field with no interpolation: a mosaic of flat square cells", NULL},

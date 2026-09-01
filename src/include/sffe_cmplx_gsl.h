@@ -13,7 +13,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
-#define sffnctscount 94
+#define sffnctscount 96
 /* sfcmplxfunc starts with the operators, which are reached through
  * sffe_operator/sffe_unary_operator rather than by name. Lookups by name start
  * after them. */
@@ -31,6 +31,8 @@ sfarg *sfneg(sfarg *const p);   /* unary - */
 /* Iteration the fractal engine is currently on, counting from 0. Set it before
  * evaluating a formula that uses ifiter/ifiterl. */
 extern thread_local unsigned int sffe_iteration;
+/* how many passes the picture allows; zero if nobody has said */
+extern thread_local unsigned int sffe_maxiter;
 /* The point being iterated. randsc hashes this rather than z, which
  * diverges between precisions; the engine sets it each pass. */
 extern thread_local cmplx sffe_position;
@@ -38,6 +40,9 @@ sfarg *sfifiter(sfarg *const p);  /* ifiter  - cycles through its arguments */
 sfarg *sfifiterl(sfarg *const p); /* ifiterl - holds on the last argument */
 unsigned int sfifiter_sel(unsigned int argc);
 unsigned int sfifiterl_sel(unsigned int argc);
+sfarg *sfifiterf(sfarg *const p);  /* ifiterf - the last pass differs */
+sfarg *sfifiterr(sfarg *const p);  /* ifiterr - differs after a count */
+unsigned int sfifiterf_sel(unsigned int argc);
 sfarg *sfmul(sfarg *const p);   /*  *  */
 sfarg *sfdiv(sfarg *const p);   /*  /  */
 sfarg *sfsin(sfarg *const p);   /* sin */

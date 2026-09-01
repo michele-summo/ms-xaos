@@ -37,19 +37,22 @@ struct testcase {
     double re;     /* expected value, when expect == OkVal */
     double im;
     unsigned iter; /* value of sffe_iteration during evaluation */
+    unsigned maxit; /* value of sffe_maxiter; 0 says nobody has set it */
     /* How many times c0/c1/c2 must each have run after LAZY_ITERS iterations,
      * as "a,b,c". NULL for cases that do not measure evaluation. */
     const char *counts;
     const char *note;
 };
 
-#define T_OK(e, n) {e, Ok, 0, 0, 0, 0, NULL, n}
-#define T_VAL(e, r, i, n) {e, OkVal, 0, r, i, 0, NULL, n}
-#define T_ERR(e, c, n) {e, Err, c, 0, 0, 0, NULL, n}
+#define T_OK(e, n) {e, Ok, 0, 0, 0, 0, 0, NULL, n}
+#define T_VAL(e, r, i, n) {e, OkVal, 0, r, i, 0, 0, NULL, n}
+#define T_ERR(e, c, n) {e, Err, c, 0, 0, 0, 0, NULL, n}
 /* ...evaluated on iteration k, for the iteration-dependent functions */
-#define T_VAL_AT(e, k, r, i, n) {e, OkVal, 0, r, i, k, NULL, n}
+#define T_VAL_AT(e, k, r, i, n) {e, OkVal, 0, r, i, k, 0, NULL, n}
 /* ...counting which branches actually ran */
-#define T_LAZY(e, c, n) {e, Ok, 0, 0, 0, 0, c, n}
+#define T_LAZY(e, c, n) {e, Ok, 0, 0, 0, 0, 0, c, n}
+/* ...on iteration k of a picture that allows m of them, for ifiterf */
+#define T_VAL_AT_MAX(e, k, m, r, i, n) {e, OkVal, 0, r, i, k, m, NULL, n}
 
 #define LAZY_ITERS 6
 
@@ -197,6 +200,31 @@ static const testcase cases[] = {
     T_VAL("lambertw(z)*exp(lambertw(z))", 2, 0, "W(z)*e^W(z) is z again"),
     T_VAL("lambertw({-3,2})*exp(lambertw({-3,2}))", -3, 2,
           "...off the real axis too"),
+
+    /* --- ifiterf: the last pass differs ---------------------------------
+     * The last pass is the last the iteration limit allows, a formula having
+     * no way to know which pass will be the one that escapes. With no limit
+     * set -- a bare parser, or a test -- it never fires.
+     */
+    T_VAL_AT_MAX("ifiterf(1,2)", 0, 10, 1, 0, "the first argument early on"),
+    T_VAL_AT_MAX("ifiterf(1,2)", 8, 10, 1, 0, "and on the pass before the last"),
+    T_VAL_AT_MAX("ifiterf(1,2)", 9, 10, 2, 0, "the second on the last pass"),
+    T_VAL_AT_MAX("ifiterf(1,2)", 20, 10, 2, 0, "and beyond it"),
+    T_VAL_AT("ifiterf(1,2)", 9, 1, 0, "with no limit set it never fires"),
+    T_VAL_AT_MAX("10+ifiterf(1,2)", 9, 10, 12, 0, "a term before it survives"),
+    T_LAZY("ifiterf(c0(1),c1(2))", "6,0,0", "ifiterf runs only the branch it picks"),
+
+    /* --- ifiterr: differing after a count -------------------------------
+     * The threshold is an argument, and the lazy mechanism chooses a block
+     * before any argument has run, so this one evaluates both and picks.
+     */
+    T_VAL_AT("ifiterr(1,2,5)", 0, 1, 0, "the first argument below the count"),
+    T_VAL_AT("ifiterr(1,2,5)", 4, 1, 0, "and up to the pass before it"),
+    T_VAL_AT("ifiterr(1,2,5)", 5, 2, 0, "the second argument from the count on"),
+    T_VAL_AT("ifiterr(1,2,5)", 99, 2, 0, "and thereafter"),
+    T_VAL_AT("ifiterr(1,2,0)", 0, 2, 0, "a count of zero switches at once"),
+    T_VAL_AT("ifiterr(z^2,z^3,2)", 3, 8, 0, "expressions as arguments"),
+    T_LAZY("ifiterr(c0(1),c1(2),3)", "6,6,0", "ifiterr evaluates both branches"),
 
     /* --- malformed input must report, not crash ------------------------- */
     T_ERR("z,c", InvalidOperators, "comma outside a function call"),
@@ -346,6 +374,7 @@ static int run_case(const testcase &tc)
             memset(hits, 0, sizeof(hits));
             for (unsigned i = 0; i < LAZY_ITERS; i++) {
                 sffe_iteration = i;
+                sffe_maxiter = tc.maxit;
                 sffe_eval(parser);
             }
             char got[32];
@@ -357,6 +386,7 @@ static int run_case(const testcase &tc)
             }
         } else {
             sffe_iteration = tc.iter;
+            sffe_maxiter = tc.maxit;
             sfNumber r = sffe_eval(parser);
             double re = (double)GSL_REAL(r);
             double im = (double)GSL_IMAG(r);

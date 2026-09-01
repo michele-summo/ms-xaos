@@ -381,6 +381,80 @@ int main(void)
               "four threads draw what one thread draws");
     }
 
+    /* The kaleidoscope.
+     *
+     * The plane is folded into level wedges around the origin, so the field is
+     * sampled from one of them and the picture repeats. The properties below
+     * are what "folded" means, and the first of them is what says the two new
+     * arguments cost nothing to a call that does not use them.
+     */
+    {
+        sffe *bare = compile("randsc({7,0};{0.5,0.5};{1,1})");
+        sffe *one = compile("randsc({7,0};{0.5,0.5};{1,1};{1,0};{0,0})");
+        sffe *left = compile("randsc({7,0};{0.5,0.5};{1,1};{4,0};{0,0})");
+        sffe *right = compile("randsc({7,0};{0.5,0.5};{1,1};{4,0};{1,0})");
+        sffe *both = compile("randsc({7,0};{0.5,0.5};{1,1};{4,0};{2,0})");
+        if (!failures) {
+            /* A level of one is what a call with three arguments already
+             * does, to the bit. */
+            int same = 1;
+            for (int i = -6; i <= 6; i++)
+                for (int j = -6; j <= 6; j++)
+                    if (at(bare, (number_t)i / 5, (number_t)j / 5, 3) !=
+                        at(one, (number_t)i / 5, (number_t)j / 5, 3))
+                        same = 0;
+            check(same, "a kaleidoscope of one level changes nothing");
+
+            /* Four wedges, so turning by a quarter of the plane lands on the
+             * same value. Not to the bit: the fold goes through an angle and
+             * back, which rounds. */
+            const number_t quarter = N_PI / 2;
+            const number_t radius = (number_t)17 / 10;
+            const number_t angle = (number_t)4 / 10;
+            number_t tol = (number_t)1 / 1000000000000ULL;
+            int turns_ok = 1, mirror_ok = 1, neighbour_ok = 1;
+            for (int t = 1; t < 4; t++) {
+                number_t a = angle + quarter * t;
+                if (nfabs(at(left, radius * ncos(angle), radius * nsin(angle), 3) -
+                          at(left, radius * ncos(a), radius * nsin(a), 3)) > tol)
+                    turns_ok = 0;
+            }
+            check(turns_ok, "four wedges: a quarter turn lands on itself");
+
+            /* Inside a wedge the far half mirrors the near one. */
+            number_t m = quarter - angle;
+            if (nfabs(at(left, radius * ncos(angle), radius * nsin(angle), 3) -
+                      at(left, radius * ncos(m), radius * nsin(m), 3)) > tol)
+                mirror_ok = 0;
+            check(mirror_ok, "the wedge is a mirror of itself");
+
+            /* Mode two mirrors whole wedges instead, so the reflection of a
+             * point across a wedge edge gives the same value. */
+            number_t n2 = 2 * quarter - angle;
+            if (nfabs(at(both, radius * ncos(angle), radius * nsin(angle), 3) -
+                      at(both, radius * ncos(n2), radius * nsin(n2), 3)) > tol)
+                neighbour_ok = 0;
+            check(neighbour_ok, "mode two mirrors the neighbouring wedge");
+
+            /* And the three modes are three different fields. Not at every
+             * point -- two of them agree wherever neither happens to fold,
+             * which is a quarter of the plane -- so they are compared over
+             * one. */
+            int lr = 0, lb = 0, rb = 0;
+            for (int i = -8; i <= 8; i++)
+                for (int j = -8; j <= 8; j++) {
+                    number_t x = (number_t)i / 5, y = (number_t)j / 5;
+                    number_t l = at(left, x, y, 3), r = at(right, x, y, 3),
+                             b = at(both, x, y, 3);
+                    lr += l != r;
+                    lb += l != b;
+                    rb += r != b;
+                }
+            check(lr > 40 && lb > 40 && rb > 40,
+                  "the three kaleidoscope modes are three fields");
+        }
+    }
+
     /* The values themselves, over a grid.
      *
      * floorl and roundl were replaced by integer conversions, which is where
