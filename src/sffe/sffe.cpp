@@ -232,6 +232,7 @@ sflazy *sffe_lazy_new(sffe *parser, sfselptr sel)
     lz->select = sel;
     lz->nblocks = 0;
     lz->bounds = NULL;
+    lz->probe = NULL;
     parser->lazy[parser->lazyCount++] = lz;
     return lz;
 }
@@ -362,7 +363,16 @@ static void sffe_run(sfopr *const oprs, unsigned int from, unsigned int to)
         sfopr *op = oprs + pc;
         if (op->lazy) {
             sflazy *lz = op->lazy;
-            unsigned int k = lz->select(lz->nblocks);
+            unsigned int nsel = lz->nblocks;
+            const sfNumber *probe = NULL;
+            if (lz->probe) {
+                /* the last argument is a value the selector needs rather than
+                 * a branch: run it first, then choose among the others */
+                nsel -= 1;
+                sffe_run(oprs, lz->bounds[nsel], lz->bounds[nsel + 1]);
+                probe = lz->probe->value;
+            }
+            unsigned int k = lz->select(nsel, probe);
             sffe_run(oprs, lz->bounds[k], lz->bounds[k + 1]);
             pc = lz->bounds[lz->nblocks];
         } else {
@@ -563,6 +573,7 @@ int sffe_parse(sffe **parser, const char *expression)
         bool variadic;      /* takes any number of arguments */
         unsigned char seen; /* variadic only: arguments counted so far */
         sfselptr sel;       /* non-NULL: arguments are evaluated lazily */
+        bool probe;         /* the last argument is read by the selector */
         sflazy *lazy;       /* the call being compiled, owned by the parser */
 #ifdef SFFE_DIRECT_FPTR
         sffptr fnc;
@@ -674,6 +685,11 @@ int sffe_parse(sffe **parser, const char *expression)
                         _res->type = sfvar_type_managed_ptr;                       \
                         /* defined until the operation writes it */             \
                         cmplxset(*(_res->value), 0, 0);                            \
+                        /* the value the selector reads, now that the operands \
+                         * are known; args[0] is the last one written */       \
+                        if (_op->lazy && _op->probe) {                             \
+                            _op->lazy->probe = _res->args[0];                      \
+                        }                                                          \
                         _vstack[_depth] = _res;                                    \
                         _depth += 1;                                               \
                         _result_slot += 1;                                         \
@@ -1128,6 +1144,7 @@ int sffe_parse(sffe **parser, const char *expression)
                     _expression->stck[_expression->size].args = 2;
                     _expression->stck[_expression->size].variadic = false;
                     _expression->stck[_expression->size].sel = NULL;
+                    _expression->stck[_expression->size].probe = false;
                     _expression->stck[_expression->size].lazy = NULL;
                     _expression->stck[_expression->size].name = function->name;
 
@@ -1171,6 +1188,7 @@ int sffe_parse(sffe **parser, const char *expression)
                     opstck->name = function->name;
                     /* the '(' that follows starts the lazy bookkeeping */
                     opstck->sel = function->sel;
+                    opstck->probe = function->probe;
                     opstck->lazy = NULL;
 
                     /* get function pointer */
@@ -1212,6 +1230,7 @@ int sffe_parse(sffe **parser, const char *expression)
                     opstck->args = 1;
                     opstck->variadic = false;
                     opstck->sel = NULL;
+                    opstck->probe = false;
                     opstck->lazy = NULL;
                     opstck->name = (*_function)->name;
 

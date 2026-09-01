@@ -180,10 +180,9 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sfifiter, SFFE_VARIADIC, "ifiter\0", sfifiter_sel},
     {sfifiterl, SFFE_VARIADIC, "ifiterl\0", sfifiterl_sel},
     {sfifiterf, 2, "ifiterf\0", sfifiterf_sel},
-    /* ifiterr takes its threshold as an argument, and the selector is
-     * consulted before any argument has been evaluated, so this one cannot be
-     * lazy: both formulas are computed and one is chosen. */
-    {sfifiterr, 3, "ifiterr\0"},
+    /* ifiterr's threshold is the argument the selector reads: the parser
+     * evaluates that one first and then chooses between the two before it. */
+    {sfifiterr, 3, "ifiterr\0", sfifiterr_sel, true},
 
     /* Names with no implementation behind them. sffe_parse turns a call to one
      * of these into an unknown-function error rather than jumping through a
@@ -231,12 +230,12 @@ thread_local unsigned int sffe_iteration = 0;
  * evaluator which one to bother computing. They must therefore depend only on
  * the iteration, never on the arguments -- which is exactly what these two do.
  * The functions below then read the value that was actually produced. */
-unsigned int sfifiter_sel(unsigned int argc)
+unsigned int sfifiter_sel(unsigned int argc, const sfNumber *)
 { /* ifiter: cycles through its arguments */
     return sffe_iteration % argc;
 }
 
-unsigned int sfifiterl_sel(unsigned int argc)
+unsigned int sfifiterl_sel(unsigned int argc, const sfNumber *)
 { /* ifiterl: stays on the last argument once past it */
     return sffe_iteration < argc ? sffe_iteration : argc - 1;
 }
@@ -250,21 +249,28 @@ unsigned int sfifiterl_sel(unsigned int argc)
  * simply never fires, which is what a test or a bare parser wants. */
 thread_local unsigned int sffe_maxiter = 0;
 
-unsigned int sfifiterf_sel(unsigned int argc)
+unsigned int sfifiterf_sel(unsigned int argc, const sfNumber *)
 { /* ifiterf: the last argument on the final pass, the first on all the rest */
     return (sffe_maxiter && sffe_iteration + 1 >= sffe_maxiter) ? argc - 1 : 0;
+}
+
+unsigned int sfifiterr_sel(unsigned int argc, const sfNumber *probe)
+{ /* ifiterr: the second branch once the passes reach the threshold, which the
+   * parser has evaluated for us before asking */
+    (void)argc;
+    return (probe && (number_t)sffe_iteration >= GSL_REAL(*probe)) ? 1 : 0;
 }
 
 /* args are held right to left, so source index i sits at args[argc - 1 - i] */
 sfarg *sfifiter(sfarg *const p)
 {
-    sfvalue(p) = sfvalue(p->args[p->argc - 1 - sfifiter_sel(p->argc)]);
+    sfvalue(p) = sfvalue(p->args[p->argc - 1 - sfifiter_sel(p->argc, NULL)]);
     return p;
 }
 
 sfarg *sfifiterl(sfarg *const p)
 {
-    sfvalue(p) = sfvalue(p->args[p->argc - 1 - sfifiterl_sel(p->argc)]);
+    sfvalue(p) = sfvalue(p->args[p->argc - 1 - sfifiterl_sel(p->argc, NULL)]);
     return p;
 }
 
@@ -283,7 +289,7 @@ sfarg *sfifiterl(sfarg *const p)
  */
 sfarg *sfifiterf(sfarg *const p)
 {
-    sfvalue(p) = sfvalue(p->args[p->argc - 1 - sfifiterf_sel(p->argc)]);
+    sfvalue(p) = sfvalue(p->args[p->argc - 1 - sfifiterf_sel(p->argc, NULL)]);
     return p;
 }
 
@@ -292,21 +298,24 @@ sfarg *sfifiterf(sfarg *const p)
  * @details ifiterr(a; b; n) evaluates a while the pass number is below n and b
  * from n onwards. n is read as a real number and may be any expression.
  *
- * Unlike ifiter and ifiterf this evaluates both arguments and then chooses.
- * The lazy mechanism decides which block to run before any of them has been
- * evaluated, so it cannot consult a threshold that is itself an argument;
- * making it able to is a change to the parser rather than to this table, and
- * is not worth it until something asks for it.
+ * Only the chosen branch is evaluated, as with ifiter, though the threshold
+ * had to be taught to the parser first: the lazy mechanism chose a block
+ * before any argument had run, and so could not consult a threshold that is
+ * itself an argument. An argument may now be marked as read by the selector
+ * rather than chosen by it, in which case it is evaluated first and the
+ * branches are the arguments before it.
  *
  * @param p The call; the arguments are read right to left, see sfaramN.
  * @return Pointer to the first argument written, unused by the evaluator.
  */
 sfarg *sfifiterr(sfarg *const p)
 {
-    number_t after = GSL_REAL(sfvalue(sfaram1(p)));
-    sfvalue(p) = (number_t)sffe_iteration < after ? sfvalue(sfaram3(p))
-                                                  : sfvalue(sfaram2(p));
-    return sfaram3(p);
+    /* The same question the selector was asked, and so the same answer. The
+     * branch that was not chosen has not been evaluated and holds whatever it
+     * last held, so it must not be read. */
+    unsigned int k = sfifiterr_sel(p->argc - 1, sfaram1(p)->value);
+    sfvalue(p) = sfvalue(p->args[p->argc - 1 - k]);
+    return p;
 }
 
 sfarg *sfmul(sfarg *const p)

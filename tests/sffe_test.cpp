@@ -215,8 +215,10 @@ static const testcase cases[] = {
     T_LAZY("ifiterf(c0(1),c1(2))", "6,0,0", "ifiterf runs only the branch it picks"),
 
     /* --- ifiterr: differing after a count -------------------------------
-     * The threshold is an argument, and the lazy mechanism chooses a block
-     * before any argument has run, so this one evaluates both and picks.
+     * The threshold is an argument, which the lazy mechanism could not
+     * consult: it chose a block before anything had run. An argument may now
+     * be marked as read by the selector rather than chosen by it, evaluated
+     * before the choice, and this is what asked for it.
      */
     T_VAL_AT("ifiterr(1,2,5)", 0, 1, 0, "the first argument below the count"),
     T_VAL_AT("ifiterr(1,2,5)", 4, 1, 0, "and up to the pass before it"),
@@ -224,7 +226,10 @@ static const testcase cases[] = {
     T_VAL_AT("ifiterr(1,2,5)", 99, 2, 0, "and thereafter"),
     T_VAL_AT("ifiterr(1,2,0)", 0, 2, 0, "a count of zero switches at once"),
     T_VAL_AT("ifiterr(z^2,z^3,2)", 3, 8, 0, "expressions as arguments"),
-    T_LAZY("ifiterr(c0(1),c1(2),3)", "6,6,0", "ifiterr evaluates both branches"),
+    T_LAZY("ifiterr(c0(1),c1(2),3)", "3,3,0", "ifiterr runs only the branch it picks"),
+    T_LAZY("ifiterr(c0(1),c1(2),0)", "0,6,0", "a count of zero never runs the first"),
+    T_LAZY("ifiterr(c0(1),c1(2),9)", "6,0,0", "a count past the end never runs the second"),
+    T_LAZY("ifiterr(c0(1),c1(2),c2(3))", "3,3,6", "the threshold itself always runs"),
 
     /* --- malformed input must report, not crash ------------------------- */
     T_ERR("z,c", InvalidOperators, "comma outside a function call"),

@@ -51,9 +51,10 @@ no way of knowing which pass will be the one that escapes, that depending on
 the value it has not produced yet. Only the chosen one is evaluated.
 
 **`ifiterr(a; b; n)`** — evaluates `a` while the pass number is below `n`
-and `b` from `n` onwards. Unlike `ifiter` and `ifiterf` this evaluates both and
-then chooses: the lazy mechanism picks a branch before any argument has run, so
-it cannot consult a threshold that is itself an argument.
+and `b` from `n` onwards. Only the chosen one is evaluated, as with the other
+two, though the threshold had to be taught to the parser first: an argument
+may now be marked as read by the selector rather than chosen by it, and is
+then evaluated before the choice is made.
 
 **Removed.** `powi`, `powdc` and `logcn` were second names for `pow` and
 `logn`; `rad`, `deg` and `sign` were listed with no implementation behind them,

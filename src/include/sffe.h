@@ -101,10 +101,13 @@ typedef sfarg *(*sffptr)(sfarg *const a);
 /* constats eval functions */
 typedef void (*cfptr)(sfNumber *cnst);
 
-/* Picks which argument of a lazy call is the live one, given how many it has.
- * Must not depend on the arguments themselves: it is consulted before any of
- * them has been evaluated. */
-typedef unsigned int (*sfselptr)(unsigned int argc);
+/* Picks which argument of a lazy call is the live one, given how many there
+ * are to choose between and, where the call asks for one, the value of an
+ * argument that is not a branch -- the threshold of ifiterr, which is
+ * evaluated before the choice is made and does not count among the branches.
+ * Must not depend on the branches themselves: none has been evaluated when
+ * this is consulted, which is the whole point. NULL where none was asked for. */
+typedef unsigned int (*sfselptr)(unsigned int argc, const sfNumber *probe);
 
 /* function type structure */
 typedef struct {
@@ -115,6 +118,10 @@ typedef struct {
      * evaluated. Defaulted, so the table entries that do not want it can keep
      * listing just {function, arity, name}. */
     sfselptr sel = NULL;
+    /* When set, the last argument written is not a branch but a value the
+     * selector reads. It is evaluated before the selection and the branches
+     * are the arguments before it. */
+    bool probe = false;
 } sffunction;
 
 /* Compiled form of a lazy call: the operations of argument k are the range
@@ -124,6 +131,10 @@ typedef struct sflazy__ {
     sfselptr select;
     unsigned int nblocks;
     unsigned int *bounds;
+    /* the argument the selector reads, and so the one block that is run
+     * before the choice rather than because of it; NULL for a call that
+     * chooses on the iteration alone */
+    sfarg *probe;
 } sflazy;
 
 /* basic sffe 'stack' operation ( function + result slot ) */

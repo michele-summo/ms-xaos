@@ -38,11 +38,12 @@ extern thread_local unsigned int sffe_maxiter;
 extern thread_local cmplx sffe_position;
 sfarg *sfifiter(sfarg *const p);  /* ifiter  - cycles through its arguments */
 sfarg *sfifiterl(sfarg *const p); /* ifiterl - holds on the last argument */
-unsigned int sfifiter_sel(unsigned int argc);
-unsigned int sfifiterl_sel(unsigned int argc);
+unsigned int sfifiter_sel(unsigned int argc, const sfNumber *probe);
+unsigned int sfifiterl_sel(unsigned int argc, const sfNumber *probe);
 sfarg *sfifiterf(sfarg *const p);  /* ifiterf - the last pass differs */
 sfarg *sfifiterr(sfarg *const p);  /* ifiterr - differs after a count */
-unsigned int sfifiterf_sel(unsigned int argc);
+unsigned int sfifiterf_sel(unsigned int argc, const sfNumber *probe);
+unsigned int sfifiterr_sel(unsigned int argc, const sfNumber *probe);
 sfarg *sfmul(sfarg *const p);   /*  *  */
 sfarg *sfdiv(sfarg *const p);   /*  /  */
 sfarg *sfsin(sfarg *const p);   /* sin */
