@@ -227,7 +227,15 @@ runtime so it runs on a machine without Qt.
 
     ctest --test-dir build
 
-257 tests: the formula parser at both precisions, the accuracy of `gamma`,
+259 tests: the formula parser at both precisions, the accuracy of `gamma`,
 `lambertw`, `erf` and `randsc` against exact references where any exist, the
 iteration loops against recorded checksums, saved positions round-tripping, the
 overlay save/restore, and the help reference against the parser's own table.
+
+One of them measures speed rather than answers. Timing in nanoseconds would
+assert which machine the suite is running on, so it asserts a ratio instead:
+what a degradation costs the noise functions, counted in multiplications. It
+should be two, one per component, because the size is multiplied by the
+degradation once per pass; raising it to the power of the pass instead reads
+six or seven and climbs with the iteration limit. The test fails on the two
+implementations this one replaced.

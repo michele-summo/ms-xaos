@@ -88,6 +88,14 @@ foreach(prec ${XAOS_TEST_PRECISIONS})
    xaos_add_test_binary(randsc_${suffix} ${prec} randsc_test.cpp ${SFFE_SOURCES})
    add_test(NAME randsc_${suffix} COMMAND randsc_${suffix})
 
+   # What the noise costs. Not nanoseconds, which would assert which machine
+   # the suite is running on, but the marginal cost of a degradation counted in
+   # multiplications -- flat if the size is carried from pass to pass, several
+   # times larger and growing if it is raised to a power.
+   xaos_add_test_binary(randsc_speed_${suffix} ${prec} randsc_speed.cpp
+                        ${SFFE_SOURCES})
+   add_test(NAME randsc_speed_${suffix} COMMAND randsc_speed_${suffix})
+
    # The help window's function list is a second copy of the parser's table,
    # and a second copy drifts. This compares them.
    xaos_add_test_binary(formula_help_${suffix} ${prec}
