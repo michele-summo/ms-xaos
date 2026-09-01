@@ -16,6 +16,8 @@
 
 #include <cstdio>
 #include <cstring>
+#include <thread>
+#include <vector>
 
 #include "config.h"
 #include "number_math.h"
@@ -325,6 +327,58 @@ int main(void)
             check(at(walk, 0.3, 0.7, 50) == jumped,
                   "going back to an earlier pass starts the count again");
         }
+    }
+
+    /* The carried degradation, computed by many threads at once.
+     *
+     * Each thread parses its own copy of a formula, so the running product
+     * sits on a call site that belongs to one thread, and no two tread on
+     * each other. That is the claim; this is the check. Pixels are dealt out
+     * to the threads, each walked from pass zero as the engine walks them,
+     * and every pixel's own checksum must come back the same whoever computed
+     * it and in whatever order.
+     *
+     * Worth knowing about what is being relied on: the running product is not
+     * a property of the pixel. It holds the degradation multiplied by itself
+     * as many times as the pass says, and two pixels at the same pass want
+     * the same number, so it does not matter which of them left it there. The
+     * reset only serves for going backwards, which is what the start of a
+     * pixel does.
+     */
+    {
+        const int npixels = 600;
+        const char *expr = "randsch({13,0};{0.3,0.3};{0.97,0.97})";
+        std::vector<unsigned long long> one(npixels, 0), many(npixels, 0);
+
+        for (int threads = 1; threads <= 4 && !failures; threads += 3) {
+            std::vector<unsigned long long> &out = threads == 1 ? one : many;
+            std::vector<std::thread> pool;
+            for (int t = 0; t < threads; t++)
+                pool.emplace_back([&, t, threads]() {
+                    sffe *f = sffe_alloc();
+                    if (!f || sffe_parse(&f, expr))
+                        return;
+                    /* dealt out unevenly and out of order, as a renderer
+                     * hands out rows */
+                    for (int k = t; k < npixels; k += threads) {
+                        int i = (k * 373) % npixels;
+                        unsigned int passes = 1 + (unsigned int)((i * 37) % 300);
+                        unsigned long long sum = 1469598103934665603ULL;
+                        for (unsigned int n = 0; n < passes; n++) {
+                            number_t v = at(f, (number_t)(i % 71) / 23,
+                                            (number_t)(i % 59) / 17, n);
+                            sum ^= (unsigned long long)((double)v *
+                                                        18446744073709551616.0);
+                            sum *= 1099511628211ULL;
+                        }
+                        out[i] = sum;
+                    }
+                });
+            for (auto &th : pool)
+                th.join();
+        }
+        check(one == many && one[0] != 0,
+              "four threads draw what one thread draws");
     }
 
     /* The values themselves, over a grid.
