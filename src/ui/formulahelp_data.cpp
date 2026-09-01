@@ -123,6 +123,9 @@ const struct formula_help_row formula_help_functions[] = {
     {"randscp", "the same field cut into irregular flat polygons, with straight edges", NULL},
     {"randsch", "the same field cut into hexagons: a honeycomb of flat cells", NULL},
     {"randsct", "the same field cut into equilateral triangles, alternating in orientation", NULL},
+    {NULL, NULL, "watching the orbit: both hand back their argument until the last iteration the limit allows, and what they gathered on it, so the inside colouring modes draw it"},
+    {"trap", "trap(a; shape; centre; size): how near the orbit came to a shape -- 0 the centre, 1 a horizontal line, 2 a vertical one, 3 a cross, 4 a ring, 5 a square, 6 a diamond", NULL},
+    {"stripe", "stripe(a; density): the average of (sin(density*arg a)+1)/2 along the orbit; density defaults to 4 and wants to be a whole number", NULL},
     {NULL, NULL, NULL}};
 
 /* The variables the engine registers before parsing a user formula; see the

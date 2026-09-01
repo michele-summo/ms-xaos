@@ -13,7 +13,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
-#define sffnctscount 96
+#define sffnctscount 98
 /* sfcmplxfunc starts with the operators, which are reached through
  * sffe_operator/sffe_unary_operator rather than by name. Lookups by name start
  * after them. */
@@ -150,6 +150,8 @@ sfarg *sfrandscq(sfarg *const p);
 sfarg *sfrandscp(sfarg *const p);
 sfarg *sfrandsch(sfarg *const p);
 sfarg *sfrandsct(sfarg *const p);
+sfarg *sftrap(sfarg *const p);   /* how near the orbit came to a shape */
+sfarg *sfstripe(sfarg *const p); /* a wave averaged along the orbit */
 int sffe_uses_noise(sffe *const parser);
 sfarg *sfgamma(sfarg *const p);
 sfarg *sflambertw(sfarg *const p);

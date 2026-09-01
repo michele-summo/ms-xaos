@@ -197,7 +197,12 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sfrandscq, SFFE_VARIADIC, "randscq\0"},
     {sfrandscp, SFFE_VARIADIC, "randscp\0"},
     {sfrandsch, SFFE_VARIADIC, "randsch\0"},
-    {sfrandsct, SFFE_VARIADIC, "randsct\0"}};
+    {sfrandsct, SFFE_VARIADIC, "randsct\0"},
+
+    /* Watching the orbit rather than the point: one number about the whole of
+     * it, handed back on the last pass. 1 to 4 arguments and so variadic. */
+    {sftrap, SFFE_VARIADIC, "trap\0"},
+    {sfstripe, SFFE_VARIADIC, "stripe\0"}};
 
 const char sfcnames[sfvarscount][6] = {"pi\0", "pi_2\0", "pi2\0",
                                        "e\0",  "i\0",    "rnd\0"};
@@ -1805,17 +1810,190 @@ sfarg *sfrandscp(sfarg *const p)
  * @param p The call; the arguments are read right to left, see sfaramN.
  * @return Pointer to the last argument, per the sffe convention.
  */
-/* Whether a parsed formula calls randsc or randscq.
+/* Orbit traps and stripe averaging.
+ *
+ * Both watch the orbit go by and keep one number about the whole of it -- the
+ * nearest the orbit ever came to a shape, or the average of a wave taken along
+ * it. That is the sort of quantity the colouring modes of the engine cannot
+ * reach: a calculation loop there is compiled to hand back a colour, and only
+ * the last z and the one before it survive to be coloured by. Done here it
+ * costs the engine nothing.
+ *
+ * The running quantity lives on the call site, as the noise degradation does
+ * (see sfarg): two traps in one formula keep their own, a thread cannot
+ * disturb another, and a pass earlier than the one counted means a new pixel
+ * has begun. Unlike the degradation this really is a property of the pixel --
+ * it is that pixel's orbit being watched -- so it depends on the engine
+ * starting every pixel at pass zero, which INIT does.
+ *
+ * Both hand back the value they were given until the last pass the iteration
+ * limit allows, where they hand back what they have gathered instead. So a
+ * whole formula is trap(z^2+c; 3) and nothing else: the fractal iterates as it
+ * would, and on the last pass the value becomes the trap, which the inside
+ * colouring modes then draw. A point that escapes never reaches that pass and
+ * keeps its ordinary outside colour, so what these draw is the inside.
+ */
+
+/* Distance from a point to one of the shapes an orbit can be trapped by.
+ * Numbered rather than named because the shape is an argument; the numbering
+ * is the order the help lists them in. */
+static number_t sftrap_distance(number_t re, number_t im, int shape,
+                                number_t radius)
+{
+    number_t ar = nfabs(re), ai = nfabs(im);
+    switch (shape) {
+        case 1: /* the horizontal line through the centre */
+            return ai;
+        case 2: /* the vertical one */
+            return ar;
+        case 3: /* both of them, a cross */
+            return ar < ai ? ar : ai;
+        case 4: /* a ring of that radius */
+            return nfabs(nsqrt(re * re + im * im) - radius);
+        case 5: /* the square with that half-side */
+            return nfabs((ar > ai ? ar : ai) - radius);
+        case 6: /* the diamond with that half-diagonal */
+            return nfabs(ar + ai - radius);
+        default: /* the centre itself */
+            return nsqrt(re * re + im * im);
+    }
+}
+
+/* Has this pixel only just begun? Clears what the last one left behind. */
+static int sftrap_begin(sfarg *const p)
+{
+    if (p->carried == 0 || p->carried > sffe_iteration) {
+        GSL_SET_COMPLEX(&p->carry, 0, 0);
+        return 1;
+    }
+    return 0;
+}
+
+/* Is this the last pass the limit allows? Where nobody has said what the
+ * limit is, nothing is ever revealed, which is what a bare parser wants. */
+static int sftrap_last(void)
+{
+    return sffe_maxiter && sffe_iteration + 1 >= sffe_maxiter;
+}
+
+/**
+ * @brief How near the orbit came to a shape.
+ * @details trap(a; shape; centre; size) measures the distance from a to the
+ * shape, keeps the smallest seen so far, and hands back a unchanged until the
+ * last pass, where it hands back that smallest distance instead. shape
+ * defaults to 0, centre to the origin, size to 1.
+ *
+ * @param p The call; the arguments are read right to left, see sfaramN.
+ * @return Pointer to the last argument, per the sffe convention.
+ */
+sfarg *sftrap(sfarg *const p)
+{
+    cmplx a, centre, size;
+    int shape = 0;
+    GSL_SET_COMPLEX(&a, 0, 0);
+    GSL_SET_COMPLEX(&centre, 0, 0);
+    GSL_SET_COMPLEX(&size, 1, 0);
+
+    switch (p->argc) {
+        case 4:
+            size = sfvalue(sfaram1(p));
+            centre = sfvalue(sfaram2(p));
+            shape = (int)GSL_REAL(sfvalue(sfaram3(p)));
+            a = sfvalue(sfaram4(p));
+            break;
+        case 3:
+            centre = sfvalue(sfaram1(p));
+            shape = (int)GSL_REAL(sfvalue(sfaram2(p)));
+            a = sfvalue(sfaram3(p));
+            break;
+        case 2:
+            shape = (int)GSL_REAL(sfvalue(sfaram1(p)));
+            a = sfvalue(sfaram2(p));
+            break;
+        case 1:
+            a = sfvalue(sfaram1(p));
+            break;
+        default:
+            GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
+            return sfaram1(p);
+    }
+
+    number_t d = sftrap_distance(GSL_REAL(a) - GSL_REAL(centre),
+                                 GSL_IMAG(a) - GSL_IMAG(centre), shape,
+                                 GSL_REAL(size));
+    if (sftrap_begin(p) || d < GSL_REAL(p->carry))
+        GSL_SET_COMPLEX(&p->carry, d, 0);
+    p->carried = sffe_iteration + 1;
+
+    if (sftrap_last())
+        GSL_SET_COMPLEX(&sfvalue(p), GSL_REAL(p->carry), 0);
+    else
+        sfvalue(p) = a;
+    return sfaram1(p);
+}
+
+/**
+ * @brief A wave averaged along the orbit.
+ * @details stripe(a; density) averages (sin(density * arg a) + 1) / 2 over the
+ * passes so far and hands back a unchanged until the last one, where it hands
+ * back that average. density defaults to 4 and is how many stripes go round a
+ * turn; a whole number, or the stripes do not meet where the turn closes.
+ *
+ * An average over the orbit changes smoothly with the point even where the
+ * iteration count jumps, which is what draws the fibres the method is used
+ * for.
+ *
+ * @param p The call; the arguments are read right to left, see sfaramN.
+ * @return Pointer to the last argument, per the sffe convention.
+ */
+sfarg *sfstripe(sfarg *const p)
+{
+    cmplx a;
+    number_t density = 4;
+    GSL_SET_COMPLEX(&a, 0, 0);
+
+    switch (p->argc) {
+        case 2:
+            density = GSL_REAL(sfvalue(sfaram1(p)));
+            a = sfvalue(sfaram2(p));
+            break;
+        case 1:
+            a = sfvalue(sfaram1(p));
+            break;
+        default:
+            GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
+            return sfaram1(p);
+    }
+
+    number_t sample =
+        (nsin(density * natan2(GSL_IMAG(a), GSL_REAL(a))) + 1) / 2;
+    sftrap_begin(p);
+    /* the sum in the real part, how many went into it in the imaginary one */
+    GSL_SET_COMPLEX(&p->carry, GSL_REAL(p->carry) + sample,
+                    GSL_IMAG(p->carry) + 1);
+    p->carried = sffe_iteration + 1;
+
+    if (sftrap_last())
+        GSL_SET_COMPLEX(&sfvalue(p), GSL_REAL(p->carry) / GSL_IMAG(p->carry),
+                        0);
+    else
+        sfvalue(p) = a;
+    return sfaram1(p);
+}
+
+/* Whether a parsed formula calls one of the functions that watch the orbit.
  *
  * The engine asks because boundary tracing has to be turned off for such a
  * formula: it walks the edge of a region, finds one colour all the way round,
  * and fills the inside without computing it. That holds for a fractal, whose
- * bands really are solid, and not for a noise field, where the inside is
- * whatever the noise says. Left on, some pixels are filled rather than
- * computed and the noise is simply wrong there.
+ * bands really are solid. It does not hold for a noise field, where the
+ * inside is whatever the noise says, nor for a trap or a stripe average,
+ * where two neighbours that take the same number of passes can still have
+ * seen quite different orbits. Left on, some pixels are filled rather than
+ * computed and are simply wrong.
  *
  * Walking the operation list rather than searching the text: the text would
- * also match a name that merely contains "randsc", and this cannot. */
+ * also match a name that merely contains one of these, and this cannot. */
 int sffe_uses_noise(sffe *const parser)
 {
     if (parser == NULL)
@@ -1825,7 +2003,9 @@ int sffe_uses_noise(sffe *const parser)
             parser->oprs[i].fnc == sfrandscq ||
             parser->oprs[i].fnc == sfrandscp ||
             parser->oprs[i].fnc == sfrandsch ||
-            parser->oprs[i].fnc == sfrandsct)
+            parser->oprs[i].fnc == sfrandsct ||
+            parser->oprs[i].fnc == sftrap ||
+            parser->oprs[i].fnc == sfstripe)
             return 1;
     return 0;
 }

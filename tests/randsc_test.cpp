@@ -446,6 +446,104 @@ int main(void)
         }
     }
 
+    /* Orbit traps and stripe averaging.
+     *
+     * Both keep one number about a whole orbit, which is what the colouring
+     * modes of the engine cannot do -- a calculation loop there hands back a
+     * colour and only the last two values of z survive. Both hand back what
+     * they were given until the last pass the limit allows, and what they
+     * gathered on it.
+     */
+    {
+        /* With a limit of one pass, pass zero is the last one, so a trap
+         * reveals what it measured straight away: the distances below are the
+         * shapes themselves, at the point 3+4i. */
+        struct {
+            const char *expr;
+            double want;
+            const char *what;
+        } shapes[] = {
+            {"trap({3,4};0)", 5, "shape 0 is the distance to the centre"},
+            {"trap({3,4};1)", 4, "shape 1 is a horizontal line"},
+            {"trap({3,4};2)", 3, "shape 2 is a vertical one"},
+            {"trap({3,4};3)", 3, "shape 3 is the nearer of the two, a cross"},
+            {"trap({3,4};4;{0,0};{2,0})", 3, "shape 4 is a ring"},
+            {"trap({3,4};5;{0,0};{2,0})", 2, "shape 5 is a square"},
+            {"trap({3,4};6;{0,0};{2,0})", 5, "shape 6 is a diamond"},
+            {"trap({3,4};0;{3,0};{1,0})", 4, "the centre moves the shape"},
+        };
+        for (int i = 0; i < 8; i++) {
+            sffe *f = compile(shapes[i].expr);
+            if (!f)
+                break;
+            sffe_maxiter = 1;
+            number_t got = at(f, 0.3, 0.7, 0);
+            check(nfabs(got - (number_t)shapes[i].want) <
+                      (number_t)1 / 1000000000,
+                  shapes[i].what);
+        }
+
+        /* Handed straight back while the passes have not run out, and it is
+         * the argument itself, to the bit. */
+        sffe *pass = compile("trap({3,4};0)");
+        if (!failures) {
+            sffe_maxiter = 10;
+            check(at(pass, 0.3, 0.7, 0) == 3 && at(pass, 0.3, 0.7, 5) == 3,
+                  "a trap hands its argument back until the last pass");
+        }
+
+        /* The smallest of the whole orbit, not the last of it. ifiter walks
+         * the argument round a cycle, so the orbit here is 3+4i, 0.5, 2, and
+         * the smallest distance to the centre is a half. */
+        sffe *walk = compile("trap(ifiter({3,4};{0.5,0};{2,0});0)");
+        if (!failures) {
+            sffe_maxiter = 6;
+            for (unsigned int n = 0; n < 5; n++)
+                at(walk, 0.3, 0.7, n);
+            check(nfabs(at(walk, 0.3, 0.7, 5) - (number_t)0.5) <
+                      (number_t)1 / 1000000000,
+                  "a trap keeps the smallest of the orbit");
+
+            /* And forgets it when the next pixel begins, or every pixel
+             * after a near miss would report that near miss. The next pixel
+             * here runs one pass only, so it must report the first point of
+             * the orbit, five, and not the half the last pixel found. */
+            sffe_maxiter = 1;
+            check(nfabs(at(walk, 0.3, 0.7, 0) - 5) < (number_t)1 / 1000000000,
+                  "and starts again with the next pixel");
+        }
+
+        /* The stripe average of a constant argument is the one sample, since
+         * every pass measures the same angle. arg(1+i) is a quarter turn, so
+         * a density of four asks for sin(pi) -- a half after the shift. */
+        sffe *flat = compile("stripe({1,1};4)");
+        if (!failures) {
+            sffe_maxiter = 1;
+            check(nfabs(at(flat, 0.3, 0.7, 0) - (number_t)0.5) <
+                      (number_t)1 / 1000000,
+                  "a stripe of one angle is that angle's sample");
+
+            sffe_maxiter = 20;
+            for (unsigned int n = 0; n < 19; n++)
+                at(flat, 0.3, 0.7, n);
+            check(nfabs(at(flat, 0.3, 0.7, 19) - (number_t)0.5) <
+                      (number_t)1 / 1000000,
+                  "and averaging it twenty times does not move it");
+        }
+
+        /* Whatever the orbit, an average of samples between zero and one is
+         * between zero and one. */
+        sffe *mixed = compile("stripe(ifiter({3,4};{0.5,-2};{2,1});5)");
+        if (!failures) {
+            sffe_maxiter = 12;
+            for (unsigned int n = 0; n < 11; n++)
+                at(mixed, 0.3, 0.7, n);
+            number_t v = at(mixed, 0.3, 0.7, 11);
+            check(v >= 0 && v <= 1, "a stripe average stays between 0 and 1");
+        }
+        sffe_maxiter = 0;
+    }
+
     /* The values themselves, over a grid.
      *
      * floorl and roundl were replaced by integer conversions, which is where

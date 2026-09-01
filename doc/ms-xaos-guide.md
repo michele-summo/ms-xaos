@@ -178,6 +178,59 @@ long run, use something near 1 — `0.97^60` is still 0.16.
 An integer seed is exact in both builds; a fractional one is quantised to its
 leading bits, which agree except for about one seed in fifty million.
 
+## Watching the orbit
+
+`trap` and `stripe` keep one number about a whole orbit rather than about the
+point, which is the kind of quantity the engine's colouring modes cannot reach:
+a calculation loop there is compiled to hand back a colour, and only the last
+`z` and the one before it survive to be coloured by. Done in the formula it
+costs the engine nothing.
+
+Both hand back the value they were given until the last pass the iteration
+limit allows, and what they gathered on that one. So a whole formula is
+
+    trap(z^2+c; 3)
+
+and nothing else: the fractal iterates as it would, and on the last pass the
+value becomes the trap, which the inside colouring modes then draw. A point
+that escapes never reaches that pass and keeps its ordinary outside colour, so
+what these draw is the inside.
+
+**`trap(a; shape; centre; size)`** — the nearest the orbit ever came to a
+shape. `shape` defaults to 0, `centre` to the origin, `size` to 1.
+
+| shape | |
+| --- | --- |
+| `0` | the centre itself, a point |
+| `1` | a horizontal line through it |
+| `2` | a vertical one |
+| `3` | both, a cross |
+| `4` | a ring of radius `size` |
+| `5` | a square of half-side `size` |
+| `6` | a diamond of half-diagonal `size` |
+
+**`stripe(a; density)`** — the average of `(sin(density * arg a) + 1) / 2`
+along the orbit. `density` defaults to 4 and is how many stripes go round a
+turn; a whole number, or they do not meet where the turn closes. An average
+over the orbit changes smoothly with the point even where the iteration count
+jumps, which is what draws the fibres the method is known for.
+
+    trap(z^2+c;0)                    how near the orbit passed the origin
+    trap(z^2+c;3)                    a cross, which draws rays
+    trap(z^2+c;4;{0,0};{0.5,0})      rings inside the cardioid
+    stripe(z^2+c;6)                  six stripes to a turn
+
+The running quantity lives on the call site, so two traps in one formula keep
+their own and a thread cannot disturb another. Both turn boundary tracing off,
+for the same reason the noise does: two neighbours that take the same number of
+passes can still have seen quite different orbits, and a region filled without
+being computed would be wrong.
+
+These are not colouring modes, and cannot be: the modes live inside each
+formula's compiled loop, which returns a colour directly, and there are
+thirty-one of those with a positional symmetry table apiece. What is here works
+for a user formula only.
+
 ## Bailout shape
 
 Calculation → Bailout → Bailout mode. The iteration stops when `z` leaves a
@@ -261,7 +314,7 @@ runtime so it runs on a machine without Qt.
 
     ctest --test-dir build
 
-259 tests: the formula parser at both precisions, the accuracy of `gamma`,
+293 tests: the formula parser at both precisions, the accuracy of `gamma`,
 `lambertw`, `erf` and `randsc` against exact references where any exist, the
 iteration loops against recorded checksums, saved positions round-tripping, the
 overlay save/restore, and the help reference against the parser's own table.
