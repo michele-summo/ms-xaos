@@ -1382,53 +1382,6 @@ static uint64_t randsc_seed(cmplx seed)
     return randsc_hash(a, b, 0x5DEECE66DULL);
 }
 
-/* degradation^n for both components at once.
- *
- * By squaring, not by multiplying n times: the plain loop was n
- * multiplications on iteration n, so a pixel taking N iterations paid
- * N(N+1)/2 of them -- half a million at a thousand iterations, for a quantity
- * that needed twenty.
- *
- * Both components in one loop, and without a branch inside it. What squaring
- * costs is not the arithmetic -- ten multiplications at a thousand iterations,
- * a few nanoseconds -- but the branches: the loop runs a different number of
- * times on every call, and the test on each bit of n is unpredictable by
- * nature. Sharing the loop between the two components halves the first, and
- * multiplying by a one where the bit is clear removes the second. Measured
- * over the range of exponents a picture actually uses: 54.8 ns for two calls
- * to the plain loop, 15.1 for this.
- *
- * Multiplying by one is exact for every finite value, and for the infinities,
- * the NaNs and the signed zeros too, so this returns the same bits as the
- * branch did -- checked against it over three thousand exponents. Which
- * matters: the operations performed depend only on n, so two builds and two
- * threads do the same arithmetic in the same order and draw the same picture.
- *
- * Remembering the answer instead was tried and is slower here, though not for
- * the reason first supposed: thread-local storage is cheap to read on this
- * compiler, and what cost was the lookup -- comparing two long doubles per
- * slot, on a branch that cannot be predicted. Advancing the power by one
- * multiplication per pass would beat this outright and would not grow with
- * the iteration limit at all, but it needs somewhere to keep the running
- * value that belongs to the one call site, and it answers a slightly
- * different number: reaching d^n by n multiplications is not the same
- * rounding as reaching it by squaring, by about three parts in 10^18. */
-static void randsc_degrade(number_t re, number_t im, unsigned int n,
-                           number_t *pre, number_t *pim)
-{
-    number_t rre = 1, rim = 1;
-    while (n) {
-        number_t mre = (n & 1u) ? re : (number_t)1;
-        number_t mim = (n & 1u) ? im : (number_t)1;
-        rre *= mre;
-        rim *= mim;
-        re *= re;
-        im *= im;
-        n >>= 1;
-    }
-    *pre = rre;
-    *pim = rim;
-}
 
 /* Shared by randsc and randscq: reads the arguments, applies the degradation
  * for the iteration reached, and returns the cell the position falls in along
@@ -1479,17 +1432,44 @@ static RANDSC_INLINE int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, 
         GSL_REAL(degradation) == 0 || GSL_IMAG(degradation) == 0)
         return RANDSC_STOP;
 
-    /* size * degradation^n, per component; see randsc_degrade for how. A
-     * degradation of one is the default and the common case, and needs
-     * nothing at all. */
-    number_t wr = GSL_REAL(size), wi = GSL_IMAG(size);
-    if (GSL_REAL(degradation) != 1 || GSL_IMAG(degradation) != 1) {
-        number_t pr, pi;
-        randsc_degrade(GSL_REAL(degradation), GSL_IMAG(degradation),
-                       sffe_iteration, &pr, &pi);
-        wr *= pr;
-        wi *= pi;
+    /* size * degradation^n, per component, carried from one pass to the next
+     * rather than worked out again.
+     *
+     * This is what degradation says it does: the size is multiplied by it at
+     * every pass. Computing the power instead grew with the iteration limit,
+     * since squaring takes a step per bit of n -- 5.6 ns at pass sixteen and
+     * 48 at sixteen thousand, against a flat 3.5 for one multiplication -- and
+     * a formula with three noise calls paid it three times a pass. The plain
+     * loop before that was worse still, being a step per pass.
+     *
+     * The running product lives on the call site (see sfarg), so two calls in
+     * one formula keep their own, and a thread cannot disturb another. A pass
+     * earlier than the one carried means a new pixel has started, which is
+     * where the count goes back to nothing.
+     *
+     * Reaching a pass by multiplying once per pass gives the same answer
+     * whatever route was taken to get there, so the picture does not depend on
+     * the order the pixels were computed in. It is not the same answer that
+     * squaring gives -- the two associate the multiplications differently, and
+     * differ by some three parts in 10^18. */
+    if (p->carried == 0 || p->carried > sffe_iteration) {
+        GSL_SET_COMPLEX(&p->carry, 1, 1);
+        p->carried = 0;
     }
+    if (GSL_REAL(degradation) == 1 && GSL_IMAG(degradation) == 1) {
+        /* The default, and multiplying by one leaves the product where it is,
+         * so the passes can be counted off without doing any of them. */
+        p->carried = sffe_iteration;
+    } else {
+        while (p->carried < sffe_iteration) {
+            GSL_SET_COMPLEX(&p->carry,
+                            GSL_REAL(p->carry) * GSL_REAL(degradation),
+                            GSL_IMAG(p->carry) * GSL_IMAG(degradation));
+            p->carried++;
+        }
+    }
+    number_t wr = GSL_REAL(size) * GSL_REAL(p->carry);
+    number_t wi = GSL_IMAG(size) * GSL_IMAG(p->carry);
     if (wr == 0 || wi == 0) /* shrunk past what the type can hold */
         return RANDSC_STOP;
 

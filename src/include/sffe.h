@@ -78,6 +78,21 @@ typedef struct sfargument__ {
     unsigned char argc;
     sfvartype type;
     sfNumber *value;
+
+    /* Scratch for a function that carries a quantity from one iteration of a
+     * formula to the next instead of working it out again -- the noise
+     * functions and the degradation they apply to their cell size.
+     *
+     * It belongs to the call site, which is what makes it usable at all: two
+     * calls in one formula do not tread on each other, and a thread cannot
+     * disturb another, each having parsed its own copy of the formula. It
+     * costs nothing to keep and nothing to release, being part of the node.
+     *
+     * carried is how many iterations carry accounts for; zero means it holds
+     * nothing yet, which is what a fresh node says, the result slots being
+     * zeroed when they are made. */
+    sfNumber carry;
+    unsigned int carried;
 } sfarg;
 
 /* sffe function prototype, parameters order is right-to-left (cdecl) */

@@ -56,8 +56,8 @@ three ulp inside a bailout of two, where a fractal actually iterates.
 **`randsc(seed; size; degradation)`** — coherent noise over the point, giving
 blobs rather than per-pixel snow. `size` (default `1+i`) is the average width
 of a blob along the real axis and its height along the imaginary one.
-`degradation` (default `1+i`) shrinks them as the iteration proceeds: the size
-in force is `size * degradation^n`, taken component by component, so `0.5+0.2i`
+`degradation` (default `1+i`) shrinks them as the iteration proceeds: the
+size is multiplied by it at every pass, component by component, so `0.5+0.2i`
 over `1+i` gives `1+i` on the first pass, then `0.5+0.2i`, then `0.25+0.04i`.
 A zero in either component of either argument returns zero rather than dividing
 by zero. Only the seed is required.

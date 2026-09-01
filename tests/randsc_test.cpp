@@ -291,6 +291,42 @@ int main(void)
         }
     }
 
+    /* The degradation is carried from pass to pass rather than worked out
+     * again, so the one thing that has to hold is that the route taken makes
+     * no difference: a pixel reaching pass fifty in fifty steps and one
+     * reaching it in a single jump must get the same number, or the picture
+     * would depend on the order the pixels were computed in and no two
+     * redraws would agree.
+     *
+     * The call site's running product is reset by asking for pass zero, which
+     * is what the engine does at the start of every pixel. */
+    {
+        sffe *walk = compile("randsc({7,0};{0.4,0.6};{0.93,0.87})");
+        if (!failures) {
+            at(walk, 0.3, 0.7, 0);
+            number_t jumped = at(walk, 0.3, 0.7, 50);
+
+            at(walk, 0.3, 0.7, 0);
+            for (unsigned int n = 1; n <= 50; n++)
+                at(walk, 0.3, 0.7, n);
+            number_t stepped = at(walk, 0.3, 0.7, 50);
+
+            at(walk, 0.3, 0.7, 0);
+            for (unsigned int n = 7; n <= 49; n += 7)
+                at(walk, 0.3, 0.7, n);
+            number_t bysevens = at(walk, 0.3, 0.7, 50);
+
+            check(jumped == stepped && jumped == bysevens,
+                  "the route to a pass makes no difference to it");
+
+            /* And a pass earlier than the one carried starts again, which is
+             * what tells one pixel from the next. */
+            at(walk, 0.3, 0.7, 300);
+            check(at(walk, 0.3, 0.7, 50) == jumped,
+                  "going back to an earlier pass starts the count again");
+        }
+    }
+
     /* The values themselves, over a grid.
      *
      * floorl and roundl were replaced by integer conversions, which is where
@@ -306,11 +342,11 @@ int main(void)
             const char *name;
             unsigned long long expected[2]; /* 64 bits, 113 bits */
         } golden[] = {
-            {"randsc", {0xe44c35d1b7e00368ULL, 0x599f28f8e0bb8b39ULL}},
-            {"randscq", {0xb9b30f3fbedb4800ULL, 0xb9b30f3fbedb4800ULL}},
-            {"randscp", {0x6d540398e03f4800ULL, 0x6d540398e03f4800ULL}},
-            {"randsch", {0x174f609c68321800ULL, 0x174f609c68321800ULL}},
-            {"randsct", {0xa82a262574eb5000ULL, 0xa82a262574eb5000ULL}},
+            {"randsc", {0x82c777cee11cf0acULL, 0x256878588c8eb491ULL}},
+            {"randscq", {0x7b41886762e6b000ULL, 0x7b41886762e6b000ULL}},
+            {"randscp", {0x7f716aced74a4000ULL, 0x7f716aced74a4000ULL}},
+            {"randsch", {0x46b88bf1d206f000ULL, 0x46b88bf1d206f000ULL}},
+            {"randsct", {0x224342c97c8b0800ULL, 0x224342c97c8b0800ULL}},
         };
         const int which = NUMBER_MANTISSA_BITS == 113 ? 1 : 0;
         for (int g = 0; g < 5; g++) {
@@ -320,10 +356,12 @@ int main(void)
             if (!f)
                 break;
             unsigned long long sum = 0;
+            static const unsigned int passes[] = {0, 1, 2, 7, 33, 100};
             for (int i = -20; i < 20; i++)
                 for (int j = -20; j < 20; j++)
-                    for (unsigned int n = 0; n < 3; n++) {
-                        number_t val = at(f, (number_t)i / 7, (number_t)j / 9, n);
+                    for (int k = 0; k < 6; k++) {
+                        number_t val = at(f, (number_t)i / 7, (number_t)j / 9,
+                                          passes[k]);
                         sum = sum * 0x100000001B3ULL +
                               (unsigned long long)(val * 18446744073709551616.0);
                     }
