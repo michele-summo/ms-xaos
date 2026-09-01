@@ -308,6 +308,12 @@ anything:
 The numbers the older modes have do not move, so a saved position goes on
 loading as it did.
 
+Colouring speed and colouring shift now reach smooth and smooth log, which
+they never did: those two returned a pixel of their own rather than going
+through the step the other modes end with, so both controls did nothing at all
+while either was chosen. At the settings they come with — speed one, shift
+nothing — the step is the identity, so no picture that was saved before moves.
+
 **Smooth and smooth log** have moved into that submenu on the outside menu.
 They interpolate between one iteration and the next using how far past the
 bailout the orbit went, which needs a formula that escapes on the bailout —

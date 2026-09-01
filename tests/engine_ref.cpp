@@ -68,6 +68,13 @@ int main(int argc, char **argv)
 
     cfractalc.maxiter = 200;
     cfractalc.bailout = 4;
+    /* What make_fractalc gives a real context. Left at zero the colouring
+     * speed multiplies every mode's value by nothing, so every pixel comes
+     * out the same colour and the checksums stop telling one mode from
+     * another -- which is what hid smooth colouring skipping the speed and
+     * the shift entirely. */
+    cfractalc.incolorspeed = 1.0f;
+    cfractalc.outcolorspeed = 1.0f;
     cfractalc.periodicity_limit = 1e-8;
     cfractalc.periodicity = 1;
     cfractalc.range = 2;
@@ -90,10 +97,19 @@ int main(int argc, char **argv)
                                         : 0ULL);
         printf(" scalc=%016llx",
                f->smooth_calculate ? checksum(f->smooth_calculate) : 0ULL);
-        printf(" speri=%016llx\n",
+        printf(" speri=%016llx",
                f->smooth_calculate_periodicity
                    ? checksum(f->smooth_calculate_periodicity)
                    : 0ULL);
+        /* The same smooth loop with the colouring shifted, which has to come
+         * out differently from the column before it. Smooth colouring used to
+         * return a pixel of its own and never meet the shift or the speed at
+         * all, so both controls did nothing whenever it was chosen; were that
+         * to come back, these two columns would agree. */
+        cfractalc.outcolorshift = 40;
+        printf(" sshift=%016llx\n",
+               f->smooth_calculate ? checksum(f->smooth_calculate) : 0ULL);
+        cfractalc.outcolorshift = 0;
     }
     if (!names_only)
         printf("formule: %d\n", n);

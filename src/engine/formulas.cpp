@@ -230,6 +230,30 @@ static inline int bailout_inside(number_t zre, number_t zim, number_t rp,
         if (cfractalc.coloringmode == OutColormodeClass::ColOut_smooth_log) { \
            iter = log(iter) * ((cpalette.size - 1))/log(cfractalc.maxiter * 256) + 1;  \
         }\
+        /* The colouring speed, the shift and the colouring function. Every    \
+         * other outside mode meets color_precalc on its way out of            \
+         * color_output; this one returns a pixel of its own and so skipped    \
+         * it, which is why neither speed nor shift did anything at all while  \
+         * smooth or smooth log was chosen. What is held here is the same      \
+         * fixed point the others use -- the count times 256, plus a fraction  \
+         * -- so it goes through unchanged.                                    \
+         *                                                                     \
+         * The negative case is handled as color_output handles it: a shift    \
+         * can carry the value below zero, and the modulus of a negative is    \
+         * not the wrap that is wanted. */                                     \
+        {                                                                      \
+            number_t smoothed = (number_t)iter;                                \
+            int wrapped;                                                       \
+            int cycle = (int)(((unsigned int)(cpalette.size - 1)) << 8);       \
+            color_precalc(smoothed, 0);                                        \
+            wrapped = (int)smoothed;                                           \
+            if (wrapped < 0) {                                                 \
+                wrapped = cycle - ((-wrapped) % cycle) - 1;                    \
+                if (wrapped < 0)                                               \
+                    wrapped = 0;                                               \
+            }                                                                  \
+            iter = (unsigned int)wrapped;                                      \
+        }                                                                      \
         iter %= ((unsigned int)(cpalette.size - 1)) << 8;                      \
                                                                                \
         if ((cpalette.type & (C256 | SMALLITER)) || !(iter & 255))             \
