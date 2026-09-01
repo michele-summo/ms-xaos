@@ -268,6 +268,61 @@ escapes — so look at the bands.
 Written to a saved position only when it is not the circle, so a position that
 does not ask for a shape stays loadable by any earlier version.
 
+## More colouring modes
+
+Calculation is not what decides the colour of a pixel: the colour comes from a
+formula in the final `z`, the parameter `c` and the iteration count, and there
+is one such formula per mode. Eighteen more of them, in a submenu of their own
+under Fractal → Incoloring mode and Fractal → Outcoloring mode, above the
+true-colour submenus.
+
+**Inside**, where the orbit never escaped and only the final `z` and `c` say
+anything:
+
+| mode | |
+| --- | --- |
+| `real/mag` | the cosine of the angle: shading that closes on itself where `atan2` has a seam |
+| `max(\|real\|,\|imag\|)` | the square norm, so the bands are squares where `zmag`'s are circles |
+| `\|real\|+\|imag\|` | the same bands turned by an eighth of a turn |
+| `min(\|real\|,\|imag\|)` | near zero along either axis, so rays |
+| `\|z-c\|` | how far the orbit settled from the parameter, which tells the bulbs apart |
+| `\|z*c\|` | the two moduli against each other |
+| `angle(z)-angle(c)` | the settled direction measured against the parameter |
+| `real*imag` | a saddle, four lobes about the axes |
+| `sin(real)*sin(imag)` | a grid laid over where the orbit settled |
+| `sign(imag)` | two flat tones: a decomposition of the inside, as binary decomposition does to the outside |
+| `frac(mag)` | contours at every eighth of the modulus |
+| `log(mag)` | `zmag` with the contrast moved onto the small values, where an attracting orbit spends its time |
+
+**Outside**, where the count and the escape point are what there is:
+
+| mode | |
+| --- | --- |
+| `iter+angle` | the direction it left by, blended into the count: the bands acquire a twist |
+| `iter+log(mag)` | how far past the bailout it went, a cheaper smoothing than the log of a log |
+| `iter+real*imag` | biomorphs made continuous rather than thresholded |
+| `max(\|real\|,\|imag\|)` | which side it left by, with no count at all |
+| `iter banded` | the count folded into eight bands, showing the shape of the level sets rather than their number |
+| `\|real\|-\|imag\|` | how lopsided the escape point is |
+
+The numbers the older modes have do not move, so a saved position goes on
+loading as it did.
+
+**Smooth and smooth log** have moved into that submenu on the outside menu.
+They interpolate between one iteration and the next using how far past the
+bailout the orbit went, which needs a formula that escapes on the bailout —
+twenty of the thirty-one do, and the other eleven either converge (the Newtons)
+or stop on a test of their own (the Sierpinskis, Koch, the Clock). For those
+the mode does nothing at all, which is not something the first list should
+offer. The user formula, which could always have had it and did not, has it
+now.
+
+What these modes cannot do is anything that needs the orbit rather than its
+end: an orbit trap, a stripe average, a Lyapunov exponent, distance
+estimation. Those need a value carried from one iteration to the next, which
+in this engine means a second compiled copy of every calculation loop. `trap`
+and `stripe` in a user formula do it instead.
+
 ## Zooming
 
 **Selection zoom** (View menu) replaces the continuous zoom with a rectangle:

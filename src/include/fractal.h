@@ -27,8 +27,29 @@
 #include "sffe.h"
 #endif
 
-#define INCOLORING 11
+/* How many inside colouring modes there are, true colour included, and where
+ * true colour sits: last, which three places used to spell as the number 10
+ * and would have gone on spelling as 10 after modes were added in front of
+ * it. */
+#define INCOLORING 23
+#define INCOLORING_TRUECOLOR (INCOLORING - 1)
 #define OUTCOLORING (OutColormodeClass::ColOut_MAXMode + 1)
+/* How many modes the per-formula symmetry tables below describe.
+ *
+ * They are written out mode by mode, one row apiece, and they were written
+ * when there were ten inside modes and eleven outside ones with true colour
+ * last of each. True colour has moved along as modes were added in front of
+ * it; its row has not, so it is looked up where it has always been.
+ *
+ * A mode with no row of its own must not simply read the row that happens to
+ * sit at its index: a row the compiler zero-filled does not mean "nothing
+ * known" but "symmetric about both axes", and one belonging to another mode
+ * means whatever that mode is symmetric about. Either would fold the picture.
+ * combine_methods gives them no symmetry, which is always safe and forgoes an
+ * optimisation rather than drawing the wrong thing. */
+#define INCOLORING_DESCRIBED 10
+#define OUTCOLORING_DESCRIBED 11
+
 #define TCOLOR 15
 #define COLORFUN 10
 
@@ -46,6 +67,15 @@ enum OutColormode {
                     ColOut_color_decomposition,
                     ColOut_smooth,
                     ColOut_smooth_log,
+                    /* added after the others, and so before true colour,
+                     * which must stay last: see INCOLORING_TRUECOLOR for the
+                     * same rule on the inside modes */
+                    ColOut_iter_plus_angle,
+                    ColOut_iter_plus_log_mag,
+                    ColOut_iter_plus_real_times_imag,
+                    ColOut_max_real_imag,
+                    ColOut_iter_banded,
+                    ColOut_abs_real_minus_abs_imag,
                     ColOut_True_color,
                     ColOut_MAXMode = ColOut_True_color
                   };

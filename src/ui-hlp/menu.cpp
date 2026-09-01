@@ -1645,6 +1645,10 @@ void uih_registermenus_i18n(void)
 }
 
 static const menuitem menuitems2[] = {
+    /* Above the true-colour submenus, as the modes they hold are ordinary
+     * palette modes and true colour is a different thing entirely. */
+    SUBMENU("mincoloring", NULL, "Other coloring mode", "mothincoloring"),
+    SUBMENU("moutcoloring", NULL, "Other coloring mode", "mothoutcoloring"),
     SUBMENU("mincoloring", NULL, "True-color incoloring mode", "tincoloring"),
     SUBMENU("moutcoloring", NULL, "True-color outcoloring mode",
             "toutcoloring"),
@@ -1681,7 +1685,7 @@ static int uih_selectedincoloring(struct uih_context *c, int n)
 
 static void uih_setintruecolor(struct uih_context *c, int n)
 {
-    uih_setincoloringmode(c, 10);
+    uih_setincoloringmode(c, INCOLORING_TRUECOLOR);
     uih_setintcolor(c, n);
 }
 
@@ -1784,18 +1788,29 @@ void uih_registermenus(void)
     }
     menu_add(item, nformulas);
 
-    menu_genernumbered(INCOLORING - 1, "mincoloring", incolorname, NULL,
-                       MENU_INT, UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
-                       uih_setincoloringmode, uih_selectedincoloring, "in");
+    /* The ten the program has always had stay in the menu itself; the ones
+     * added since go to a submenu, so that the list does not run off the
+     * screen. The numbers do not move: they are what a saved position holds. */
+    menu_genernumberedsplit(INCOLORING - 1, "mincoloring", 10,
+                            "mothincoloring", incolorname, NULL, MENU_INT,
+                            UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
+                            uih_setincoloringmode, uih_selectedincoloring,
+                            "in");
 
     menu_genernumbered(TCOLOR - 1, "tincoloring", tcolorname, NULL, MENU_INT,
                        UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
                        uih_setintruecolor, uih_selectedintcoloring, "int");
 
 
-    menu_genernumbered(OUTCOLORING - 1, "moutcoloring", outcolorname, NULL,
-                       MENU_INT, UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
-                       uih_setoutcoloringmode, uih_selectedoutcoloring, "out");
+    /* Smooth and smooth log go to the submenu with the new ones: they work
+     * only for a formula that escapes on the bailout, which is most of them
+     * but not all, and a mode that does nothing at all for the fractal on
+     * screen does not belong in the first list. */
+    menu_genernumberedsplit(OUTCOLORING - 1, "moutcoloring", 9,
+                            "mothoutcoloring", outcolorname, NULL, MENU_INT,
+                            UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
+                            uih_setoutcoloringmode, uih_selectedoutcoloring,
+                            "out");
 
     menu_genernumbered(TCOLOR - 1, "toutcoloring", tcolorname, NULL, MENU_INT,
                        UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,

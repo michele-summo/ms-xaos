@@ -422,6 +422,17 @@ menu_genernumbered(int n, const char *menuname, const char *const *const names,
                    void (*fint)(struct uih_context *context, int),
                    int (*cint)(struct uih_context *context, int),
                    const char *prefix);
+
+/* As menu_genernumbered, but the entries from split onwards are put in
+ * submenu instead of menuname. See the definition for why it is one call and
+ * not two. */
+const menuitem *
+menu_genernumberedsplit(int n, const char *menuname, int split,
+                        const char *submenu, const char *const *const names,
+                        const char *keys, int type, int flags,
+                        void (*function)(struct uih_context *context, int),
+                        int (*control)(struct uih_context *context, int),
+                        const char *prefix);
 void menu_delnumbered(int n, const char *name);
 void menu_addqueue(const menuitem *item, dialogparam *d);
 const menuitem *menu_delqueue(dialogparam **d);

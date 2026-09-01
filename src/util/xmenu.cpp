@@ -462,13 +462,32 @@ menu_genernumbered(int n, const char *menuname, const char *const *const names,
                    int (*control)(struct uih_context *context, int),
                    const char *prefix)
 {
+    return menu_genernumberedsplit(n, menuname, n, NULL, names, keys, type,
+                                   flags, function, control, prefix);
+}
+
+/* The same, with the entries from split onwards going to a second menu.
+ *
+ * One allocation, not two, because menu_delnumbered finds the first entry by
+ * name and then walks n of them expecting the block menu_genernumbered
+ * malloc'd; two calls would leave it walking off the end of the first. Which
+ * menu an entry belongs to is a field of the entry, so one block can feed
+ * both. */
+const menuitem *
+menu_genernumberedsplit(int n, const char *menuname, int split,
+                        const char *submenu, const char *const *const names,
+                        const char *keys, int type, int flags,
+                        void (*function)(struct uih_context *context, int),
+                        int (*control)(struct uih_context *context, int),
+                        const char *prefix)
+{
     int l = keys != NULL ? (int)strlen(keys) : -1;
     int i;
     menuitem *item = (menuitem *)malloc(sizeof(menuitem) * n);
     if (item == NULL)
         return NULL;
     for (i = 0; i < n; i++) {
-        item[i].menuname = menuname;
+        item[i].menuname = (submenu != NULL && i >= split) ? submenu : menuname;
         if (i < l) {
             char *key = (char *)malloc(2);
             item[i].key = key;

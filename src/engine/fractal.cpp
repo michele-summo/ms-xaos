@@ -82,15 +82,39 @@ static void set_view(fractal_context *c, const vinfo *s)
     recalc_view(c);
 }
 
+/* Which row of a formula's symmetry table describes a colouring mode, if any
+ * does. See INCOLORING_DESCRIBED for why a mode without one must not borrow
+ * the row at its index. */
+static const struct symmetryinfo nosymmetry = {(number_t)INT_MAX,
+                                               (number_t)INT_MAX, 0, NULL};
+
+static const struct symmetryinfo *insymmetry(const struct formula *f, int mode)
+{
+    if (mode < INCOLORING_DESCRIBED)
+        return f->in + mode;
+    if (mode == INCOLORING_TRUECOLOR)
+        return f->in + INCOLORING_DESCRIBED;
+    return &nosymmetry;
+}
+
+static const struct symmetryinfo *outsymmetry(const struct formula *f, int mode)
+{
+    if (mode < OUTCOLORING_DESCRIBED)
+        return f->out + mode;
+    if (mode == OutColormodeClass::ColOut_True_color)
+        return f->out + OUTCOLORING_DESCRIBED;
+    return &nosymmetry;
+}
+
 /*FIXME most of this code is obsolete */
 static void /*inline */
 combine_methods(void)
 {
     int angle = (int)cfractalc.angle;
-    const struct symmetryinfo *s1 = cfractalc.currentformula->out +
-                                    cfractalc.coloringmode.AsInt(),
-                              *s2 = cfractalc.currentformula->in +
-                                    cfractalc.incoloringmode;
+    const struct symmetryinfo *s1 = outsymmetry(cfractalc.currentformula,
+                                                cfractalc.coloringmode.AsInt());
+    const struct symmetryinfo *s2 =
+        insymmetry(cfractalc.currentformula, cfractalc.incoloringmode);
     if (angle < 0) {
         angle = 360 - ((-angle) % 360);
     } else

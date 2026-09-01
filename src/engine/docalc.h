@@ -688,6 +688,10 @@ static void JULIA(struct image *image, number_t pre, number_t pim)
 #undef NSFORMULALOOP
 #undef SFORMULALOOP
 #undef PRESMOOTH
+/* Left defined, this followed the formula that set it into the next one that
+ * asked for smooth colouring, where the variables it names are out of scope --
+ * which is why the user formula could not have a smooth variant at all. */
+#undef CUSTOMSAVEZMAG
 #undef SMOOTH
 #undef SMOOTHMODE
 #undef RANGE

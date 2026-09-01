@@ -485,7 +485,7 @@ void uih_saveframe(struct uih_context *uih)
         if (s->fcontext->incoloringmode != uih->fcontext->incoloringmode)
             save_intc(uih, "incoloring", uih->fcontext->incoloringmode),
                 s->fcontext->incoloringmode = uih->fcontext->incoloringmode;
-        if ((s->fcontext->incoloringmode == 10 || s->mode >= UIH_SAVEALL) &&
+        if ((s->fcontext->incoloringmode == INCOLORING_TRUECOLOR || s->mode >= UIH_SAVEALL) &&
             s->fcontext->intcolor != uih->fcontext->intcolor)
             save_intc(uih, "intcoloring", uih->fcontext->intcolor),
                 s->fcontext->intcolor = uih->fcontext->intcolor;

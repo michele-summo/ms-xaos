@@ -65,6 +65,18 @@ const char *const incolorname[] = {"0",
                                    "sin(real^2-imag^2)",
                                    "atan(real*imag*creal*cimag)",
                                    "squares",
+                                   "real/mag",
+                                   "max(|real|,|imag|)",
+                                   "|real|+|imag|",
+                                   "min(|real|,|imag|)",
+                                   "|z-c|",
+                                   "|z*c|",
+                                   "angle(z)-angle(c)",
+                                   "real*imag",
+                                   "sin(real)*sin(imag)",
+                                   "sign(imag)",
+                                   "frac(mag)",
+                                   "log(mag)",
                                    "True-color",
                                    NULL};
 
@@ -80,6 +92,12 @@ const char *const outcolorname[] = {"iter",
                                     "color decomposition",
                                     "smooth",
                                     "smooth log",
+                                    "iter+angle",
+                                    "iter+log(mag)",
+                                    "iter+real*imag",
+                                    "max(|real|,|imag|)",
+                                    "iter banded",
+                                    "|real|-|imag|",
                                     "True-color",
                                     NULL};
 
@@ -190,7 +208,7 @@ static inline int bailout_inside(number_t zre, number_t zim, number_t rp,
 
 #define OUTPUT()                                                               \
     if (iter >= (unsigned int)cfractalc.maxiter) {                             \
-        if (cfractalc.incoloringmode == 10)                                    \
+        if (cfractalc.incoloringmode == INCOLORING_TRUECOLOR)                                    \
             return (                                                           \
                 truecolor_output(zre, zim, pre, pim, cfractalc.intcolor, 1));  \
         INOUTPUT();                                                            \
@@ -604,6 +622,37 @@ static unsigned int color_output(number_t zre, number_t zim, unsigned int iter)
             i_f = ((atan2l(zre, zim) / (M_PI + M_PI) + 0.75) *
                    20000);
             break;
+        case OutColormodeType::ColOut_iter_plus_angle:
+            /* the angle it left by, blended into the count: the bands acquire
+             * a twist and the escape directions show as spokes */
+            i_f = (iter + (natan2(zim, zre) / (N_PI + N_PI) + (number_t)0.5) *
+                              SMUL * 8);
+            break;
+        case OutColormodeType::ColOut_iter_plus_log_mag:
+            /* how far past the bailout it went, which is a cheaper smoothing
+             * than the log of a log and bands differently */
+            i_f = (iter + nlog(zre * zre + zim * zim + 1) * SMUL * 4);
+            break;
+        case OutColormodeType::ColOut_iter_plus_real_times_imag:
+            /* biomorphs made continuous: the same quantity that the biomorph
+             * test thresholds, added to the count instead */
+            i_f = (iter + zre * zim * SMUL);
+            break;
+        case OutColormodeType::ColOut_max_real_imag:
+            /* which side it left by, and how far, with no count at all */
+            i_f = ((myabs(zre) > myabs(zim) ? myabs(zre) : myabs(zim)) * SMUL *
+                   200);
+            break;
+        case OutColormodeType::ColOut_iter_banded:
+            /* the count folded into eight bands, which shows the shape of the
+             * level sets rather than their number */
+            i_f = ((number_t)(((unsigned int)i_f >> SHIFT) % 8) * SMUL * 8);
+            break;
+        case OutColormodeType::ColOut_abs_real_minus_abs_imag:
+            /* how lopsided the escape point is, with no count: the level sets
+             * of the difference rather than of the modulus */
+            i_f = ((myabs(zre) - myabs(zim)) * SMUL * 200);
+            break;
         default:
             break;
     }
@@ -699,6 +748,63 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
             i_f = ((
                 (atan2l(zim, zre) / (M_PI + M_PI) + 0.75) *
                 20000));
+        break;
+    case 10: /* real/mag: the cosine of the angle. Where atan2 has a seam
+              * wherever the angle wraps, this closes on itself. */
+        i_f = ((zre / nsqrt(zre * zre + zim * zim) + 1) * 20000);
+        break;
+    case 11: /* max(|real|,|imag|): the square norm, so the bands are squares
+              * where zmag's are circles */
+        i_f = ((myabs(zre) > myabs(zim) ? myabs(zre) : myabs(zim)) *
+                   (number_t)(cfractalc.maxiter >> 1) * SMUL +
+               SMUL);
+        break;
+    case 12: /* |real|+|imag|: the same bands turned by an eighth of a turn */
+        i_f = ((myabs(zre) + myabs(zim)) * (number_t)(cfractalc.maxiter >> 1) *
+                   SMUL +
+               SMUL);
+        break;
+    case 13: /* min(|real|,|imag|): near zero along either axis, so rays */
+        i_f = ((myabs(zre) < myabs(zim) ? myabs(zre) : myabs(zim)) *
+                   (number_t)cfractalc.maxiter * SMUL +
+               SMUL);
+        break;
+    case 14: /* |z-c|: how far the orbit settled from the parameter, which is
+              * one thing that tells the bulbs apart */
+        i_f = (nsqrt((zre - pre) * (zre - pre) + (zim - pim) * (zim - pim)) *
+                   (number_t)(cfractalc.maxiter >> 1) * SMUL +
+               SMUL);
+        break;
+    case 15: /* |z*c|: the two moduli against each other */
+        i_f = (nsqrt((zre * zre + zim * zim) * (pre * pre + pim * pim)) *
+                   (number_t)(cfractalc.maxiter >> 1) * SMUL +
+               SMUL);
+        break;
+    case 16: /* angle(z) - angle(c) */
+        i_f = ((natan2(zim, zre) - natan2(pim, pre)) / (N_PI + N_PI) +
+               (number_t)0.75) *
+              20000;
+        break;
+    case 17: /* real*imag: a saddle, four lobes about the axes */
+        i_f = (zre * zim * (number_t)cfractalc.maxiter * SMUL + SMUL);
+        break;
+    case 18: /* sin(real)*sin(imag): a grid laid over where the orbit settled */
+        i_f = ((nsin(zre) * nsin(zim) + 1) * 20000);
+        break;
+    case 19: /* sign(imag): two flat tones. A decomposition of the inside,
+              * where binary decomposition does the same to the outside. */
+        i_f = (zim > 0 ? 20000 : 45000);
+        break;
+    case 20: /* frac(mag): contours at every eighth of the modulus */
+        {
+            number_t bands = nsqrt(zre * zre + zim * zim) * 8;
+            i_f = ((bands - nfloor(bands)) * 60000);
+        }
+        break;
+    case 21: /* log(mag): zmag with the contrast moved onto the small values,
+              * which is where an attracting orbit spends its time */
+        i_f = (nlog(zre * zre + zim * zim + (number_t)1 / 1000000) * 8000 +
+               30000);
         break;
     };
     color_precalc(i_f, 1);
@@ -1627,8 +1733,13 @@ greater_then_1Em6(n) \
     : bailout_inside(zre, zim, zre * zre, zim * zim)
 #define CALC sffe_calc
 #define JULIA sffe_julia
-//#define SCALC ssffe_calc
-//#define SMOOTH
+#define SCALC ssffe_calc
+#define SMOOTH
+/* The user formula does not keep rp and ip -- its bailout test spells the two
+ * squares out -- so the two places smooth colouring reads the squared modulus
+ * have to be told where to get it. */
+#define CUSTOMSAVEZMAG szmag = zre * zre + zim * zim
+#define PRESMOOTH zre = zre * zre + zim * zim
 #include "docalc.h"
 #endif
 
@@ -2847,7 +2958,7 @@ const struct formula formulas[] = {
        FORMULAMAGIC,
        sffe_calc,
        NULL,
-       NULL,
+       ssffe_calc,
        NULL,
 #endif
        sffe_julia,
