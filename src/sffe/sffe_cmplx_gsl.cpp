@@ -1462,15 +1462,11 @@ static uint64_t randsc_seed(cmplx seed)
  *                          half, so every wedge is symmetric about its own
  *                          bisector;
  *   1                      the same the other way about, the near half
- *                          mirroring the far one;
- *   2                      no fold inside a wedge, but every other wedge is
- *                          mirrored, which is what the mirrors of a real
- *                          kaleidoscope do -- neighbours are reflections and
- *                          the pattern runs continuously around.
+ *                          mirroring the far one.
  *
- * Every one of the three is continuous across the joins, so the noise stays
- * coherent and the two precisions go on agreeing; a fold that met itself
- * unevenly would show as a seam.
+ * Both are continuous across the joins, so the noise stays coherent and the
+ * two precisions go on agreeing; a fold that met itself unevenly would show as
+ * a seam.
  *
  * This is the only part of the family that costs trigonometry, and it is only
  * reached when a level of two or more is asked for. At a level of one --
@@ -1489,9 +1485,6 @@ static void randsc_kaleido(number_t *px, number_t *py, int level, int mode)
 
     if (mode == 1) {
         if (s < half)
-            s = sector - s;
-    } else if (mode == 2) {
-        if ((int64_t)turns & 1)
             s = sector - s;
     } else {
         if (s > half)

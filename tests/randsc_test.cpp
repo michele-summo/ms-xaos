@@ -393,7 +393,9 @@ int main(void)
         sffe *one = compile("randsc({7,0};{0.5,0.5};{1,1};{1,0};{0,0})");
         sffe *left = compile("randsc({7,0};{0.5,0.5};{1,1};{4,0};{0,0})");
         sffe *right = compile("randsc({7,0};{0.5,0.5};{1,1};{4,0};{1,0})");
-        sffe *both = compile("randsc({7,0};{0.5,0.5};{1,1};{4,0};{2,0})");
+        /* anything that is not one folds the way zero does, which is what
+             * "and anything else" in the description has to mean */
+        sffe *other = compile("randsc({7,0};{0.5,0.5};{1,1};{4,0};{7,0})");
         if (!failures) {
             /* A level of one is what a call with three arguments already
              * does, to the bit. */
@@ -412,7 +414,7 @@ int main(void)
             const number_t radius = (number_t)17 / 10;
             const number_t angle = (number_t)4 / 10;
             number_t tol = (number_t)1 / 1000000000000ULL;
-            int turns_ok = 1, mirror_ok = 1, neighbour_ok = 1;
+            int turns_ok = 1, mirror_ok = 1;
             for (int t = 1; t < 4; t++) {
                 number_t a = angle + quarter * t;
                 if (nfabs(at(left, radius * ncos(angle), radius * nsin(angle), 3) -
@@ -428,30 +430,19 @@ int main(void)
                 mirror_ok = 0;
             check(mirror_ok, "the wedge is a mirror of itself");
 
-            /* Mode two mirrors whole wedges instead, so the reflection of a
-             * point across a wedge edge gives the same value. */
-            number_t n2 = 2 * quarter - angle;
-            if (nfabs(at(both, radius * ncos(angle), radius * nsin(angle), 3) -
-                      at(both, radius * ncos(n2), radius * nsin(n2), 3)) > tol)
-                neighbour_ok = 0;
-            check(neighbour_ok, "mode two mirrors the neighbouring wedge");
-
-            /* And the three modes are three different fields. Not at every
-             * point -- two of them agree wherever neither happens to fold,
-             * which is a quarter of the plane -- so they are compared over
-             * one. */
-            int lr = 0, lb = 0, rb = 0;
+            /* The two modes are two different fields, and a mode that is
+             * neither is the first of them. Not point by point -- the two
+             * agree wherever neither happens to fold -- so over a grid. */
+            int lr = 0, lo = 0;
             for (int i = -8; i <= 8; i++)
                 for (int j = -8; j <= 8; j++) {
                     number_t x = (number_t)i / 5, y = (number_t)j / 5;
-                    number_t l = at(left, x, y, 3), r = at(right, x, y, 3),
-                             b = at(both, x, y, 3);
+                    number_t l = at(left, x, y, 3), r = at(right, x, y, 3);
                     lr += l != r;
-                    lb += l != b;
-                    rb += r != b;
+                    lo += l != at(other, x, y, 3);
                 }
-            check(lr > 40 && lb > 40 && rb > 40,
-                  "the three kaleidoscope modes are three fields");
+            check(lr > 40, "the two kaleidoscope modes are two fields");
+            check(lo == 0, "a mode that is neither folds the way zero does");
         }
     }
 

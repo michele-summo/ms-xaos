@@ -144,12 +144,11 @@ default — leaving it alone; the second is which mirror does the folding:
 | --- | --- |
 | `0` (and anything else) | the far half of each wedge mirrors the near half, so every wedge is symmetric about its own bisector |
 | `1` | the same the other way about, the near half mirroring the far one |
-| `2` | no fold inside a wedge, but every other wedge is mirrored — what the mirrors of a real kaleidoscope do, so that neighbours are reflections of one another |
 
     randsc(13;{0.6,0.6};{1,1};6;0)     six wedges, each a mirror of itself
-    randsc(13;{0.6,0.6};{1,1};6;2)     six wedges mirrored in pairs
+    randsc(13;{0.6,0.6};{1,1};3;1)     three wedges, folded the other way
 
-All three folds are continuous where the wedges meet, so the noise stays
+Both folds are continuous where the wedges meet, so the noise stays
 coherent and the two precisions go on agreeing; a fold that met itself unevenly
 would show as a seam.
 
