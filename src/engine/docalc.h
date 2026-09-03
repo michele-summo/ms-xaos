@@ -20,7 +20,16 @@
 #define POSTCALC
 #endif
 #ifndef PRESMOOTH
-#define PRESMOOTH zre = rp + ip
+/* The quantity smooth colouring interpolates on, after the step that escaped.
+ * It is the one the bailout shape tests, not the modulus: those agree for the
+ * circle and part company for every other shape, and interpolating on the
+ * wrong one leaves seams along the sides. A formula whose bailout test is its
+ * own gives its own here instead. */
+#define PRESMOOTH zre = bailout_measure(zre, zim, rp, ip)
+#endif
+#ifndef SMOOTHTHRESHOLD
+/* What that quantity is compared against; see PRESMOOTH. */
+#define SMOOTHTHRESHOLD bailout_threshold()
 #endif
 #ifndef UFORMULA
 #define UFORMULA FORMULA
@@ -69,7 +78,8 @@
 #ifdef CUSTOMSAVEZMAG
 #define SAVEZMAG CUSTOMSAVEZMAG;
 #else
-#define SAVEZMAG szmag = rp + ip;
+/* the same quantity, one pass earlier */
+#define SAVEZMAG szmag = bailout_measure(zre, zim, rp, ip);
 #endif
 #else
 #define SAVEZMAG
@@ -692,6 +702,7 @@ static void JULIA(struct image *image, number_t pre, number_t pim)
  * asked for smooth colouring, where the variables it names are out of scope --
  * which is why the user formula could not have a smooth variant at all. */
 #undef CUSTOMSAVEZMAG
+#undef SMOOTHTHRESHOLD
 #undef SMOOTH
 #undef SMOOTHMODE
 #undef RANGE

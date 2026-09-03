@@ -3,8 +3,8 @@ Mandelbrot^3             calc=a8e9ee778554ed6d peri=a8e9ee778554ed6d scalc=e4b67
 Mandelbrot^4             calc=dc86372290627370 peri=dc86372290627370 scalc=1cf6c569ad6b354d speri=1cf6c569ad6b354d sshift=d429ca4966a70fa5
 Mandelbrot^5             calc=562a65b45a0fcb97 peri=562a65b45a0fcb97 scalc=175a202f61197877 speri=175a202f61197877 sshift=bebb389c8b3290cf
 Mandelbrot^6             calc=a20f9c8d1af29dd1 peri=a20f9c8d1af29dd1 scalc=715049cc18098008 speri=715049cc18098008 sshift=79dd2e9559d774f8
-Newton                   calc=148b716f47d7ea96 peri=0000000000000000 scalc=0000000000000000 speri=0000000000000000 sshift=0000000000000000
-Newton^4                 calc=90ac29af87aeafc1 peri=0000000000000000 scalc=0000000000000000 speri=0000000000000000 sshift=0000000000000000
+Newton                   calc=148b716f47d7ea96 peri=0000000000000000 scalc=1ca2b8f73e2077f4 speri=0000000000000000 sshift=64779b77e92dbe6c
+Newton^4                 calc=90ac29af87aeafc1 peri=0000000000000000 scalc=973037ec472f66cb speri=0000000000000000 sshift=917686136456828b
 Barnsley1 Mandelbrot     calc=42e85a272caf8abc peri=0000000000000000 scalc=6570a7f7bb104329 speri=0000000000000000 sshift=6570a7f7bb104329
 Barnsley2 Mandelbrot     calc=0685beb5fb735e87 peri=0000000000000000 scalc=c8b61d0de9a390c9 speri=0000000000000000 sshift=04bfc33d96638619
 Barnsley3 Mandelbrot     calc=409bf98f8301422a peri=0000000000000000 scalc=da624f00d90738dd speri=0000000000000000 sshift=bb4e37573591f82d

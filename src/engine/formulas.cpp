@@ -182,10 +182,63 @@ static inline int bailout_inside(number_t zre, number_t zim, number_t rp,
     }
 }
 
+
+/* The quantity a bailout shape actually tests, and what it tests it against.
+ *
+ * bailout_inside answers a yes or no; smooth colouring needs the number behind
+ * it. It interpolates between one pass and the next by asking where the
+ * quantity crossed the threshold, and that only means anything if it is the
+ * same quantity the escape was decided on. Interpolating on the modulus while
+ * escaping on a hexagon is what left seams along the sides of the shape.
+ *
+ * Every mode compares one scalar against one threshold, so both are here.
+ * For the circle the scalar is the squared modulus and the threshold the
+ * bailout, which is what smooth colouring always used -- so nothing moves for
+ * the shape every version had. */
+static inline number_t bailout_measure(number_t zre, number_t zim, number_t rp,
+                                       number_t ip)
+{
+    switch (cfractalc.bailoutmode) {
+        case BAILOUT_SQUARE:
+            return rp > ip ? rp : ip;
+        case BAILOUT_DIAMOND:
+            return rp + ip + 2 * nsqrt(rp * ip);
+        case BAILOUT_REAL:
+            return rp;
+        case BAILOUT_IMAG:
+            return ip;
+        case BAILOUT_BOTH:
+            return rp < ip ? rp : ip;
+        case BAILOUT_CIRCLE:
+            return rp + ip;
+        default: {
+            number_t furthest = 0;
+            for (int k = 0; k < cfractalc.bailoutsides; k++) {
+                number_t side = zre * cfractalc.bailoutnx[k] +
+                                zim * cfractalc.bailoutny[k];
+                if (side > furthest)
+                    furthest = side;
+            }
+            return furthest;
+        }
+    }
+}
+
+static inline number_t bailout_threshold(void)
+{
+    /* The polygons are measured by their apothem and against a projection,
+     * which is a length; the rest compare squares. */
+    return cfractalc.bailoutmode > BAILOUT_BOTH ? cfractalc.bailoutapothem
+                                                : cfractalc.bailout;
+}
+
 #ifndef less_than_4
 #define less_than_0(x) ((x) < 0)
 #define less_than_4(x) ((x) < cfractalc.bailout)
-#define greater_then_1Em6(n) ((n) > 1E-6)
+/* Newton mode stops when successive iterates stop moving. The limit was
+ * written into the macro, so the Newton convergence the menu offers was
+ * set, saved and reloaded while nothing ever read it. */
+#define not_converged(n) ((n) > cfractalc.newtonconvergence)
 #define abs_less_than(x, y) (myabs(x) < y)
 #define greater_than(x, y) ((x) > (y))
 #endif
@@ -222,10 +275,20 @@ static inline int bailout_inside(number_t zre, number_t zim, number_t rp,
 #define SMOOTHOUTPUT()                                                         \
     {                                                                          \
         PRESMOOTH;                                                             \
-        zre += 0.000001;                                                       \
-        szmag += 0.000001;                                                     \
+        {                                                                      \
+            /* Enough to keep a logarithm away from zero and no more. It was   \
+             * a millionth, which is nothing beside a bailout of four and      \
+             * everything beside a Newton convergence of a millionth; below    \
+             * one it now follows the threshold down. At the bailouts anyone   \
+             * uses it is the millionth it always was. */                      \
+            number_t nudge = SMOOTHTHRESHOLD < 1                               \
+                                 ? (number_t)SMOOTHTHRESHOLD * (number_t)1e-6  \
+                                 : (number_t)0.000001;                         \
+            zre += nudge;                                                      \
+            szmag += nudge;                                                    \
+        }                                                                      \
         iter = (int)(((cfractalc.maxiter - iter) * 256 +                       \
-                      log((double)(cfractalc.bailout / (szmag))) /             \
+                      log((double)(SMOOTHTHRESHOLD / (szmag))) /               \
                           log((double)((zre) / (szmag))) * 256));              \
         if (cfractalc.coloringmode == OutColormodeClass::ColOut_smooth_log) { \
            iter = log(iter) * ((cpalette.size - 1))/log(cfractalc.maxiter * 256) + 1;  \
@@ -1109,6 +1172,11 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
  * happening.  I can work around it by subtracting a small amount from the
  * magnitude before performing the bailout test.
  */
+/* Its own bailout test, so its own quantity to smooth on: the shape chosen
+ * for the others means nothing here. */
+#define CUSTOMSAVEZMAG szmag = rp + ip
+#define PRESMOOTH zre = rp + ip
+#define SMOOTHTHRESHOLD cfractalc.bailout
 #define BTEST less_than_4(rp + ip - 0.00000001)
 #define FORMULA                                                                \
     c_div(pre, pim, zre, zim, rp, ip);                                         \
@@ -1536,7 +1604,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
 #define INIT                                                                   \
     sqri = zim * zim, n = zre, zre = pre, pre = n, n = zim, zim = pim,         \
     pim = n, n = (number_t)1;
-#define BTEST greater_then_1Em6(n)
+#define BTEST not_converged(n)
 #define FORMULA                                                                \
     zre1 = zre;                                                                \
     zim1 = zim;                                                                \
@@ -1550,6 +1618,15 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
     zre1 -= zre;                                                               \
     zim1 -= zim;                                                               \
     n = zre1 * zre1 + zim1 * zim1;
+/* Newton converges rather than escaping, so what smooth colouring interpolates
+ * on is the step length falling past the convergence limit rather than the
+ * modulus climbing past the bailout. The formula is the same either way: where
+ * between the two passes did the quantity cross. */
+#define CUSTOMSAVEZMAG szmag = n
+#define PRESMOOTH zre = n
+#define SMOOTHTHRESHOLD cfractalc.newtonconvergence
+#define SMOOTH
+#define SCALC snewton_calc
 #define CALC newton_calc
 #include "docalc.h"
 
@@ -1557,7 +1634,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
 #define INIT                                                                   \
     sqri = zim * zim, n = zre, zre = pre, pre = n, n = zim, zim = pim,         \
     pim = n, n = (number_t)1;
-#define BTEST greater_then_1Em6(n)
+#define BTEST not_converged(n)
 #define FORMULA                                                                \
     zre1 = zre;                                                                \
     zim1 = zim;                                                                \
@@ -1570,6 +1647,15 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
     zre1 -= zre;                                                               \
     zim1 -= zim;                                                               \
     n = zre1 * zre1 + zim1 * zim1;
+/* Newton converges rather than escaping, so what smooth colouring interpolates
+ * on is the step length falling past the convergence limit rather than the
+ * modulus climbing past the bailout. The formula is the same either way: where
+ * between the two passes did the quantity cross. */
+#define CUSTOMSAVEZMAG szmag = n
+#define PRESMOOTH zre = n
+#define SMOOTHTHRESHOLD cfractalc.newtonconvergence
+#define SMOOTH
+#define SCALC snewton4_calc
 #define CALC newton4_calc
 #include "docalc.h"
 
@@ -1753,17 +1839,28 @@ bool pndef = cfractalc.pndefault; unsigned int maxit                           \
  * using rp and ip -- so choosing a bailout mode did nothing at all for a
  * user formula, which is the one place it is most wanted. */
 #define BTEST newtok ?                                                         \
-greater_then_1Em6(n) \
+not_converged(n) \
     : bailout_inside(zre, zim, zre * zre, zim * zim)
 #define CALC sffe_calc
 #define JULIA sffe_julia
 #define SCALC ssffe_calc
 #define SMOOTH
 /* The user formula does not keep rp and ip -- its bailout test spells the two
- * squares out -- so the two places smooth colouring reads the squared modulus
- * have to be told where to get it. */
-#define CUSTOMSAVEZMAG szmag = zre * zre + zim * zim
-#define PRESMOOTH zre = zre * zre + zim * zim
+ * squares out -- so the places smooth colouring reads its quantity have to be
+ * told where to get it. And it has two bailout tests, one for each mode: the
+ * shape when it escapes, the step length when it converges, so the quantity
+ * and the threshold follow whichever is in force.
+ *
+ * n starts at infinity to force the first pass, and an orbit that converges on
+ * that very pass would leave a logarithm with nothing to work on; one stands
+ * in for it, as the built-in Newtons start theirs. */
+#define CUSTOMSAVEZMAG                                                         \
+    szmag = newtok ? (n < (number_t)1e30 ? n : (number_t)1)                    \
+                   : bailout_measure(zre, zim, zre * zre, zim * zim)
+#define PRESMOOTH                                                              \
+    zre = newtok ? n : bailout_measure(zre, zim, zre * zre, zim * zim)
+#define SMOOTHTHRESHOLD                                                        \
+    (newtok ? cfractalc.newtonconvergence : bailout_threshold())
 #include "docalc.h"
 #endif
 
@@ -1985,7 +2082,7 @@ const struct formula formulas[] = {
      FORMULAMAGIC,
      newton_calc,
      NULL,
-     NULL,
+     snewton_calc,
      NULL,
      NULL,
      {"Newton", "Newton julia?"},
@@ -2026,7 +2123,7 @@ const struct formula formulas[] = {
      FORMULAMAGIC,
      newton4_calc,
      NULL,
-     NULL,
+     snewton4_calc,
      NULL,
      NULL,
      {"Newton^4", "Newton^4 julia?"},

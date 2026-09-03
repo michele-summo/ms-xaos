@@ -314,6 +314,25 @@ through the step the other modes end with, so both controls did nothing at all
 while either was chosen. At the settings they come with — speed one, shift
 nothing — the step is the identity, so no picture that was saved before moves.
 
+Smooth and smooth log follow the bailout shape. They interpolate between one
+pass and the next by asking where the orbit crossed the bailout, and they used
+to ask it of the modulus whatever shape had been chosen — so escaping on a
+square and interpolating on a circle put better than a fifth of the escaping
+points, and half of them with a diamond, outside the band they belong to. Each
+shape now hands over the quantity it actually tests and the threshold it tests
+it against. For the circle the two are the same thing, so nothing that was
+drawn before moves.
+
+They also work in Newton mode, where an orbit converges rather than escapes: the
+quantity is then how far the last step moved and the threshold the convergence
+limit, and the interpolation is the same question asked of a number going down
+instead of up. The two Newton fractals, which had no smooth variant at all, have
+one.
+
+**Newton convergence**, in the Calculation menu, is read at last. The limit was
+written into the iteration as a millionth, so the setting was offered, saved and
+reloaded while nothing ever consulted it.
+
 **Smooth and smooth log** have moved into that submenu on the outside menu.
 They interpolate between one iteration and the next using how far past the
 bailout the orbit went, which needs a formula that escapes on the bailout —
