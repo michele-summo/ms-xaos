@@ -2655,6 +2655,9 @@ void uih_initstate(struct uih_context *uih)
     uih_setperiodicity(uih, 1);
     uih_setmaxiter(uih, DEFAULT_MAX_ITER);
     uih_setbailout(uih, DEFAULT_BAILOUT);
+    /* The shape as well as the size: a new fractal that kept the last one's
+     * triangle or hexagon is not a new fractal. */
+    uih_setbailoutmode(uih, BAILOUT_CIRCLE);
     uih_setincoloringmode(uih, 0);
     uih_setoutcoloringmode(uih, 0);
     uih_setincolorspeed(uih, 1.0);
