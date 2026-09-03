@@ -142,10 +142,10 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sftwave, 1, "twave\0"},       /* triangle wave of period 2, in [-1, 1] */
 
     /* --- assorted --- */
-    {sfjulian, SFFE_VARIADIC, "julian\0"}, /* |a|^b * e^(i*c*arg(a)) */
+    {sfjulian, SFFE_VARIADIC, "julian\0", NULL, false, 2}, /* |a|^b * e^(i*c*arg(a)) */
     /* inveps(a, b): real(a)/(|a|^2 + real(b)) - i*imag(a)/(|a|^2 + imag(b)),
      * an inverse softened by b so that it stays finite at the origin */
-    {sfinveps, SFFE_VARIADIC, "inveps\0"},
+    {sfinveps, SFFE_VARIADIC, "inveps\0", NULL, false, 2},
     /* atan2s(y, x): atan2 of each pair of components. Differs from atan2 only
      * on real arguments, where negating one gives a negative zero and
      * natan2(-0, -0) is -pi rather than 0. */
@@ -153,7 +153,7 @@ const sffunction sfcmplxfunc[sffnctscount] = {
 
     /* ngon(a, b, c, d): folds a about the centre b onto a c-sided polygon,
      * the corner radius raised to the power d */
-    {sfngon, SFFE_VARIADIC, "ngon\0"},
+    {sfngon, SFFE_VARIADIC, "ngon\0", NULL, false, 2},
     /* parchment(a, b): quantises the angle of a into |b| sectors, keeping |a| */
     {sfparchment, 2, "parchment\0"},
     /* parchmenta(a, b): as parchment, but mirroring alternate half sectors */
@@ -177,8 +177,8 @@ const sffunction sfcmplxfunc[sffnctscount] = {
 
     /* iteration-dependent selection; -1 parameters means variadic, and the
      * selector marks the arguments as lazily evaluated */
-    {sfifiter, SFFE_VARIADIC, "ifiter\0", sfifiter_sel},
-    {sfifiterl, SFFE_VARIADIC, "ifiterl\0", sfifiterl_sel},
+    {sfifiter, SFFE_VARIADIC, "ifiter\0", sfifiter_sel, false, 2},
+    {sfifiterl, SFFE_VARIADIC, "ifiterl\0", sfifiterl_sel, false, 2},
     {sfifiterf, 2, "ifiterf\0", sfifiterf_sel},
     /* ifiterr's threshold is the argument the selector reads: the parser
      * evaluates that one first and then chooses between the two before it. */
@@ -193,20 +193,20 @@ const sffunction sfcmplxfunc[sffnctscount] = {
      * variadic. randsc interpolates and gives blobs; the rest do not and
      * give a mosaic of flat cells, differing only in how they cut the
      * plane up. See each of them for the rest. */
-    {sfrandsc, SFFE_VARIADIC, "randsc\0"},
-    {sfrandscq, SFFE_VARIADIC, "randscq\0"},
-    {sfrandscp, SFFE_VARIADIC, "randscp\0"},
-    {sfrandsch, SFFE_VARIADIC, "randsch\0"},
-    {sfrandsct, SFFE_VARIADIC, "randsct\0"},
+    {sfrandsc, SFFE_VARIADIC, "randsc\0", NULL, false, 2},
+    {sfrandscq, SFFE_VARIADIC, "randscq\0", NULL, false, 2},
+    {sfrandscp, SFFE_VARIADIC, "randscp\0", NULL, false, 2},
+    {sfrandsch, SFFE_VARIADIC, "randsch\0", NULL, false, 2},
+    {sfrandsct, SFFE_VARIADIC, "randsct\0", NULL, false, 2},
 
     /* Watching the orbit rather than the point: one number about the whole of
      * it, handed back on the last pass. 1 to 4 arguments and so variadic. */
-    {sftrap, SFFE_VARIADIC, "trap\0"},
-    {sfstripe, SFFE_VARIADIC, "stripe\0"},
+    {sftrap, SFFE_VARIADIC, "trap\0", NULL, false, 2},
+    {sfstripe, SFFE_VARIADIC, "stripe\0", NULL, false, 2},
 
     /* A polynomial in the first argument, the rest being its coefficients
      * from the highest power down. */
-    {sfpoly, SFFE_VARIADIC, "poly\0"}};
+    {sfpoly, SFFE_VARIADIC, "poly\0", NULL, false, 2}};
 
 const char sfcnames[sfvarscount][6] = {"pi\0", "pi_2\0", "pi2\0",
                                        "e\0",  "i\0",    "rnd\0"};
@@ -912,7 +912,8 @@ sfarg *sftwave(sfarg *const p)
 }
 
 /* The argument in a given place, counting from the first one written, or the
- * value it takes when the call stops short of it.
+ * value it takes when the call does not give it -- either by stopping short of
+ * it, "julian(z)", or by leaving its place empty, "julian(z, ,3)".
  *
  * A call with defaults has to be variadic -- the parser counts what it is
  * given and hands the count over -- and the sfaramN macros count from the
@@ -920,7 +921,7 @@ sfarg *sftwave(sfarg *const p)
 static inline cmplx sfarg_or(sfarg *const p, unsigned int place, number_t re,
                              number_t im)
 {
-    if (place <= p->argc)
+    if (place <= p->argc && !p->args[p->argc - place]->omitted)
         return sfvalue(p->args[p->argc - place]);
     cmplx fallback;
     GSL_SET_COMPLEX(&fallback, re, im);
@@ -1554,44 +1555,21 @@ static void randsc_kaleido(number_t *px, number_t *py, int level, int mode)
 static RANDSC_INLINE int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, number_t *u,
                         number_t *v, uint64_t *hash)
 {
-    cmplx size, degradation, seed;
-    GSL_SET_COMPLEX(&size, 1, 1);
-    /* Half each pass. A degradation of one, which was the default, leaves the
-     * cells the size they started and so wastes the argument on a call that
-     * says nothing; a half is the shrinking one asks for when one asks. */
-    GSL_SET_COMPLEX(&degradation, 0.5, 0.5);
-    GSL_SET_COMPLEX(&seed, 0, 0);
-    int level = 1, mode = 0;
+    if (p->argc < 1 || p->argc > 5)
+        return RANDSC_STOP;
 
-    switch (p->argc) {
-        case 5:
-            mode = (int)GSL_REAL(sfvalue(sfaram1(p)));
-            level = (int)GSL_REAL(sfvalue(sfaram2(p)));
-            degradation = sfvalue(sfaram3(p));
-            size = sfvalue(sfaram4(p));
-            seed = sfvalue(sfaram5(p));
-            break;
-        case 4:
-            level = (int)GSL_REAL(sfvalue(sfaram1(p)));
-            degradation = sfvalue(sfaram2(p));
-            size = sfvalue(sfaram3(p));
-            seed = sfvalue(sfaram4(p));
-            break;
-        case 3:
-            degradation = sfvalue(sfaram1(p));
-            size = sfvalue(sfaram2(p));
-            seed = sfvalue(sfaram3(p));
-            break;
-        case 2:
-            size = sfvalue(sfaram1(p));
-            seed = sfvalue(sfaram2(p));
-            break;
-        case 1:
-            seed = sfvalue(sfaram1(p));
-            break;
-        default:
-            return RANDSC_STOP;
-    }
+    /* Seed, cell size, degradation, kaleidoscope level and its mode, in the
+     * order they are written; all but the seed have a default, which a call
+     * takes by stopping short of them or by leaving their place empty.
+     *
+     * Degradation halves the cells each pass. One, which was the default,
+     * leaves them the size they started and so wastes the argument on a call
+     * that says nothing; a half is the shrinking one asks for when one asks. */
+    cmplx seed = sfarg_or(p, 1, 0, 0);
+    cmplx size = sfarg_or(p, 2, 1, 1);
+    cmplx degradation = sfarg_or(p, 3, (number_t)1 / 2, (number_t)1 / 2);
+    int level = (int)GSL_REAL(sfarg_or(p, 4, 1, 0));
+    int mode = (int)GSL_REAL(sfarg_or(p, 5, 0, 0));
 
     if (GSL_REAL(size) == 0 || GSL_IMAG(size) == 0 ||
         GSL_REAL(degradation) == 0 || GSL_IMAG(degradation) == 0)
@@ -1860,7 +1838,8 @@ sfarg *sfrandscp(sfarg *const p)
  * rounded once rather than from a power rounded m times.
  *
  * With no coefficients at all there are no terms, and a sum of no terms is
- * zero.
+ * zero; so is a coefficient whose place was left empty, "poly(z, 1, , 1)"
+ * being z^2 + 1.
  *
  * @param p The call; the arguments are read right to left, see sfaramN.
  * @return Pointer to the last argument, per the sffe convention.
@@ -1869,7 +1848,8 @@ sfarg *sfpoly(sfarg *const p)
 {
     if (p->argc < 2) {
         GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
-        return sfaram1(p);
+        /* the call itself, there being no argument to point at */
+        return p;
     }
     /* args[argc - 1] is the first written, so z; the coefficients follow it
      * from args[argc - 2] down to args[0]. */
@@ -1959,35 +1939,17 @@ static int sftrap_last(void)
  */
 sfarg *sftrap(sfarg *const p)
 {
-    cmplx a, centre, size;
-    int shape = 0;
-    GSL_SET_COMPLEX(&a, 0, 0);
-    GSL_SET_COMPLEX(&centre, 0, 0);
-    GSL_SET_COMPLEX(&size, 1, 0);
-
-    switch (p->argc) {
-        case 4:
-            size = sfvalue(sfaram1(p));
-            centre = sfvalue(sfaram2(p));
-            shape = (int)GSL_REAL(sfvalue(sfaram3(p)));
-            a = sfvalue(sfaram4(p));
-            break;
-        case 3:
-            centre = sfvalue(sfaram1(p));
-            shape = (int)GSL_REAL(sfvalue(sfaram2(p)));
-            a = sfvalue(sfaram3(p));
-            break;
-        case 2:
-            shape = (int)GSL_REAL(sfvalue(sfaram1(p)));
-            a = sfvalue(sfaram2(p));
-            break;
-        case 1:
-            a = sfvalue(sfaram1(p));
-            break;
-        default:
-            GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
-            return sfaram1(p);
+    if (p->argc < 1 || p->argc > 4) {
+        GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
+        return p;
     }
+
+    /* the point watched, then the shape, where it sits and how big it is, all
+     * three of which have a default */
+    cmplx a = sfarg_or(p, 1, 0, 0);
+    int shape = (int)GSL_REAL(sfarg_or(p, 2, 0, 0));
+    cmplx centre = sfarg_or(p, 3, 0, 0);
+    cmplx size = sfarg_or(p, 4, 1, 0);
 
     number_t d = sftrap_distance(GSL_REAL(a) - GSL_REAL(centre),
                                  GSL_IMAG(a) - GSL_IMAG(centre), shape,
@@ -2019,22 +1981,13 @@ sfarg *sftrap(sfarg *const p)
  */
 sfarg *sfstripe(sfarg *const p)
 {
-    cmplx a;
-    number_t density = 4;
-    GSL_SET_COMPLEX(&a, 0, 0);
-
-    switch (p->argc) {
-        case 2:
-            density = GSL_REAL(sfvalue(sfaram1(p)));
-            a = sfvalue(sfaram2(p));
-            break;
-        case 1:
-            a = sfvalue(sfaram1(p));
-            break;
-        default:
-            GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
-            return sfaram1(p);
+    if (p->argc < 1 || p->argc > 2) {
+        GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
+        return p;
     }
+
+    cmplx a = sfarg_or(p, 1, 0, 0);
+    number_t density = GSL_REAL(sfarg_or(p, 2, 4, 0));
 
     number_t sample =
         (nsin(density * natan2(GSL_IMAG(a), GSL_REAL(a))) + 1) / 2;

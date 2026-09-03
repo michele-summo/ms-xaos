@@ -12,7 +12,7 @@ set(XAOS_TEST_PRECISIONS ${XAOS_PRECISION} ${XAOS_EXTRA_PRECISIONS})
 
 # Keep in sync with the case table in sffe_test.cpp; the sffe_case_count test
 # fails with instructions if the two drift apart.
-set(SFFE_TEST_CASE_COUNT 136)
+set(SFFE_TEST_CASE_COUNT 154)
 math(EXPR SFFE_TEST_LAST_CASE "${SFFE_TEST_CASE_COUNT} - 1")
 
 # MinGW hides M_PI behind _USE_MATH_DEFINES when compiling to a strict standard.

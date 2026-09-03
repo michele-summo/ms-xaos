@@ -586,11 +586,14 @@ int main(void)
         }
     }
 
-    /* Defaults, where a call that stops short takes them.
+    /* Defaults, where a call that stops short of an argument, or leaves its
+     * place empty, takes them.
      *
      * Each is checked against the same call with the value written out: the
      * two must agree to the bit, or the default is not the value it is said
-     * to be. */
+     * to be. The empty places matter as much as the short calls: a function
+     * that reads its arguments by counting what it was given cannot tell an
+     * empty place from a value, and would take the nothing for a zero. */
     {
         struct {
             const char *shorthand;
@@ -616,8 +619,26 @@ int main(void)
              "trap measures to the centre by default"},
             {"stripe({0.4,0.7})", "stripe({0.4,0.7};{4,0})",
              "stripe lays four to a turn"},
+
+            {"julian({0.4,0.7}; ;{2,0})", "julian({0.4,0.7};{1,0};{2,0})",
+             "an empty place takes the default julian declares"},
+            {"inveps({0.4,0.7}; )", "inveps({0.4,0.7};{0.01,0.01})",
+             "and so does one left empty at the end"},
+            {"ngon({0.4,0.7}; ;{5,0})", "ngon({0.4,0.7};{0,0};{5,0};{1,0})",
+             "ngon about the origin with only the sides given"},
+            {"randsc({7,0}; ; )", "randsc({7,0};{1,1};{0.5,0.5})",
+             "randsc fills in size and degradation alike"},
+            {"randscq({7,0}; ;{0.5,0.5}; )",
+             "randscq({7,0};{1,1};{0.5,0.5};{1,0})",
+             "and the mosaic its size and its kaleidoscope level"},
+            {"trap({0.4,0.7}; ; ;{2,0})", "trap({0.4,0.7};{0,0};{0,0};{2,0})",
+             "trap keeps its shape and its centre"},
+            {"stripe({0.4,0.7}; )", "stripe({0.4,0.7};{4,0})",
+             "stripe keeps its four to a turn"},
         };
-        for (int i = 0; i < 9 && !failures; i++) {
+        for (int i = 0; i < (int)(sizeof(defaults) / sizeof(defaults[0])) &&
+                        !failures;
+             i++) {
             sffe *shorthand = compile(defaults[i].shorthand);
             sffe *written = compile(defaults[i].written);
             if (failures)

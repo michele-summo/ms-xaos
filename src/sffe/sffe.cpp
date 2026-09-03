@@ -34,6 +34,7 @@
 #define sfset(arg, val)                                                        \
 (arg)->args = NULL;                                                        \
     (arg)->argc = 0;                                                           \
+    (arg)->omitted = false;                                                    \
     (arg)->value = (sfNumber *)malloc(sizeof(sfNumber));                       \
     if ((arg)->value) {                                                        \
         (arg)->type = sfvar_type_managed_ptr;                                  \
@@ -43,6 +44,7 @@
 #define sfset(arg, val)                                                        \
 (arg)->args = NULL;                                                        \
     (arg)->argc = 0;                                                           \
+    (arg)->omitted = false;                                                    \
     (arg)->value = (sfNumber *)malloc(sizeof(sfNumber));                       \
     if ((arg)->value) {                                                        \
         (arg)->type = sfvar_type_managed_ptr;                                  \
@@ -233,6 +235,7 @@ sflazy *sffe_lazy_new(sffe *parser, sfselptr sel)
     lz->nblocks = 0;
     lz->bounds = NULL;
     lz->probe = NULL;
+    lz->source = NULL;
     parser->lazy[parser->lazyCount++] = lz;
     return lz;
 }
@@ -250,6 +253,22 @@ bool sffe_lazy_bound(sflazy *lz, unsigned int op)
     lz->bounds = grown;
     lz->bounds[lz->nblocks] = op;
     lz->nblocks += 1;
+    return true;
+}
+
+/* Records which block a choice really runs. A block whose argument was left
+ * empty runs the one before it, so that "ifiter(f, , , g)" spends three passes
+ * on f: the empty places are extra passes of the argument they follow, and
+ * where they lead is settled here rather than on every pass. */
+bool sffe_lazy_source(sflazy *lz, unsigned int idx, bool omitted)
+{
+    unsigned int *grown = (unsigned int *)realloc(
+        lz->source, (idx + 1) * sizeof(unsigned int));
+    if (!grown) {
+        return false;
+    }
+    lz->source = grown;
+    lz->source[idx] = (omitted && idx) ? lz->source[idx - 1] : idx;
     return true;
 }
 
@@ -299,6 +318,7 @@ void sffe_clear(sffe **parser)
         for (i = 0; i < p->lazyCount; i++) {
             if (p->lazy[i]) {
                 free(p->lazy[i]->bounds);
+                free(p->lazy[i]->source);
                 free(p->lazy[i]);
             }
         }
@@ -373,6 +393,8 @@ static void sffe_run(sfopr *const oprs, unsigned int from, unsigned int to)
                 probe = lz->probe->value;
             }
             unsigned int k = lz->select(nsel, probe);
+            /* an empty argument runs the block of the one it follows */
+            k = lz->source[k];
             sffe_run(oprs, lz->bounds[k], lz->bounds[k + 1]);
             pc = lz->bounds[lz->nblocks];
         } else {
@@ -491,6 +513,10 @@ void *sffe_regfunc(sffe **parser, const char *vname, unsigned int parcnt,
     sff->parcnt = parcnt;
     sff->fptr = funptr;
     sff->sel = NULL; /* user functions get their arguments evaluated eagerly */
+    /* and every argument written out: there is no table entry to say
+     * otherwise, and the memory this came from says nothing at all */
+    sff->probe = false;
+    sff->optfrom = 0;
 
     parser_->userfCount += 1;
     return (void *)sff;
@@ -575,6 +601,8 @@ int sffe_parse(sffe **parser, const char *expression)
         sfselptr sel;       /* non-NULL: arguments are evaluated lazily */
         bool probe;         /* the last argument is read by the selector */
         sflazy *lazy;       /* the call being compiled, owned by the parser */
+        unsigned char optfrom; /* first argument that may be left out, 1 based */
+        unsigned int argi;     /* argument being read, counting from zero */
 #ifdef SFFE_DIRECT_FPTR
         sffptr fnc;
 #else
@@ -624,6 +652,11 @@ int sffe_parse(sffe **parser, const char *expression)
     /* Lazy calls seen while tokenizing. Each needs one dispatch operation on
      * top of the operations its arguments compile to. */
     unsigned int lazy_calls;
+    /* Room reserved for the argument places a call may have left empty, each
+     * of which needs a node of its own, and the next of those nodes to hand
+     * out. Counted before phase 3, which cannot grow the array it holds
+     * pointers into. */
+    unsigned int empty_places, empty_slot;
 
     /* Number of entries in _functions, which is one per function and operator
      * the tokenizer found. Not the same as the final _parser->oprCount: that
@@ -668,8 +701,11 @@ int sffe_parse(sffe **parser, const char *expression)
                 errctx = _op->name;                                                \
             } else {                                                               \
                 sfarg *_res = _parser->args + _result_slot;                        \
-                _res->args = (sfarg **)malloc(_nargs * sizeof(sfarg *));           \
-                if (!_res->args) {                                                 \
+                /* "f()" takes nothing, and malloc(0) may or may not hand      \
+                 * back a pointer; either way there is nothing to hold */      \
+                _res->args =                                                       \
+                    _nargs ? (sfarg **)malloc(_nargs * sizeof(sfarg *)) : NULL;    \
+                if (_nargs && !_res->args) {                                       \
                     err = MemoryError;                                             \
                 } else {                                                           \
                     _depth -= _nargs;                                              \
@@ -702,6 +738,50 @@ int sffe_parse(sffe **parser, const char *expression)
             }                                                                      \
     }
 
+/* An empty place is only a place the function said it could fill in itself.
+ * Anywhere else it is an argument that was simply not given. */
+#define check_empty(op)                                                        \
+    if (!(op)->optfrom || (op)->argi + 1 < (op)->optfrom) {                    \
+            set_error_at(InvalidParameters, (op)->name);                           \
+    }
+
+/* Stands an argument the call left empty on the value stack. It is a leaf like
+ * any other, so the arity counting and the operand wiring need know nothing
+ * about it; only the callee, reading the mark, does. The slot comes from the
+ * places counted after phase 1, phase 3 not being free to grow an array whose
+ * entries are already held by pointer.
+ *
+ * For a lazy call an empty argument means the argument before it, so it takes
+ * that one's value rather than owning one -- and, not owning it, must not be
+ * the node that frees it. For everyone else it is a zero, which is what poly
+ * wants and what a function reading its own defaults never looks at. */
+#define push_empty(op)                                                         \
+    if (empty_slot >= _parser->argCount) {                                     \
+            /* the reservation is an upper bound, so this cannot happen; and   \
+             * saying so costs one test where being wrong costs the array */   \
+            set_error_at(StackError, _parser->expression);                         \
+    } else {                                                                   \
+            sfarg *_hole = _parser->args + empty_slot;                             \
+            empty_slot += 1;                                                       \
+            _hole->args = NULL;                                                    \
+            _hole->argc = 0;                                                       \
+            _hole->omitted = true;                                                 \
+            if ((op)->lazy && (op)->argi) {                                        \
+                _hole->type = sfvar_type_ptr;                                      \
+                _hole->value = _vstack[_depth - 1]->value;                         \
+            } else {                                                               \
+                _hole->value = (sfNumber *)malloc(sizeof(sfNumber));               \
+                if (!_hole->value) {                                               \
+                    err = MemoryError;                                             \
+                } else {                                                           \
+                    _hole->type = sfvar_type_managed_ptr;                          \
+                    cmplxset(*(_hole->value), 0, 0);                               \
+                }                                                                  \
+            }                                                                      \
+            _vstack[_depth] = _hole;                                               \
+            _depth += 1;                                                           \
+    }
+
 #define max(a, b) ((a > b) ? a : b)
 
 #ifdef SFFE_DEVEL
@@ -716,6 +796,7 @@ int sffe_parse(sffe **parser, const char *expression)
     _vstack = NULL;
     _result_slot = 0;
     lazy_calls = 0;
+    empty_places = 0;
     function_count = 0;
     tokens = (char *)malloc(1);
     err = MemoryError;
@@ -815,6 +896,21 @@ int sffe_parse(sffe **parser, const char *expression)
     if (strlen(_parser->expression) == 0)
         err = EmptyFormula;
 
+    /* Room for the places a call may have left empty -- the nothing between
+     * two separators in "f(z, ,5)" -- each of which phase 3 gives a node of
+     * its own, out of an array it is not free to grow.
+     *
+     * Counting the places one could be rather than the ones there are. A place
+     * is empty when phase 2 produces no token between two separators, which is
+     * not quite the same as there being nothing between them in the text: a
+     * unary plus produces no token either. Reproducing that decision here
+     * would be reproducing phase 2; taking one separator or closing bracket to
+     * be one possible place cannot be short, since each of them takes at most
+     * one, and costs a handful of nodes nobody asks for. */
+    for (const char *scan = _parser->expression; *scan; scan++)
+        if (*scan == ',' || *scan == ')')
+            empty_places += 1;
+
     /*! PHASE 2 !!!!!!!! tokenize expression, lexical analysis (need
      * optimizations) */
     *tokens = '\0';
@@ -841,6 +937,7 @@ int sffe_parse(sffe **parser, const char *expression)
                 _argument->type = sfvar_type_ptr;
                 _argument->args = NULL; /* a leaf has no operands */
                 _argument->argc = 0;
+                _argument->omitted = false;
                 _argument->value = (sfNumber *)sffe_variable(
                     _parser, ch1, (size_t)(ech - ch1));
 
@@ -1054,7 +1151,10 @@ int sffe_parse(sffe **parser, const char *expression)
              * _parser->args must not move: the operands are held by pointer. */
             _result_slot = _parser->argCount;
             function_count = _parser->oprCount;
-            ui1 = _parser->argCount + _parser->oprCount;
+            /* the empty places get their nodes after the result slots, where
+             * the memset below leaves them saying they own nothing */
+            empty_slot = _parser->argCount + _parser->oprCount;
+            ui1 = _parser->argCount + _parser->oprCount + empty_places;
             _parser->args = (sfarg *)realloc(_parser->args, ui1 * sizeof(sfarg));
             /* Zero the slots we just added: sffe_clear frees whatever they say
              * they own, so an uninitialised one becomes a free() of garbage. */
@@ -1146,6 +1246,8 @@ int sffe_parse(sffe **parser, const char *expression)
                     _expression->stck[_expression->size].sel = NULL;
                     _expression->stck[_expression->size].probe = false;
                     _expression->stck[_expression->size].lazy = NULL;
+                    _expression->stck[_expression->size].optfrom = 0;
+                    _expression->stck[_expression->size].argi = 0;
                     _expression->stck[_expression->size].name = function->name;
 
                     /* get function pointer */
@@ -1190,6 +1292,8 @@ int sffe_parse(sffe **parser, const char *expression)
                     opstck->sel = function->sel;
                     opstck->probe = function->probe;
                     opstck->lazy = NULL;
+                    opstck->optfrom = function->optfrom;
+                    opstck->argi = 0;
 
                     /* get function pointer */
 #ifdef SFFE_DIRECT_FPTR
@@ -1232,6 +1336,8 @@ int sffe_parse(sffe **parser, const char *expression)
                     opstck->sel = NULL;
                     opstck->probe = false;
                     opstck->lazy = NULL;
+                    opstck->optfrom = 0;
+                    opstck->argi = 0;
                     opstck->name = (*_function)->name;
 
 #ifdef SFFE_DIRECT_FPTR
@@ -1320,10 +1426,26 @@ int sffe_parse(sffe **parser, const char *expression)
                                       1]; // here is last function before
                         // opening new op stack
 
+                    /* Nothing at all stands between this separator and the
+                     * one, or the bracket, before it: the argument was left
+                     * empty for the function to fill in. */
+                    bool hole =
+                        (ech > tokens) && (ech[-1] == '(' || ech[-1] == ',');
+                    if (hole) {
+                        check_empty(opstck);
+                        push_empty(opstck);
+                        if (err) {
+                            break;
+                        }
+                    }
+
                     /* one argument of a lazy call has just been compiled */
-                    if (opstck->lazy && !sffe_lazy_bound(opstck->lazy, ui1)) {
+                    if (opstck->lazy &&
+                        (!sffe_lazy_bound(opstck->lazy, ui1) ||
+                         !sffe_lazy_source(opstck->lazy, opstck->argi, hole))) {
                         set_error(MemoryError);
                     }
+                    opstck->argi += 1;
 
                     if (opstck->variadic) {
                         /* no declared arity to check against, just tally one
@@ -1387,6 +1509,32 @@ int sffe_parse(sffe **parser, const char *expression)
                             // opening new op stack
                         if ((opstck->type & 0xE0) == 0x60) {
 
+                            /* the last argument was left empty, exactly as one
+                             * between two separators is */
+                            bool hole = (ech > tokens) && (ech[-1] == ',');
+                            if (hole) {
+                                check_empty(opstck);
+                                push_empty(opstck);
+                                if (err) {
+                                    break;
+                                }
+                            }
+
+                            /* "f()": nothing was written at all, which only a
+                             * function whose every argument has a default can
+                             * mean. It is a call of no arguments, not a call of
+                             * one that was left out, so no place is taken for
+                             * it and none was counted. */
+                            if (ech > tokens && ech[-1] == '(') {
+                                if (opstck->optfrom != 1) {
+                                    set_error_at(InvalidParameters,
+                                                 opstck->name);
+                                }
+                                opstck->type = 0x60;
+                                opstck->args = 0;
+                                opstck->seen = 0;
+                            }
+
                             /* wrong number of parameters */
                             if ((opstck->type & 0x1f) > 1) {
                                 set_error_at(InvalidParameters, opstck->name);
@@ -1396,7 +1544,9 @@ int sffe_parse(sffe **parser, const char *expression)
                              * and this is also where the dispatch resumes, on
                              * the call's own operation emitted just below. */
                             if (!err && opstck->lazy) {
-                                if (!sffe_lazy_bound(opstck->lazy, ui1)) {
+                                if (!sffe_lazy_bound(opstck->lazy, ui1) ||
+                                    !sffe_lazy_source(opstck->lazy,
+                                                      opstck->argi, hole)) {
                                     set_error(MemoryError);
                                 }
                                 sffe_lazy_close(opstck->lazy);

@@ -2,7 +2,7 @@
 
 A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Everything the
 original does, it still does; this describes what has been added or changed,
-and why. Version 1.2.
+and why. Version 1.3.
 
 ## Two binaries
 
@@ -74,6 +74,21 @@ list and those counts are both checked against the parser’s own table by a
 test, so a function that gains or loses an argument cannot go on being
 described with the one it used to have. An argument that may be left out is
 shown in brackets with the value it takes when it is: `a; [b=1]; [c=1]`.
+
+**Leaving a place empty.** An argument shown in brackets may be left out in the
+middle of a call as well as at the end, by writing nothing between the two
+separators: `julian(z; ;3)` gives the first and the third and lets the function
+say what the second is. Spaces make no difference — `f(z, ,5)` and `f(z,,5)`
+are the same call — and an argument that is not in brackets must still be
+written, so `poly( ;1;2)` and `sin(,)` are refused rather than guessed at.
+
+What an empty place means is the function's own business. Most take the default
+they declare; a coefficient of `poly` left empty is a term that is not there,
+so `poly(z;1; ;1)` is `z^2 + 1`; and a branch of `ifiter` or `ifiterl` left
+empty repeats the one before it, which is how a branch is given more than one
+pass in the cycle. `ifiter(f(z); ; ;g(z); ; ; ; )` runs `f` for three passes
+and `g` for five, and costs no more to evaluate than writing them out would:
+where each choice leads is settled once, when the formula is parsed.
 
 A user formula that has not been written yet says `z^2+c`. It used to say the
 burning ship, which is a fractal of its own and a puzzle to meet as a starting

@@ -93,6 +93,12 @@ typedef struct sfargument__ {
      * zeroed when they are made. */
     sfNumber carry;
     unsigned int carried;
+
+    /* Set on an argument the call left empty -- the nothing between two
+     * separators in "f(z, ,5)". What it means is the callee's business: the
+     * value it would have defaulted to, a zero, or the argument before it.
+     * The parser only says that it was not written. */
+    bool omitted;
 } sfarg;
 
 /* sffe function prototype, parameters order is right-to-left (cdecl) */
@@ -122,6 +128,14 @@ typedef struct {
      * selector reads. It is evaluated before the selection and the branches
      * are the arguments before it. */
     bool probe = false;
+    /* Where the optional arguments start, counting the first as 1: the
+     * position from which an argument may be left out, either by stopping
+     * early or by leaving its place empty, as in "f(z, ,5)". Two is the usual
+     * one, the first argument being the thing the function works on. One says
+     * even that may go, and so that "f()" is a call with every default taken.
+     * Zero, the default, says none of them may: a function with no defaults
+     * has nothing to fall back on. */
+    unsigned char optfrom = 0;
 } sffunction;
 
 /* Compiled form of a lazy call: the operations of argument k are the range
@@ -135,6 +149,12 @@ typedef struct sflazy__ {
      * before the choice rather than because of it; NULL for a call that
      * chooses on the iteration alone */
     sfarg *probe;
+    /* Which block each choice actually runs, one entry per block. They are
+     * the same thing until a call leaves an argument empty, which for these
+     * means "the one before it": ifiter(f, , , g, , , , ) runs f on three
+     * passes and g on five, and that is settled here, once, rather than
+     * looked up on every pass. */
+    unsigned int *source;
 } sflazy;
 
 /* basic sffe 'stack' operation ( function + result slot ) */

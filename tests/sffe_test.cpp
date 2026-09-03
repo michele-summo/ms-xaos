@@ -266,7 +266,33 @@ static const testcase cases[] = {
     T_VAL_AT("ifiter(-z,-c)", 1, -3, 0, "unary minus inside the arguments"),
     T_VAL_AT("ifiter(ifiter(1,2),3)", 0, 1, 0, "nested variadic calls"),
     T_ERR("ifiter()", InvalidParameters, "variadic call with no arguments"),
-    T_ERR("ifiter(1,)", InvalidParameters, "variadic call with a trailing comma"),
+
+    /* --- arguments left out ------------------------------------------------
+     * A function that declares defaults may be called with a place left empty
+     * as well as with the tail cut short: "f(z, ,5)" gives the first and the
+     * third and lets the function say what the second is. What an empty place
+     * means is the function's own business -- the default it declares, a zero
+     * for poly, the branch before it for ifiter -- and a function that
+     * declares no defaults has nothing to fall back on and must refuse.
+     */
+    T_VAL("poly(2,1, ,1)", 5, 0, "an empty coefficient is a term that is not there"),
+    T_VAL("poly( 2 , 1 , , 1 )", 5, 0, "spaces do not make a place any less empty"),
+    T_VAL("poly(2, , , )", 0, 0, "every coefficient left out is the zero polynomial"),
+    T_VAL("julian(4, ,1)", 4, 0, "an empty place takes the declared default"),
+    T_VAL("julian(4,2, )", 16, 0, "and so does one at the end"),
+    T_VAL("inveps(2, )", 0.4987531172069825, 0, "inveps falls back on {0.01,0.01}"),
+    T_VAL_AT("ifiter(1,)", 1, 1, 0, "an empty branch repeats the one before it"),
+    T_VAL_AT("ifiter(1, , ,2, , , , )", 2, 1, 0, "three passes on the first branch"),
+    T_VAL_AT("ifiter(1, , ,2, , , , )", 3, 2, 0, "and five on the second"),
+    T_VAL_AT("ifiter(1, , ,2, , , , )", 7, 2, 0, "to the last of them"),
+    T_VAL_AT("ifiter(1, , ,2, , , , )", 8, 1, 0, "and round again"),
+    T_VAL_AT("ifiterl(1, ,2, )", 1, 1, 0, "holding repeats the branch as well"),
+    T_VAL("julian(4,+,1)", 4, 0, "a plus with nothing after it leaves the place empty"),
+    T_ERR("sin(,)", InvalidParameters, "a function with no defaults cannot leave a place empty"),
+    T_ERR("atan2s(1, )", InvalidParameters, "nor can one of fixed arity"),
+    T_ERR("poly(,1,2)", InvalidParameters, "the first argument must be written"),
+    T_ERR("julian( )", InvalidParameters, "and a call of nothing cannot supply it"),
+    T_ERR("ifiter(,1)", InvalidParameters, "the first branch too must be written"),
 
     /* --- lazy evaluation -------------------------------------------------
      * Only the selected branch may run. Over 6 iterations an eagerly
@@ -283,6 +309,8 @@ static const testcase cases[] = {
            "a term before the call still runs every iteration"),
     T_LAZY("ifiter(ifiter(c0(z),c1(z)),c2(z))", "3,0,3",
            "a skipped branch does not run the calls nested inside it"),
+    T_LAZY("ifiter(c0(z), , ,c1(z))", "5,1,0",
+           "an empty branch runs the block of the branch before it"),
 
     /* --- formulas shipped in examples/ and catalogs/ --------------------
      * These are the compatibility corpus: whatever we change in the parser,
