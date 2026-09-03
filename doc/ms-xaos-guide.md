@@ -23,6 +23,20 @@ does not know the command is refused, which is the intent — a picture computed
 at 113 bits cannot be reproduced at 64, and failing to open is more honest than
 drawing something else.
 
+## Numbers in the dialogs
+
+A field that asks for a number takes one written any way it can be read, 1e-18
+as readily as 0.5. The single-field dialogs used a spin box, which keeps two
+decimal places unless told otherwise, so 0.01 survived and 0.001 became
+nothing — a Newton convergence of a millionth could not be entered at all.
+
+What is shown back is the shortest text that reads as the very number held, so
+a millionth of a millionth looks like 1e-18 rather than like
+9.99999999999999999978e-19, which is what printing every digit the build
+carries makes of a decimal a binary float cannot hold exactly. A coordinate
+that needs all twenty-one digits still gets them: needing them is the same
+thing as not reading back unchanged without them.
+
 ## Saved positions
 
 The view is written at the full precision of the build — 21 significant digits

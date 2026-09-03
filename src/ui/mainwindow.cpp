@@ -1113,12 +1113,28 @@ void MainWindow::showDialog(const char *name)
                     }
                     case DIALOG_FLOAT:
                     {
-                        qInputDialog->setDoubleMaximum(1E300);
-                        qInputDialog->setDoubleMinimum(-1E300);
-                        qInputDialog->setDoubleValue(dialog->deffloat);
-                        connect(qInputDialog, &QInputDialog::doubleValueSelected, qInputDialog,
-                            [=](const double &value) {
-                                param->number = value;
+                        /* Typed rather than spun.
+                         *
+                         * The spin box this used keeps two decimal places
+                         * unless told otherwise, so 0.01 survived and 0.001
+                         * became nothing: a Newton convergence of a millionth
+                         * could not be entered at all. Giving it more decimals
+                         * would only move the wall, these values spanning many
+                         * orders of magnitude, and it would still refuse
+                         * exponent notation.
+                         *
+                         * A line of text takes 1e-9 as readily as 0.5, and is
+                         * what the several-field dialog beside this one has
+                         * always used -- read back with the same reader, so a
+                         * quad build keeps the digits a double would drop. */
+                        qInputDialog->setInputMode(QInputDialog::TextInput);
+                        qInputDialog->setTextValue(
+                            CustomDialog::format(dialog->deffloat));
+                        connect(qInputDialog, &QInputDialog::textValueSelected, qInputDialog,
+                            [=](const QString &text) {
+                                char *end;
+                                QByteArray typed = text.toUtf8();
+                                param->number = xstrtonum(typed.constData(), &end);
                                 menuActivate(item, param);
                             });
                         break;

@@ -16,24 +16,51 @@
 
 QStringList fnames = {};
 
+/* One printing of a number, to the asked-for number of significant digits.
+ * Small values come out in exponent notation, which is what %g does and what
+ * a convergence limit or a deep coordinate wants. */
+static void print_digits(char *buf, size_t size, number_t number, int digits)
+{
+    char fs[16];
+#ifdef USE_FLOAT128
+    snprintf(fs, sizeof(fs), "%%.%iQg", digits);
+    quadmath_snprintf(buf, size, fs, (__float128)number);
+#else
+#ifdef USE_LONG_DOUBLE
+    snprintf(fs, sizeof(fs), "%%.%iLg", digits);
+    snprintf(buf, size, fs, (long double)number);
+#else
+    snprintf(fs, sizeof(fs), "%%.%ig", digits);
+    snprintf(buf, size, fs, (double)number);
+#endif
+#endif
+}
+
 QString CustomDialog::format(number_t number)
 {
     char buf[256];
-    char fs[10];
-    /* Shown to as many digits as the build actually carries: a field that
-     * prints fewer loses precision the moment the user presses OK. */
-#ifdef USE_FLOAT128
-    snprintf(fs, sizeof(fs), "%%.%iQg", NUMBER_DIGITS);
-    quadmath_snprintf(buf, 256, fs, (__float128)number);
-#else
-#ifdef USE_LONG_DOUBLE
-    snprintf(fs, sizeof(fs), "%%.%iLg", NUMBER_DIGITS);
-    snprintf(buf, 256, fs, (long double)number);
-#else
-    snprintf(fs, sizeof(fs), "%%.%ig", NUMBER_DIGITS);
-    snprintf(buf, 256, fs, (double)number);
-#endif
-#endif
+    char *end;
+
+    /* The shortest text that reads back as this very number.
+     *
+     * Every digit the build carries used to be printed, so that a field could
+     * not lose precision when it was read back. That is right for a
+     * coordinate at a deep zoom and noise everywhere else: a convergence of
+     * 1e-18 came back looking like 9.99999999999999999978e-19 and a
+     * thousandth like 0.000999999999999999999958, because the decimal that
+     * was typed is not one a binary float holds exactly and twenty-one digits
+     * say so at length.
+     *
+     * Trying the lengths in turn and stopping at the first that reads back
+     * unchanged keeps the guarantee exactly -- that is what reading back
+     * unchanged means -- while saying 1e-18 where 1e-18 is what it holds, and
+     * still spelling out every digit of a coordinate that needs them. */
+    for (int digits = 1; digits < NUMBER_DIGITS; digits++) {
+        print_digits(buf, sizeof(buf), number, digits);
+        if (xstrtonum(buf, &end) == number && end != buf && *end == 0)
+            return QString(buf);
+    }
+    print_digits(buf, sizeof(buf), number, NUMBER_DIGITS);
     return QString(buf);
 }
 
