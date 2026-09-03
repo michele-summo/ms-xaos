@@ -103,7 +103,10 @@ typedef double number_t;
 // Default user formula
 // #define USER_FORMULA "z^log(c)*p"
 // #define USER_FORMULA "c^z+im(p)*{0;1}"
-#define USER_FORMULA "(abs(re(z))+i*abs(im(z)))^2+c"
+/* What the user formula holds before anything is typed into it. The burning
+ * ship was there, which is a fractal of its own and a puzzle to meet as a
+ * starting point; the Mandelbrot is what a formula is expected to say. */
+#define USER_FORMULA "z^2+c"
 
 // Disable optional statistics collection and reporting
 //#define STATISTICS

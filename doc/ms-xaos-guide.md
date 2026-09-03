@@ -72,7 +72,12 @@ Each row of the function list says what the call takes and in what order —
 "a; b", or "seed; size; degradation" where the position means something. The
 list and those counts are both checked against the parser’s own table by a
 test, so a function that gains or loses an argument cannot go on being
-described with the one it used to have.
+described with the one it used to have. An argument that may be left out is
+shown in brackets with the value it takes when it is: `a; [b=1]; [c=1]`.
+
+A user formula that has not been written yet says `z^2+c`. It used to say the
+burning ship, which is a fractal of its own and a puzzle to meet as a starting
+point.
 
 **`ifiterf(a; b)`** — evaluates `a` on every pass but the final one and `b`
 on that. The final pass is the last the iteration limit allows: a formula has
@@ -110,7 +115,8 @@ the bargain.
 noise over the point, giving blobs rather than per-pixel snow. `size`
 (default `1+i`) is the average width of a blob along the real axis and its
 height along the imaginary one.
-`degradation` (default `1+i`) shrinks them as the iteration proceeds: the
+`degradation` (default `0.5+0.5i`, halving them each pass) shrinks them as
+the iteration proceeds: the
 size is multiplied by it at every pass, component by component, so `0.5+0.2i`
 over `1+i` gives `1+i` on the first pass, then `0.5+0.2i`, then `0.25+0.04i`.
 A zero in either component of either argument returns zero rather than dividing

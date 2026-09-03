@@ -142,10 +142,10 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sftwave, 1, "twave\0"},       /* triangle wave of period 2, in [-1, 1] */
 
     /* --- assorted --- */
-    {sfjulian, 3, "julian\0"}, /* |a|^b * e^(i*c*arg(a)) */
+    {sfjulian, SFFE_VARIADIC, "julian\0"}, /* |a|^b * e^(i*c*arg(a)) */
     /* inveps(a, b): real(a)/(|a|^2 + real(b)) - i*imag(a)/(|a|^2 + imag(b)),
      * an inverse softened by b so that it stays finite at the origin */
-    {sfinveps, 2, "inveps\0"},
+    {sfinveps, SFFE_VARIADIC, "inveps\0"},
     /* atan2s(y, x): atan2 of each pair of components. Differs from atan2 only
      * on real arguments, where negating one gives a negative zero and
      * natan2(-0, -0) is -pi rather than 0. */
@@ -153,7 +153,7 @@ const sffunction sfcmplxfunc[sffnctscount] = {
 
     /* ngon(a, b, c, d): folds a about the centre b onto a c-sided polygon,
      * the corner radius raised to the power d */
-    {sfngon, 4, "ngon\0"},
+    {sfngon, SFFE_VARIADIC, "ngon\0"},
     /* parchment(a, b): quantises the angle of a into |b| sectors, keeping |a| */
     {sfparchment, 2, "parchment\0"},
     /* parchmenta(a, b): as parchment, but mirroring alternate half sectors */
@@ -911,13 +911,31 @@ sfarg *sftwave(sfarg *const p)
     return sfaram1(p);
 }
 
+/* The argument in a given place, counting from the first one written, or the
+ * value it takes when the call stops short of it.
+ *
+ * A call with defaults has to be variadic -- the parser counts what it is
+ * given and hands the count over -- and the sfaramN macros count from the
+ * other end, which is no use when the end moves. */
+static inline cmplx sfarg_or(sfarg *const p, unsigned int place, number_t re,
+                             number_t im)
+{
+    if (place <= p->argc)
+        return sfvalue(p->args[p->argc - place]);
+    cmplx fallback;
+    GSL_SET_COMPLEX(&fallback, re, im);
+    return fallback;
+}
+
 sfarg *sfjulian(sfarg *const p)
 {
-    gsl_complex z = sfvalue(sfaram3(p));
+    /* the modulus raised to the first, the angle multiplied by the first:
+     * julian(a) is a itself */
+    gsl_complex z = sfarg_or(p, 1, 0, 0);
     gsl_complex m;
     GSL_SET_COMPLEX(&m, gsl_complex_abs(z), 0);
-    m = gsl_complex_pow(m, sfvalue(sfaram2(p)));
-    gsl_complex b = sfvalue(sfaram1(p));
+    m = gsl_complex_pow(m, sfarg_or(p, 2, 1, 0));
+    gsl_complex b = sfarg_or(p, 3, 1, 0);
     number_t mx = GSL_REAL(m);
     number_t my = GSL_IMAG(m);
     number_t arg = gsl_complex_arg(z);
@@ -928,17 +946,23 @@ sfarg *sfjulian(sfarg *const p)
 
     GSL_REAL(sfvalue(p)) = byg*(mx*cosbxg - my*sinbxg);
     GSL_IMAG(sfvalue(p)) = byg*(my*cosbxg + mx*sinbxg);
-    return sfaram3(p);
+    return sfaram1(p);
 }
 
 sfarg *sfinveps(sfarg *const p)
 { /* cinv */
-    number_t x = GSL_REAL(sfvalue(sfaram2(p)));
-    number_t y = GSL_IMAG(sfvalue(sfaram2(p)));
+    cmplx a = sfarg_or(p, 1, 0, 0);
+    /* A hundredth, which softens the pole without moving much else. Written
+     * as a division: the literal 0.01 is a double, and promoting it gives a
+     * different number from the one this build reads out of "0.01". */
+    const number_t hundredth = (number_t)1 / 100;
+    cmplx eps = sfarg_or(p, 2, hundredth, hundredth);
+    number_t x = GSL_REAL(a);
+    number_t y = GSL_IMAG(a);
     number_t delta = (x*x + y*y);
-    GSL_REAL(sfvalue(p)) = x/(delta + GSL_REAL(sfvalue(sfaram1(p))));
-    GSL_IMAG(sfvalue(p)) = -y/(delta + GSL_IMAG(sfvalue(sfaram1(p))));
-    return sfaram2(p);
+    GSL_REAL(sfvalue(p)) = x/(delta + GSL_REAL(eps));
+    GSL_IMAG(sfvalue(p)) = -y/(delta + GSL_IMAG(eps));
+    return sfaram1(p);
 }
 
 sfarg *sfatan2s(sfarg *const p)
@@ -954,8 +978,10 @@ sfarg *sfngon(sfarg *const p)
     gsl_complex i;
     GSL_SET_COMPLEX(&i, 0.0, 1.0);
 
-    gsl_complex n = sfvalue(sfaram2(p));
-    gsl_complex zc = gsl_complex_sub(sfvalue(sfaram4(p)), sfvalue(sfaram3(p)));
+    /* three sides about the origin, corners left where they are */
+    gsl_complex centre = sfarg_or(p, 2, 0, 0);
+    gsl_complex n = sfarg_or(p, 3, 3, 0);
+    gsl_complex zc = gsl_complex_sub(sfarg_or(p, 1, 0, 0), centre);
     number_t t = gsl_complex_arg(zc);
     gsl_complex tn = gsl_complex_mul_real(n, t * N_1_2PI);
     tn = gsl_complex_add_real(tn, 0.5);
@@ -969,12 +995,12 @@ sfarg *sfngon(sfarg *const p)
     gsl_complex scn = gsl_complex_sin(tn);
     gsl_complex rn = gsl_complex_add(gsl_complex_mul_real(ccn, cr),
                                      gsl_complex_mul_real(scn, sr));
-    rn = gsl_complex_mul_real(gsl_complex_pow(rn, sfvalue(sfaram1(p))),
+    rn = gsl_complex_mul_real(gsl_complex_pow(rn, sfarg_or(p, 4, 1, 0)),
                               gsl_complex_abs(zc));
     gsl_complex argexp = gsl_complex_exp(gsl_complex_mul_real(i, t));
-    sfvalue(p) =  gsl_complex_add(gsl_complex_mul(rn, argexp), sfvalue(sfaram3(p)));
+    sfvalue(p) = gsl_complex_add(gsl_complex_mul(rn, argexp), centre);
 
-    return sfaram4(p);
+    return sfaram1(p);
 }
 
 sfarg *sfparchment(sfarg *const p)
@@ -1530,7 +1556,10 @@ static RANDSC_INLINE int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, 
 {
     cmplx size, degradation, seed;
     GSL_SET_COMPLEX(&size, 1, 1);
-    GSL_SET_COMPLEX(&degradation, 1, 1);
+    /* Half each pass. A degradation of one, which was the default, leaves the
+     * cells the size they started and so wastes the argument on a call that
+     * says nothing; a half is the shrinking one asks for when one asks. */
+    GSL_SET_COMPLEX(&degradation, 0.5, 0.5);
     GSL_SET_COMPLEX(&seed, 0, 0);
     int level = 1, mode = 0;
 

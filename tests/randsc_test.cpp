@@ -62,6 +62,7 @@ int main(void)
     char what[96];
     sffe *bare = compile("randsc({7,0})");
     sffe *full = compile("randsc({7,0};{1,1};{1,1})");
+    sffe *asdefault = compile("randsc({7,0};{1,1};{0.5,0.5})");
     sffe *fade = compile("randsc({7,0};{1,1};{0.5,0.2})");
     sffe *sized = compile("randsc({7,0};{0.5,0.2};{1,1})");
     sffe *half = compile("randsc({7,0};{1,1};{0.5,1})");
@@ -72,7 +73,7 @@ int main(void)
         return 1;
 
     check(at(bare, 0.3, 0.7, 0) == at(full, 0.3, 0.7, 0),
-          "the defaults are size 1+i and degradation 1+i");
+          "the defaults are size 1+i and degradation a half each way");
 
     /* degradation to the power zero is one, so the first pass uses the size as
      * written -- which is the bare call with no degradation at all. */
@@ -94,9 +95,17 @@ int main(void)
     check(at(half, 0.3, 0.7, 5) == at(fifth, 0.3, 0.7, 5),
           "a degradation of one on one component leaves it alone");
 
-    /* With degradation 1+i nothing shrinks, so pass nine is still size 1+i. */
-    check(at(full, 0.3, 0.7, 9) == at(bare, 0.3, 0.7, 9),
-          "degradation 1+i leaves the size alone");
+    /* That a degradation of one leaves the size alone was checked here by
+     * comparing it against a call that said nothing, which worked only while
+     * saying nothing meant one. It says a half now, and the property is kept
+     * by "a degradation of one on one component leaves it alone" above --
+     * that one exercises the same multiplication by one, and against a
+     * component that does move rather than against itself.
+     *
+     * What is worth checking here is the default: a call that says nothing
+     * halves the cells each pass, which is what the two written out say. */
+    check(at(bare, 0.3, 0.7, 4) == at(asdefault, 0.3, 0.7, 4),
+          "saying nothing is size 1+i halving each pass");
 
     check(at(zsize, 0.3, 0.7, 0) == 0, "a zero in size declines to compute");
     check(at(zfade, 0.3, 0.7, 0) == 0,
@@ -574,6 +583,52 @@ int main(void)
                 check(GSL_REAL(v) == 0 && GSL_IMAG(v) == 2,
                       "and the arithmetic is complex throughout");
             }
+        }
+    }
+
+    /* Defaults, where a call that stops short takes them.
+     *
+     * Each is checked against the same call with the value written out: the
+     * two must agree to the bit, or the default is not the value it is said
+     * to be. */
+    {
+        struct {
+            const char *shorthand;
+            const char *written;
+            const char *what;
+        } defaults[] = {
+            {"julian({0.4,0.7})", "julian({0.4,0.7};{1,0};{1,0})",
+             "julian defaults to the first power and the first turn"},
+            {"julian({0.4,0.7};{2,0})", "julian({0.4,0.7};{2,0};{1,0})",
+             "and to the first turn when only the power is given"},
+            {"inveps({0.4,0.7})", "inveps({0.4,0.7};{0.01,0.01})",
+             "inveps softens by a hundredth each way"},
+            {"ngon({0.4,0.7})", "ngon({0.4,0.7};{0,0};{3,0};{1,0})",
+             "ngon defaults to a triangle about the origin"},
+            {"ngon({0.4,0.7};{0.1,0.2})",
+             "ngon({0.4,0.7};{0.1,0.2};{3,0};{1,0})",
+             "and to a triangle when only the centre is given"},
+            {"randsc({7,0};{1,1})", "randsc({7,0};{1,1};{0.5,0.5})",
+             "randsc halves its cells each pass"},
+            {"randscq({7,0};{1,1})", "randscq({7,0};{1,1};{0.5,0.5};{1,0})",
+             "and so does the mosaic, unfolded"},
+            {"trap({0.4,0.7})", "trap({0.4,0.7};{0,0};{0,0};{1,0})",
+             "trap measures to the centre by default"},
+            {"stripe({0.4,0.7})", "stripe({0.4,0.7};{4,0})",
+             "stripe lays four to a turn"},
+        };
+        for (int i = 0; i < 9 && !failures; i++) {
+            sffe *shorthand = compile(defaults[i].shorthand);
+            sffe *written = compile(defaults[i].written);
+            if (failures)
+                break;
+            /* over several passes, since a default may only show itself once
+             * the degradation has had something to bite on */
+            int same = 1;
+            for (unsigned int n = 0; n < 4; n++)
+                if (at(shorthand, 0.3, 0.7, n) != at(written, 0.3, 0.7, n))
+                    same = 0;
+            check(same, defaults[i].what);
         }
     }
 

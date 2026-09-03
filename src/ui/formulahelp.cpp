@@ -89,9 +89,13 @@ static QWidget *buildTable(const struct formula_help_row *rows,
         for (const struct formula_help_row *r = rows; r->name || r->section; r++)
             if (r->args)
                 taken = qMax(taken, metrics.horizontalAdvance(QString(r->args)));
+        /* Capped, and wrapping past the cap: a call with five optional
+         * arguments and their defaults written out is longer than any window
+         * should give to a column that is not the description. */
+        int cap = 34 * metrics.horizontalAdvance(QChar('m'));
         table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Fixed);
-        table->setColumnWidth(1,
-                              taken + 3 * metrics.horizontalAdvance(QChar('m')));
+        table->setColumnWidth(
+            1, qMin(taken + 3 * metrics.horizontalAdvance(QChar('m')), cap));
     }
     table->horizontalHeader()->setSectionResizeMode(columns - 1,
                                                     QHeaderView::Stretch);

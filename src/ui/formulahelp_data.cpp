@@ -94,10 +94,10 @@ const struct formula_help_row formula_help_functions[] = {
     {"sawtooth", "a", "x - nfloor(x), a ramp in [0, 1)", NULL}, /* 1 */
     {"twave", "a", "triangle wave of period 2, in [-1, 1]", NULL}, /* 1 */
     {NULL, NULL, NULL, "assorted"},
-    {"julian", "a; b; c", "|a|^b * e^(i*c*arg(a))", NULL}, /* 3 */
-    {"inveps", "a; b", "an inverse softened by b, so that it stays finite at the origin", NULL}, /* 2 */
+    {"julian", "a; [b=1]; [c=1]", "|a|^b * e^(i*c*arg(a))", NULL}, /* 3 */
+    {"inveps", "a; [b=0.01+0.01i]", "an inverse softened by b, so that it stays finite at the origin", NULL}, /* 2 */
     {"atan2s", "a; b", "atan2 of each pair of components; differs from atan2 on real arguments only", NULL}, /* 2 */
-    {"ngon", "a; b; c; d", "folds a about the centre b onto a c-sided polygon, corner radius raised to d", NULL}, /* 4 */
+    {"ngon", "a; [b=0]; [c=3]; [d=1]", "folds a about the centre b onto a c-sided polygon, corner radius raised to d", NULL}, /* 4 */
     {"parchment", "a; b", "quantises the angle of a into |b| sectors, keeping |a|", NULL}, /* 2 */
     {"parchmenta", "a; b", "as parchment, but mirroring alternate half sectors", NULL}, /* 2 */
     {NULL, NULL, NULL, "snapping to a grid of step 1/n; n == 0 leaves the value alone"},
@@ -116,16 +116,16 @@ const struct formula_help_row formula_help_functions[] = {
     {"ifiterl", "a; b; ...", "as ifiter, but holding the last argument once the iterations run out", NULL}, /* variadic */
     {"ifiterf", "a; b", "b on the last iteration the limit allows, a on the rest; only the chosen one runs", NULL}, /* 2 */
     {"ifiterr", "a; b; n", "a while the iteration is below n, b from n on; only the chosen one runs", NULL}, /* 3 */
-    {NULL, NULL, NULL, "randomness: randsc(seed; size; degradation; kaleidoscope; mode), all but the seed optional, a new field every iteration -- the last two are in the Values tab"},
+    {NULL, NULL, NULL, "randomness: all but the seed optional, and a new field every iteration; what the kaleidoscope and its mode do is in the Values tab"},
     {"rand", "a", "real(a) times a random number in [0, 1); depends on call order, so a redraw differs", NULL},
-    {"randsc", "seed; size; degradation; kaleidoscope; mode", "coherent noise over the point: soft blobs, size wide and size high", NULL},
-    {"randscq", "seed; size; degradation; kaleidoscope; mode", "the same field with no interpolation: a mosaic of flat square cells", NULL},
-    {"randscp", "seed; size; degradation; kaleidoscope; mode", "the same field cut into irregular flat polygons, with straight edges", NULL},
-    {"randsch", "seed; size; degradation; kaleidoscope; mode", "the same field cut into hexagons: a honeycomb of flat cells", NULL},
-    {"randsct", "seed; size; degradation; kaleidoscope; mode", "the same field cut into equilateral triangles, alternating in orientation", NULL},
+    {"randsc", "seed; [size=1+i]; [degradation=0.5+0.5i]; [kaleidoscope=1]; [mode=0]", "coherent noise over the point: soft blobs, size wide and size high", NULL},
+    {"randscq", "seed; [size=1+i]; [degradation=0.5+0.5i]; [kaleidoscope=1]; [mode=0]", "the same field with no interpolation: a mosaic of flat square cells", NULL},
+    {"randscp", "seed; [size=1+i]; [degradation=0.5+0.5i]; [kaleidoscope=1]; [mode=0]", "the same field cut into irregular flat polygons, with straight edges", NULL},
+    {"randsch", "seed; [size=1+i]; [degradation=0.5+0.5i]; [kaleidoscope=1]; [mode=0]", "the same field cut into hexagons: a honeycomb of flat cells", NULL},
+    {"randsct", "seed; [size=1+i]; [degradation=0.5+0.5i]; [kaleidoscope=1]; [mode=0]", "the same field cut into equilateral triangles, alternating in orientation", NULL},
     {NULL, NULL, NULL, "watching the orbit: both hand back their argument until the last iteration, and what they gathered on it, which the inside colouring modes then draw"},
-    {"trap", "a; shape; centre; size", "how near the orbit ever came to a shape; the shapes are in the Values tab", NULL},
-    {"stripe", "a; density", "the average of (sin(density*arg a)+1)/2 along the orbit; density a whole number, how many stripes go round a turn", NULL},
+    {"trap", "a; [shape=0]; [centre=0]; [size=1]", "how near the orbit ever came to a shape; the shapes are in the Values tab", NULL},
+    {"stripe", "a; [density=4]", "the average of (sin(density*arg a)+1)/2 along the orbit; density a whole number, how many stripes go round a turn", NULL},
     {NULL, NULL, NULL, "polynomials"},
     {"poly", "z; k1; k2; ...", "k1*z^(m-1) + k2*z^(m-2) + ... + km: the first coefficient written multiplies the highest power, the last stands alone", NULL},
     {NULL, NULL, NULL, NULL}};
