@@ -23,6 +23,24 @@ const char *qt_gettext(const char * /*context*/, const char *text)
 
 static int failures = 0;
 
+/* How many arguments a "takes" line describes: the parts between semicolons,
+ * with a trailing "..." meaning any number more. */
+static int described_arity(const char *args, int *open_ended)
+{
+    *open_ended = 0;
+    if (args == NULL || *args == 0)
+        return 0;
+    int parts = 1;
+    for (const char *c = args; *c; c++)
+        if (*c == ';')
+            parts++;
+    if (strstr(args, "...") != NULL) {
+        *open_ended = 1;
+        parts--; /* the "..." is not an argument of its own */
+    }
+    return parts;
+}
+
 int main(void)
 {
     /* The first sffnctsfirst entries are the operators, which sffe_function
@@ -41,6 +59,36 @@ int main(void)
             printf("FAIL   \"%s\" is in the parser and not in the help table\n",
                    name);
             failures++;
+        }
+    }
+
+    /* And each must be described as taking what it takes. The arity is the
+     * parser's own, so a function that gains or loses an argument cannot go on
+     * being described with the one it used to have. */
+    for (int i = 0; i < sffnctscount; i++) {
+        const char *name = sfcmplxfunc[i].name;
+        for (const struct formula_help_row *r = formula_help_functions;
+             r->name || r->section; r++) {
+            if (!r->name || strcmp(r->name, name))
+                continue;
+            int open_ended = 0;
+            int described = described_arity(r->args, &open_ended);
+            int actual = sfcmplxfunc[i].parcnt;
+            if (actual == SFFE_VARIADIC) {
+                if (!open_ended && described == 0) {
+                    printf("FAIL   \"%s\" takes any number of arguments and "
+                           "says nothing about them\n",
+                           name);
+                    failures++;
+                }
+            } else if (described != actual && described != 0) {
+                /* zero stands for the operators, which are shown whole as
+                 * "a + b" and have nothing to list */
+                printf("FAIL   \"%s\" takes %d, described as taking %d\n", name,
+                       actual, described);
+                failures++;
+            }
+            break;
         }
     }
 

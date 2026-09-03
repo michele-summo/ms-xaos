@@ -12,6 +12,12 @@
 
 struct formula_help_row {
     const char *name;    /* NULL on a section heading */
+    /* What the call takes, in order: "a; b" for two, "seed; size" where the
+     * position means something, empty where there is nothing to take. A test
+     * counts these against the arity the parser holds, so a function that
+     * gains or loses an argument cannot go on being described with the old
+     * one. NULL on a section heading. */
+    const char *args;
     const char *summary; /* NULL on a section heading */
     const char *section; /* set only on a section heading */
 };

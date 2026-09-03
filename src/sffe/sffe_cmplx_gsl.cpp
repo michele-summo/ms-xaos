@@ -202,7 +202,11 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     /* Watching the orbit rather than the point: one number about the whole of
      * it, handed back on the last pass. 1 to 4 arguments and so variadic. */
     {sftrap, SFFE_VARIADIC, "trap\0"},
-    {sfstripe, SFFE_VARIADIC, "stripe\0"}};
+    {sfstripe, SFFE_VARIADIC, "stripe\0"},
+
+    /* A polynomial in the first argument, the rest being its coefficients
+     * from the highest power down. */
+    {sfpoly, SFFE_VARIADIC, "poly\0"}};
 
 const char sfcnames[sfvarscount][6] = {"pi\0", "pi_2\0", "pi2\0",
                                        "e\0",  "i\0",    "rnd\0"};
@@ -1810,6 +1814,44 @@ sfarg *sfrandscp(sfarg *const p)
  * @param p The call; the arguments are read right to left, see sfaramN.
  * @return Pointer to the last argument, per the sffe convention.
  */
+/**
+ * @brief A polynomial in the first argument, the rest being its coefficients.
+ * @details poly(z; k1; k2; ...; km) is
+ *
+ *     k1*z^(m-1) + k2*z^(m-2) + ... + k(m-1)*z + km
+ *
+ * so the first coefficient written multiplies the highest power and the last
+ * stands alone. Writing the coefficients in the order one says them is what
+ * makes the call read like the polynomial.
+ *
+ * Worked out by Horner's rule -- start at k1 and repeatedly multiply by z and
+ * add the next -- which is m-1 multiplications rather than the m(m-1)/2 that
+ * raising each power separately would take, and is the more accurate of the
+ * two into the bargain, every product being formed from one that was already
+ * rounded once rather than from a power rounded m times.
+ *
+ * With no coefficients at all there are no terms, and a sum of no terms is
+ * zero.
+ *
+ * @param p The call; the arguments are read right to left, see sfaramN.
+ * @return Pointer to the last argument, per the sffe convention.
+ */
+sfarg *sfpoly(sfarg *const p)
+{
+    if (p->argc < 2) {
+        GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
+        return sfaram1(p);
+    }
+    /* args[argc - 1] is the first written, so z; the coefficients follow it
+     * from args[argc - 2] down to args[0]. */
+    cmplx z = sfvalue(p->args[p->argc - 1]);
+    cmplx acc = sfvalue(p->args[p->argc - 2]);
+    for (int k = p->argc - 3; k >= 0; k--)
+        acc = gsl_complex_add(gsl_complex_mul(acc, z), sfvalue(p->args[k]));
+    sfvalue(p) = acc;
+    return sfaram1(p);
+}
+
 /* Orbit traps and stripe averaging.
  *
  * Both watch the orbit go by and keep one number about the whole of it -- the

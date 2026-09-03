@@ -66,8 +66,13 @@ since none of them is elementary and one does not reach for them by accident.
 A fourth tab lists the numbers that appear as arguments and mean something
 particular — which shape a trap measures against, which mirror the
 kaleidoscope folds with — rather than burying them in the description of the
-function that takes them. The function list is checked against the parser’s own
-table by a test, so it cannot drift.
+function that takes them.
+
+Each row of the function list says what the call takes and in what order —
+"a; b", or "seed; size; degradation" where the position means something. The
+list and those counts are both checked against the parser’s own table by a
+test, so a function that gains or loses an argument cannot go on being
+described with the one it used to have.
 
 **`ifiterf(a; b)`** — evaluates `a` on every pass but the final one and `b`
 on that. The final pass is the last the iteration limit allows: a formula has
@@ -87,6 +92,19 @@ alias should use the name that remains — the function is identical.
 
 **`erf(z)`** — the error function over the complex plane. Accurate to about
 three ulp inside a bailout of two, where a fractal actually iterates.
+
+**`poly(z; k1; k2; ...; km)`** — a polynomial in `z`:
+
+    k1*z^(m-1) + k2*z^(m-2) + ... + k(m-1)*z + km
+
+The first coefficient written multiplies the highest power and the last stands
+alone, so the call reads in the order one says the polynomial. Worked out by
+Horner's rule, which is m−1 multiplications rather than the m(m−1)/2 that
+raising each power separately would take, and the more accurate of the two into
+the bargain.
+
+    poly(z;1;0;0)+c            the Mandelbrot, written out
+    poly(z;1;0;0;{0.7,0.2})    z^3 + 0.7+0.2i
 
 **`randsc(seed; size; degradation; kaleidoscope; mode)`** — coherent
 noise over the point, giving blobs rather than per-pixel snow. `size`

@@ -544,6 +544,39 @@ int main(void)
         sffe_maxiter = 0;
     }
 
+    /* poly: a polynomial in its first argument, the rest its coefficients
+     * from the highest power down. */
+    {
+        sffe *quad = compile("poly({2,0};{3,0};{4,0};{5,0})");
+        sffe *linear = compile("poly({2,0};{3,0};{4,0})");
+        sffe *constant = compile("poly({2,0};{7,0})");
+        sffe *empty = compile("poly({2,0})");
+        sffe *cube = compile("poly({2,0};{1,0};{0,0};{0,0};{0,0})");
+        if (!failures) {
+            /* 3*4 + 4*2 + 5 = 25 */
+            check(at(quad, 0.3, 0.7, 0) == 25,
+                  "poly with three coefficients is a quadratic");
+            check(at(linear, 0.3, 0.7, 0) == 10, "with two, a line");
+            check(at(constant, 0.3, 0.7, 0) == 7, "with one, a constant");
+            check(at(empty, 0.3, 0.7, 0) == 0,
+                  "with none, a sum of no terms");
+            check(at(cube, 0.3, 0.7, 0) == 8, "the first coefficient takes "
+                                              "the highest power");
+
+            /* The imaginary part goes through the same arithmetic, so a
+             * complex argument is worth one check of its own: (1+i)^2 = 2i,
+             * so poly(1+i; 1; 0; 0) is 2i. */
+            sffe *comp = compile("poly({1,1};{1,0};{0,0};{0,0})");
+            if (!failures) {
+                GSL_SET_COMPLEX(&sffe_position, 0.3, 0.7);
+                sffe_iteration = 0;
+                sfNumber v = sffe_eval(comp);
+                check(GSL_REAL(v) == 0 && GSL_IMAG(v) == 2,
+                      "and the arithmetic is complex throughout");
+            }
+        }
+    }
+
     /* The values themselves, over a grid.
      *
      * floorl and roundl were replaced by integer conversions, which is where

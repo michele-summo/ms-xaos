@@ -44,16 +44,20 @@ class WrappingTable : public QTableWidget
  * keeps the header in place while it does, which is what makes a list of
  * ninety-six entries usable. */
 static QWidget *buildTable(const struct formula_help_row *rows,
-                           const QString &nameHeading)
+                           const QString &nameHeading, bool withArgs = false)
 {
     int count = 0;
     for (const struct formula_help_row *r = rows; r->name || r->section; r++)
         count++;
 
-    QTableWidget *table = new WrappingTable(count, 2);
-    table->setHorizontalHeaderLabels(QStringList()
-                                     << nameHeading
-                                     << QObject::tr("What it does"));
+    const int columns = withArgs ? 3 : 2;
+    QTableWidget *table = new WrappingTable(count, columns);
+    QStringList headings;
+    headings << nameHeading;
+    if (withArgs)
+        headings << QObject::tr("Takes");
+    headings << QObject::tr("What it does");
+    table->setHorizontalHeaderLabels(headings);
     table->verticalHeader()->setVisible(false);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -79,7 +83,18 @@ static QWidget *buildTable(const struct formula_help_row *rows,
             names = qMax(names, metrics.horizontalAdvance(QString(r->name)));
     table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
     table->setColumnWidth(0, names + 3 * metrics.horizontalAdvance(QChar('m')));
-    table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    if (withArgs) {
+        /* Measured the same way and for the same reason as the names. */
+        int taken = metrics.horizontalAdvance(QObject::tr("Takes"));
+        for (const struct formula_help_row *r = rows; r->name || r->section; r++)
+            if (r->args)
+                taken = qMax(taken, metrics.horizontalAdvance(QString(r->args)));
+        table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Fixed);
+        table->setColumnWidth(1,
+                              taken + 3 * metrics.horizontalAdvance(QChar('m')));
+    }
+    table->horizontalHeader()->setSectionResizeMode(columns - 1,
+                                                    QHeaderView::Stretch);
 
     int row = 0;
     for (const struct formula_help_row *r = rows; r->name || r->section;
@@ -92,14 +107,20 @@ static QWidget *buildTable(const struct formula_help_row *rows,
             item->setFont(bold);
             item->setBackground(table->palette().alternateBase());
             table->setItem(row, 0, item);
-            /* The heading is one cell across both columns. */
-            table->setSpan(row, 0, 1, 2);
+            /* The heading is one cell across the lot. */
+            table->setSpan(row, 0, 1, columns);
             continue;
         }
         QTableWidgetItem *name = new QTableWidgetItem(QString(r->name));
         name->setFont(fixed);
         table->setItem(row, 0, name);
-        table->setItem(row, 1, new QTableWidgetItem(QObject::tr(r->summary)));
+        if (withArgs) {
+            QTableWidgetItem *args = new QTableWidgetItem(QString(r->args));
+            args->setFont(fixed);
+            table->setItem(row, 1, args);
+        }
+        table->setItem(row, columns - 1,
+                       new QTableWidgetItem(QObject::tr(r->summary)));
     }
     table->resizeRowsToContents();
     return table;
@@ -117,7 +138,8 @@ void ui_formulahelp(struct uih_context * /*uih*/)
         window->resize(720, 560);
 
         QTabWidget *tabs = new QTabWidget(window);
-        tabs->addTab(buildTable(formula_help_functions, QObject::tr("Function")),
+        tabs->addTab(buildTable(formula_help_functions, QObject::tr("Function"),
+                                true),
                      QObject::tr("Functions"));
         tabs->addTab(buildTable(formula_help_variables, QObject::tr("Name")),
                      QObject::tr("Variables"));
