@@ -37,6 +37,13 @@ carries makes of a decimal a binary float cannot hold exactly. A coordinate
 that needs all twenty-one digits still gets them: needing them is the same
 thing as not reading back unchanged without them.
 
+The exponent form is used from a thousand billion upwards and below a hundred
+billionths, and plain decimal between — so twenty is twenty, a hundred
+thousand million is written out, and 1e-8 is not. Left to itself the printing
+would choose by comparing the exponent against the number of digits asked for,
+which is no use when the digits are chosen for shortness: one digit is all it
+takes to read back as twenty, and twenty came out as 2e+01.
+
 ## Saved positions
 
 The view is written at the full precision of the build — 21 significant digits

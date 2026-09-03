@@ -16,21 +16,40 @@
 
 QStringList fnames = {};
 
-/* One printing of a number, to the asked-for number of significant digits.
- * Small values come out in exponent notation, which is what %g does and what
- * a convergence limit or a deep coordinate wants. */
-static void print_digits(char *buf, size_t size, number_t number, int digits)
+/* Where the exponent form starts to be the readable one.
+ *
+ * %g decides this for itself, by comparing the exponent against the number of
+ * significant digits asked for -- which is no use when the digits are being
+ * chosen for shortness: twenty came out as 2e+01, since one digit is all it
+ * takes to read back as twenty. So the notation is chosen by size, and the
+ * digits within it by what reads back. */
+#define PLAIN_ABOVE ((number_t)1e12)  /* a thousand billion */
+#define PLAIN_BELOW ((number_t)1e-7)  /* a hundred billionths */
+
+static bool wants_exponent(number_t number)
+{
+    number_t size = number < 0 ? -number : number;
+    if (size == 0)
+        return false;
+    return size >= PLAIN_ABOVE || size < PLAIN_BELOW;
+}
+
+/* One printing: `digits` significant ones in exponent form, or that many
+ * places after the point in plain form. */
+static void print_digits(char *buf, size_t size, number_t number, int digits,
+                         bool exponent)
 {
     char fs[16];
+    const char form = exponent ? 'e' : 'f';
 #ifdef USE_FLOAT128
-    snprintf(fs, sizeof(fs), "%%.%iQg", digits);
+    snprintf(fs, sizeof(fs), "%%.%iQ%c", digits, form);
     quadmath_snprintf(buf, size, fs, (__float128)number);
 #else
 #ifdef USE_LONG_DOUBLE
-    snprintf(fs, sizeof(fs), "%%.%iLg", digits);
+    snprintf(fs, sizeof(fs), "%%.%iL%c", digits, form);
     snprintf(buf, size, fs, (long double)number);
 #else
-    snprintf(fs, sizeof(fs), "%%.%ig", digits);
+    snprintf(fs, sizeof(fs), "%%.%i%c", digits, form);
     snprintf(buf, size, fs, (double)number);
 #endif
 #endif
@@ -55,12 +74,17 @@ QString CustomDialog::format(number_t number)
      * unchanged keeps the guarantee exactly -- that is what reading back
      * unchanged means -- while saying 1e-18 where 1e-18 is what it holds, and
      * still spelling out every digit of a coordinate that needs them. */
-    for (int digits = 1; digits < NUMBER_DIGITS; digits++) {
-        print_digits(buf, sizeof(buf), number, digits);
+    const bool exponent = wants_exponent(number);
+    /* Plain form counts places after the point, so a small number needs more
+     * of them than it has significant digits; exponent form counts the digits
+     * themselves and never needs more than the build carries. */
+    const int most = exponent ? NUMBER_DIGITS : NUMBER_DIGITS + 12;
+    for (int digits = 0; digits < most; digits++) {
+        print_digits(buf, sizeof(buf), number, digits, exponent);
         if (xstrtonum(buf, &end) == number && end != buf && *end == 0)
             return QString(buf);
     }
-    print_digits(buf, sizeof(buf), number, NUMBER_DIGITS);
+    print_digits(buf, sizeof(buf), number, most, exponent);
     return QString(buf);
 }
 
