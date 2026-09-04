@@ -2,7 +2,7 @@
 
 A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Everything the
 original does, it still does; this describes what has been added or changed,
-and why. Version 2.2.
+and why. Version 2.3.
 
 ## Two binaries
 
@@ -305,16 +305,22 @@ correct: `z` along the way is a point of the plane like any other, so the
 colouring modes that read it, smooth colouring, and writing a figure inside a
 larger formula all mean something.
 
-A gasket and a carpet fill their shape, so what is not figure is hole and the
-level that cut it says which colour it takes. A snowflake does not fill its
-hexagon: it leaves six corners of **ground**, and that ground has to leave on a
-pass of its own or it would be drawn the colour of the body. So it goes first,
-and the body is held one pass and goes second — which is why a snowflake counts
-from two where the other two count from one, and why those six corners come out
-in a band of their own.
+A gasket and a carpet fill their shape, so every point in one has a level and
+leaves on it. A snowflake does not fill its hexagon: it leaves six corners of
+**ground**, and that ground is no part of the figure and has no level. It is
+handed back exactly where it stands, so it never leaves and comes out in the
+**inside colour** — the incolouring modes work there, on the point itself, and
+the empty space stays empty instead of taking a band of the outside colour off
+the figure.
 
-Every point leaves, and none takes more passes than the level it stands at, so
-none of these ever runs to the iteration limit.
+That is the one place these figures cost something. A ground pixel is asked the
+membership question once a pass for as long as it is looked at, where the other
+two figures and the body of the snowflake leave on the pass their level names.
+Drawn straight through the iteration loop, a whole snowflake costs about 2.2
+times what it cost when the ground was given a band of its own. Boundary tracing
+is left on for these formulas — their bands really are solid, which is the
+condition for it — and the ground is one solid region, so what reaches the
+screen is less than that number suggests.
 
 `radius` means what `bailout` means and is read the same way: **as the square of
 the distance**. What it draws is the shape a bailout of that number draws,
@@ -345,9 +351,10 @@ ring to speak of, and there the far corner goes instead, which is a gasket again
 — a square cut in four with one corner taken away is what a gasket is.
 
 **`snowflake([radius=4])`** — the Koch snowflake, its points on that hexagon's
-corners, banded by generation: the body first, the three triangles on its edges
-next, the nine on theirs after that. The six corners of ground the figure does
-not cover are a band of their own, one pass ahead of the body.
+corners, banded by generation: the body on the first pass, the three triangles
+on its edges on the second, the nine on theirs on the third. The six corners of
+ground the figure does not cover are not banded at all — they never leave, and
+are drawn in the inside colour.
 
 Every argument has a default, so `snowflake()` is a call, and so is
 `sierpinskyc( ;5)` — a lacier carpet at the default size.
@@ -357,9 +364,11 @@ Every argument has a default, so `snowflake()` is a call, and so is
     sierpinskyc( ;5)     a lacier carpet
     snowflake()          with bailout shape hexagon 0
 
-None of them costs more than the noise beside them: measured against `randsc`,
-the gasket 0.45, the carpet 0.58 and the snowflake 0.67 of it at 64 bits of
-mantissa, and 0.54, 0.85 and 1.02 at 113. That was not free, and at 113 bits it
+None of them costs more than the noise beside them, pass for pass: measured
+against `randsc`, the gasket 0.44, the carpet 0.57 and the snowflake 0.60 of it
+at 64 bits of mantissa, and 0.50, 0.89 and 0.84 at 113. What a snowflake costs
+over a whole picture is the paragraph above, and is about how many passes the
+ground takes rather than about what a pass costs. That was not free, and at 113 bits it
 was very nearly lost — a square root and a division are both software there, and
 either costs about what a whole figure costs. So the reciprocal of the square
 root of the radius is kept on the call site rather than taken again every pass,

@@ -2046,15 +2046,14 @@ sfarg *sfstripe(sfarg *const p)
  * the iteration count is the picture, and z along the way is a point of the
  * plane like any other -- which is what lets the colouring modes that read z,
  * smooth colouring, and writing a figure inside a larger formula all mean
- * something. Every point leaves, and none takes more passes than its own level,
- * so nothing here runs to the iteration limit.
+ * something.
  *
- * A gasket and a carpet fill their shape, so what is not figure is hole and the
- * two are told apart by which level cut it. A snowflake does not fill its
- * hexagon: it leaves six corners of ground, and that ground has to leave on a
- * pass of its own or it would be drawn the colour of the body. It goes first,
- * and the body is held one pass and goes second -- which is why a snowflake
- * counts from two where the other two count from one.
+ * A gasket and a carpet fill their shape, so every point in one has a level and
+ * leaves on it. A snowflake does not fill its hexagon: it leaves six corners of
+ * ground, which is no part of the figure and has no level. That ground is
+ * handed back where it stands and never leaves, so it is drawn in the inside
+ * colour rather than taking a band of the outside one off the figure, and the
+ * incolouring modes have the point itself to read.
  *
  * They were a field before this: a number between nought and one saying how
  * solidly a point belonged, meant to be multiplied into a formula the way the
@@ -2123,15 +2122,6 @@ static const int FIG_OPP[3] = {2, 0, 1}; /* the corner an edge is opposite */
 static const number_t FIG_CC[3] = {-1, (number_t)1 / 2, (number_t)1 / 2};
 static const number_t FIG_CS[3] = {0, -FIG_SIN60, FIG_SIN60};
 
-/* Where the body of a snowflake is held for the one pass it takes to leave.
- * Any patch of ground would do; this one is in the valley between two of the
- * points, on the side the first corner of the hexagon faces, and is ground at
- * every level however fine the fringe is drawn -- so a point that lands there
- * of its own accord is ground and is answered as ground. */
-#define FIG_HOLD_U ((number_t)4 / 5)
-#define FIG_HOLD_LO ((number_t)3 / 4)
-#define FIG_HOLD_HI ((number_t)17 / 20)
-#define FIG_HOLD_V ((number_t)1 / 50)
 
 /* The square root of the radius, or its reciprocal, kept on the call site
  * rather than taken again on every pass.
@@ -2373,18 +2363,22 @@ static inline int koch_under(double x, double y, int depth)
  * is new here. The pass a point leaves on is then the level of the triangle it
  * stands in, and the iteration count is the picture.
  *
- * The body has no parent and so has to leave. But the ground -- what is inside
- * the hexagon and outside the figure -- has to leave as well, and were the two
- * to leave on the same pass they would be drawn in the same colour and the
- * picture would be a flat hexagon. So the ground leaves on the first pass and
- * the body is held for one, in a patch of ground kept aside for it, and leaves
- * on the second; a triangle k levels down leaves on the k+1th. Every point
- * leaves, and none takes more passes than the level it stands at.
+ * The body has no parent and so leaves on the first pass, and a triangle k
+ * levels down on the kth -- the same counting the other two figures do.
  *
- * On a hexagon the figure leaves six corners of ground uncovered, which is what
- * a snowflake in a hexagon looks like. Under a circular bailout the six points
- * reach a seventh further out than the number says and are cut off instead:
- * the honest answer to asking for a figure in a shape it does not fit.
+ * A snowflake does not fill its hexagon: it leaves six corners of ground, and
+ * that ground is not part of the figure and is not given a level. A point
+ * standing there is handed back exactly where it stands, so it never leaves
+ * and comes out in the inside colour, and the incolouring modes have the point
+ * itself to work with -- which is the whole reason for handing back the point
+ * rather than parking every such pixel on one spot. It costs the membership
+ * question once a pass for as long as the pixel is looked at, and that is the
+ * price of an empty space that stays empty instead of taking a band of the
+ * outside colour off the figure.
+ *
+ * Under a circular bailout the six points reach a seventh further out than the
+ * number says and are cut off: the honest answer to asking for a figure in a
+ * shape it does not fit.
  *
  * @param p The call; the arguments are read right to left, see sfaramN.
  * @return Pointer to the call, the evaluator having no use for the result.
@@ -2406,13 +2400,6 @@ sfarg *sfsnowflake(sfarg *const p)
     number_t scale = FIG_SIN60 * inv;
     number_t x = GSL_REAL(sffe_z) * scale;
     number_t y = GSL_IMAG(sffe_z) * scale;
-
-    /* a body set down here last pass, let go now */
-    if (x > FIG_HOLD_LO && x < FIG_HOLD_HI && y > -FIG_HOLD_V &&
-        y < FIG_HOLD_V) {
-        GSL_SET_COMPLEX(&sfvalue(p), FIG_ESCAPED, 0);
-        return p;
-    }
 
     /* The six points of a snowflake reach exactly as far as the corners of the
      * triangle it grew from, so the whole figure sits inside the circle those
@@ -2447,24 +2434,26 @@ sfarg *sfsnowflake(sfarg *const p)
     }
 
     if (outside && edge < 0) {
-        /* the ground, and it goes first */
+        /* The ground, which is no part of the figure: handed back where it
+         * stands, so it stays there, never leaves, and is drawn in the inside
+         * colour with its own position for the incolouring to read. */
+        sfvalue(p) = sffe_z;
+        return p;
+    }
+    if (!outside) {
+        /* the body: no parent to walk to, so it goes on this pass */
         GSL_SET_COMPLEX(&sfvalue(p), FIG_ESCAPED, 0);
         return p;
     }
 
-    /* Out of the figure's units and back into the plane. The root comes back
-     * the way it does above, by multiplying the square into its reciprocal,
-     * which is two multiplications where dividing by the scale would be a
-     * division. */
-    number_t reach = radius * inv * FIG_ACROSS;
-    if (!outside) {
-        /* the body: nowhere to walk to, so it is set down and goes next pass */
-        GSL_SET_COMPLEX(&sfvalue(p), FIG_HOLD_U * reach, 0);
-        return p;
-    }
-
     /* Onto the parent: take the child off the corner its edge faces away from,
-     * turn it back the way the parent faces, and blow it up by three. */
+     * turn it back the way the parent faces, and blow it up by three.
+     *
+     * Out of the figure's units and back into the plane on the way: the root
+     * comes back by multiplying the square into its reciprocal, which is two
+     * multiplications where dividing by the scale would be a division, and a
+     * division at 113 bits of mantissa is software. */
+    number_t reach = radius * inv * FIG_ACROSS;
     int k = FIG_OPP[edge];
     number_t px = x + (number_t)2 / 3 * FIG_VX[k];
     number_t py = y + (number_t)2 / 3 * FIG_VY[k];
