@@ -15,6 +15,7 @@ HEADERS += \
     $$PWD/i18n.h \
     $$PWD/misc-f.h \
     $$PWD/param.h \
+    $$PWD/phist.h \
     $$PWD/pixel_t.h \
     $$PWD/plane.h \
     $$PWD/sffe.h \

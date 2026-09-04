@@ -1,5 +1,39 @@
-XaoS
-====
+MS XaoS
+=======
+
+A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3 by
+[Michele Summo](https://www.michelesummo.it). Everything the original does, it
+still does; what has been added is described in
+**[the guide](doc/ms-xaos-guide.md)**, and in short it is:
+
+- **A second binary at 128-bit precision**, so a zoom can go some seven orders
+  of magnitude deeper before the arithmetic runs out.
+- **Coherent noise in the user formula** — `randsc` and its family, which lay a
+  random field over the plane in blobs, squares, irregular polygons, hexagons
+  or triangles, with a kaleidoscope to fold the plane first.
+- **Orbit traps and stripe averaging**, as ordinary formula functions.
+- **Eighteen more colouring modes**, inside and out, and smooth colouring made
+  to work for the user formula, for every bailout shape and for the Newton
+  emulation.
+- **A user formula language that says what it means**: every function
+  documented with what it takes and what it defaults to, `poly`, `ifiter` and
+  its relatives, arguments that may be left out by leaving their place empty,
+  and `p1` to `p9999` for reaching back into the orbit.
+- **A reference window** listing every function, variable and notation the
+  formula language accepts, beside the formula being written.
+
+335 regression tests, run at both precisions.
+
+Supporting this fork
+--------------------
+
+MS XaoS is free software and is written in spare time. If it is useful to you,
+you can support the work at **[Buy Me a Coffee](https://buymeacoffee.com/michelesummo)**.
+There is more about the project, and about what else I do, at
+[www.michelesummo.it](https://www.michelesummo.it).
+
+About XaoS
+----------
 
 XaoS (pronounced *chaos*) is a realtime interactive fractal zoomer. This
 means that it lets you zoom smoothly into any place in the fractal you
@@ -22,6 +56,14 @@ should also work on any other platform supporting Qt Widgets, like the BSDs.
 Project Resources
 -----------------
 
+This fork:
+
+- [GitHub Repo](https://github.com/michele-summo/ms-xaos)
+- [What this fork adds](doc/ms-xaos-guide.md)
+- [Support the work](https://buymeacoffee.com/michelesummo)
+
+The original project:
+
 - [GitHub Repo](https://github.com/xaos-project/XaoS)
 - [Binary Releases](https://github.com/xaos-project/XaoS/releases)
 - [Documentation](https://github.com/xaos-project/XaoS/wiki)
@@ -42,7 +84,9 @@ traditional mailing list to a completely web-based forum, so you don’t have to
 get emails if you don’t want to.
 
 If you think you have found a bug in XaoS or have an idea for a new feature,
-please let us know about it. XaoS is developed on a volunteer basis and the
+please let us know about it -- for this fork, on
+[its own issue tracker](https://github.com/michele-summo/ms-xaos/issues), and
+for anything the original does too, upstream. XaoS is developed on a volunteer basis and the
 developers work on it in their spare time. Therefore, we can’t guarantee that
 issues will be addressed in a certain timeframe. If you are able to fix a bug
 or implement a new feature yourself, pull requests are very welcome.

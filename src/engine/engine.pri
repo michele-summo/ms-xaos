@@ -17,6 +17,7 @@ SOURCES += \
     $$PWD/stereogram.cpp \
     $$PWD/3d.cpp \
     $$PWD/subwindow.cpp \
+    $$PWD/phist.cpp \
     $$PWD/plane.cpp \
     $$PWD/julia.cpp
 
