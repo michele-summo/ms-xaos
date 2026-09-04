@@ -12,6 +12,11 @@ still does; what has been added is described in
   random field over the plane in blobs, squares, irregular polygons, hexagons
   or triangles, with a kaleidoscope to fold the plane first.
 - **Orbit traps and stripe averaging**, as ordinary formula functions.
+- **Figures beside the noise** — `sierpinskyt`, `sierpinskyc` and `snowflake`
+  lay a Sierpinski gasket, a Sierpinski carpet or a Koch snowflake over the
+  plane, and cost less than the noise does.
+- **Seven ways to make a palette** instead of three: a spectrum, one hue in
+  tones, neighbouring hues, opposite ones.
 - **Eighteen more colouring modes**, inside and out, and smooth colouring made
   to work for the user formula, for every bailout shape and for the Newton
   emulation.
@@ -22,7 +27,7 @@ still does; what has been added is described in
 - **A reference window** listing every function, variable and notation the
   formula language accepts, beside the formula being written.
 
-335 regression tests, run at both precisions.
+337 regression tests, run at both precisions.
 
 Supporting this fork
 --------------------

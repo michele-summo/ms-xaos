@@ -126,6 +126,10 @@ const struct formula_help_row formula_help_functions[] = {
     {NULL, NULL, NULL, "watching the orbit: both hand back their argument until the last iteration, and what they gathered on it, which the inside colouring modes then draw"},
     {"trap", "a; [shape=0]; [centre=0]; [size=1]", "how near the orbit ever came to a shape; the shapes are in the Values tab", NULL},
     {"stripe", "a; [density=4]", "the average of (sin(density*arg a)+1)/2 along the orbit; density a whole number, how many stripes go round a turn", NULL},
+    {NULL, NULL, NULL, "figures standing at the position, the same in mandelbrot and julia mode as the noise is: 1 where the point belongs to the figure most, tapering as the feature it stands in gets finer, 0 where the figure is not. radius is the circumradius of the triangle, or half the side of the square"},
+    {"sierpinskyt", "[radius=4]", "the Sierpinski gasket: 1 on what survives every cut, less the sooner the point was cut away", NULL},
+    {"sierpinskyc", "[radius=4]; [squares=3]", "the Sierpinski carpet, cut into squares by squares with the middle one thrown away; 2 gives a gasket, 5 or 7 a lacier carpet", NULL},
+    {"snowflake", "[radius=4]", "the Koch snowflake: 1 over the body, tapering as the fringe gets finer", NULL},
     {NULL, NULL, NULL, "polynomials"},
     {"poly", "z; k1; k2; ...", "k1*z^(m-1) + k2*z^(m-2) + ... + km: the first coefficient written multiplies the highest power, the last stands alone", NULL},
     {NULL, NULL, NULL, NULL}};

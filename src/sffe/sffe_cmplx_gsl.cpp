@@ -204,6 +204,13 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sftrap, SFFE_VARIADIC, "trap\0", NULL, false, 2},
     {sfstripe, SFFE_VARIADIC, "stripe\0", NULL, false, 2},
 
+    /* Figures rather than noise: the same field over the position, drawn
+     * instead of diced. Every argument has a default, so "snowflake()" is a
+     * call and so is "sierpinskyc( ,5)". */
+    {sfsierpinskyt, SFFE_VARIADIC, "sierpinskyt\0", NULL, false, 1},
+    {sfsierpinskyc, SFFE_VARIADIC, "sierpinskyc\0", NULL, false, 1},
+    {sfsnowflake, SFFE_VARIADIC, "snowflake\0", NULL, false, 1},
+
     /* A polynomial in the first argument, the rest being its coefficients
      * from the highest power down. */
     {sfpoly, SFFE_VARIADIC, "poly\0", NULL, false, 2}};
@@ -2003,6 +2010,354 @@ sfarg *sfstripe(sfarg *const p)
     else
         sfvalue(p) = a;
     return sfaram1(p);
+}
+
+
+/* --- figures: a field drawn rather than diced -----------------------------
+ *
+ * These three read the position the way the noise functions do -- sffe_position,
+ * the pixel itself, which is the same point in mandelbrot mode as in julia mode
+ * and does not move as z does -- and hand back a number about it. What differs
+ * is where the number comes from: the noise functions hash the cell the point
+ * falls in, these ask which part of a figure the point is standing in. Nothing
+ * about them is random, so the same position always gives the same number, and
+ * the figure is where it looks like it is.
+ *
+ * All three answer one question -- how solidly does this point belong to the
+ * figure -- and answer it the same way: one where it belongs most, tapering
+ * toward zero as the feature it stands in gets finer, and exactly zero where
+ * the figure is not. The two Sierpinski figures are made by taking away, so a
+ * point that falls into the first hole scores almost nothing and one that
+ * survives every cut scores one; the snowflake is made by adding, so the body
+ * scores one and the fringe tapers. Either way the field is banded by the
+ * levels of the construction, which is what makes it worth multiplying into a
+ * formula.
+ *
+ * None of them iterates over the figure. The gasket is decided by one integer
+ * AND, the carpet by a digit expansion in the base it is cut into, and the
+ * snowflake by walking one path down the curve -- so what a pass costs does not
+ * depend on how much of the figure the picture can see.
+ */
+
+/* sin 60 degrees, which is half the width of an equilateral triangle of
+ * circumradius one and the height of the bump the Koch curve puts on a third of
+ * a segment, three times over. Worked out at the precision in use rather than
+ * written as a decimal, which would be a double in the quad build. */
+static const number_t FIG_SIN60 = nsqrt((number_t)3) / 2;
+static const number_t FIG_ACROSS = 1 / (nsqrt((number_t)3) / 2);
+/* the corners of that triangle, apex up */
+static const number_t FIG_VX[3] = {0, -FIG_SIN60, FIG_SIN60};
+static const number_t FIG_VY[3] = {1, (number_t)-1 / 2, (number_t)-1 / 2};
+
+/* Each edge of that triangle, as the pair a point is multiplied by to say how
+ * far along it and how far out of it the point stands. Both are the edge
+ * divided by its own length twice over, and the edge and its length are the
+ * same for every picture ever drawn -- so they are worked out here rather than
+ * three times a pass for every pixel. At 113 bits of mantissa a division is
+ * software and costs about what a hundred additions cost, which is what made
+ * this worth doing rather than merely tidy. */
+static const number_t FIG_EDGE = 3; /* every edge, squared, of a unit triangle */
+static const number_t FIG_AX[3] = {
+    (-FIG_SIN60 - 0) / FIG_EDGE, (FIG_SIN60 + FIG_SIN60) / FIG_EDGE,
+    (0 - FIG_SIN60) / FIG_EDGE};
+static const number_t FIG_AY[3] = {((number_t)-1 / 2 - 1) / FIG_EDGE, 0,
+                                   (1 - (number_t)-1 / 2) / FIG_EDGE};
+
+/* How many levels are worth telling apart.
+ *
+ * The gasket reads its levels out of the bits of a fixed-point number and gets
+ * every one of them exactly, so thirty costs the same as three. The carpet and
+ * the snowflake work a level at a time and each level shifts away what the last
+ * one left: past the width of the mantissa the levels are rounding rather than
+ * figure, and drawing rounding is slower than not drawing it. */
+#define SIER_BITS 30
+#ifdef USE_FLOAT128
+#define FIG_SAFE_SHIFTS 100
+#elif defined(USE_LONG_DOUBLE)
+#define FIG_SAFE_SHIFTS 56
+#else
+#define FIG_SAFE_SHIFTS 44
+#endif
+/* Twenty-four levels puts the finest bump at three to the minus twenty-four of
+ * the radius, which is smaller than anything a picture of a figure this size
+ * will ever be asked to show. What the mantissa could carry is beside the
+ * point: the levels past this one cost and are not seen. */
+#define KOCH_DEPTH 24
+/* sin 60 again, in the type the walk is done in */
+#define KOCH_SIN60 0.86602540378443864676
+/* The carpet reads its digits in fixed point instead, so what limits it is the
+ * width of an integer and not of a mantissa: this much fraction leaves six bits
+ * at the top for a base of up to sixty-four to multiply into. */
+#define FIG_CARPET_BITS 58
+
+/* The level a set bit stands for, counting the first cut as one. Not a loop:
+ * this is asked once a pass for every pixel on the screen. */
+static inline int sier_level(uint32_t both)
+{
+#if defined(__GNUC__) || defined(__clang__)
+    return __builtin_clz(both) - (32 - SIER_BITS) + 1;
+#else
+    int level = 1;
+    uint32_t bit = (uint32_t)1 << (SIER_BITS - 1);
+    while (bit && !(both & bit)) {
+        bit >>= 1;
+        level += 1;
+    }
+    return level;
+#endif
+}
+
+/**
+ * @brief The Sierpinski gasket, as a field over the plane.
+ * @details sierpinskyt(radius) stands an equilateral triangle of that
+ * circumradius at the origin, point upwards, and says of each point how far
+ * into the gasket cut out of it that point lies: one on what survives every
+ * cut, less the sooner it was cut away, zero outside the triangle.
+ *
+ * Worked out in barycentric coordinates, where the gasket has a description
+ * that costs nothing. Halving the triangle towards each of its corners in turn
+ * is halving two of the three weights, so writing those two in binary spells
+ * out which corner was taken at every level -- and the gasket is exactly the
+ * points where no place holds a one in both, since a one in both is the step
+ * that would have to go towards two corners at once. The first such place is
+ * the level the point was cut away at.
+ *
+ * So the figure is two multiplications, two conversions and an AND, at any
+ * depth, where subdividing a triangle thirty times would have been thirty
+ * rounds of comparisons for every pixel of every pass. The bands it draws
+ * therefore follow the halving rather than the three-fold symmetry of the
+ * triangle: the figure is symmetric and the shading is symmetric about the one
+ * axis, which is a thing to know rather than a thing to fix.
+ *
+ * @param p The call; the arguments are read right to left, see sfaramN.
+ * @return Pointer to the call, the evaluator having no use for the result.
+ */
+sfarg *sfsierpinskyt(sfarg *const p)
+{
+    GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
+    if (p->argc > 1)
+        return p;
+    number_t radius = GSL_REAL(sfarg_or(p, 1, 4, 0));
+    if (!(radius > 0))
+        return p;
+
+    number_t scale = 1 / radius;
+    number_t x = GSL_REAL(sffe_position) * scale;
+    number_t y = GSL_IMAG(sffe_position) * scale;
+
+    /* The apex sits at (0,1) and the base along y = -1/2, so the three weights
+     * come out of the point without a matrix: how far up it is gives the apex
+     * its share, and how far across it is splits the rest between the other
+     * two. */
+    number_t a = (2 * y + 1) / 3;
+    number_t rest = 1 - a;
+    number_t across = x * FIG_ACROSS;
+    number_t b = (rest - across) / 2;
+    number_t c = (rest + across) / 2;
+    if (a < 0 || b < 0 || c < 0)
+        return p; /* outside the triangle */
+
+    uint32_t bx = (uint32_t)(b * (number_t)((uint32_t)1 << SIER_BITS));
+    uint32_t cx = (uint32_t)(c * (number_t)((uint32_t)1 << SIER_BITS));
+    uint32_t both = (bx & cx) & (((uint32_t)1 << SIER_BITS) - 1);
+    if (!both) {
+        GSL_SET_COMPLEX(&sfvalue(p), 1, 0); /* never cut away */
+        return p;
+    }
+    GSL_SET_COMPLEX(&sfvalue(p), (number_t)sier_level(both) / SIER_BITS, 0);
+    return p;
+}
+
+/**
+ * @brief The Sierpinski carpet, as a field over the plane.
+ * @details sierpinskyc(radius, squares) fills the square of that half-side at
+ * the origin, cuts it into squares by squares, throws the middle one away and
+ * does the same to each of the rest. Three is the carpet as it is usually
+ * drawn; five or seven give a lacier one, and two gives a gasket again, since
+ * a square cut in four with one corner taken away is what a gasket is.
+ *
+ * The level a point is cut away at is the first place where both its
+ * coordinates, written in base squares, are the middle digit -- so the figure
+ * is read a digit at a time and stops at the first that decides it, which for
+ * most of the plane is the first or second.
+ *
+ * @param p The call; the arguments are read right to left, see sfaramN.
+ * @return Pointer to the call, the evaluator having no use for the result.
+ */
+sfarg *sfsierpinskyc(sfarg *const p)
+{
+    GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
+    if (p->argc > 2)
+        return p;
+    number_t radius = GSL_REAL(sfarg_or(p, 1, 4, 0));
+    int squares = (int)GSL_REAL(sfarg_or(p, 2, 3, 0));
+    if (!(radius > 0) || squares < 2 || squares > 64)
+        return p;
+
+    number_t scale = 1 / (2 * radius);
+    number_t u = (GSL_REAL(sffe_position) + radius) * scale;
+    number_t v = (GSL_IMAG(sffe_position) + radius) * scale;
+    if (!(u >= 0) || u >= 1 || !(v >= 0) || v >= 1)
+        return p; /* outside the square */
+
+    /* Read the digits in fixed point rather than in number_t.
+     *
+     * A digit is a multiply, a shift and a mask, where in floating point it was
+     * a multiply, a truncation and a subtraction -- and the truncation of a
+     * long double is a trip through memory. The loop came out at 172 ns a call
+     * against the 154 of the noise it sits beside; in fixed point it is 92, and
+     * a point standing in the first hole, which most of the square is, costs
+     * almost nothing. It is exact into the bargain: every level is a whole
+     * number of bits and none of them is rounded away.
+     *
+     * FIG_CARPET_BITS of fraction leaves room for a base of up to 64 to
+     * multiply into without carrying past the top, and the digits run out when
+     * the fraction does -- each level taking as many bits as the base is
+     * wide. */
+    uint64_t ui = (uint64_t)(u * (number_t)((uint64_t)1 << FIG_CARPET_BITS));
+    uint64_t vi = (uint64_t)(v * (number_t)((uint64_t)1 << FIG_CARPET_BITS));
+    const uint64_t frac = ((uint64_t)1 << FIG_CARPET_BITS) - 1;
+    int width = 0;
+    for (int t = squares - 1; t; t >>= 1)
+        width += 1;
+    int depth = FIG_CARPET_BITS / width;
+    if (depth > 30)
+        depth = 30;
+
+    uint64_t middle = (uint64_t)(squares / 2);
+    for (int level = 1; level <= depth; level += 1) {
+        ui *= (uint64_t)squares;
+        vi *= (uint64_t)squares;
+        if ((ui >> FIG_CARPET_BITS) == middle &&
+            (vi >> FIG_CARPET_BITS) == middle) {
+            GSL_SET_COMPLEX(&sfvalue(p), (number_t)level / depth, 0);
+            return p;
+        }
+        ui &= frac;
+        vi &= frac;
+    }
+    GSL_SET_COMPLEX(&sfvalue(p), 1, 0); /* never cut away */
+    return p;
+}
+
+/* Whether a point stands under the Koch curve drawn over the segment from
+ * (0,0) to (1,0), and if so how many levels down the answer was found.
+ *
+ * The curve never doubles back, so how far along the segment the point is picks
+ * out exactly one of the four smaller curves the big one is made of, and the
+ * question repeats in that one's frame. One path down rather than a search:
+ * what it costs is the depth, not four to the depth. Falling below the frame is
+ * being inside; running out of levels without falling below it is being
+ * outside. */
+static inline int koch_under(double x, double y, int depth)
+{
+    /* Walked in double whatever the picture is drawn in. The figure stands at
+     * a fixed size in the plane, so what comes in here is a fraction of one
+     * edge and a double holds fifty-two bits of it -- thirty-three levels'
+     * worth, where twenty-four are drawn. At 113 bits of mantissa every
+     * multiplication below would otherwise be software, and the walk cost more
+     * than the noise it sits beside; in double it costs less. */
+    const double third = 1.0 / 3;
+    const double apex = 0.28867513459481288225; /* sqrt(3)/6, the bump height */
+    /* The curve never rises above the triangle on its own chord whose apex is
+     * that bump -- that triangle is its convex hull -- so a point above either
+     * of the two sides is above the whole curve and is outside now rather than
+     * in another twenty levels. Without this the walk ran to the bottom for
+     * every point outside the figure, which in a picture of a figure is most
+     * of them, and cost twice what the noise costs at 113 bits of mantissa
+     * where every multiplication is software. */
+    const double slope = apex * 2; /* the hull rises this fast from each end */
+    for (int level = 1; level <= depth; level += 1) {
+        if (y < 0)
+            return level;
+        if (x < 0 || x > 1)
+            return 0;
+        if (y > x * slope || y > (1 - x) * slope)
+            return 0;
+        if (x < third) {
+            x *= 3;
+            y *= 3;
+        } else if (x < 0.5) {
+            /* the side that climbs away at sixty degrees */
+            double ax = x - third, ay = y;
+            x = 3 * (ax / 2 + ay * KOCH_SIN60);
+            y = 3 * (ay / 2 - ax * KOCH_SIN60);
+        } else if (x < 2 * third) {
+            /* and the one that comes back down */
+            double ax = x - 0.5, ay = y - apex;
+            x = 3 * (ax / 2 - ay * KOCH_SIN60);
+            y = 3 * (ax * KOCH_SIN60 + ay / 2);
+        } else {
+            x = 3 * (x - 2 * third);
+            y *= 3;
+        }
+    }
+    return 0;
+}
+
+/**
+ * @brief The Koch snowflake, as a field over the plane.
+ * @details snowflake(radius) stands an equilateral triangle of that
+ * circumradius at the origin, point upwards, and grows a Koch snowflake out of
+ * it: one over the body, tapering as the fringe the point stands in gets finer,
+ * zero outside altogether. The body is most of the figure and the fringe is
+ * where the detail is, which is what a snowflake looks like.
+ *
+ * Each edge is asked separately, and an edge the point is on the inner side of
+ * is not asked at all -- so a point inside answers in three comparisons, and a
+ * point outside in the same three plus one walk down the single curve that
+ * could have taken it in.
+ *
+ * @param p The call; the arguments are read right to left, see sfaramN.
+ * @return Pointer to the call, the evaluator having no use for the result.
+ */
+sfarg *sfsnowflake(sfarg *const p)
+{
+    GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
+    if (p->argc > 1)
+        return p;
+    number_t radius = GSL_REAL(sfarg_or(p, 1, 4, 0));
+    if (!(radius > 0))
+        return p;
+
+    number_t scale = 1 / radius;
+    number_t x = GSL_REAL(sffe_position) * scale;
+    number_t y = GSL_IMAG(sffe_position) * scale;
+
+    /* The six points of a snowflake reach exactly as far as the corners of the
+     * triangle it grew from, so the whole figure sits inside the circle those
+     * corners are on and most of the plane can be turned away in three
+     * multiplications. */
+    if (x * x + y * y > 1)
+        return p;
+
+    int outside = 0;
+    int best = 0;
+
+    for (int e = 0; e < 3; e += 1) {
+        number_t rx = x - FIG_VX[e], ry = y - FIG_VY[e];
+        /* along the edge, and out from it: the corners are taken in the order
+         * that puts the outside of each edge on the positive side */
+        number_t along = rx * FIG_AX[e] + ry * FIG_AY[e];
+        number_t out = rx * FIG_AY[e] - ry * FIG_AX[e];
+        if (out <= 0)
+            continue;
+        outside = 1;
+        if (along < 0 || along > 1)
+            continue;
+        int level = koch_under((double)along, (double)out, KOCH_DEPTH);
+        if (level && (!best || level < best))
+            best = level;
+    }
+
+    if (!outside) {
+        GSL_SET_COMPLEX(&sfvalue(p), 1, 0); /* the body of it */
+        return p;
+    }
+    if (!best)
+        return p; /* outside the snowflake */
+    GSL_SET_COMPLEX(&sfvalue(p), (number_t)(KOCH_DEPTH - best) / KOCH_DEPTH, 0);
+    return p;
 }
 
 /* Whether a parsed formula calls one of the functions that watch the orbit.

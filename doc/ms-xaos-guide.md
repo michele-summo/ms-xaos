@@ -2,7 +2,7 @@
 
 A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Everything the
 original does, it still does; this describes what has been added or changed,
-and why. Version 1.4.
+and why. Version 1.5.
 
 ## Two binaries
 
@@ -272,6 +272,86 @@ long run, use something near 1 — `0.97^60` is still 0.16.
 
 An integer seed is exact in both builds; a fractional one is quantised to its
 leading bits, which agree except for about one seed in fifty million.
+
+### Figures instead of noise
+
+`sierpinskyt`, `sierpinskyc` and `snowflake` stand where the noise stands. They
+read the same position — the pixel, which is the same point in mandelbrot mode
+as in julia mode and does not move as `z` does — and hand back a number in
+`[0, 1)` about it, so anywhere `randsc` can go one of these can go instead.
+Nothing about them is random: the figure is where it looks like it is, and the
+same point always gives the same number.
+
+All three answer one question, *how solidly does this point belong to the
+figure*, and answer it the same way: **1** where it belongs most, tapering
+toward **0** as the feature it stands in gets finer, and exactly **0** where the
+figure is not. The two Sierpinski figures are made by taking away, so a point
+that falls into the first hole scores almost nothing and one that survives every
+cut scores one; the snowflake is made by adding, so the body scores one and the
+fringe tapers.
+
+**`sierpinskyt([radius=4])`** — the Sierpinski gasket, in an equilateral
+triangle of that circumradius standing at the origin, point upwards.
+
+**`sierpinskyc([radius=4]; [squares=3])`** — the Sierpinski carpet, in a square
+of that half-side. The square is cut into `squares` by `squares`, the middle one
+is thrown away, and the same is done to each of the rest. Three is the carpet as
+it is usually drawn; five or seven give a lacier one; two gives a gasket again,
+since a square cut in four with one corner taken away is what a gasket is.
+
+**`snowflake([radius=4])`** — the Koch snowflake grown from a triangle of that
+circumradius.
+
+Every argument has a default, so `snowflake()` is a call, and so is
+`sierpinskyc( ;5)` — a lacier carpet at the default size.
+
+    z^2+c+snowflake()*0.15               the set with a snowflake pressed into it
+    z+sierpinskyt(3)*0.4                 the gasket as a displacement
+    z^2+c*sierpinskyc( ;5)               the carpet as a mask on the point
+    randsc(13;{0.3,0.3})*snowflake(4)    noise cut to the shape of a snowflake
+
+None of them costs more than the noise beside them: measured against `randsc`,
+the gasket 0.26, the carpet 0.34 and the snowflake 0.36 at 64 bits of mantissa,
+and 0.72, 0.53 and 0.99 at 113. That was not free. The gasket is decided by one
+integer AND rather than by subdividing a triangle; the carpet reads its digits
+in fixed point rather than in `number_t`; and the snowflake walks the curve in
+`double`, since the figure stands at a fixed size and 52 bits of a fraction of
+one edge is more than the 24 levels it draws can use. A test asserts the three
+ratios, so a future rewrite that loses them says so.
+
+## Palettes
+
+Fractal → Palette asks for an algorithm number. There were three, and all three
+work the same way: some four to nine colours are chosen, every second or third
+of them pinned to black or white, and the palette is interpolated between them.
+That is what gives XaoS its banded, high-contrast look, and it was the only look
+it had.
+
+Four more choose their colours in relation to each other:
+
+| | |
+| --- | --- |
+| 1–3 | colours scattered between black and white anchors — as before |
+| 4 | **spectrum** — right round the hue circle, one turn, darkening at both ends |
+| 5 | **duotone** — one hue from the dark of it through the pure colour to the pale of it |
+| 6 | **analogous** — hues from one narrow arc, dark and light taking turns |
+| 7 | **complementary** — two hues from opposite sides of the circle, alternating |
+
+They cost what the others cost: a palette is made once, when it is asked for,
+and none of these does more per colour than one conversion out of hue,
+saturation and value. Each is driven from the seed the dialog holds, so an
+algorithm and a seed give the same palette every time — which is all a saved
+position records of its colours.
+
+Two things had to be settled by position rather than by the dice, and a test
+now keeps them settled. A hue cycle at one brightness has no dark anywhere in
+it, and a fractal shown in it has hue where it should have shape — so the
+spectrum swells from dark to bright and back. Colours drawn at random from one
+narrow arc came out four shades of the same thing more often than not — so in
+the analogous palette dark and light alternate.
+
+A position saved with one of the new four names an algorithm the original XaoS
+does not have and will refuse to load; one saved with 1 to 3 is unaffected.
 
 ## Watching the orbit
 
