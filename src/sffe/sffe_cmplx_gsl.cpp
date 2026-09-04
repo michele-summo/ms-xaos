@@ -2034,24 +2034,23 @@ sfarg *sfstripe(sfarg *const p)
  * formula.
  *
  * radius means what bailout means and is read the same way: as the square of
- * the distance, so the default of four draws a figure two from the origin to
- * its corners -- the circle a default bailout of four lets an orbit run to,
- * and so the part of the plane the fractals shipped with XaoS draw in.
+ * the distance. What it draws is then the shape a bailout of that number
+ * draws, inscribed in it exactly:
  *
- * Each is turned the way one of the bailout shapes is turned, which is how to
- * read one against the other:
+ *   sierpinskyt   the triangle of BAILOUT_TRIANGLEM90, corner for corner
+ *   sierpinskyc   the square of BAILOUT_SQUARE, side for side
+ *   snowflake     the hexagon of BAILOUT_HEXAGON0, its six points on the
+ *                 hexagon's six corners
  *
- *   sierpinskyt   a triangle point upwards, cornered as BAILOUT_TRIANGLEM90
- *   sierpinskyc   a square on the axes, sided as BAILOUT_SQUARE
- *   snowflake     six points at thirty degrees and every sixty after them,
- *                 cornered as BAILOUT_HEXAGON0
+ * So a figure written with the same number as the bailout stands exactly where
+ * the bailout stands, and the two lie over one another.
  *
- * The sizes are not the same and are not meant to be. A bailout polygon stands
- * its sides the square root of the bailout from the centre, so its corners are
- * further out than that -- twice as far, for a triangle -- and a figure drawn
- * out to a bailout triangle's corners would stand half again as tall as
- * the picture a user formula opens in. These stand their corners where the
- * number says, which is what makes a default call fill a default view.
+ * The thing to know is that a bailout polygon stands its *sides* the square
+ * root of the bailout from the centre -- that is its apothem, not its
+ * circumradius -- so its corners are further out than the number says: twice
+ * as far for a triangle, and by a seventh for a hexagon. A figure drawn to the
+ * number instead of to the shape comes out half the size the shape is, which
+ * is what these did until it was measured off a picture of the two together.
  *
  * None of them iterates over the figure. The gasket is decided by one integer
  * AND, the carpet by a digit expansion in the base it is cut into, and the
@@ -2129,9 +2128,8 @@ static inline int sier_level(uint32_t both)
 
 /**
  * @brief The Sierpinski gasket, as a field over the plane.
- * @details sierpinskyt(radius) stands an equilateral triangle point upwards,
- * cornered as BAILOUT_TRIANGLEM90 is, its corners the square root of radius
- * from the origin, point upwards, and says of each point how far
+ * @details sierpinskyt(radius) stands the triangle a triangular bailout of
+ * that number draws, point upwards, point upwards, and says of each point how far
  * into the gasket cut out of it that point lies: one on what survives every
  * cut, less the sooner it was cut away, zero outside the triangle.
  *
@@ -2162,7 +2160,10 @@ sfarg *sfsierpinskyt(sfarg *const p)
     if (!(radius > 0))
         return p;
 
-    number_t scale = 1 / nsqrt(radius); /* squared, as bailout is */
+    /* The sides stand the square root of the radius from the centre, where a
+     * triangular bailout of that number stands its sides, which puts the
+     * corners at twice that: a triangle's apothem is half its circumradius. */
+    number_t scale = 1 / (2 * nsqrt(radius));
     number_t x = GSL_REAL(sffe_position) * scale;
     number_t y = GSL_IMAG(sffe_position) * scale;
 
@@ -2191,8 +2192,8 @@ sfarg *sfsierpinskyt(sfarg *const p)
 
 /**
  * @brief The Sierpinski carpet, as a field over the plane.
- * @details sierpinskyc(radius, squares) fills the square of half-side the
- * square root of radius, on the axes as BAILOUT_SQUARE is, cuts it into squares by squares, throws the middle one away and
+ * @details sierpinskyc(radius, squares) fills the square a square bailout of
+ * that number draws -- half a side the square root of radius, at the origin, cuts it into squares by squares, throws the middle one away and
  * does the same to each of the rest. Three is the carpet as it is usually
  * drawn; five or seven give a lacier one, and two gives a gasket again, since
  * a square cut in four with one corner taken away is what a gasket is.
@@ -2320,8 +2321,8 @@ static inline int koch_under(double x, double y, int depth)
 /**
  * @brief The Koch snowflake, as a field over the plane.
  * @details snowflake(radius) grows a Koch snowflake point upwards, its six
- * points the square root of radius from the origin and standing in the
- * directions the corners of BAILOUT_HEXAGON0 stand in: one over the body, tapering as the fringe the point stands in gets finer,
+ * points standing on the six corners of the hexagon a hexagonal bailout of
+ * that number draws: one over the body, tapering as the fringe the point stands in gets finer,
  * zero outside altogether. The body is most of the figure and the fringe is
  * where the detail is, which is what a snowflake looks like.
  *
@@ -2342,7 +2343,11 @@ sfarg *sfsnowflake(sfarg *const p)
     if (!(radius > 0))
         return p;
 
-    number_t scale = 1 / nsqrt(radius); /* squared, as bailout is */
+    /* A hexagon stands its corners its apothem over cos thirty degrees from
+     * the centre, and a snowflake stands its points as far out as the corners
+     * of the triangle it grew from -- so this lands the six points on the six
+     * corners of the hexagon a bailout of this number would draw. */
+    number_t scale = FIG_SIN60 / nsqrt(radius);
     number_t x = GSL_REAL(sffe_position) * scale;
     number_t y = GSL_IMAG(sffe_position) * scale;
 
