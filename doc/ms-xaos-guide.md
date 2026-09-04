@@ -2,7 +2,7 @@
 
 A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Everything the
 original does, it still does; this describes what has been added or changed,
-and why. Version 1.7.
+and why. Version 1.8.
 
 ## Two binaries
 
@@ -291,37 +291,33 @@ cut scores one; the snowflake is made by adding, so the body scores one and the
 fringe tapers.
 
 `radius` means what `bailout` means and is read the same way: **as the square of
-the distance**. The default of 4 therefore draws a figure 2 from the origin to
-its corners — which is the circle a default bailout of 4 lets an orbit run to,
-and so the part of the plane the fractals shipped with XaoS draw in. Written
-with the same number as the bailout, a figure fills the same picture they do.
-
-Each is turned the way one of the bailout shapes is turned, so a figure can be
-read against one:
+the distance**. What it then draws is the shape a bailout of that number draws,
+**inscribed in it exactly** — set the bailout to the matching shape and the same
+number, and the figure and the bailout lie over one another:
 
 | | |
 | --- | --- |
-| `sierpinskyt` | a triangle point upwards — cornered as bailout **triangle −90°** |
-| `sierpinskyc` | a square on the axes — sided as bailout **square** |
-| `snowflake` | six points at 30° and every 60° after — cornered as bailout **hexagon 0°** |
+| `sierpinskyt` | the triangle of bailout **triangle −90°**, corner for corner |
+| `sierpinskyc` | the square of bailout **square**, side for side |
+| `snowflake` | the hexagon of bailout **hexagon 0°**, its six points on the hexagon's six corners |
 
-The sizes are not the same, and are not meant to be: a bailout polygon stands
-its *sides* the square root of the bailout from the centre, so its corners are
-further out — twice as far for a triangle — and a figure drawn out to a bailout
-triangle's corners would be half again as tall as the picture a user formula
-opens in.
+The thing to know is that a bailout polygon stands its **sides** the square root
+of the bailout from the centre — that is its apothem, not its circumradius — so
+its corners are further out than the number says: twice as far for a triangle,
+and by a seventh for a hexagon. `sierpinskyt(4)` therefore reaches 4 to its
+corners while `sierpinskyc(4)` reaches 2 to its sides, and both are right.
 
-**`sierpinskyt([radius=4])`** — the Sierpinski gasket, in an equilateral
-triangle standing at the origin, point upwards, its corners `sqrt(radius)` away.
+**`sierpinskyt([radius=4])`** — the Sierpinski gasket, in that triangle.
 
-**`sierpinskyc([radius=4]; [squares=3])`** — the Sierpinski carpet, in a square
-of half-side `sqrt(radius)`. The square is cut into `squares` by `squares`, the
+**`sierpinskyc([radius=4]; [squares=3])`** — the Sierpinski carpet, in that
+square. The square is cut into `squares` by `squares`, the
 middle one is thrown away, and the same is done to each of the rest. Three is
 the carpet as it is usually drawn; five or seven give a lacier one; two gives a
 gasket again, since a square cut in four with one corner taken away is what a
 gasket is.
 
-**`snowflake([radius=4])`** — the Koch snowflake grown from that triangle.
+**`snowflake([radius=4])`** — the Koch snowflake, its points on that
+hexagon's corners.
 
 Every argument has a default, so `snowflake()` is a call, and so is
 `sierpinskyc( ;5)` — a lacier carpet at the default size.

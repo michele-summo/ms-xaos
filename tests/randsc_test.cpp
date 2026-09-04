@@ -624,22 +624,25 @@ int main(void)
              * apex is never cut away at all */
             check(at(tri4, 0, 0, 0) > 0 && at(tri4, 0, 0, 0) < (number_t)1 / 10,
                   "the centre of the gasket was cut away, and cut away early");
-            /* The corners stand the square root of the radius out, the way
-             * bailout reads its number, so that a default call fills a default
-             * view. Not where a bailout polygon has its corners: those are its
-             * apothem over the cosine of half a turn between sides, which for
-             * a triangle is twice as far and taller than the picture. */
-            check(at(tri4, 0, 2, 0) == 1,
-                  "the apex stands at the square root of the radius");
-            check(at(tri4, 0, (number_t)201 / 100, 0) == 0,
+            /* The figure is inscribed in the shape a bailout of the same
+             * number draws. A bailout polygon stands its sides the square root
+             * of the bailout from the centre -- its apothem -- which for a
+             * triangle puts the corners at twice that, so radius four reaches
+             * four and not two. */
+            check(at(tri4, 0, 4, 0) == 1,
+                  "the apex stands on the corner of a triangular bailout of 4");
+            check(at(tri4, 0, (number_t)401 / 100, 0) == 0,
                   "and just past it the figure has ended");
+            check(at(tri4, 0, (number_t)-199 / 100, 0) > 0 &&
+                      at(tri4, 0, (number_t)-201 / 100, 0) == 0,
+                  "and its base lies along a side of that bailout");
             /* A corner of the triangle is in the gasket however deep the
              * cutting goes -- it is a corner of one sub-triangle at every
              * level. Its neighbourhood is not: the line of symmetry through it
              * is holes almost everywhere, which is what a gasket is. */
-            check(at(tri4, 0, (number_t)199 / 100, 0) < 1,
+            check(at(tri4, 0, (number_t)399 / 100, 0) < 1,
                   "while the point just under it was cut away");
-            check(at(tri4, 5, 5, 0) == 0 && at(tri4, 0, -5, 0) == 0,
+            check(at(tri4, 9, 9, 0) == 0 && at(tri4, 0, -9, 0) == 0,
                   "outside the triangle there is no figure");
 
             /* the same shape twice the size, read at twice the distance */
@@ -677,21 +680,77 @@ int main(void)
              * on the middle of an edge belongs to it although the triangle
              * does not reach there. The base is at y = -radius/2. */
             check(at(flake4, 0, 0, 0) == 1, "the body of the snowflake is solid");
-            check(at(flake4, 0, -5, 0) == 0 && at(flake4, 5, 5, 0) == 0,
+            check(at(flake4, 0, -6, 0) == 0 && at(flake4, 6, 6, 0) == 0,
                   "and beyond its fringe there is nothing");
-            /* the six points stand as far out as the corners of the triangle
-             * they grew from, in the directions a hexagon has its corners */
-            check(at(flake4, 0, (number_t)-199 / 100, 0) > 0 &&
-                      at(flake4, 0, (number_t)-201 / 100, 0) == 0,
-                  "the points reach the square root of the radius, all six");
-            number_t bump = at(flake4, 0, (number_t)-115 / 100, 0);
+            /* A hexagonal bailout of four has its sides two from the centre
+             * and its corners two over cos thirty degrees, which is 2.3094:
+             * the six points stand on those six corners. */
+            check(at(flake4, 0, (number_t)-23 / 10, 0) > 0 &&
+                      at(flake4, 0, (number_t)-2313 / 1000, 0) == 0,
+                  "the points stand on the corners of a hexagonal bailout of 4");
+            number_t bump = at(flake4, 0, (number_t)-133 / 100, 0);
             check(bump > 0 && bump < 1,
                   "the bump under the base belongs to it, and is fringe");
             /* that bump is an equilateral triangle on the middle third of an
              * edge whose own length is sqrt(3) times the corner distance, so it
              * reaches that whole distance past the base, and no further */
-            check(at(flake4, 0, (number_t)-225 / 100, 0) == 0,
+            check(at(flake4, 0, (number_t)-26 / 10, 0) == 0,
                   "and past the point of that bump there is nothing again");
+
+
+            /* And the whole silhouette, not three points of it: how far the
+             * figure reaches in a hundred and twenty directions, against how
+             * far the bailout polygon reaches in the same ones.
+             *
+             * The polygon is written out here rather than asked of the engine,
+             * so that this says what the shape is and not merely that two
+             * copies of one mistake agree. A regular polygon of apothem a has
+             * its edge at a / cos(t) where t is the angle off the nearest
+             * side's normal, which runs from minus to plus half the turn
+             * between sides.
+             *
+             * The size of these was wrong twice, both times by taking the
+             * bailout number for the distance to a corner when it is the
+             * distance to a side. */
+            const double apothem = 2; /* sqrt(4) */
+            struct {
+                sffe *f;
+                int sides;
+                double turn;
+                const char *what;
+            } shape[2] = {{tri4, 3, -3.14159265358979323846 / 2,
+                           "the gasket fills a triangular bailout of four"},
+                          {flake4, 6, 0,
+                           "and the snowflake reaches a hexagonal one"}};
+            for (int k = 0; k < 2; k++) {
+                double step = 2 * 3.14159265358979323846 / shape[k].sides;
+                int agree = 1;
+                for (int d = 0; d < 120; d++) {
+                    double t = d * 2 * 3.14159265358979323846 / 120;
+                    /* how far the polygon reaches this way */
+                    double off = t - shape[k].turn;
+                    off -= step * nfloor(off / step + (number_t)0.5);
+                    double reach = apothem / ncos((number_t)off);
+                    /* how far the figure reaches this way: it must be there
+                     * just inside and gone just outside */
+                    double cs = ncos((number_t)t), sn = nsin((number_t)t);
+                    number_t in = at(shape[k].f, (number_t)(reach * 0.995 * cs),
+                                     (number_t)(reach * 0.995 * sn), 0);
+                    number_t out = at(shape[k].f, (number_t)(reach * 1.02 * cs),
+                                      (number_t)(reach * 1.02 * sn), 0);
+                    /* the snowflake only touches the hexagon at its points,
+                     * so inside is asked of it only where a point is */
+                    int corner = shape[k].sides == 6
+                                     ? (d % 20 == 0 || d % 20 == 19 ||
+                                        d % 20 == 1)
+                                     : 1;
+                    if (out != 0)
+                        agree = 0;
+                    if (corner && shape[k].sides == 3 && in == 0)
+                        agree = 0;
+                }
+                check(agree, shape[k].what);
+            }
 
             /* the same point twice is the same number: these are figures, not
              * noise, and nothing in them is drawn from a seed */
