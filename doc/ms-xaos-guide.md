@@ -2,7 +2,7 @@
 
 A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Everything the
 original does, it still does; this describes what has been added or changed,
-and why. Version 2.4.
+and why. Version 2.5.
 
 ## Two binaries
 
@@ -296,6 +296,16 @@ it out of the bailout, and a part *n* levels down takes *n* steps to get there:
 **the pass a point leaves on is the level it stands at**, and the iteration count
 is the picture.
 
+What comes back on the pass a point leaves on matters as much as the pass
+itself: **every outside colouring mode but the iteration count reads it**. So the
+topmost part of each figure is thrown out rather than simply declared gone — the
+gasket doubles its middle hole away from a corner and it lands outside the
+triangle, the carpet scales its middle cell about the cell beside it, the
+snowflake throws its middle hexagon out the way that sector faces. Each carries
+where it came from with it, so `real`, `imag`, `angle`, smooth colouring and the
+rest all have something to work on. Only a point that was never in the figure is
+handed a number standing in for "gone".
+
 A snowflake is read **from a hexagon out**, which is the thing to know about it.
 It comes apart exactly into a regular hexagon at the middle, six triangles of
 that hexagon's own side standing on its six sides, twelve of a third that on
@@ -379,8 +389,8 @@ Every argument has a default, so `snowflake()` is a call, and so is
     snowflake()          with bailout shape hexagon 0
 
 None of them costs more than the noise beside them, pass for pass: measured
-against `randsc`, the gasket 0.44, the carpet 0.54 and the snowflake 0.51 of it
-at 64 bits of mantissa, and 0.50, 0.87 and 0.45 at 113. Reading a snowflake from
+against `randsc`, the gasket 0.44, the carpet 0.54 and the snowflake 0.50 of it
+at 64 bits of mantissa, and 0.50, 0.87 and 0.65 at 113. Reading a snowflake from
 its middle made it cheaper as well as better to look at: six sevenths of the
 figure is the hexagon or a triangle standing on it, and those are answered by
 four multiplications and a comparison without walking the curve at all. What a snowflake costs

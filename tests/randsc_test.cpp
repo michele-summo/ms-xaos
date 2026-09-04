@@ -104,6 +104,47 @@ static unsigned int leavesa(sffe *parser, int sides, number_t a, number_t x,
     return NEVER;
 }
 
+/* Whether a figure puts every point it lets go in a place of its own.
+ *
+ * What it hands back on the pass a point goes is what every outside colouring
+ * mode but the iteration count reads. A number standing in for "gone" would be
+ * the same number for the whole figure and all of those modes would draw one
+ * flat tone -- so what goes back has to be a point of the plane that moves as
+ * the point moves. */
+static int lands_apart(sffe *parser, int sides, number_t span)
+{
+    number_t sx[64], sy[64];
+    int n = 0, gone = 0;
+    for (int j = 0; j < 8; j++)
+        for (int i = 0; i < 8; i++) {
+            number_t x = -span + 2 * span * (number_t)i / 7;
+            number_t y = -span + 2 * span * (number_t)j / 7;
+            if (!fig_inside(sides, 2, x, y))
+                continue;
+            GSL_SET_COMPLEX(&sffe_position, x, y);
+            for (unsigned int t = 0; t < 32; t++) {
+                GSL_SET_COMPLEX(&sffe_z, x, y);
+                sffe_iteration = t;
+                cmplx next = sffe_eval(parser);
+                x = GSL_REAL(next);
+                y = GSL_IMAG(next);
+                if (fig_inside(sides, 2, x, y))
+                    continue;
+                gone += 1;
+                for (int q = 0; q < n; q++)
+                    if (sx[q] == x && sy[q] == y)
+                        return 0; /* two points, one place */
+                if (n < 64) {
+                    sx[n] = x;
+                    sy[n] = y;
+                    n += 1;
+                }
+                break;
+            }
+        }
+    return gone > 8;
+}
+
 static unsigned int leaves(sffe *parser, int sides, number_t x, number_t y)
 {
     return leavesa(parser, sides, 2, x, y);
@@ -830,6 +871,17 @@ int main(void)
                   "the ground beside the snowflake never leaves");
             check(leaves(flake4, 6, 0, (number_t)-2313 / 1000) == 0,
                   "and past the points nothing ever started");
+
+            /* The hexagon has no parent, so it is thrown out rather than
+             * declared gone: two points of it land in two places, and the
+             * outside colouring modes have something to read. The gasket has
+             * always done this -- its topmost hole is doubled away from a
+             * corner like any other and lands outside the triangle, which is
+             * outside the bailout, carrying where it came from with it. */
+            check(lands_apart(flake4, 6, (number_t)12 / 10),
+                  "a snowflake puts every point it lets go in its own place");
+            check(lands_apart(tri4, 3, (number_t)18 / 10),
+                  "and so does a gasket, as it always did");
             /* the ground is handed back untouched, which is what leaves the
              * incolouring something to say about it */
             {

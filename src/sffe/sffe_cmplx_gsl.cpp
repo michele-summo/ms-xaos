@@ -2049,6 +2049,17 @@ sfarg *sfstripe(sfarg *const p)
  * smooth colouring, and writing a figure inside a larger formula all mean
  * something.
  *
+ * That holds for the pass it goes on as well, and it has to. Every outside
+ * colouring mode but the iteration count reads what came back on that pass, so
+ * a number standing in for "gone" would be one number for the whole figure and
+ * all of them would draw one flat tone. The topmost part is therefore thrown
+ * rather than declared gone: the gasket doubles its middle hole away from a
+ * corner like any other and it lands outside the triangle, which is outside the
+ * bailout; the carpet scales its middle cell about the cell beside it and it
+ * lands a square out; the snowflake throws its middle hexagon out the way the
+ * sector faces. All three carry where they came from with them. Only a point
+ * that was never in the figure at all is handed the standing-in number.
+ *
  * A gasket and a carpet fill their shape, so every point in one has a level and
  * leaves on it. A snowflake does not fill its hexagon: it leaves six corners of
  * ground, which is no part of the figure and has no level. That ground is
@@ -2154,6 +2165,35 @@ static const number_t FIG_TURN_C[6] = {(number_t)1 / 2, 1,  (number_t)1 / 2,
                                        (number_t)-1 / 2, -1, (number_t)-1 / 2};
 static const number_t FIG_TURN_S[6] = {FIG_SIN60,  0, -FIG_SIN60,
                                        -FIG_SIN60, 0, FIG_SIN60};
+
+/* Three times the figure's reach, the way each sector faces.
+ *
+ * The hexagon at the middle has no parent to walk to and so has to go, and what
+ * it hands back on the way out is what every outside colouring mode but the
+ * iteration count has to read. A number standing in for "gone" would be the
+ * same number for every pixel of it, and every one of those modes would draw
+ * one flat tone -- so it is thrown, and what it hands back is a point of the
+ * plane that moves as the point moves. The gasket has always done this: a hole
+ * with no parent is doubled away from a corner like any other and lands outside
+ * the triangle, which is outside the bailout, carrying where it came from with
+ * it.
+ *
+ * Three times the reach clears every bailout shape of the same number. The
+ * worst of them is the triangle, whose corners stand at twice its apothem and
+ * so at 1.74 of the reach; the nearest this throw can leave a point is three
+ * less the hexagon's own corner, 2.42 of the reach, which is past it. Within a
+ * sector the throw is a translation, so the point keeps its shape exactly, and
+ * the six sectors are the same throw turned.
+ *
+ * Written in the plane rather than in the figure's units, and so with the
+ * turning of an apothem into a circumradius already in it: what is left to do
+ * per pass is to multiply by the square root of the radius, which comes back
+ * from multiplying the radius into the reciprocal that is already cached. The
+ * point itself is then added in the plane, where it already is, so the whole
+ * throw is three multiplications and two additions. */
+static const number_t FIG_THROW_X[6] = {3, 0, -3, -3, 0, 3};
+static const number_t FIG_THROW_Y[6] = {FIG_SQRT3,  2 * FIG_SQRT3, FIG_SQRT3,
+                                        -FIG_SQRT3, -2 * FIG_SQRT3, -FIG_SQRT3};
 
 
 /* The square root of the radius, or its reciprocal, kept on the call site
@@ -2409,7 +2449,10 @@ static inline int koch_under(double x, double y, int depth)
  * standing on the free edge of another steps onto that one, blown up by three
  * and turned to face the way it faces. Either way it is one step to the parent,
  * so the pass a point leaves on is the level of the piece it stands in, and the
- * hexagon, having nowhere to go, leaves on the first.
+ * hexagon, having nowhere to go, is thrown out the way its sector faces and
+ * leaves on the first -- thrown rather than simply declared gone, so that what
+ * it hands back is a point of the plane and the outside colouring modes have
+ * something to read there. See FIG_THROW_X.
  *
  * The six corners of ground the figure leaves in its hexagon are no part of it
  * and have no level. A point standing there is handed back exactly where it
@@ -2481,8 +2524,13 @@ sfarg *sfsnowflake(sfarg *const p)
         k = 5;
     }
     if (far < FIG_HEX_APOTHEM) {
-        /* the hexagon at the middle: no parent to walk to, so it goes now */
-        GSL_SET_COMPLEX(&sfvalue(p), FIG_ESCAPED, 0);
+        /* The hexagon at the middle: no parent to walk to, so it is thrown out
+         * the way its sector faces and goes on this pass, carrying where it
+         * came from with it for the outside colouring to read. */
+        number_t root = radius * inv; /* the square root back, by multiplying */
+        GSL_SET_COMPLEX(&sfvalue(p),
+                        GSL_REAL(sffe_z) + FIG_THROW_X[k] * root,
+                        GSL_IMAG(sffe_z) + FIG_THROW_Y[k] * root);
         return p;
     }
 
