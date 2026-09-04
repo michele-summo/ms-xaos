@@ -2,7 +2,7 @@
 
 A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Everything the
 original does, it still does; this describes what has been added or changed,
-and why. Version 1.6.
+and why. Version 1.7.
 
 ## Two binaries
 
@@ -296,6 +296,21 @@ its corners — which is the circle a default bailout of 4 lets an orbit run to,
 and so the part of the plane the fractals shipped with XaoS draw in. Written
 with the same number as the bailout, a figure fills the same picture they do.
 
+Each is turned the way one of the bailout shapes is turned, so a figure can be
+read against one:
+
+| | |
+| --- | --- |
+| `sierpinskyt` | a triangle point upwards — cornered as bailout **triangle −90°** |
+| `sierpinskyc` | a square on the axes — sided as bailout **square** |
+| `snowflake` | six points at 30° and every 60° after — cornered as bailout **hexagon 0°** |
+
+The sizes are not the same, and are not meant to be: a bailout polygon stands
+its *sides* the square root of the bailout from the centre, so its corners are
+further out — twice as far for a triangle — and a figure drawn out to a bailout
+triangle's corners would be half again as tall as the picture a user formula
+opens in.
+
 **`sierpinskyt([radius=4])`** — the Sierpinski gasket, in an equilateral
 triangle standing at the origin, point upwards, its corners `sqrt(radius)` away.
 
@@ -339,7 +354,7 @@ Four more choose their colours in relation to each other:
 | --- | --- |
 | 1–3 | colours scattered between black and white anchors — as before |
 | 4 | **spectrum** — right round the hue circle, one turn, darkening at both ends |
-| 5 | **duotone** — two hues, one owning the shadows and the other the highlights, as a press does it with two inks |
+| 5 | **duotone** — two hues, one owning the shadows and the other the highlights, as a press does it with two inks, banded |
 | 6 | **triad** — three hues spread round the circle, taken in turn, deep and bright alternating |
 | 7 | **complementary** — two hues from opposite sides of the circle, alternating |
 
@@ -368,6 +383,14 @@ colour and a bright one, never between nothing and nothing.
 And which segment is deep and which is bright is settled by where the segment
 sits, not by the dice: left to the dice, a palette four segments long comes out
 all one weight more often than not.
+
+Deep and bright alternate **band by band**, as they do in the three older ways,
+rather than swelling once from one end of the palette to the other. A palette
+that swells once changes colour over a hundred entries where a banded one
+changes over thirty, and a fractal drawn in the first has no edges to its
+rings — the gradient reads as slow. The test measures how far a palette travels
+in brightness against how far it reaches, and asks that the new four travel as
+far as the old three do, seed for seed.
 
 A position saved with one of the new four names an algorithm the original XaoS
 does not have and will refuse to load; one saved with 1 to 3 is unaffected.
