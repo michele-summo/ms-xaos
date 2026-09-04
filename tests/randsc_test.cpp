@@ -726,8 +726,43 @@ int main(void)
                   "and the corner survives cut after cut");
             check(leaves(carpet33, 4, 5, 0) == 0,
                   "outside the square the point never started");
-            /* two squares to a side with the middle one taken away is the far
-             * quarter taken away, which is a gasket again */
+            /* What the cut leaves, counted rather than described: a cell in
+             * the middle block goes on the first pass, and one in the border
+             * ring is carried onto the middle block and goes on the second.
+             * So the picture is the one big square the block draws with the
+             * ring's 4n-4 around it, whatever n is. */
+            struct {
+                const char *expr;
+                int n;
+            } cuts[3] = {{"sierpinskyc(4;3)", 3},
+                         {"sierpinskyc(4;4)", 4},
+                         {"sierpinskyc(4;5)", 5}};
+            for (int c = 0; c < 3; c++) {
+                sffe *f = compile(cuts[c].expr);
+                if (failures)
+                    break;
+                int n = cuts[c].n, ring = 0, hole = 0;
+                for (int j = 0; j < n; j++) {
+                    for (int i = 0; i < n; i++) {
+                        /* the middle of that cell, in the plane */
+                        number_t cx = (2 * ((number_t)i + (number_t)1 / 2) / n
+                                       - 1) * 2;
+                        number_t cy = (2 * ((number_t)j + (number_t)1 / 2) / n
+                                       - 1) * 2;
+                        unsigned int t = leaves(f, 4, cx, cy);
+                        if (t == 1)
+                            hole += 1;
+                        else if (t == 2)
+                            ring += 1;
+                    }
+                }
+                check(hole == (n - 2) * (n - 2) && ring == 4 * n - 4,
+                      cuts[c].expr);
+                sffe_free(&f);
+            }
+
+            /* two squares to a side has no ring to speak of, so the far
+             * quarter goes instead, which is a gasket again */
             sffe *carpet2 = compile("sierpinskyc(4;2)");
             if (!failures) {
                 check(leaves(carpet2, 4, (number_t)3 / 2, (number_t)3 / 2) == 1,
@@ -738,18 +773,30 @@ int main(void)
                 sffe_free(&carpet2);
             }
 
-            /* the snowflake is drawn whole, its six points on the six corners
-             * of the hexagon a bailout of four draws -- apothem two, corners
-             * two over cos thirty degrees, which is 2.3094 */
-            check(leaves(flake4, 6, 0, 0) == NEVER,
-                  "the body of the snowflake never leaves");
-            check(leaves(flake4, 6, 0, (number_t)-23 / 10) == NEVER &&
+            /* The snowflake counts from two: the ground it leaves in the
+             * corners of the hexagon goes on the first pass, so that the body
+             * -- held one pass for the purpose -- can have the second to
+             * itself and not be drawn the colour of the ground. */
+            check(leaves(flake4, 6, 1, (number_t)-15 / 10) == 1,
+                  "the ground beside the snowflake goes first");
+            check(leaves(flake4, 6, 0, 0) == 2,
+                  "and the body of it second");
+            check(leaves(flake4, 6, 0, (number_t)-15 / 10) == 3,
+                  "and the bump under the base, one level down, third");
+            check(leaves(flake4, 6, 0, (number_t)-23 / 10) == 3 &&
                       leaves(flake4, 6, 0, (number_t)-2313 / 1000) == 0,
                   "the points stand on the corners of a hexagonal bailout of 4");
-            check(leaves(flake4, 6, 0, (number_t)-133 / 100) == NEVER,
-                  "the bump under the base belongs to it");
-            check(leaves(flake4, 6, 1, (number_t)-15 / 10) == 1,
-                  "and the ground beside that bump does not");
+            /* The point under the base is the child of the point above it,
+             * turned half about: a step off one lands on the other, so it goes
+             * one pass later, and that holds all the way up to the tip. */
+            int child = 1;
+            for (int i = 1; i <= 8; i++) {
+                number_t r = (number_t)2 + (number_t)3 * i / 100;
+                if (leaves(flake4, 6, 0, -r) != leaves(flake4, 6, 0, r) + 1)
+                    child = 0;
+            }
+            check(child,
+                  "a child is its parent turned about and cut down by three");
 
             /* the whole silhouette, in a hundred and twenty directions: just
              * outside the shape nothing ever started, and every corner of the
@@ -797,9 +844,13 @@ int main(void)
             for (int k = 0; k < 6; k++) {
                 double t = 3.14159265358979323846 / 6 +
                            k * 3.14159265358979323846 / 3;
-                number_t r = (number_t)23093 / 10000;
+                number_t r = (number_t)23090 / 10000;
+                /* in the figure rather than in the ground beside it: the
+                 * ground goes on the first pass, three of the six points are
+                 * corners of the body and go on the second, and the other
+                 * three are children of it and go on the third */
                 if (leaves(flake4, 6, (number_t)(r * ncos((number_t)t)),
-                           (number_t)(r * nsin((number_t)t))) != NEVER)
+                           (number_t)(r * nsin((number_t)t))) < 2)
                     corners = 0;
             }
             check(corners, "and both reach every corner of the shape they fill");

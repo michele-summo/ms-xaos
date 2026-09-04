@@ -2,7 +2,7 @@
 
 A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Everything the
 original does, it still does; this describes what has been added or changed,
-and why. Version 2.1.
+and why. Version 2.2.
 
 ## Two binaries
 
@@ -275,36 +275,46 @@ leading bits, which agree except for about one seed in fifty million.
 
 ### Figures instead of noise
 
-`sierpinskyt`, `sierpinskyc` and `snowflake` stand where the noise stands. They
-read the same position — the pixel, which is the same point in mandelbrot mode
-as in julia mode and does not move as `z` does — and nothing about them is
-random: the figure is where it looks like it is.
+`sierpinskyt`, `sierpinskyc` and `snowflake` stand where the noise stands, and
+nothing about them is random: the figure is where it looks like it is, and
+mandelbrot mode and julia mode draw the same picture, a shape in the plane being
+in the same place either way.
 
 **They are fractals of their own, not fields to multiply into one.** Written
 alone — `sierpinskyt()` and nothing else — each draws its figure, the way
 Fractal → More Formulae draws its **Sierpinski**, **Sierpinski Carpet** and
 **Koch Snowflake**.
 
-The two Sierpinski figures do it by **carrying the point to its parent**. Every
-hole in a gasket sits inside a bigger hole one level up — the three second-level
-triangles each sit in the first-level one — and doubling the point away from the
-nearest corner of the triangle is exactly the step from a hole to the hole above
-it. The topmost hole has no parent inside the figure, so that step carries it
-out of the bailout, and a point in a hole *n* levels down takes *n* steps to get
-there: **the pass a point leaves on is the level that cut it**, and the
-iteration count is the picture.
+All three do it by **carrying the point to its parent**. Every part of one of
+these figures has one: a hole in a gasket sits inside a bigger hole one level up,
+a hole in a carpet inside the cell that was cut the same way, a triangle of a
+snowflake on the edge of the triangle it grew from. The step onto the parent is a
+scaling about the right point — doubling away from the nearest corner for the
+gasket, blowing a cell up by the number of cells for the carpet, blowing a child
+up by three for the snowflake. The topmost part has no parent inside the figure,
+so its step carries it out of the bailout, and a part *n* levels down takes *n*
+steps to get there: **the pass a point leaves on is the level it stands at**, and
+the iteration count is the picture.
+
+A snowflake adds one thing to that. Its three children sit on three edges facing
+three different ways, so a child is **turned as well as moved** and the step onto
+the parent has to turn it back. Nothing else about it differs.
 
 The point really travels, and that is what makes these usable rather than merely
 correct: `z` along the way is a point of the plane like any other, so the
 colouring modes that read it, smooth colouring, and writing a figure inside a
 larger formula all mean something.
 
-The snowflake has no such parent to walk to — its levels add to its edge rather
-than cutting into its middle, so all but a sliver of it is level one and there
-is nothing to count. It is drawn whole instead: a point in it stays where it is
-and never leaves, a point outside it is thrown past any bailout at once, so the
-body comes out in the inside colour, the ground in the outside one, and the
-fringe between them is as fine as the levels go.
+A gasket and a carpet fill their shape, so what is not figure is hole and the
+level that cut it says which colour it takes. A snowflake does not fill its
+hexagon: it leaves six corners of **ground**, and that ground has to leave on a
+pass of its own or it would be drawn the colour of the body. So it goes first,
+and the body is held one pass and goes second — which is why a snowflake counts
+from two where the other two count from one, and why those six corners come out
+in a band of their own.
+
+Every point leaves, and none takes more passes than the level it stands at, so
+none of these ever runs to the iteration limit.
 
 `radius` means what `bailout` means and is read the same way: **as the square of
 the distance**. What it draws is the shape a bailout of that number draws,
@@ -326,15 +336,18 @@ corners while `sierpinskyc(4)` reaches 2 to its sides, and both are right.
 **`sierpinskyt([radius=4])`** — the Sierpinski gasket, in that triangle.
 
 **`sierpinskyc([radius=4]; [squares=3])`** — the Sierpinski carpet, in that
-square. The square is cut into `squares` by `squares`, the middle one is thrown
-away, and the same is done to each of the rest. Three is the carpet as it is
-usually drawn; five or seven give a lacier one; two gives a gasket again, since
-a square cut in four with one corner taken away is what a gasket is.
+square. The square is cut into `squares` by `squares`, the ring of cells along
+the border is kept, everything that ring encloses is thrown away, and the same
+is done to each cell that was kept. So the picture is **one square in the middle
+and 4×`squares`−4 around it**: eight at three, which is the carpet as it is
+usually drawn, twelve at four, sixteen at five. Two is the one number with no
+ring to speak of, and there the far corner goes instead, which is a gasket again
+— a square cut in four with one corner taken away is what a gasket is.
 
 **`snowflake([radius=4])`** — the Koch snowflake, its points on that hexagon's
-corners. Drawn whole rather than in bands: the levels of a snowflake add to its
-edge rather than cutting into its middle, so there is a body, a ground, and the
-fringe between them as fine as the levels go.
+corners, banded by generation: the body first, the three triangles on its edges
+next, the nine on theirs after that. The six corners of ground the figure does
+not cover are a band of their own, one pass ahead of the body.
 
 Every argument has a default, so `snowflake()` is a call, and so is
 `sierpinskyc( ;5)` — a lacier carpet at the default size.
@@ -345,18 +358,21 @@ Every argument has a default, so `snowflake()` is a call, and so is
     snowflake()          with bailout shape hexagon 0
 
 None of them costs more than the noise beside them: measured against `randsc`,
-the gasket 0.37, the carpet 0.40 and the snowflake 0.35 of it at 64 bits of
-mantissa, and 0.41, 0.77 and 0.63 at 113. That was not free, and at 113 bits it
+the gasket 0.45, the carpet 0.58 and the snowflake 0.67 of it at 64 bits of
+mantissa, and 0.54, 0.85 and 1.02 at 113. That was not free, and at 113 bits it
 was very nearly lost — a square root and a division are both software there, and
-either costs about what a whole figure costs. So the square root of the radius
-is kept on the call site rather than taken again every pass; the gasket compares
-its three barycentric weights scaled by a positive number, which changes neither
-which is largest nor which is negative and takes its divisions to none; and the
-carpet counts in cells rather than in the plane, where the multiplication by
-`squares` and the division by it cancel. The snowflake walks the Koch curve in
-`double` besides, since the figure stands at a fixed size and 52 bits of a
-fraction of one edge is more than the 24 levels it draws can use. A test asserts
-the ratios, so a rewrite that loses them says so.
+either costs about what a whole figure costs. So the reciprocal of the square
+root of the radius is kept on the call site rather than taken again every pass,
+and the root itself comes back by multiplying the radius into that reciprocal
+rather than by dividing; the gasket compares its three barycentric weights
+scaled by a positive number, which changes neither which is largest nor which is
+negative; the carpet counts in cells rather than in the plane, where the
+multiplication by `squares` and the division by it cancel; and the snowflake
+takes the child to walk onto from the edge whose bump it was found under, which
+it had to find anyway. It walks the Koch curve in `double` besides, since the
+figure stands at a fixed size and 52 bits of a fraction of one edge is more than
+the 24 levels it draws can use. A test asserts the ratios, so a rewrite that
+loses them says so.
 
 ## Palettes
 
