@@ -2,7 +2,7 @@
 
 A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Everything the
 original does, it still does; this describes what has been added or changed,
-and why. Version 1.9.
+and why. Version 2.0.
 
 ## Two binaries
 
@@ -277,40 +277,23 @@ leading bits, which agree except for about one seed in fifty million.
 
 `sierpinskyt`, `sierpinskyc` and `snowflake` stand where the noise stands. They
 read the same position — the pixel, which is the same point in mandelbrot mode
-as in julia mode and does not move as `z` does — and hand back a number in
-`[0, 1)` about it, so anywhere `randsc` can go one of these can go instead.
-Nothing about them is random: the figure is where it looks like it is, and the
-same point always gives the same number.
+as in julia mode and does not move as `z` does — and nothing about them is
+random: the figure is where it looks like it is.
 
-**Written alone, a figure draws nothing — and this is the first thing to know
-about them.** `sierpinskyt()` on its own sets `z` to a number between 0 and 1,
-and a number between 0 and 1 never leaves a bailout of 4: every pixel runs to
-the iteration limit, every pixel gets the same colour, and what you see is the
-bailout shape in one flat tone with the figure nowhere in it. Nothing is broken;
-the value simply never reaches the picture. It is the same thing the noise
-functions ask for, said in the same place a few paragraphs down.
-
-Add it to `z` instead and the value drives the escape: a point on the gasket
-climbs to the bailout in a few passes and a point in a deep hole takes many, so
-the levels of the figure come out as the bands of the picture. Set the matching
-bailout shape and the figure fills it exactly:
-
-    z+sierpinskyt()     with Fractal -> Bailout shape -> triangle -90
-    z+sierpinskyc()     with bailout shape square
-    z+snowflake()       with bailout shape hexagon 0
-
-All three answer one question, *how solidly does this point belong to the
-figure*, and answer it the same way: **1** where it belongs most, tapering
-toward **0** as the feature it stands in gets finer, and exactly **0** where the
-figure is not. The two Sierpinski figures are made by taking away, so a point
-that falls into the first hole scores almost nothing and one that survives every
-cut scores one; the snowflake is made by adding, so the body scores one and the
-fringe tapers.
+**They are fractals of their own, not fields to multiply into one.** Written
+alone — `sierpinskyt()` and nothing else — each draws its figure, the way
+Fractal → More Formulae draws its **Sierpinski**, **Sierpinski Carpet** and
+**Koch Snowflake**, and for the same reason: each knows the level of the
+construction that decided a point, hands back nothing until the pass reaches
+that level and a number no bailout can hold once it has, so **the pass a point
+escapes on is the level that decided it** and the iteration count is the
+picture. A point in the first hole leaves on the first pass, one thirty levels
+down on the thirtieth, and one on the figure itself never leaves.
 
 `radius` means what `bailout` means and is read the same way: **as the square of
-the distance**. What it then draws is the shape a bailout of that number draws,
+the distance**. What it draws is the shape a bailout of that number draws,
 **inscribed in it exactly** — set the bailout to the matching shape and the same
-number, and the figure and the bailout lie over one another:
+number and the figure and the bailout lie over one another:
 
 | | |
 | --- | --- |
@@ -327,33 +310,33 @@ corners while `sierpinskyc(4)` reaches 2 to its sides, and both are right.
 **`sierpinskyt([radius=4])`** — the Sierpinski gasket, in that triangle.
 
 **`sierpinskyc([radius=4]; [squares=3])`** — the Sierpinski carpet, in that
-square. The square is cut into `squares` by `squares`, the
-middle one is thrown away, and the same is done to each of the rest. Three is
-the carpet as it is usually drawn; five or seven give a lacier one; two gives a
-gasket again, since a square cut in four with one corner taken away is what a
-gasket is.
+square. The square is cut into `squares` by `squares`, the middle one is thrown
+away, and the same is done to each of the rest. Three is the carpet as it is
+usually drawn; five or seven give a lacier one; two gives a gasket again, since
+a square cut in four with one corner taken away is what a gasket is.
 
-**`snowflake([radius=4])`** — the Koch snowflake, its points on that
-hexagon's corners.
+**`snowflake([radius=4])`** — the Koch snowflake, its points on that hexagon's
+corners. Drawn whole rather than in bands: the levels of a snowflake add to its
+edge rather than cutting into its middle, so there is a body, a ground, and the
+fringe between them as fine as the levels go.
 
 Every argument has a default, so `snowflake()` is a call, and so is
 `sierpinskyc( ;5)` — a lacier carpet at the default size.
 
-    z+sierpinskyt()                      the gasket, banded by its levels
-    z+sierpinskyc( ;5)                   a lacier carpet, the same way
-    z^2+c+snowflake()*0.15               the set with a snowflake pressed into it
-    z+sierpinskyt(3)*0.4                 the gasket as a displacement
-    z^2+c*sierpinskyc( ;5)               the carpet as a mask on the point
-    randsc(13;{0.3,0.3})*snowflake(4)    noise cut to the shape of a snowflake
+    sierpinskyt()        with Fractal -> Bailout shape -> triangle -90
+    sierpinskyc()        with bailout shape square
+    sierpinskyc( ;5)     a lacier carpet
+    snowflake()          with bailout shape hexagon 0
 
 None of them costs more than the noise beside them: measured against `randsc`,
-the gasket 0.26, the carpet 0.34 and the snowflake 0.36 at 64 bits of mantissa,
-and 0.72, 0.53 and 0.99 at 113. That was not free. The gasket is decided by one
-integer AND rather than by subdividing a triangle; the carpet reads its digits
-in fixed point rather than in `number_t`; and the snowflake walks the curve in
+the gasket 0.34, the carpet 0.40 and the snowflake 0.33 of it at 64 bits of
+mantissa. That was not free. The gasket's level is one integer AND on two
+barycentric weights rather than thirty rounds of subdividing a triangle; the
+carpet reads its digits in fixed point rather than in `number_t`, which is a
+third quicker and exact besides; and the snowflake walks the Koch curve in
 `double`, since the figure stands at a fixed size and 52 bits of a fraction of
 one edge is more than the 24 levels it draws can use. A test asserts the three
-ratios, so a future rewrite that loses them says so.
+ratios, so a rewrite that loses them says so.
 
 ## Palettes
 

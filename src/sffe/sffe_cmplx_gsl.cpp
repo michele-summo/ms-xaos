@@ -2023,15 +2023,25 @@ sfarg *sfstripe(sfarg *const p)
  * about them is random, so the same position always gives the same number, and
  * the figure is where it looks like it is.
  *
- * All three answer one question -- how solidly does this point belong to the
- * figure -- and answer it the same way: one where it belongs most, tapering
- * toward zero as the feature it stands in gets finer, and exactly zero where
- * the figure is not. The two Sierpinski figures are made by taking away, so a
- * point that falls into the first hole scores almost nothing and one that
- * survives every cut scores one; the snowflake is made by adding, so the body
- * scores one and the fringe tapers. Either way the field is banded by the
- * levels of the construction, which is what makes it worth multiplying into a
- * formula.
+ * All three are fractals of their own and not fields to multiply into one.
+ * Written alone -- "sierpinskyt()" and nothing else -- each draws its figure,
+ * the way the Sierpinski, Sierpinski Carpet and Koch Snowflake under Fractal ->
+ * More Formulae draw theirs, and for the same reason: the pass a point escapes
+ * at is the level of the construction that decided it.
+ *
+ * That is all these do. Each knows, of a point, the level it was cut away at --
+ * or, for the snowflake, whether it was taken in at all -- and hands back
+ * nothing while the pass has not reached that level and a number no bailout can
+ * hold once it has. So a point in the first hole leaves on the first pass, one
+ * in a hole thirty levels down leaves on the thirtieth, and one on the figure
+ * itself never leaves. The iteration count is the picture.
+ *
+ * They were a field before this: a number between nought and one saying how
+ * solidly a point belonged, meant to be multiplied into a formula the way the
+ * noise is. Written alone a field draws nothing at all -- a number between
+ * nought and one cannot leave a bailout of four -- and what was on the screen
+ * was the bailout shape in one flat tone, which is not what anybody asking for
+ * a Sierpinski triangle wants.
  *
  * radius means what bailout means and is read the same way: as the square of
  * the distance. What it draws is then the shape a bailout of that number
@@ -2090,6 +2100,12 @@ static const number_t FIG_AY[3] = {((number_t)-1 / 2 - 1) / FIG_EDGE, 0,
  * one left: past the width of the mantissa the levels are rounding rather than
  * figure, and drawing rounding is slower than not drawing it. */
 #define SIER_BITS 30
+/* What a figure hands back once the pass has reached the level that decides
+ * the point: a number no bailout shape can hold, so the point leaves on that
+ * pass whatever shape and however large a bailout was chosen. Its square is
+ * still far inside what any of the three number types can carry, which is what
+ * keeps the squares the loops take of it finite. */
+#define FIG_ESCAPED ((number_t)1e10)
 #ifdef USE_FLOAT128
 #define FIG_SAFE_SHIFTS 100
 #elif defined(USE_LONG_DOUBLE)
@@ -2129,9 +2145,9 @@ static inline int sier_level(uint32_t both)
 /**
  * @brief The Sierpinski gasket, as a field over the plane.
  * @details sierpinskyt(radius) stands the triangle a triangular bailout of
- * that number draws, point upwards, point upwards, and says of each point how far
- * into the gasket cut out of it that point lies: one on what survives every
- * cut, less the sooner it was cut away, zero outside the triangle.
+ * that number draws, point upwards, and cuts the gasket out of it: a point
+ * leaves on the pass numbered by the cut that took it, and one on the gasket
+ * itself never leaves, so the iteration count is the picture.
  *
  * Worked out in barycentric coordinates, where the gasket has a description
  * that costs nothing. Halving the triangle towards each of its corners in turn
@@ -2176,17 +2192,19 @@ sfarg *sfsierpinskyt(sfarg *const p)
     number_t across = x * FIG_ACROSS;
     number_t b = (rest - across) / 2;
     number_t c = (rest + across) / 2;
-    if (a < 0 || b < 0 || c < 0)
-        return p; /* outside the triangle */
+    if (a < 0 || b < 0 || c < 0) {
+        /* outside the triangle: gone on the first pass */
+        GSL_SET_COMPLEX(&sfvalue(p), FIG_ESCAPED, 0);
+        return p;
+    }
 
     uint32_t bx = (uint32_t)(b * (number_t)((uint32_t)1 << SIER_BITS));
     uint32_t cx = (uint32_t)(c * (number_t)((uint32_t)1 << SIER_BITS));
     uint32_t both = (bx & cx) & (((uint32_t)1 << SIER_BITS) - 1);
-    if (!both) {
-        GSL_SET_COMPLEX(&sfvalue(p), 1, 0); /* never cut away */
-        return p;
-    }
-    GSL_SET_COMPLEX(&sfvalue(p), (number_t)sier_level(both) / SIER_BITS, 0);
+    if (!both)
+        return p; /* never cut away, so it never leaves */
+    if ((unsigned int)sier_level(both) <= sffe_iteration + 1)
+        GSL_SET_COMPLEX(&sfvalue(p), FIG_ESCAPED, 0);
     return p;
 }
 
@@ -2220,8 +2238,10 @@ sfarg *sfsierpinskyc(sfarg *const p)
     number_t scale = 1 / (2 * half);
     number_t u = (GSL_REAL(sffe_position) + half) * scale;
     number_t v = (GSL_IMAG(sffe_position) + half) * scale;
-    if (!(u >= 0) || u >= 1 || !(v >= 0) || v >= 1)
-        return p; /* outside the square */
+    if (!(u >= 0) || u >= 1 || !(v >= 0) || v >= 1) {
+        GSL_SET_COMPLEX(&sfvalue(p), FIG_ESCAPED, 0); /* outside the square */
+        return p;
+    }
 
     /* Read the digits in fixed point rather than in number_t.
      *
@@ -2253,14 +2273,14 @@ sfarg *sfsierpinskyc(sfarg *const p)
         vi *= (uint64_t)squares;
         if ((ui >> FIG_CARPET_BITS) == middle &&
             (vi >> FIG_CARPET_BITS) == middle) {
-            GSL_SET_COMPLEX(&sfvalue(p), (number_t)level / depth, 0);
+            if ((unsigned int)level <= sffe_iteration + 1)
+                GSL_SET_COMPLEX(&sfvalue(p), FIG_ESCAPED, 0);
             return p;
         }
         ui &= frac;
         vi &= frac;
     }
-    GSL_SET_COMPLEX(&sfvalue(p), 1, 0); /* never cut away */
-    return p;
+    return p; /* never cut away, so it never leaves */
 }
 
 /* Whether a point stands under the Koch curve drawn over the segment from
@@ -2355,8 +2375,10 @@ sfarg *sfsnowflake(sfarg *const p)
      * triangle it grew from, so the whole figure sits inside the circle those
      * corners are on and most of the plane can be turned away in three
      * multiplications. */
-    if (x * x + y * y > 1)
+    if (x * x + y * y > 1) {
+        GSL_SET_COMPLEX(&sfvalue(p), FIG_ESCAPED, 0);
         return p;
+    }
 
     int outside = 0;
     int best = 0;
@@ -2377,13 +2399,16 @@ sfarg *sfsnowflake(sfarg *const p)
             best = level;
     }
 
-    if (!outside) {
-        GSL_SET_COMPLEX(&sfvalue(p), 1, 0); /* the body of it */
-        return p;
-    }
+    /* The snowflake is drawn whole rather than in bands, as the built-in one
+     * is: a point in it never leaves and a point outside it leaves at once, so
+     * the body comes out in the inside colour and the ground in the outside
+     * one, with the fringe between them as fine as the levels go. There is no
+     * banding to be had -- the levels of a snowflake add to its edge rather
+     * than cutting into its middle, so all but a sliver of it is level one. */
+    if (!outside)
+        return p; /* the body of it */
     if (!best)
-        return p; /* outside the snowflake */
-    GSL_SET_COMPLEX(&sfvalue(p), (number_t)(KOCH_DEPTH - best) / KOCH_DEPTH, 0);
+        GSL_SET_COMPLEX(&sfvalue(p), FIG_ESCAPED, 0); /* outside altogether */
     return p;
 }
 

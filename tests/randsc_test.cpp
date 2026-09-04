@@ -57,6 +57,23 @@ static number_t at(sffe *parser, number_t x, number_t y, unsigned int n)
     return GSL_REAL(sffe_eval(parser));
 }
 
+
+/* The pass a figure lets a point go on, or NEVER if it never does.
+ *
+ * A figure hands back nothing while the point still belongs and a number no
+ * bailout can hold once it does not, so this is the iteration count the picture
+ * is drawn from -- and it is what the figures have to be checked as, there
+ * being no field left in them to check. */
+#define NEVER 0xffffffffu
+
+static unsigned int leaves(sffe *parser, number_t x, number_t y)
+{
+    for (unsigned int n = 0; n < 64; n++)
+        if (at(parser, x, y, n) != 0)
+            return n;
+    return NEVER;
+}
+
 int main(void)
 {
     char what[96];
@@ -587,13 +604,20 @@ int main(void)
     }
 
 
-    /* --- the figures: the same field, drawn rather than diced --------------
+    /* --- the figures: fractals of their own --------------------------------
      *
-     * sierpinskyt, sierpinskyc and snowflake stand where the noise stands --
-     * at the position, which is the same point in either mode -- and answer
-     * the same question about it, how solidly the point belongs to a figure.
-     * Nothing about them is random, so unlike the noise they can be checked
-     * against points whose answer is known by looking at the figure.
+     * sierpinskyt, sierpinskyc and snowflake stand where the noise stands -- at
+     * the position, which is the same point in either mode -- but what they
+     * hand back is not a field. Each knows the level of the construction that
+     * decided the point, and hands back nothing until the pass reaches that
+     * level and a number no bailout can hold once it has: so the pass a point
+     * escapes on is the level that decided it, and the iteration count draws
+     * the figure. That is how Fractal -> More Formulae draws its Sierpinski,
+     * its Carpet and its Koch Snowflake, and writing one of these alone now
+     * draws the same picture.
+     *
+     * Checked here as escape passes rather than as values, since the value is
+     * only ever nothing or gone.
      */
     {
         sffe *tri = compile("sierpinskyt()");
@@ -607,111 +631,89 @@ int main(void)
         sffe *flake4 = compile("snowflake(4)");
         if (!failures) {
             /* every argument has a default, so the bare call is a call */
-            check(at(tri, (number_t)1 / 3, (number_t)1 / 7, 0) ==
-                      at(tri4, (number_t)1 / 3, (number_t)1 / 7, 0),
+            check(leaves(tri, (number_t)1 / 3, (number_t)1 / 7) ==
+                      leaves(tri4, (number_t)1 / 3, (number_t)1 / 7),
                   "sierpinskyt defaults to a radius of four");
-            check(at(carpet, (number_t)1 / 3, (number_t)1 / 7, 0) ==
-                      at(carpet33, (number_t)1 / 3, (number_t)1 / 7, 0),
+            check(leaves(carpet, (number_t)1 / 3, (number_t)1 / 7) ==
+                      leaves(carpet33, (number_t)1 / 3, (number_t)1 / 7),
                   "sierpinskyc to four and to three squares");
-            check(at(flake, (number_t)1 / 3, (number_t)1 / 7, 0) ==
-                      at(flake4, (number_t)1 / 3, (number_t)1 / 7, 0),
+            check(leaves(flake, (number_t)1 / 3, (number_t)1 / 7) ==
+                      leaves(flake4, (number_t)1 / 3, (number_t)1 / 7),
                   "and snowflake to four");
-            check(at(carpet5e, (number_t)1 / 3, (number_t)1 / 7, 0) ==
-                      at(carpet5, (number_t)1 / 3, (number_t)1 / 7, 0),
+            check(leaves(carpet5e, (number_t)1 / 3, (number_t)1 / 7) ==
+                      leaves(carpet5, (number_t)1 / 3, (number_t)1 / 7),
                   "and the radius may be left empty and the squares given");
 
-            /* the middle of the triangle is a hole, and an early one; the
-             * apex is never cut away at all */
-            check(at(tri4, 0, 0, 0) > 0 && at(tri4, 0, 0, 0) < (number_t)1 / 10,
-                  "the centre of the gasket was cut away, and cut away early");
-            /* The figure is inscribed in the shape a bailout of the same
-             * number draws. A bailout polygon stands its sides the square root
-             * of the bailout from the centre -- its apothem -- which for a
-             * triangle puts the corners at twice that, so radius four reaches
-             * four and not two. */
-            check(at(tri4, 0, 4, 0) == 1,
+            /* The figure is inscribed in the shape a bailout of the same number
+             * draws. A bailout polygon stands its sides the square root of the
+             * bailout from the centre -- its apothem -- which for a triangle
+             * puts the corners at twice that, so radius four reaches four. */
+            check(leaves(tri4, 0, 4) == NEVER,
                   "the apex stands on the corner of a triangular bailout of 4");
-            check(at(tri4, 0, (number_t)401 / 100, 0) == 0,
-                  "and just past it the figure has ended");
-            check(at(tri4, 0, (number_t)-199 / 100, 0) > 0 &&
-                      at(tri4, 0, (number_t)-201 / 100, 0) == 0,
+            check(leaves(tri4, 0, (number_t)401 / 100) == 0,
+                  "and just past it the point is gone at once");
+            check(leaves(tri4, 0, (number_t)-199 / 100) != 0 &&
+                      leaves(tri4, 0, (number_t)-201 / 100) == 0,
                   "and its base lies along a side of that bailout");
-            /* A corner of the triangle is in the gasket however deep the
-             * cutting goes -- it is a corner of one sub-triangle at every
-             * level. Its neighbourhood is not: the line of symmetry through it
-             * is holes almost everywhere, which is what a gasket is. */
-            check(at(tri4, 0, (number_t)399 / 100, 0) < 1,
-                  "while the point just under it was cut away");
-            check(at(tri4, 9, 9, 0) == 0 && at(tri4, 0, -9, 0) == 0,
-                  "outside the triangle there is no figure");
+
+            /* the middle of the triangle is a hole, and an early one */
+            unsigned int middle = leaves(tri4, 0, 0);
+            check(middle != NEVER && middle < 4,
+                  "the centre of the gasket is a hole, and an early one");
 
             /* the same shape twice the size, read at twice the distance */
             int scaled = 1;
             for (int i = 1; i < 40; i++) {
                 number_t x = (number_t)(i % 7) / 3 - 1;
                 number_t y = (number_t)(i % 11) / 5 - 1;
-                if (at(tri16, 2 * x, 2 * y, 0) != at(tri4, x, y, 0))
+                if (leaves(tri16, 2 * x, 2 * y) != leaves(tri4, x, y))
                     scaled = 0;
             }
             check(scaled,
                   "and four times the radius is twice the figure, as bailout");
 
             /* the carpet: the middle square goes first, a corner never goes */
-            check(at(carpet33, 0, 0, 0) > 0 &&
-                      at(carpet33, 0, 0, 0) < (number_t)1 / 20,
+            check(leaves(carpet33, 0, 0) == 0,
                   "the centre of the carpet is what the first cut removed");
-            check(at(carpet33, -2, -2, 0) == 1,
+            check(leaves(carpet33, -2, -2) == NEVER,
                   "and the corner survives every cut");
-            check(at(carpet33, 5, 0, 0) == 0,
-                  "outside the square there is no figure");
-            /* two squares to a side with the middle one taken away is the top
-             * right quarter taken away, which is a gasket again */
+            check(leaves(carpet33, 5, 0) == 0,
+                  "outside the square the point is gone at once");
+            /* two squares to a side with the middle one taken away is the far
+             * quarter taken away, which is a gasket again */
             sffe *carpet2 = compile("sierpinskyc(4;2)");
             if (!failures) {
-                check(at(carpet2, (number_t)3 / 2, (number_t)3 / 2, 0) > 0 &&
-                          at(carpet2, (number_t)3 / 2, (number_t)3 / 2, 0) <
-                              (number_t)1 / 20,
+                check(leaves(carpet2, (number_t)3 / 2, (number_t)3 / 2) == 0,
                       "cut in two, the quarter that goes is the far corner");
-                check(at(carpet2, -2, -2, 0) == 1, "and the near one stays");
+                check(leaves(carpet2, -2, -2) == NEVER,
+                      "and the near one stays");
                 sffe_free(&carpet2);
             }
 
-            /* the snowflake: solid in the body, nothing outside, and the bump
-             * on the middle of an edge belongs to it although the triangle
-             * does not reach there. The base is at y = -radius/2. */
-            check(at(flake4, 0, 0, 0) == 1, "the body of the snowflake is solid");
-            check(at(flake4, 0, -6, 0) == 0 && at(flake4, 6, 6, 0) == 0,
-                  "and beyond its fringe there is nothing");
-            /* A hexagonal bailout of four has its sides two from the centre
-             * and its corners two over cos thirty degrees, which is 2.3094:
-             * the six points stand on those six corners. */
-            check(at(flake4, 0, (number_t)-23 / 10, 0) > 0 &&
-                      at(flake4, 0, (number_t)-2313 / 1000, 0) == 0,
+            /* the snowflake is drawn whole: in it a point never leaves, out of
+             * it a point leaves at once, and its six points stand on the six
+             * corners of the hexagon a bailout of four draws -- apothem two,
+             * corners two over cos thirty degrees, which is 2.3094 */
+            check(leaves(flake4, 0, 0) == NEVER,
+                  "the body of the snowflake never leaves");
+            check(leaves(flake4, 0, (number_t)-23 / 10) == NEVER &&
+                      leaves(flake4, 0, (number_t)-2313 / 1000) == 0,
                   "the points stand on the corners of a hexagonal bailout of 4");
-            number_t bump = at(flake4, 0, (number_t)-133 / 100, 0);
-            check(bump > 0 && bump < 1,
-                  "the bump under the base belongs to it, and is fringe");
-            /* that bump is an equilateral triangle on the middle third of an
-             * edge whose own length is sqrt(3) times the corner distance, so it
-             * reaches that whole distance past the base, and no further */
-            check(at(flake4, 0, (number_t)-26 / 10, 0) == 0,
+            check(leaves(flake4, 0, -6) == 0 && leaves(flake4, 6, 6) == 0,
+                  "and beyond its fringe a point is gone at once");
+            /* the bump under the base is part of it, and the ground past that
+             * bump is not: that bump reaches a whole corner distance past the
+             * base, and no further */
+            check(leaves(flake4, 0, (number_t)-133 / 100) == NEVER,
+                  "the bump under the base belongs to it");
+            check(leaves(flake4, 0, (number_t)-26 / 10) == 0,
                   "and past the point of that bump there is nothing again");
 
-
-            /* And the whole silhouette, not three points of it: how far the
-             * figure reaches in a hundred and twenty directions, against how
-             * far the bailout polygon reaches in the same ones.
-             *
-             * The polygon is written out here rather than asked of the engine,
-             * so that this says what the shape is and not merely that two
-             * copies of one mistake agree. A regular polygon of apothem a has
-             * its edge at a / cos(t) where t is the angle off the nearest
-             * side's normal, which runs from minus to plus half the turn
-             * between sides.
-             *
-             * The size of these was wrong twice, both times by taking the
-             * bailout number for the distance to a corner when it is the
-             * distance to a side. */
+            /* And the whole silhouette, not three points of it: how far each
+             * figure reaches in a hundred and twenty directions, against a
+             * regular polygon of apothem two written out here rather than asked
+             * of the engine, so that this says what the shape is and not merely
+             * that two copies of one mistake agree. */
             const double apothem = 2; /* sqrt(4) */
             struct {
                 sffe *f;
@@ -727,38 +729,48 @@ int main(void)
                 int agree = 1;
                 for (int d = 0; d < 120; d++) {
                     double t = d * 2 * 3.14159265358979323846 / 120;
-                    /* how far the polygon reaches this way */
                     double off = t - shape[k].turn;
-                    off -= step * nfloor(off / step + (number_t)0.5);
-                    double reach = apothem / ncos((number_t)off);
-                    /* how far the figure reaches this way: it must be there
-                     * just inside and gone just outside */
-                    double cs = ncos((number_t)t), sn = nsin((number_t)t);
-                    number_t in = at(shape[k].f, (number_t)(reach * 0.995 * cs),
-                                     (number_t)(reach * 0.995 * sn), 0);
-                    number_t out = at(shape[k].f, (number_t)(reach * 1.02 * cs),
-                                      (number_t)(reach * 1.02 * sn), 0);
-                    /* the snowflake only touches the hexagon at its points,
-                     * so inside is asked of it only where a point is */
-                    int corner = shape[k].sides == 6
-                                     ? (d % 20 == 0 || d % 20 == 19 ||
-                                        d % 20 == 1)
-                                     : 1;
-                    if (out != 0)
-                        agree = 0;
-                    if (corner && shape[k].sides == 3 && in == 0)
+                    off -= step * (double)nfloor((number_t)(off / step) +
+                                                 (number_t)0.5);
+                    double reach = apothem / (double)ncos((number_t)off);
+                    double cs = (double)ncos((number_t)t);
+                    double sn = (double)nsin((number_t)t);
+                    /* just outside the shape, every figure is gone at once */
+                    if (leaves(shape[k].f, (number_t)(reach * 1.02 * cs),
+                               (number_t)(reach * 1.02 * sn)) != 0)
                         agree = 0;
                 }
                 check(agree, shape[k].what);
             }
+            /* And each reaches its corners. A hair inside them rather than on
+             * them: a corner of the gasket is one point of the plane, and
+             * whether a cosine lands on the inside or the outside of it is
+             * decided by the last bit rather than by the figure. A hair inside
+             * is still deep in the corner, and deep is what is checked -- the
+             * cut that takes it is many levels down. */
+            int corners = 1;
+            for (int k = 0; k < 3; k++) {
+                double t = 3.14159265358979323846 / 2 +
+                           k * 2 * 3.14159265358979323846 / 3;
+                number_t r = (number_t)4 * (number_t)999 / 1000;
+                if (leaves(tri4, (number_t)(r * ncos((number_t)t)),
+                           (number_t)(r * nsin((number_t)t))) <= 3)
+                    corners = 0;
+            }
+            for (int k = 0; k < 6; k++) {
+                double t = 3.14159265358979323846 / 6 +
+                           k * 3.14159265358979323846 / 3;
+                double r = 2.3093;
+                if (leaves(flake4, (number_t)(r * ncos((number_t)t)),
+                           (number_t)(r * nsin((number_t)t))) != NEVER)
+                    corners = 0;
+            }
+            check(corners, "and both reach every corner of the shape they fill");
 
-            /* the same point twice is the same number: these are figures, not
-             * noise, and nothing in them is drawn from a seed */
-            check(at(tri4, (number_t)1 / 3, (number_t)1 / 7, 0) ==
-                          at(tri4, (number_t)1 / 3, (number_t)1 / 7, 9) &&
-                      at(flake4, (number_t)1 / 3, (number_t)1 / 7, 0) ==
-                          at(flake4, (number_t)1 / 3, (number_t)1 / 7, 9),
-                  "and none of them moves with the pass, as the noise does");
+            /* nothing in them is drawn from a seed */
+            check(leaves(tri4, (number_t)1 / 3, (number_t)1 / 7) ==
+                      leaves(tri4, (number_t)1 / 3, (number_t)1 / 7),
+                  "and the same point always leaves on the same pass");
         }
         sffe_free(&tri);
         sffe_free(&tri4);

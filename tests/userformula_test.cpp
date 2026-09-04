@@ -197,35 +197,37 @@ int main(void)
           "an initialization may name p1, which before any pass is where z starts");
 
 
-    /* --- a figure has to reach the picture --------------------------------
+    /* --- a figure written alone is the fractal -----------------------------
      *
-     * These functions hand back a number between zero and one, and a number
-     * between zero and one cannot leave a bailout of four. Written alone, the
-     * formula therefore sets z to a value that never escapes: every pixel runs
-     * to the iteration limit, every pixel gets the same colour, and the picture
-     * is the bailout shape in one flat tone with the figure nowhere in it. That
-     * is what a bare call draws, and it is worth having said so in a test as
-     * well as in the guide, because it looks like the figure is broken.
+     * Each of the three knows the level of the construction that decided a
+     * point, and hands back nothing until the pass reaches that level and a
+     * number no bailout can hold once it has. So the pass a point escapes on is
+     * the level that decided it, the iteration count is the picture, and
+     * "sierpinskyt()" written alone draws a Sierpinski gasket the way Fractal ->
+     * More Formulae draws its own.
      *
-     * Add it to z and the value drives the escape instead: a point in the
-     * gasket climbs to the bailout in a few passes and one in a deep hole takes
-     * many, so the levels of the figure come out as the bands of the picture.
-     * That is the same thing the noise functions ask for and are documented
-     * asking for.
+     * They were a field before this -- a number between nought and one, meant
+     * to be multiplied into a formula -- and a number between nought and one
+     * cannot leave a bailout of four, so a bare call drew the bailout shape in
+     * one flat tone and nothing else. Two tones was what this test recorded of
+     * them then. It records what they draw now.
      */
     {
-        /* how many different iteration counts a formula draws with */
         struct {
             const char *formula;
             int least;
+            int most;
             const char *what;
         } reach[6] = {
-            {"sierpinskyt()", 0, "a bare gasket draws one flat tone"},
-            {"sierpinskyc()", 0, "and so does a bare carpet"},
-            {"snowflake()", 0, "and a bare snowflake"},
-            {"z+sierpinskyt()", 12, "added to z, the gasket draws its levels"},
-            {"z+sierpinskyc()", 12, "and the carpet draws its own"},
-            {"z+snowflake()", 4, "and the snowflake its fringe"},
+            {"sierpinskyt()", 8, 64, "a bare gasket draws its levels"},
+            {"sierpinskyc()", 8, 64, "and a bare carpet its own"},
+            /* the snowflake is drawn whole rather than in bands: its levels add
+             * to its edge rather than cutting into its middle, so there is a
+             * body, a ground, and the fringe between them */
+            {"snowflake()", 2, 4, "and a bare snowflake is a snowflake, whole"},
+            {"z+sierpinskyt()", 8, 64, "adding it to z draws the same gasket"},
+            {"z+sierpinskyc()", 8, 64, "and the same carpet"},
+            {"z+snowflake()", 2, 4, "and the same snowflake"},
         };
         for (int k = 0; k < 6; k++) {
             if (sffe_parse(&cfractalc.userformula, reach[k].formula) != 0) {
@@ -235,7 +237,6 @@ int main(void)
             }
             sffe_setlocal(&cfractalc);
             iterationfunc fn = userformula()->calculate;
-            /* a coarse grid over the figure, and how many answers it gives */
             unsigned seen[64];
             int n = 0;
             for (int iy = 0; iy < 24 && n < 64; iy++)
@@ -255,9 +256,7 @@ int main(void)
                 }
             char line[160];
             sprintf(line, "%s (%d tones)", reach[k].what, n);
-            /* a bare call gives one or two, which is a flat picture; added to
-             * z it has to give many more than that */
-            check(reach[k].least ? n >= reach[k].least : n <= 2, line);
+            check(n >= reach[k].least && n <= reach[k].most, line);
         }
     }
 
