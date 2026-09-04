@@ -2,7 +2,7 @@
 
 A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Everything the
 original does, it still does; this describes what has been added or changed,
-and why. Version 1.8.
+and why. Version 1.9.
 
 ## Two binaries
 
@@ -282,6 +282,23 @@ as in julia mode and does not move as `z` does — and hand back a number in
 Nothing about them is random: the figure is where it looks like it is, and the
 same point always gives the same number.
 
+**Written alone, a figure draws nothing — and this is the first thing to know
+about them.** `sierpinskyt()` on its own sets `z` to a number between 0 and 1,
+and a number between 0 and 1 never leaves a bailout of 4: every pixel runs to
+the iteration limit, every pixel gets the same colour, and what you see is the
+bailout shape in one flat tone with the figure nowhere in it. Nothing is broken;
+the value simply never reaches the picture. It is the same thing the noise
+functions ask for, said in the same place a few paragraphs down.
+
+Add it to `z` instead and the value drives the escape: a point on the gasket
+climbs to the bailout in a few passes and a point in a deep hole takes many, so
+the levels of the figure come out as the bands of the picture. Set the matching
+bailout shape and the figure fills it exactly:
+
+    z+sierpinskyt()     with Fractal -> Bailout shape -> triangle -90
+    z+sierpinskyc()     with bailout shape square
+    z+snowflake()       with bailout shape hexagon 0
+
 All three answer one question, *how solidly does this point belong to the
 figure*, and answer it the same way: **1** where it belongs most, tapering
 toward **0** as the feature it stands in gets finer, and exactly **0** where the
@@ -322,6 +339,8 @@ hexagon's corners.
 Every argument has a default, so `snowflake()` is a call, and so is
 `sierpinskyc( ;5)` — a lacier carpet at the default size.
 
+    z+sierpinskyt()                      the gasket, banded by its levels
+    z+sierpinskyc( ;5)                   a lacier carpet, the same way
     z^2+c+snowflake()*0.15               the set with a snowflake pressed into it
     z+sierpinskyt(3)*0.4                 the gasket as a displacement
     z^2+c*sierpinskyc( ;5)               the carpet as a mask on the point
