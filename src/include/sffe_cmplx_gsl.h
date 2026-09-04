@@ -36,6 +36,8 @@ extern thread_local unsigned int sffe_maxiter;
 /* The point being iterated. randsc hashes this rather than z, which
  * diverges between precisions; the engine sets it each pass. */
 extern thread_local cmplx sffe_position;
+/* the value a pass starts from, which the formula calls z */
+extern thread_local cmplx sffe_z;
 sfarg *sfifiter(sfarg *const p);  /* ifiter  - cycles through its arguments */
 sfarg *sfifiterl(sfarg *const p); /* ifiterl - holds on the last argument */
 unsigned int sfifiter_sel(unsigned int argc, const sfNumber *probe);

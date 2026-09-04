@@ -1728,7 +1728,10 @@ thread_local bool sffe_formula_valid = false;
 thread_local sffe *sffe_formula_local = NULL;
 thread_local bool sffe_initial_valid = false;
 thread_local sffe *sffe_initial_local = NULL;
-thread_local cmplx sffe_z, sffe_c, sffe_n, sffe_x;
+/* sffe_z is defined beside sffe_position in sffe_cmplx_gsl.cpp: the
+ * figures follow the value from one pass to the next and so have to read
+ * it, the way the noise reads the position. */
+thread_local cmplx sffe_c, sffe_n, sffe_x;
 /* Set when the user formula calls randsc or randscq; read by BTRACEOK. */
 int sffe_formula_noise = 0;
 

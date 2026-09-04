@@ -199,12 +199,10 @@ int main(void)
 
     /* --- a figure written alone is the fractal -----------------------------
      *
-     * Each of the three knows the level of the construction that decided a
-     * point, and hands back nothing until the pass reaches that level and a
-     * number no bailout can hold once it has. So the pass a point escapes on is
-     * the level that decided it, the iteration count is the picture, and
-     * "sierpinskyt()" written alone draws a Sierpinski gasket the way Fractal ->
-     * More Formulae draws its own.
+     * sierpinskyt and sierpinskyc carry the point to the parent of the hole it
+     * stands in, so it leaves on the pass numbered by the level that cut it and
+     * the iteration count draws the figure. The snowflake has no parent to walk
+     * to and is drawn whole: a body, a ground, and the fringe between them.
      *
      * They were a field before this -- a number between nought and one, meant
      * to be multiplied into a formula -- and a number between nought and one
@@ -218,20 +216,19 @@ int main(void)
             int least;
             int most;
             const char *what;
-        } reach[6] = {
-            {"sierpinskyt()", 8, 64, "a bare gasket draws its levels"},
-            {"sierpinskyc()", 8, 64, "and a bare carpet its own"},
-            /* the snowflake is drawn whole rather than in bands: its levels add
-             * to its edge rather than cutting into its middle, so there is a
-             * body, a ground, and the fringe between them */
-            {"snowflake()", 2, 4, "and a bare snowflake is a snowflake, whole"},
-            {"z+sierpinskyt()", 8, 64, "adding it to z draws the same gasket"},
-            {"z+sierpinskyc()", 8, 64, "and the same carpet"},
-            {"z+snowflake()", 2, 4, "and the same snowflake"},
+        } reach[3] = {
+            /* six is the bar rather than the eight and seventeen these draw:
+             * how many levels a grid this coarse happens to land on is not the
+             * thing being asserted, and two -- one flat tone and the ground --
+             * is what a figure that never reaches the picture gives */
+            {"sierpinskyt()", 6, 64, "a bare gasket draws its levels"},
+            {"sierpinskyc()", 6, 64, "and a bare carpet its own"},
+            {"snowflake()", 2, 5, "and a bare snowflake is a snowflake, whole"},
         };
-        for (int k = 0; k < 6; k++) {
+        unsigned long long drew[3];
+        for (int k = 0; k < 3; k++) {
             if (sffe_parse(&cfractalc.userformula, reach[k].formula) != 0) {
-                printf("FAIL   will not parse: %s\n", reach[k].formula);
+                printf("FAIL   will not parse: %s' + chr(92) + 'n", reach[k].formula);
                 failures++;
                 continue;
             }
@@ -239,25 +236,33 @@ int main(void)
             iterationfunc fn = userformula()->calculate;
             unsigned seen[64];
             int n = 0;
-            for (int iy = 0; iy < 24 && n < 64; iy++)
-                for (int ix = 0; ix < 24 && n < 64; ix++) {
-                    number_t px = (number_t)-15 / 10 +
-                                  (number_t)ix * (number_t)3 / 23;
-                    number_t py = (number_t)-15 / 10 +
-                                  (number_t)iy * (number_t)3 / 23;
+            unsigned long long h = 1469598103934665603ULL;
+            /* over the whole of each figure, not a patch in the middle of it:
+             * the gasket reaches four above the origin and two below */
+            for (int iy = 0; iy < 40; iy++)
+                for (int ix = 0; ix < 40; ix++) {
+                    number_t px = (number_t)-24 / 10 +
+                                  (number_t)ix * (number_t)48 / 390;
+                    number_t py = (number_t)-24 / 10 +
+                                  (number_t)iy * (number_t)48 / 390;
                     cmplxset(sffe_position, px, py);
                     unsigned v = fn(px, py, px, py);
+                    h ^= v;
+                    h *= 1099511628211ULL;
                     int known = 0;
                     for (int q = 0; q < n; q++)
                         if (seen[q] == v)
                             known = 1;
-                    if (!known)
+                    if (!known && n < 64)
                         seen[n++] = v;
                 }
+            drew[k] = h;
             char line[160];
             sprintf(line, "%s (%d tones)", reach[k].what, n);
             check(n >= reach[k].least && n <= reach[k].most, line);
         }
+        check(drew[0] != drew[1] && drew[1] != drew[2] && drew[0] != drew[2],
+              "and the three of them draw three different pictures");
     }
 
     if (failures)

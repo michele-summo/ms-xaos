@@ -1382,6 +1382,10 @@ sfarg *sferf(sfarg *const p)
  * between the two. The position is computed from the view in a few operations
  * that do not amplify, and agrees to the last bit or two. */
 thread_local cmplx sffe_position = {{0, 0}};
+/* The value the pass starts from -- what the formula calls z. The engine
+ * writes it before every evaluation and reads back what the formula made
+ * of it; the figures below follow it from one pass to the next. */
+thread_local cmplx sffe_z = {{0, 0}};
 
 /* A hash of integers, which is the same at any precision: the alternative,
  * hashing a float through sin(), depends on the exact sin() of the build and
@@ -2026,15 +2030,26 @@ sfarg *sfstripe(sfarg *const p)
  * All three are fractals of their own and not fields to multiply into one.
  * Written alone -- "sierpinskyt()" and nothing else -- each draws its figure,
  * the way the Sierpinski, Sierpinski Carpet and Koch Snowflake under Fractal ->
- * More Formulae draw theirs, and for the same reason: the pass a point escapes
- * at is the level of the construction that decided it.
+ * More Formulae draw theirs.
  *
- * That is all these do. Each knows, of a point, the level it was cut away at --
- * or, for the snowflake, whether it was taken in at all -- and hands back
- * nothing while the pass has not reached that level and a number no bailout can
- * hold once it has. So a point in the first hole leaves on the first pass, one
- * in a hole thirty levels down leaves on the thirtieth, and one on the figure
- * itself never leaves. The iteration count is the picture.
+ * The two Sierpinski figures do it by carrying the point to its parent. Every
+ * hole in a gasket sits inside a bigger hole one level up -- the three
+ * second-level triangles each sit in the first-level one -- and doubling the
+ * point away from the nearest corner of the triangle is exactly the step from a
+ * hole to the hole above it. The topmost hole has no parent inside the figure,
+ * so that step carries it out of the bailout, and a point in a hole n levels
+ * down takes n steps to get there. The point really travels: the pass it leaves
+ * on is the level it was cut away at, the iteration count is the picture, and z
+ * along the way is a point of the plane like any other -- which is what lets
+ * the colouring modes that read z, smooth colouring, and writing a figure
+ * inside a larger formula all mean something.
+ *
+ * The snowflake has no such parent to walk to: its levels add to its edge
+ * rather than cutting into its middle, so all but a sliver of it is level one
+ * and there is nothing to count. It is drawn whole instead -- a point in it
+ * stays where it is and never leaves, a point outside it is thrown past any
+ * bailout at once -- so the body comes out in the inside colour, the ground in
+ * the outside one, and the fringe between them is as fine as the levels go.
  *
  * They were a field before this: a number between nought and one saying how
  * solidly a point belonged, meant to be multiplied into a formula the way the
@@ -2091,6 +2106,31 @@ static const number_t FIG_AX[3] = {
     (0 - FIG_SIN60) / FIG_EDGE};
 static const number_t FIG_AY[3] = {((number_t)-1 / 2 - 1) / FIG_EDGE, 0,
                                    (1 - (number_t)-1 / 2) / FIG_EDGE};
+/* half the length of one of those edges, reciprocated: the snowflake wants it
+ * once per pass and it is the same number every time */
+static const number_t FIG_INV_EDGE = 1 / (2 * (nsqrt((number_t)3) / 2));
+
+/* The square root of the radius, or its reciprocal, kept on the call site
+ * rather than taken again on every pass.
+ *
+ * At 113 bits of mantissa a square root and a division are both software and
+ * either costs about what the whole of a figure costs; taking one of each per
+ * pass put these over the noise they are meant to stay under. The radius is
+ * almost always a constant, so remembering the one it was last asked for turns
+ * that into a comparison and a load. The scratch belongs to the call site (see
+ * sfarg), so two figures in one formula keep their own and no thread can
+ * disturb another. */
+static inline number_t fig_cached(sfarg *const p, number_t radius, int recip)
+{
+    if (p->carried && GSL_REAL(p->carry) == radius)
+        return GSL_IMAG(p->carry);
+    number_t v = nsqrt(radius);
+    if (recip)
+        v = 1 / v;
+    GSL_SET_COMPLEX(&p->carry, radius, v);
+    p->carried = 1;
+    return v;
+}
 
 /* How many levels are worth telling apart.
  *
@@ -2179,32 +2219,33 @@ sfarg *sfsierpinskyt(sfarg *const p)
     /* The sides stand the square root of the radius from the centre, where a
      * triangular bailout of that number stands its sides, which puts the
      * corners at twice that: a triangle's apothem is half its circumradius. */
-    number_t scale = 1 / (2 * nsqrt(radius));
-    number_t x = GSL_REAL(sffe_position) * scale;
-    number_t y = GSL_IMAG(sffe_position) * scale;
+    number_t corner = 2 * fig_cached(p, radius, 0);
+    number_t x = GSL_REAL(sffe_z);
+    number_t y = GSL_IMAG(sffe_z);
 
-    /* The apex sits at (0,1) and the base along y = -1/2, so the three weights
-     * come out of the point without a matrix: how far up it is gives the apex
-     * its share, and how far across it is splits the rest between the other
-     * two. */
-    number_t a = (2 * y + 1) / 3;
-    number_t rest = 1 - a;
-    number_t across = x * FIG_ACROSS;
-    number_t b = (rest - across) / 2;
-    number_t c = (rest + across) / 2;
-    if (a < 0 || b < 0 || c < 0) {
-        /* outside the triangle: gone on the first pass */
+    /* The three barycentric weights, each multiplied by three times the corner
+     * distance. That is a positive number, so it changes neither which of them
+     * is the largest nor which of them is negative, and it takes the divisions
+     * out: with the apex at (0,C) and the base along y = -C/2, the weights come
+     * out of the point in three multiply-adds. */
+    number_t wa = 2 * y + corner;
+    number_t across = FIG_SIN60 * 2 * x;
+    number_t wb = corner - y - across;
+    number_t wc = corner - y + across;
+    if (wa < 0 || wb < 0 || wc < 0) {
+        /* already out of the triangle, and further out for having been asked */
         GSL_SET_COMPLEX(&sfvalue(p), FIG_ESCAPED, 0);
         return p;
     }
 
-    uint32_t bx = (uint32_t)(b * (number_t)((uint32_t)1 << SIER_BITS));
-    uint32_t cx = (uint32_t)(c * (number_t)((uint32_t)1 << SIER_BITS));
-    uint32_t both = (bx & cx) & (((uint32_t)1 << SIER_BITS) - 1);
-    if (!both)
-        return p; /* never cut away, so it never leaves */
-    if ((unsigned int)sier_level(both) <= sffe_iteration + 1)
-        GSL_SET_COMPLEX(&sfvalue(p), FIG_ESCAPED, 0);
+    /* Double away from the corner whose share of the point is largest, which
+     * is the corner of the sub-triangle it stands in. A point in the middle
+     * triangle has no share over a half anywhere, so whichever corner is
+     * chosen it lands outside -- which is what makes the topmost hole the one
+     * that leaves. */
+    int k = (wa >= wb && wa >= wc) ? 0 : (wb >= wc ? 1 : 2);
+    GSL_SET_COMPLEX(&sfvalue(p), 2 * x - corner * FIG_VX[k],
+                    2 * y - corner * FIG_VY[k]);
     return p;
 }
 
@@ -2234,53 +2275,41 @@ sfarg *sfsierpinskyc(sfarg *const p)
     if (!(radius > 0) || squares < 2 || squares > 64)
         return p;
 
-    number_t half = nsqrt(radius); /* squared, as bailout is */
-    number_t scale = 1 / (2 * half);
-    number_t u = (GSL_REAL(sffe_position) + half) * scale;
-    number_t v = (GSL_IMAG(sffe_position) + half) * scale;
-    if (!(u >= 0) || u >= 1 || !(v >= 0) || v >= 1) {
-        GSL_SET_COMPLEX(&sfvalue(p), FIG_ESCAPED, 0); /* outside the square */
+    /* How far along the square the point stands, counted in cells rather than
+     * in the plane. The reciprocal is what is kept on the call site, since a
+     * square root costs more than the division that turns it back over. */
+    number_t invhalf = fig_cached(p, radius, 1);
+    number_t half = 1 / invhalf;
+    number_t tu = (GSL_REAL(sffe_z) + half) * invhalf * squares / 2;
+    number_t tv = (GSL_IMAG(sffe_z) + half) * invhalf * squares / 2;
+    if (!(tu >= 0) || tu >= squares || !(tv >= 0) || tv >= squares) {
+        GSL_SET_COMPLEX(&sfvalue(p), FIG_ESCAPED, 0); /* already out */
         return p;
     }
 
-    /* Read the digits in fixed point rather than in number_t.
+    /* Which cell the point stands in, and the step onto its parent: scale
+     * about that cell so the cell fills the whole square again and the point
+     * stands where its parent stood. Counted in cells, that scaling is just
+     * subtracting the index -- the multiplication by squares and the division
+     * by it cancel, which is worth having where a division is software.
      *
-     * A digit is a multiply, a shift and a mask, where in floating point it was
-     * a multiply, a truncation and a subtraction -- and the truncation of a
-     * long double is a trip through memory. The loop came out at 172 ns a call
-     * against the 154 of the noise it sits beside; in fixed point it is 92, and
-     * a point standing in the first hole, which most of the square is, costs
-     * almost nothing. It is exact into the bargain: every level is a whole
-     * number of bits and none of them is rounded away.
+     * The middle cell is the one that was thrown away. It has no parent inside
+     * the figure, so a point in it is scaled about a neighbouring cell instead
+     * and lands a whole square outside, which is what makes it leave: one pass
+     * for the middle of the square, two for the eight middles inside that, and
+     * so on down.
      *
-     * FIG_CARPET_BITS of fraction leaves room for a base of up to 64 to
-     * multiply into without carrying past the top, and the digits run out when
-     * the fraction does -- each level taking as many bits as the base is
-     * wide. */
-    uint64_t ui = (uint64_t)(u * (number_t)((uint64_t)1 << FIG_CARPET_BITS));
-    uint64_t vi = (uint64_t)(v * (number_t)((uint64_t)1 << FIG_CARPET_BITS));
-    const uint64_t frac = ((uint64_t)1 << FIG_CARPET_BITS) - 1;
-    int width = 0;
-    for (int t = squares - 1; t; t >>= 1)
-        width += 1;
-    int depth = FIG_CARPET_BITS / width;
-    if (depth > 30)
-        depth = 30;
-
-    uint64_t middle = (uint64_t)(squares / 2);
-    for (int level = 1; level <= depth; level += 1) {
-        ui *= (uint64_t)squares;
-        vi *= (uint64_t)squares;
-        if ((ui >> FIG_CARPET_BITS) == middle &&
-            (vi >> FIG_CARPET_BITS) == middle) {
-            if ((unsigned int)level <= sffe_iteration + 1)
-                GSL_SET_COMPLEX(&sfvalue(p), FIG_ESCAPED, 0);
-            return p;
-        }
-        ui &= frac;
-        vi &= frac;
-    }
-    return p; /* never cut away, so it never leaves */
+     * One cell a pass rather than all of them at once: the pass is doing the
+     * counting now, so the loop that used to read thirty digits, and the fixed
+     * point it read them in, are both gone. */
+    int i = (int)tu;
+    int j = (int)tv;
+    int m = squares / 2;
+    if (i == m && j == m)
+        i = m + 1 < squares ? m + 1 : m - 1;
+    GSL_SET_COMPLEX(&sfvalue(p), half * (2 * (tu - i) - 1),
+                    half * (2 * (tv - j) - 1));
+    return p;
 }
 
 /* Whether a point stands under the Koch curve drawn over the segment from
@@ -2367,7 +2396,10 @@ sfarg *sfsnowflake(sfarg *const p)
      * the centre, and a snowflake stands its points as far out as the corners
      * of the triangle it grew from -- so this lands the six points on the six
      * corners of the hexagon a bailout of this number would draw. */
-    number_t scale = FIG_SIN60 / nsqrt(radius);
+    /* The snowflake asks about the position rather than about z: there is no
+     * parent to walk to, so the point does not travel and the question is only
+     * ever whether it is in the figure. */
+    number_t scale = FIG_SIN60 * fig_cached(p, radius, 1);
     number_t x = GSL_REAL(sffe_position) * scale;
     number_t y = GSL_IMAG(sffe_position) * scale;
 
@@ -2399,16 +2431,21 @@ sfarg *sfsnowflake(sfarg *const p)
             best = level;
     }
 
-    /* The snowflake is drawn whole rather than in bands, as the built-in one
-     * is: a point in it never leaves and a point outside it leaves at once, so
-     * the body comes out in the inside colour and the ground in the outside
-     * one, with the fringe between them as fine as the levels go. There is no
-     * banding to be had -- the levels of a snowflake add to its edge rather
-     * than cutting into its middle, so all but a sliver of it is level one. */
-    if (!outside)
-        return p; /* the body of it */
-    if (!best)
-        GSL_SET_COMPLEX(&sfvalue(p), FIG_ESCAPED, 0); /* outside altogether */
+    /* A point in the snowflake is handed back where it stands, so it stays
+     * put and never leaves; one outside is thrown past any bailout. Handing it
+     * back rather than handing back nothing is what keeps z a point of the
+     * plane, so the colouring modes that read it have something to read.
+     *
+     * That does mean the six points, which reach a seventh further out than the
+     * number says, only stay inside a bailout shaped to match -- a hexagon at
+     * zero of the same number. Under a circular bailout the tips are outside it
+     * and are cut off, which is the honest answer to asking for a figure that
+     * does not fit the shape it is being drawn in. */
+    if (!outside || best) {
+        sfvalue(p) = sffe_position; /* in it: stay where you are */
+        return p;
+    }
+    GSL_SET_COMPLEX(&sfvalue(p), FIG_ESCAPED, 0); /* outside altogether */
     return p;
 }
 
