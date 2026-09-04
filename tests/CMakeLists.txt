@@ -143,6 +143,19 @@ foreach(prec ${XAOS_TEST_PRECISIONS})
                         ${SFFE_SOURCES})
    add_test(NAME phist_speed_${suffix} COMMAND phist_speed_${suffix})
 
+   # --- the user formula, end to end ---------------------------------------
+   # The only test that drives the loop a user formula is actually drawn by,
+   # which is where the variables it may name are registered -- and where an
+   # initialization naming one that is not gets thrown away in silence.
+   xaos_add_test_binary(userformula_${suffix} ${prec}
+                        userformula_test.cpp
+                        ${CMAKE_SOURCE_DIR}/src/engine/formulas.cpp
+                        ${CMAKE_SOURCE_DIR}/src/engine/phist.cpp
+                        ${SFFE_SOURCES})
+   target_include_directories(userformula_${suffix}
+                              PRIVATE ${CMAKE_SOURCE_DIR}/src/engine)
+   add_test(NAME userformula_${suffix} COMMAND userformula_${suffix})
+
    # --- the iteration loops ------------------------------------------------
    # The formula table exposes every loop as an iterationfunc, so they can be
    # driven directly over a grid without going through the renderer; the

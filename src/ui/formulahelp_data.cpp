@@ -161,10 +161,10 @@ const struct formula_help_row formula_help_values[] = {
  * parse error, which is what keeps the two lists worth writing down. */
 const struct formula_help_row formula_help_variables[] = {
     {NULL, NULL, NULL, "the iteration"},
-    {"z", "", "the current value, and what the formula computes the next one from", NULL},
-    {"c", "", "the point being iterated -- the pixel, in the mandelbrot sense", NULL},
-    {"n", "", "the iteration number, counting from zero", NULL},
-    {"x", "", "scratch value, kept across iterations", NULL},
+    {"z", "", "the current value, and what the formula computes the next one from; in the initialization, where z starts", NULL},
+    {"c", "", "the point being iterated -- the pixel in mandelbrot mode, the constant in julia mode", NULL},
+    {"n", "", "the iteration number", NULL},
+    {"x", "", "the plain coordinate: like c, but the pixel in julia mode too, and unchanged from pass to pass", NULL},
     {NULL, NULL, NULL, "earlier values of z; Fractal -> Set p values on first iteration says what they are before there are any"},
     {"p1", "", "the value z had on the pass before this one", NULL},
     {"p2", "", "the one before that, and so on", NULL},

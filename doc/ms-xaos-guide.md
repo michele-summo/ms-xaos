@@ -105,6 +105,22 @@ two, though the threshold had to be taught to the parser first: an argument
 may now be marked as read by the selector rather than chosen by it, and is
 then evaluated before the choice is made.
 
+**The variables.** `z` is the running value; `c` is the point, which is the
+pixel in mandelbrot mode and the constant in julia mode; `x` is the plain
+coordinate, which is the pixel in either mode and does not change from pass to
+pass; `n` is the iteration number. In the *User initialization* `z` is where `z`
+would have started had there been no initialization, which is the same value
+`x` is, so an initialization of `z` alone says exactly what saying nothing
+says.
+
+That last part is new, and so is being able to say it: `z` was registered on
+neither of the two parsers the initialization is run through, and `x` on the
+wrong one, so an initialization naming either was refused by the thread that
+had to compute it -- while the dialog, whose parser has both, accepted it and
+gave no sign that it was then thrown away. `n` was left holding whatever the
+pixel before it had left behind, which is to say an initialization reading it
+read the order the pixels happened to be computed in.
+
 **`p1`, `p2` ... `p9999`** — the value `z` had on an earlier pass: `p1` on the
 pass before this one, `p2` the one before that, `p9999` nine thousand nine
 hundred and ninety-nine passes back. `p` is another name for `p1`. Before there

@@ -1765,11 +1765,15 @@ void sffe_setmine(void *data, struct taskinfo * /*task*/, int /*r1*/,
         sffe_regvar(&sffe_initial_local, &sffe_c, "c");
         sffe_regvar(&sffe_initial_local, &sffe_n, "n");
         /* On the initial parser, which is what "usrformInit" is parsed by.
-         * This was registered on the formula parser instead, so an
-         * initialization naming x was rejected as an unknown variable by the
-         * thread that had to compute it -- while the dialog, whose parser has
-         * it, accepted the formula and gave no sign that it did nothing. */
+         * x was registered on the formula parser instead, and z on neither, so
+         * an initialization naming either was refused as an unknown variable
+         * by the thread that had to compute it -- while the dialog, whose
+         * parser has both, accepted the formula and gave no sign that it was
+         * then thrown away. In an initialization z is where z would have
+         * started had there been no initialization, which is the same thing x
+         * is; "z" alone therefore says exactly what saying nothing says. */
         sffe_regvar(&sffe_initial_local, &sffe_x, "x");
+        sffe_regvar(&sffe_initial_local, &sffe_z, "z");
     }
     if (c->userinitial->expression) {
         if (sffe_parse(&sffe_initial_local, c->userinitial->expression) == 0)
@@ -1791,6 +1795,11 @@ void sffe_setlocal(fractal_context *c)
     xth_sync();
 }
 
+/* z and n are set whether or not there is an initialization to read them: an
+ * initialization that named either used to read whatever the pixel before it
+ * had left behind, which is to say it read the order the pixels happened to
+ * be computed in. Before the first pass z is where z starts, which is what x
+ * is as well, so an initialization of "z" says what saying nothing says. */
 #define INIT                                                                   \
     if (pndef) {                                                               \
             sffe_phist_reset(pre, pim);                                        \
@@ -1799,14 +1808,12 @@ void sffe_setlocal(fractal_context *c)
     }                                                                          \
     cmplxset(sffe_c, pre, pim);                                                \
     cmplxset(sffe_x, zre, zim);                                                \
+    cmplxset(sffe_z, zre, zim);                                                \
+    cmplxset(sffe_n, 1, 0);                                                    \
     sffe_iteration = 0;                                                        \
     sffe_maxiter = maxit;                                                      \
     if (sffe_initial_valid)                                                    \
         sffe_z = sffe_eval(sffe_initial_local);                                \
-    else {                                                                     \
-        cmplxset(sffe_z, zre, zim);                                            \
-        cmplxset(sffe_n, 1, 0);                                                \
-    }                                                                          \
     n = INFINITY;
 //#define SAVE cmplxset(pZ,real(Z),imag(Z));
 //#define PRETEST 0
