@@ -41,6 +41,7 @@
 
 #include "config.h"
 #include "number_math.h"
+#include "phist.h"
 #include "cmplx.h"
 #include "filter.h"
 #include "fractal.h"
@@ -1730,7 +1731,6 @@ thread_local sffe *sffe_initial_local = NULL;
 thread_local cmplx sffe_z, sffe_c, sffe_n, sffe_x;
 /* Set when the user formula calls randsc or randscq; read by BTRACEOK. */
 int sffe_formula_noise = 0;
-thread_local cmplx sffe_p[NUM_P];
 
 // Copy the formula from the main parser to this thread's local parser
 // Possibly initializing the parser if this is the first time
@@ -1740,12 +1740,8 @@ void sffe_setmine(void *data, struct taskinfo * /*task*/, int /*r1*/,
     fractal_context *c = (fractal_context *)data;
     if (!sffe_formula_local) {
         sffe_formula_local = sffe_alloc();
-        sffe_regvar(&sffe_formula_local, &sffe_p[0], "p");
-        for (int i = 0; i < NUM_P; i++) {
-            char pname[3];
-            snprintf(pname, 3, "p%d", (i+1));
-            sffe_regvar(&sffe_formula_local, &sffe_p[i], pname);
-        }
+        /* p, p1, p2 ... are asked for as they are met; see sffe_resolve_p */
+        sffe_formula_local->resolve = sffe_resolve_p;
         sffe_regvar(&sffe_formula_local, &sffe_z, "z");
         sffe_regvar(&sffe_formula_local, &sffe_c, "c");
         sffe_regvar(&sffe_formula_local, &sffe_n, "n");
@@ -1765,15 +1761,15 @@ void sffe_setmine(void *data, struct taskinfo * /*task*/, int /*r1*/,
 
     if (!sffe_initial_local) {
         sffe_initial_local = sffe_alloc();
-        sffe_regvar(&sffe_initial_local, &sffe_p[0], "p");
-        for (int i = 0; i < NUM_P; i++) {
-            char pname[3];
-            snprintf(pname, 3, "p%d", (i+1));
-            sffe_regvar(&sffe_formula_local, &sffe_p[i], pname);
-        }
+        sffe_initial_local->resolve = sffe_resolve_p;
         sffe_regvar(&sffe_initial_local, &sffe_c, "c");
         sffe_regvar(&sffe_initial_local, &sffe_n, "n");
-        sffe_regvar(&sffe_formula_local, &sffe_x, "x");
+        /* On the initial parser, which is what "usrformInit" is parsed by.
+         * This was registered on the formula parser instead, so an
+         * initialization naming x was rejected as an unknown variable by the
+         * thread that had to compute it -- while the dialog, whose parser has
+         * it, accepted the formula and gave no sign that it did nothing. */
+        sffe_regvar(&sffe_initial_local, &sffe_x, "x");
     }
     if (c->userinitial->expression) {
         if (sffe_parse(&sffe_initial_local, c->userinitial->expression) == 0)
@@ -1781,6 +1777,11 @@ void sffe_setmine(void *data, struct taskinfo * /*task*/, int /*r1*/,
         else
             sffe_initial_valid = false;
     }
+
+    /* Both are parsed: work out which places they read and how deep a history
+     * that needs. Once per formula, not once per pass. */
+    sffe_ptaps_build(sffe_formula_valid ? sffe_formula_local : NULL,
+                     sffe_initial_valid ? sffe_initial_local : NULL);
 }
 
 // Tell all threads copy the formula into their local parser
@@ -1792,13 +1793,9 @@ void sffe_setlocal(fractal_context *c)
 
 #define INIT                                                                   \
     if (pndef) {                                                               \
-            for (int i = 0; i < NUM_P; i++) {                                  \
-                cmplxset(sffe_p[i], pre, pim);                                 \
-        }                                                                      \
+            sffe_phist_reset(pre, pim);                                        \
     } else {                                                                   \
-            for (int i = 0; i < NUM_P; i++) {                                  \
-                cmplxset(sffe_p[i], 0, 0);                                     \
-        }                                                                      \
+            sffe_phist_reset(0, 0);                                            \
     }                                                                          \
     cmplxset(sffe_c, pre, pim);                                                \
     cmplxset(sffe_x, zre, zim);                                                \
@@ -1816,18 +1813,20 @@ void sffe_setlocal(fractal_context *c)
 #define VARIABLES number_t n; bool newtok = cfractalc.newtonmodesffe;          \
 bool pndef = cfractalc.pndefault; unsigned int maxit                           \
     = (unsigned int)cfractalc.maxiter;
+/* The newton emulation measures the step from one pass to the next, so it
+ * takes where z was before the two lines below put where it now is in its
+ * place. */
 #define FORMULA                                                                \
     if (sffe_formula_valid)                                                    \
         sffe_z = sffe_eval(sffe_formula_local);                                \
-    for (int i = NUM_P - 1; i > 0; i--) {                                      \
-        cmplxset(sffe_p[i], real(sffe_p[i - 1]), imag(sffe_p[i - 1]));         \
+    sffe_phist_push(zre, zim);                                                 \
+    if (newtok) {                                                              \
+        pre = zre;                                                             \
+        pim = zim;                                                             \
     }                                                                          \
-    cmplxset(sffe_p[0], zre, zim);                                             \
     zre = real(sffe_z);                                                        \
     zim = imag(sffe_z);                                                        \
     if (newtok) {                                                              \
-        pre = real(sffe_p[0]);                                                 \
-        pim = imag(sffe_p[0]);                                                 \
         n = iter > 1 ? zre*zre - 2*zre*pre + zim*zim - 2*pim*zim + pre*pre + pim*pim : 0; \
     }                                                                          \
     cmplxset(sffe_n, maxit - iter + 1, 0);                                     \

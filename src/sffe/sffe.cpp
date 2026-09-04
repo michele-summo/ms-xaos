@@ -531,7 +531,39 @@ sfNumber *sffe_variable(sffe *const p, char *fname, size_t len)
     if (var) {
         return var->value;
     }
+    /* Nothing registered answers to it; the host may still know it. */
+    if (p->resolve) {
+        return p->resolve(p, fn);
+    }
     return NULL;
+}
+
+/* Walks the compiled program rather than the text: the text would also match a
+ * name that merely contains this one, and a variable registered and left
+ * unnamed by the formula would look used. An operation holds its operands by
+ * pointer, so a leaf that is read appears as an operand of something. */
+int sffe_reads(sffe *const parser, const sfNumber *value)
+{
+    if (parser == NULL || value == NULL) {
+        return 0;
+    }
+    /* A formula that is one value and no operations at all: there is nothing
+     * to walk, and the value it hands back is the leaf itself. */
+    if (parser->oprCount == 0) {
+        return parser->result == value;
+    }
+    for (unsigned int i = 0; i < parser->oprCount; i += 1) {
+        sfarg *op = parser->oprs[i].arg;
+        if (op == NULL) {
+            continue; /* a lazy dispatch, which holds no operands */
+        }
+        for (unsigned char k = 0; k < op->argc; k += 1) {
+            if (op->args[k]->value == value) {
+                return 1;
+            }
+        }
+    }
+    return 0;
 }
 
 sffunction *userfunction(const sffe *const p, char *fname, size_t len)

@@ -32,6 +32,7 @@
 #include "cmplx.h"
 #include "plane.h"
 #include "timers.h"
+#include "phist.h"
 #ifndef M_PI
 #define M_PI 3.1415
 #endif
@@ -380,7 +381,9 @@ fractal_context *make_fractalc(const int formula, float wi, float he)
     // to make them legal for the parser
     static cmplx sffe_dummy;
     new_ctxt->userformula = sffe_alloc();
-    sffe_regvar(&new_ctxt->userformula, &sffe_dummy, "p");
+    /* p, p1, p2 ... are asked for as the formula names them rather than
+     * registered beforehand; the place is real, it is simply never read. */
+    new_ctxt->userformula->resolve = sffe_resolve_p;
     sffe_regvar(&new_ctxt->userformula, &sffe_dummy, "z");
     sffe_regvar(&new_ctxt->userformula, &sffe_dummy, "c");
     sffe_regvar(&new_ctxt->userformula, &sffe_dummy, "n");
@@ -388,18 +391,12 @@ fractal_context *make_fractalc(const int formula, float wi, float he)
     sffe_regvar(&new_ctxt->userformula, &sffe_dummy, "x");
 
     new_ctxt->userinitial = sffe_alloc();
-    sffe_regvar(&new_ctxt->userinitial, &sffe_dummy, "p");
+    new_ctxt->userinitial->resolve = sffe_resolve_p;
     sffe_regvar(&new_ctxt->userinitial, &sffe_dummy, "z");
     sffe_regvar(&new_ctxt->userinitial, &sffe_dummy, "c");
     sffe_regvar(&new_ctxt->userinitial, &sffe_dummy, "n");
 
     sffe_regvar(&new_ctxt->userinitial, &sffe_dummy, "x");
-    for (int i = 0; i < NUM_P; i++) {
-        char pname[3];
-        snprintf(pname, 3, "p%d", (i+1));
-        sffe_regvar(&new_ctxt->userformula, &sffe_dummy, pname);
-        sffe_regvar(&new_ctxt->userinitial, &sffe_dummy, pname);
-    }
 #endif
     set_formula(new_ctxt, formula);
     return (new_ctxt);

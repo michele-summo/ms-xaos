@@ -185,7 +185,7 @@ typedef struct sfcontext__ {
 } sffe_context;
 
 /* SFFE main structure */
-typedef struct {
+typedef struct sffe__ {
     /*public*/
     const char *expression; /* parsed expression (read-only) */
     char *errormsg;         /* parser errors (read-only) */
@@ -206,6 +206,21 @@ typedef struct {
 
     unsigned int userfCount; /* number of user functions */
     sffunction *userf;
+
+    /* Names the host would rather supply when it meets them than register
+     * beforehand, called with a name no registered variable answered to and
+     * returning the place that name stands for, or NULL to leave it unknown.
+     *
+     * A family of variables too large to enumerate is what this is for: XaoS
+     * lets a formula reach back to any of nearly ten thousand earlier values
+     * of z, and registering ten thousand names -- with a linear scan for
+     * duplicates apiece -- cost a fifth of a second per thread to hand almost
+     * all of them to a formula that never asks. Asked for on sight, only the
+     * handful a formula names is ever made.
+     *
+     * The place must outlive the parse, and the parse may register variables
+     * of its own, which is what sffe_regvar with a null pointer is for. */
+    sfNumber *(*resolve)(struct sffe__ *parser, const char *name);
 } sffe;
 
 #define SFFE sffe
@@ -244,6 +259,12 @@ void *sffe_regfunc(sffe **parser, const char *vname, unsigned int parcnt,
 /* get already registered variable pointer, NULL if variable was not registered
  */
 sfvariable *sffe_var(sffe *const parser, const char *name);
+
+/* Whether the compiled program reads a given place -- whether, that is, the
+ * formula that was parsed actually names the variable living there. A variable
+ * may be registered and never used, and one the host has to keep up to date on
+ * every iteration is worth keeping up to date only if something reads it. */
+int sffe_reads(sffe *const parser, const sfNumber *value);
 
 /* single variable 'vptrs' identified by name 'vchars' */
 // void *sffe_regvar(sffe ** parser, sfNumber * vptrs, char vchars);

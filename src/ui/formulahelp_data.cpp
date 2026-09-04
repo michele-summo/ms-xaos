@@ -165,14 +165,11 @@ const struct formula_help_row formula_help_variables[] = {
     {"c", "", "the point being iterated -- the pixel, in the mandelbrot sense", NULL},
     {"n", "", "the iteration number, counting from zero", NULL},
     {"x", "", "scratch value, kept across iterations", NULL},
-    {NULL, NULL, NULL, "parameters, set from Fractal -> Parameters"},
-    {"p", "", "the first parameter; the same value as p1", NULL},
-    {"p1", "", "first parameter", NULL},
-    {"p2", "", "second parameter", NULL},
-    {"p3", "", "third parameter", NULL},
-    {"p4", "", "fourth parameter", NULL},
-    {"p5", "", "fifth parameter", NULL},
-    {"p6", "", "sixth parameter", NULL},
+    {NULL, NULL, NULL, "earlier values of z; Fractal -> Set p values on first iteration says what they are before there are any"},
+    {"p1", "", "the value z had on the pass before this one", NULL},
+    {"p2", "", "the one before that, and so on", NULL},
+    {"p9999", "", "as far back as one may look; any p up to this is a variable, whether or not the picture runs that many passes", NULL},
+    {"p", "", "another name for p1", NULL},
     {NULL, NULL, NULL, NULL}};
 
 /* How values are written. These are properties of the parser rather than

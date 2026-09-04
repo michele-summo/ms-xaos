@@ -120,5 +120,9 @@ typedef double number_t;
 #define NUMBER_BIG ((number_t)INT_MAX)
 #endif // CONFIG_H
 
-// Number of previous z minus 1
-#define NUM_P 6
+// How far back a user formula may reach for an earlier value of z: p1 is the
+// value it had on the pass before, p9999 the one nine thousand nine hundred
+// and ninety-nine passes back. Only the places a formula names are kept, so
+// the ceiling costs nothing to raise; it is here to stop a typo like p99999
+// from being taken for a variable at all.
+#define NUM_P_MAX 9999

@@ -105,6 +105,22 @@ two, though the threshold had to be taught to the parser first: an argument
 may now be marked as read by the selector rather than chosen by it, and is
 then evaluated before the choice is made.
 
+**`p1`, `p2` ... `p9999`** — the value `z` had on an earlier pass: `p1` on the
+pass before this one, `p2` the one before that, `p9999` nine thousand nine
+hundred and ninety-nine passes back. `p` is another name for `p1`. Before there
+have been that many passes they stand at whatever the history starts from,
+which *Fractal → Set p values on first iteration* decides: the point being
+iterated when it is on, zero when it is off.
+
+They used to stop at `p6` and were kept by shifting a six-place array along by
+one every pass — a copy per place per pass, paid whether or not the formula
+named any of them. That is why they stopped at six: at nine thousand it would
+have been 320 KB of copying per pass, measured at twenty-four times the whole
+cost of iterating `z^2+c`. The history is a ring now, written once per pass,
+and only the places a formula actually names are read out of it, so `p9999`
+costs what `p1` costs and a formula that names none costs nothing at all.
+The reference window lists them among the variables.
+
 **Removed.** `powi`, `powdc` and `logcn` were second names for `pow` and
 `logn`; `rad`, `deg` and `sign` were listed with no implementation behind them,
 and a second `trunc` was shadowed by the working one. A formula using a removed
