@@ -773,21 +773,63 @@ int main(void)
                 sffe_free(&carpet2);
             }
 
-            /* The snowflake counts as the other two do: the body is level one
-             * and goes on the first pass. The ground it leaves in the corners
-             * of the hexagon is no part of the figure and has no level, so it
-             * is handed back where it stands and never goes at all -- the
-             * inside colour, and the point itself for the incolouring to
-             * read. */
+            /* The snowflake is read from its middle out: a hexagon there, six
+             * triangles of the hexagon's own side standing on its six sides,
+             * twelve of a third that on their free edges, and so on. The
+             * hexagon goes on the first pass and a piece k levels out on the
+             * kth, as the other two figures count.
+             *
+             * At a radius of four the figure reaches 2.3094 -- two over cos
+             * thirty degrees -- so the hexagon stands its sides half of that
+             * out, 1.1547, and its corners at 1.3333. Its corners point along
+             * the axes and its sides face the ways between. */
+            check(leaves(flake4, 6, 0, (number_t)115 / 100) == 1 &&
+                      leaves(flake4, 6, 0, (number_t)116 / 100) == 2,
+                  "a side of the middle hexagon stands half way out");
+            check(leaves(flake4, 6, (number_t)132 / 100, 0) == 1,
+                  "and a corner of it at that over cos thirty");
+            check(leaves(flake4, 6, (number_t)134 / 100, 0) == NEVER,
+                  "where two of the six triangles meet at a point and the "
+                  "ground reaches in between them");
+
+            /* the six triangles, each with its point on a corner of the
+             * hexagonal bailout, all one level out from the middle */
+            int six = 1;
+            for (int d = 0; d < 6; d++) {
+                double t = 3.14159265358979323846 / 6 +
+                           d * 3.14159265358979323846 / 3;
+                number_t r = (number_t)2309 / 1000;
+                if (leaves(flake4, 6, (number_t)(r * ncos((number_t)t)),
+                           (number_t)(r * nsin((number_t)t))) != 2)
+                    six = 0;
+            }
+            check(six, "six triangles stand on it, and their points reach the "
+                       "corners of a hexagonal bailout of 4");
+            check(leaves(flake4, 6, (number_t)4444 / 10000,
+                         (number_t)17963 / 10000) == 3,
+                  "and twelve more on their free edges, one level further");
+
+            /* From the hexagon out a snowflake is six-fold symmetric -- three
+             * of the six triangles are the corners of the triangle it grew
+             * from and three are the first bumps on its edges, and nothing
+             * tells them apart. Reading it from the middle is what makes that
+             * visible; the pass a point leaves on has to show it. */
+            int sixfold = 1;
+            for (int i = 1; i < 30; i++) {
+                number_t px = (number_t)(i % 7) / 2 - (number_t)3 / 2;
+                number_t py = (number_t)(i % 11) / 3 - (number_t)3 / 2;
+                /* the same point turned by sixty degrees */
+                number_t qx = px / 2 - py * (number_t)8660254 / 10000000;
+                number_t qy = px * (number_t)8660254 / 10000000 + py / 2;
+                if (leaves(flake4, 6, px, py) != leaves(flake4, 6, qx, qy))
+                    sixfold = 0;
+            }
+            check(sixfold, "and a sixth of a turn leaves the picture alone");
+
             check(leaves(flake4, 6, 1, (number_t)-15 / 10) == NEVER,
                   "the ground beside the snowflake never leaves");
-            check(leaves(flake4, 6, 0, 0) == 1,
-                  "the body of it goes on the first pass");
-            check(leaves(flake4, 6, 0, (number_t)-15 / 10) == 2,
-                  "and the bump under the base, one level down, on the second");
-            check(leaves(flake4, 6, 0, (number_t)-23 / 10) == 2 &&
-                      leaves(flake4, 6, 0, (number_t)-2313 / 1000) == 0,
-                  "the points stand on the corners of a hexagonal bailout of 4");
+            check(leaves(flake4, 6, 0, (number_t)-2313 / 1000) == 0,
+                  "and past the points nothing ever started");
             /* the ground is handed back untouched, which is what leaves the
              * incolouring something to say about it */
             {
@@ -797,17 +839,21 @@ int main(void)
                           GSL_IMAG(same) == (number_t)-15 / 10,
                       "and stands exactly where it stood");
             }
-            /* The point under the base is the child of the point above it,
-             * turned half about: a step off one lands on the other, so it goes
-             * one pass later, and that holds all the way up to the tip. */
+            /* A triangle on a free edge is its parent cut down by three and
+             * turned to face the way that edge faces, so a step off it lands on
+             * the parent and it goes one pass later. Walking out along one of
+             * the twelve, from the parent's edge to its own point. */
             int child = 1;
-            for (int i = 1; i <= 8; i++) {
-                number_t r = (number_t)2 + (number_t)3 * i / 100;
-                if (leaves(flake4, 6, 0, -r) != leaves(flake4, 6, 0, r) + 1)
+            for (int i = 0; i < 6; i++) {
+                /* out along the way the bump on the upper right edge faces */
+                number_t g = (number_t)(i + 1) / 20;
+                number_t bx = (number_t)3333 / 10000 + g * (number_t)866 / 1000;
+                number_t by = (number_t)17321 / 10000 + g / 2;
+                if (leaves(flake4, 6, bx, by) != 3)
                     child = 0;
             }
-            check(child,
-                  "a child is its parent turned about and cut down by three");
+            check(child, "a child is its parent cut down by three and turned "
+                         "to face the way its edge faces");
 
             /* the whole silhouette, in a hundred and twenty directions: just
              * outside the shape nothing ever started, and every corner of the
@@ -856,10 +902,9 @@ int main(void)
                 double t = 3.14159265358979323846 / 6 +
                            k * 3.14159265358979323846 / 3;
                 number_t r = (number_t)23090 / 10000;
-                /* in the figure rather than in the ground beside it: the
-                 * ground never goes, three of the six points are corners of
-                 * the body and go on the first pass, and the other three are
-                 * children of it and go on the second */
+                /* in the figure rather than in the ground beside it: all
+                 * six points belong to the six triangles standing on the
+                 * middle hexagon, so all six go on the second pass */
                 unsigned int at = leaves(flake4, 6,
                                          (number_t)(r * ncos((number_t)t)),
                                          (number_t)(r * nsin((number_t)t)));

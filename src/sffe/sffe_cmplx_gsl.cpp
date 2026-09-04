@@ -2034,13 +2034,14 @@ sfarg *sfstripe(sfarg *const p)
  * All three carry the point to its parent. Every part of one of these figures
  * has one: a hole in a gasket sits inside a bigger hole one level up, a hole in
  * a carpet inside the cell that was cut the same way, a triangle of a snowflake
- * on the edge of the triangle it grew from. The step onto the parent is a
- * scaling about the right point -- doubling away from the nearest corner for
- * the gasket, blowing up a cell by the number of cells for the carpet, blowing
- * up a child by three for the snowflake, which turns it as well since each of
- * the three edges it might have grown on faces a different way. The topmost
- * part has no parent inside the figure, so its step carries it out of the
- * bailout, and a part n levels down takes n steps to get there.
+ * on a side of the hexagon at its middle or on the free edge of another
+ * triangle. The step onto the parent is a motion of the plane -- doubling away
+ * from the nearest corner for the gasket, blowing a cell up by the number of
+ * cells for the carpet, folding a triangle across the hexagon side it stands on
+ * or blowing it up by three and turning it to face the way its edge faces for
+ * the snowflake. The topmost part has no parent inside the figure, so its step
+ * carries it out of the bailout, and a part n levels down takes n steps to get
+ * there.
  *
  * The point really travels: the pass it leaves on is the level it stands at,
  * the iteration count is the picture, and z along the way is a point of the
@@ -2054,6 +2055,14 @@ sfarg *sfstripe(sfarg *const p)
  * handed back where it stands and never leaves, so it is drawn in the inside
  * colour rather than taking a band of the outside one off the figure, and the
  * incolouring modes have the point itself to read.
+ *
+ * Where the levels of a snowflake are counted from is the difference between a
+ * picture and a flat tone. Counted from the triangle it grew from, five eighths
+ * of it is level one and everything else is a fringe around that. Counted from
+ * the regular hexagon at its middle -- which with the six triangles standing on
+ * that hexagon's six sides is the same figure, exactly -- the first two levels
+ * are five twelfths each and the rest come down evenly, and what is drawn looks
+ * like a snowflake instead of like a triangle.
  *
  * They were a field before this: a number between nought and one saying how
  * solidly a point belonged, meant to be multiplied into a formula the way the
@@ -2083,9 +2092,12 @@ sfarg *sfstripe(sfarg *const p)
  *
  * None of them iterates over the figure. A pass of the gasket is three
  * multiply-adds and a comparison, a pass of the carpet two divisions worth of
- * scaling and two truncations, and a pass of the snowflake one walk down one
- * path of the curve -- so what a pass costs does not depend on how much of the
- * figure the picture can see, nor on how deep the level it is looking at.
+ * scaling and two truncations, and a pass of the snowflake four multiplications
+ * to name the sector and, for the six sevenths of it that is the hexagon or a
+ * triangle on the hexagon, nothing further -- only what is deeper walks the
+ * curve, and that walk is one path down and not a search. So what a pass costs
+ * does not depend on how much of a figure the picture can see, nor on how deep
+ * the level it is looking at.
  */
 
 /* sin 60 degrees, which is half the width of an equilateral triangle of
@@ -2121,6 +2133,27 @@ static const number_t FIG_AY[3] = {((number_t)-1 / 2 - 1) / FIG_EDGE, 0,
 static const int FIG_OPP[3] = {2, 0, 1}; /* the corner an edge is opposite */
 static const number_t FIG_CC[3] = {-1, (number_t)1 / 2, (number_t)1 / 2};
 static const number_t FIG_CS[3] = {0, -FIG_SIN60, FIG_SIN60};
+/* Of a triangle standing on a side of the hexagon at the middle of a snowflake,
+ * the base is glued to the hexagon and only these two edges bear children. */
+static const int FIG_FREE[2] = {0, 2};
+
+/* A snowflake read from its middle out. The hexagon there has the same side as
+ * the six triangles standing on its six sides, and stands its own sides half
+ * way out to the points of the figure -- so in units of the figure's reach, its
+ * apothem is a half and its corners are at one over the square root of three.
+ *
+ * The six sectors are told apart by which of six ways the point stands furthest
+ * out on, and the one it is in is then turned upright so that one piece of
+ * geometry serves all six. Turning by sixty degrees less sixty times the sector
+ * does it; the figure has six-fold symmetry from the hexagon out, which is what
+ * makes one piece of geometry enough. */
+static const number_t FIG_HEX_APOTHEM = (number_t)1 / 2;
+static const number_t FIG_SQRT3 = nsqrt((number_t)3);
+static const number_t FIG_THIRD = (number_t)1 / 3;
+static const number_t FIG_TURN_C[6] = {(number_t)1 / 2, 1,  (number_t)1 / 2,
+                                       (number_t)-1 / 2, -1, (number_t)-1 / 2};
+static const number_t FIG_TURN_S[6] = {FIG_SIN60,  0, -FIG_SIN60,
+                                       -FIG_SIN60, 0, FIG_SIN60};
 
 
 /* The square root of the radius, or its reciprocal, kept on the call site
@@ -2350,28 +2383,38 @@ static inline int koch_under(double x, double y, int depth)
 }
 
 /**
- * @brief The Koch snowflake, as a tree of triangles.
+ * @brief The Koch snowflake, read from a hexagon out.
  * @details snowflake(radius) draws a Koch snowflake with its six points
  * standing on the six corners of the hexagon a hexagonal bailout of that
  * number draws.
  *
- * Every triangle in a snowflake has a parent, as every hole in a gasket does:
- * the three that stand on the edges of a triangle are a third its size, and
- * the step onto the parent blows them up by three. Where a gasket differs is
- * that each of the three edges faces a different way, so a child is turned as
- * well as moved and the step has to turn it back -- which is the whole of what
- * is new here. The pass a point leaves on is then the level of the triangle it
- * stands in, and the iteration count is the picture.
+ * A snowflake comes apart exactly: a regular hexagon at the middle, six
+ * triangles of the hexagon's own side standing on its six sides, twelve of a
+ * third that on the free edges of those, forty-eight of a ninth on theirs, and
+ * so on for ever. Three of the six are the corners of the triangle the figure
+ * grew from and three are the first bumps put on its edges, and nothing tells
+ * them apart -- from the hexagon out the figure has six-fold symmetry, which is
+ * what makes this the natural way to read it and what lets one piece of
+ * geometry serve all six sectors.
  *
- * The body has no parent and so leaves on the first pass, and a triangle k
- * levels down on the kth -- the same counting the other two figures do.
+ * That reading is what the picture wants as well. The bands it gives are even:
+ * the hexagon and the six triangles are five twelfths of the figure each and
+ * the twelve a further tenth, where reading the figure from its first triangle
+ * made one band five eighths of the picture and left the rest to a fringe --
+ * one flat triangle, with no snowflake to look at and nothing for the outside
+ * colour to say.
  *
- * A snowflake does not fill its hexagon: it leaves six corners of ground, and
- * that ground is not part of the figure and is not given a level. A point
- * standing there is handed back exactly where it stands, so it never leaves
- * and comes out in the inside colour, and the incolouring modes have the point
- * itself to work with -- which is the whole reason for handing back the point
- * rather than parking every such pixel on one spot. It costs the membership
+ * A triangle standing on a side of the hexagon folds across that side into it,
+ * which lands it exactly on one of the six the hexagon is made of. A triangle
+ * standing on the free edge of another steps onto that one, blown up by three
+ * and turned to face the way it faces. Either way it is one step to the parent,
+ * so the pass a point leaves on is the level of the piece it stands in, and the
+ * hexagon, having nowhere to go, leaves on the first.
+ *
+ * The six corners of ground the figure leaves in its hexagon are no part of it
+ * and have no level. A point standing there is handed back exactly where it
+ * stands, so it never leaves and comes out in the inside colour, and the
+ * incolouring modes have the point itself to work with. It costs the membership
  * question once a pass for as long as the pixel is looked at, and that is the
  * price of an empty space that stays empty instead of taking a band of the
  * outside colour off the figure.
@@ -2401,65 +2444,108 @@ sfarg *sfsnowflake(sfarg *const p)
     number_t x = GSL_REAL(sffe_z) * scale;
     number_t y = GSL_IMAG(sffe_z) * scale;
 
-    /* The six points of a snowflake reach exactly as far as the corners of the
-     * triangle it grew from, so the whole figure sits inside the circle those
-     * corners are on and most of the plane can be turned away in three
-     * multiplications. */
+    /* The six points reach exactly as far as the corners of the triangle the
+     * figure grew from, so the whole of it sits inside the circle those corners
+     * are on and most of the plane can be turned away in three multiplications.
+     */
     if (x * x + y * y > 1) {
         GSL_SET_COMPLEX(&sfvalue(p), FIG_ESCAPED, 0);
         return p;
     }
 
-    /* Which edge's bump the point stands in, if it stands in one. An edge the
-     * point is on the inner side of is not asked at all, so a point in the body
-     * answers in three comparisons and one outside in the same three plus a
-     * walk down the single curve that could have taken it in. The edge is the
-     * answer and not merely whether there was one: the child to walk onto is
-     * the one grown on that edge. */
-    int outside = 0;
-    int edge = -1;
-    for (int e = 0; e < 3 && edge < 0; e += 1) {
-        number_t rx = x - FIG_VX[e], ry = y - FIG_VY[e];
-        /* along the edge, and out from it: the corners are taken in the order
-         * that puts the outside of each edge on the positive side */
-        number_t along = rx * FIG_AX[e] + ry * FIG_AY[e];
-        number_t out = rx * FIG_AY[e] - ry * FIG_AX[e];
-        if (out <= 0)
-            continue;
-        outside = 1;
-        if (along < 0 || along > 1)
-            continue;
-        if (koch_under((double)along, (double)out, KOCH_DEPTH))
-            edge = e;
+    /* How far out the point stands on each of the six ways the middle hexagon
+     * faces. Three of them are the negatives of the other three, so four
+     * multiplications answer all six, and the largest names the sector. */
+    number_t u0 = FIG_SIN60 * x + y / 2;
+    number_t u2 = -FIG_SIN60 * x + y / 2;
+    number_t far = u0;
+    int k = 0;
+    if (y > far) {
+        far = y;
+        k = 1;
     }
-
-    if (outside && edge < 0) {
-        /* The ground, which is no part of the figure: handed back where it
-         * stands, so it stays there, never leaves, and is drawn in the inside
-         * colour with its own position for the incolouring to read. */
-        sfvalue(p) = sffe_z;
-        return p;
+    if (u2 > far) {
+        far = u2;
+        k = 2;
     }
-    if (!outside) {
-        /* the body: no parent to walk to, so it goes on this pass */
+    if (-u0 > far) {
+        far = -u0;
+        k = 3;
+    }
+    if (-y > far) {
+        far = -y;
+        k = 4;
+    }
+    if (-u2 > far) {
+        far = -u2;
+        k = 5;
+    }
+    if (far < FIG_HEX_APOTHEM) {
+        /* the hexagon at the middle: no parent to walk to, so it goes now */
         GSL_SET_COMPLEX(&sfvalue(p), FIG_ESCAPED, 0);
         return p;
     }
 
-    /* Onto the parent: take the child off the corner its edge faces away from,
-     * turn it back the way the parent faces, and blow it up by three.
-     *
-     * Out of the figure's units and back into the plane on the way: the root
-     * comes back by multiplying the square into its reciprocal, which is two
-     * multiplications where dividing by the scale would be a division, and a
-     * division at 113 bits of mantissa is software. */
+    /* that sector turned upright, so that the same geometry serves all six */
+    number_t c = FIG_TURN_C[k], sn = FIG_TURN_S[k];
+    number_t xr = x * c - y * sn;
+    number_t yr = x * sn + y * c;
+
+    number_t nx, ny;
+    number_t across = FIG_SQRT3 * (xr < 0 ? -xr : xr);
+    if (yr + across <= 1) {
+        /* The triangle standing on that side of the hexagon: apex out at the
+         * figure's reach, base along the side. Folding it across the side lands
+         * it exactly on one of the six the hexagon is made of, so the fold is
+         * its step onto its parent and it goes on the next pass. */
+        nx = xr;
+        ny = 1 - yr;
+    } else {
+        /* Deeper, and the walk is the one a triangle has always taken -- in
+         * that triangle's own frame, where it has circumradius one and stands
+         * at the origin, and where only the two edges that are not glued to the
+         * hexagon bear children. */
+        number_t px = 3 * xr, py = 3 * yr - 2;
+        int edge = -1;
+        for (int t = 0; t < 2 && edge < 0; t += 1) {
+            int e = FIG_FREE[t];
+            number_t rx = px - FIG_VX[e], ry = py - FIG_VY[e];
+            /* along the edge, and out from it: the corners are taken in the
+             * order that puts the outside of each edge on the positive side */
+            number_t along = rx * FIG_AX[e] + ry * FIG_AY[e];
+            number_t off = rx * FIG_AY[e] - ry * FIG_AX[e];
+            if (off <= 0 || along < 0 || along > 1)
+                continue;
+            if (koch_under((double)along, (double)off, KOCH_DEPTH))
+                edge = e;
+        }
+        if (edge < 0) {
+            /* The ground, which is no part of the figure: handed back where it
+             * stands, so it stays there, never leaves, and is drawn in the
+             * inside colour with its own position for the incolouring to
+             * read. */
+            sfvalue(p) = sffe_z;
+            return p;
+        }
+        /* onto the parent: take the child off the corner its edge faces away
+         * from, turn it back the way the parent faces, and blow it up by three
+         */
+        int j = FIG_OPP[edge];
+        number_t qx = px + (number_t)2 / 3 * FIG_VX[j];
+        number_t qy = py + (number_t)2 / 3 * FIG_VY[j];
+        px = 3 * (qx * FIG_CC[j] + qy * FIG_CS[j]);
+        py = 3 * (qy * FIG_CC[j] - qx * FIG_CS[j]);
+        nx = px * FIG_THIRD;
+        ny = (py + 2) * FIG_THIRD;
+    }
+
+    /* the sector turned back, and out of the figure's units into the plane. The
+     * root comes back by multiplying the square into its reciprocal, which is
+     * two multiplications where dividing by the scale would be a division, and
+     * a division at 113 bits of mantissa is software. */
     number_t reach = radius * inv * FIG_ACROSS;
-    int k = FIG_OPP[edge];
-    number_t px = x + (number_t)2 / 3 * FIG_VX[k];
-    number_t py = y + (number_t)2 / 3 * FIG_VY[k];
-    number_t step = 3 * reach;
-    GSL_SET_COMPLEX(&sfvalue(p), step * (px * FIG_CC[k] + py * FIG_CS[k]),
-                    step * (py * FIG_CC[k] - px * FIG_CS[k]));
+    GSL_SET_COMPLEX(&sfvalue(p), (nx * c + ny * sn) * reach,
+                    (ny * c - nx * sn) * reach);
     return p;
 }
 
