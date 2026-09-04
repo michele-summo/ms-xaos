@@ -2,7 +2,7 @@
 
 A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Everything the
 original does, it still does; this describes what has been added or changed,
-and why. Version 2.0.
+and why. Version 2.1.
 
 ## Two binaries
 
@@ -283,12 +283,28 @@ random: the figure is where it looks like it is.
 **They are fractals of their own, not fields to multiply into one.** Written
 alone — `sierpinskyt()` and nothing else — each draws its figure, the way
 Fractal → More Formulae draws its **Sierpinski**, **Sierpinski Carpet** and
-**Koch Snowflake**, and for the same reason: each knows the level of the
-construction that decided a point, hands back nothing until the pass reaches
-that level and a number no bailout can hold once it has, so **the pass a point
-escapes on is the level that decided it** and the iteration count is the
-picture. A point in the first hole leaves on the first pass, one thirty levels
-down on the thirtieth, and one on the figure itself never leaves.
+**Koch Snowflake**.
+
+The two Sierpinski figures do it by **carrying the point to its parent**. Every
+hole in a gasket sits inside a bigger hole one level up — the three second-level
+triangles each sit in the first-level one — and doubling the point away from the
+nearest corner of the triangle is exactly the step from a hole to the hole above
+it. The topmost hole has no parent inside the figure, so that step carries it
+out of the bailout, and a point in a hole *n* levels down takes *n* steps to get
+there: **the pass a point leaves on is the level that cut it**, and the
+iteration count is the picture.
+
+The point really travels, and that is what makes these usable rather than merely
+correct: `z` along the way is a point of the plane like any other, so the
+colouring modes that read it, smooth colouring, and writing a figure inside a
+larger formula all mean something.
+
+The snowflake has no such parent to walk to — its levels add to its edge rather
+than cutting into its middle, so all but a sliver of it is level one and there
+is nothing to count. It is drawn whole instead: a point in it stays where it is
+and never leaves, a point outside it is thrown past any bailout at once, so the
+body comes out in the inside colour, the ground in the outside one, and the
+fringe between them is as fine as the levels go.
 
 `radius` means what `bailout` means and is read the same way: **as the square of
 the distance**. What it draws is the shape a bailout of that number draws,
@@ -329,14 +345,18 @@ Every argument has a default, so `snowflake()` is a call, and so is
     snowflake()          with bailout shape hexagon 0
 
 None of them costs more than the noise beside them: measured against `randsc`,
-the gasket 0.34, the carpet 0.40 and the snowflake 0.33 of it at 64 bits of
-mantissa. That was not free. The gasket's level is one integer AND on two
-barycentric weights rather than thirty rounds of subdividing a triangle; the
-carpet reads its digits in fixed point rather than in `number_t`, which is a
-third quicker and exact besides; and the snowflake walks the Koch curve in
-`double`, since the figure stands at a fixed size and 52 bits of a fraction of
-one edge is more than the 24 levels it draws can use. A test asserts the three
-ratios, so a rewrite that loses them says so.
+the gasket 0.37, the carpet 0.40 and the snowflake 0.35 of it at 64 bits of
+mantissa, and 0.41, 0.77 and 0.63 at 113. That was not free, and at 113 bits it
+was very nearly lost — a square root and a division are both software there, and
+either costs about what a whole figure costs. So the square root of the radius
+is kept on the call site rather than taken again every pass; the gasket compares
+its three barycentric weights scaled by a positive number, which changes neither
+which is largest nor which is negative and takes its divisions to none; and the
+carpet counts in cells rather than in the plane, where the multiplication by
+`squares` and the division by it cancel. The snowflake walks the Koch curve in
+`double` besides, since the figure stands at a fixed size and 52 bits of a
+fraction of one edge is more than the 24 levels it draws can use. A test asserts
+the ratios, so a rewrite that loses them says so.
 
 ## Palettes
 
