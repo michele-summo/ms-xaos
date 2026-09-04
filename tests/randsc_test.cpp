@@ -773,19 +773,30 @@ int main(void)
                 sffe_free(&carpet2);
             }
 
-            /* The snowflake counts from two: the ground it leaves in the
-             * corners of the hexagon goes on the first pass, so that the body
-             * -- held one pass for the purpose -- can have the second to
-             * itself and not be drawn the colour of the ground. */
-            check(leaves(flake4, 6, 1, (number_t)-15 / 10) == 1,
-                  "the ground beside the snowflake goes first");
-            check(leaves(flake4, 6, 0, 0) == 2,
-                  "and the body of it second");
-            check(leaves(flake4, 6, 0, (number_t)-15 / 10) == 3,
-                  "and the bump under the base, one level down, third");
-            check(leaves(flake4, 6, 0, (number_t)-23 / 10) == 3 &&
+            /* The snowflake counts as the other two do: the body is level one
+             * and goes on the first pass. The ground it leaves in the corners
+             * of the hexagon is no part of the figure and has no level, so it
+             * is handed back where it stands and never goes at all -- the
+             * inside colour, and the point itself for the incolouring to
+             * read. */
+            check(leaves(flake4, 6, 1, (number_t)-15 / 10) == NEVER,
+                  "the ground beside the snowflake never leaves");
+            check(leaves(flake4, 6, 0, 0) == 1,
+                  "the body of it goes on the first pass");
+            check(leaves(flake4, 6, 0, (number_t)-15 / 10) == 2,
+                  "and the bump under the base, one level down, on the second");
+            check(leaves(flake4, 6, 0, (number_t)-23 / 10) == 2 &&
                       leaves(flake4, 6, 0, (number_t)-2313 / 1000) == 0,
                   "the points stand on the corners of a hexagonal bailout of 4");
+            /* the ground is handed back untouched, which is what leaves the
+             * incolouring something to say about it */
+            {
+                GSL_SET_COMPLEX(&sffe_z, 1, (number_t)-15 / 10);
+                cmplx same = sffe_eval(flake4);
+                check(GSL_REAL(same) == 1 &&
+                          GSL_IMAG(same) == (number_t)-15 / 10,
+                      "and stands exactly where it stood");
+            }
             /* The point under the base is the child of the point above it,
              * turned half about: a step off one lands on the other, so it goes
              * one pass later, and that holds all the way up to the tip. */
@@ -846,11 +857,13 @@ int main(void)
                            k * 3.14159265358979323846 / 3;
                 number_t r = (number_t)23090 / 10000;
                 /* in the figure rather than in the ground beside it: the
-                 * ground goes on the first pass, three of the six points are
-                 * corners of the body and go on the second, and the other
-                 * three are children of it and go on the third */
-                if (leaves(flake4, 6, (number_t)(r * ncos((number_t)t)),
-                           (number_t)(r * nsin((number_t)t))) < 2)
+                 * ground never goes, three of the six points are corners of
+                 * the body and go on the first pass, and the other three are
+                 * children of it and go on the second */
+                unsigned int at = leaves(flake4, 6,
+                                         (number_t)(r * ncos((number_t)t)),
+                                         (number_t)(r * nsin((number_t)t)));
+                if (at == 0 || at == NEVER)
                     corners = 0;
             }
             check(corners, "and both reach every corner of the shape they fill");
