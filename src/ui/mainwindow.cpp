@@ -1227,7 +1227,11 @@ void MainWindow::showDialog(const char *name)
                 QString label(dialog->question);
                 algono->setObjectName(label + "algono");
                 algono->setValue(palcontext->palettetype);
-                algono->setRange(1, 3);
+                /* However many there are, not the three there used to be: the
+                 * box was written with the number in it and the slider beside
+                 * it with the constant, so the two disagreed the moment a
+                 * fourth was added and the box would not count past three. */
+                algono->setRange(1, PALGORITHMS);
 
                 // Algo Slider
                 algoslider = new QSlider(Qt::Horizontal, qDialog);

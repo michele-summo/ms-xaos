@@ -78,6 +78,54 @@ static int identical(const struct made *a, const struct made *b)
            !memcmp(a->rgb, b->rgb, (size_t)a->size * 3);
 }
 
+/* How much of the hue circle a palette actually visits, as a fraction of it.
+ *
+ * Every entry with enough colour in it to have a hue is placed on the circle,
+ * and what is measured is the circle less its largest empty arc. One hue gives
+ * nearly nothing; two opposite ones give a half; a cycle gives one. The four
+ * new ways to make a palette were meant to be schemes of several colours and
+ * two of them were quietly one colour each, which this is here to notice. */
+static double hue_spread(const struct made *m)
+{
+    double hue[4096];
+    int n = 0;
+    for (int i = 0; i < m->size && n < 4096; i++) {
+        int r = m->rgb[i][0], g = m->rgb[i][1], b = m->rgb[i][2];
+        int hi = r > g ? (r > b ? r : b) : (g > b ? g : b);
+        int lo = r < g ? (r < b ? r : b) : (g < b ? g : b);
+        if (hi - lo < 40)
+            continue; /* too near grey to have a hue worth placing */
+        double d = hi - lo, h;
+        if (hi == r)
+            h = (g - b) / d;
+        else if (hi == g)
+            h = 2 + (b - r) / d;
+        else
+            h = 4 + (r - g) / d;
+        h /= 6;
+        if (h < 0)
+            h += 1;
+        hue[n++] = h;
+    }
+    if (n < 2)
+        return 0;
+    /* sort, then the widest gap between neighbours around the circle */
+    for (int i = 1; i < n; i++) {
+        double v = hue[i];
+        int j = i - 1;
+        while (j >= 0 && hue[j] > v) {
+            hue[j + 1] = hue[j];
+            j--;
+        }
+        hue[j + 1] = v;
+    }
+    double widest = hue[0] + 1 - hue[n - 1];
+    for (int i = 1; i < n; i++)
+        if (hue[i] - hue[i - 1] > widest)
+            widest = hue[i] - hue[i - 1];
+    return 1 - widest;
+}
+
 /* The lightest and the darkest entry, as the sum of their three channels. */
 static void range(const struct made *m, int *lo, int *hi)
 {
@@ -166,6 +214,33 @@ int main(void)
         sprintf(what, "algorithm %d has dark and light in it (%d of 765)",
                 alg + 1, worst);
         check(ranged, what);
+    }
+
+    /* --- and the four that are schemes have more than one colour in them ---
+     *
+     * A spectrum, two inks, three hues spread round the circle and two
+     * opposite ones: none of those is one colour, and two of them were. The
+     * first three of the seven are free to be whatever the dice say. */
+    {
+        static const struct {
+            int alg;
+            double least;
+            const char *what;
+        } scheme[4] = {{3, 0.55, "the spectrum goes most of the way round"},
+                       {4, 0.10, "the two inks are two colours and not one"},
+                       {5, 0.25, "the three spread hues are three"},
+                       {6, 0.20, "and the opposite pair are opposite"}};
+        for (int k = 0; k < 4; k++) {
+            double worst = 2;
+            for (int s = 0; s < 6; s++) {
+                make(&a, scheme[k].alg, seeds[s]);
+                double spread = hue_spread(&a);
+                if (spread < worst)
+                    worst = spread;
+            }
+            sprintf(what, "%s (%.2f of the circle)", scheme[k].what, worst);
+            check(worst >= scheme[k].least, what);
+        }
     }
 
     if (failures)

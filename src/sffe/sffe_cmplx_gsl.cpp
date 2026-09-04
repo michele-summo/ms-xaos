@@ -2033,6 +2033,12 @@ sfarg *sfstripe(sfarg *const p)
  * levels of the construction, which is what makes it worth multiplying into a
  * formula.
  *
+ * radius means what bailout means, and is read the same way: as the square of
+ * the distance, so that the default of four is a figure two across the middle
+ * -- which is the circle a default bailout of four lets an orbit run to, and
+ * therefore the part of the plane the fractals shipped with XaoS draw in. A
+ * figure written with the same number as the bailout fills the same picture.
+ *
  * None of them iterates over the figure. The gasket is decided by one integer
  * AND, the carpet by a digit expansion in the base it is cut into, and the
  * snowflake by walking one path down the curve -- so what a pass costs does not
@@ -2109,8 +2115,8 @@ static inline int sier_level(uint32_t both)
 
 /**
  * @brief The Sierpinski gasket, as a field over the plane.
- * @details sierpinskyt(radius) stands an equilateral triangle of that
- * circumradius at the origin, point upwards, and says of each point how far
+ * @details sierpinskyt(radius) stands an equilateral triangle whose
+ * corners are the square root of radius from the origin, point upwards, and says of each point how far
  * into the gasket cut out of it that point lies: one on what survives every
  * cut, less the sooner it was cut away, zero outside the triangle.
  *
@@ -2141,7 +2147,7 @@ sfarg *sfsierpinskyt(sfarg *const p)
     if (!(radius > 0))
         return p;
 
-    number_t scale = 1 / radius;
+    number_t scale = 1 / nsqrt(radius); /* squared, as bailout is */
     number_t x = GSL_REAL(sffe_position) * scale;
     number_t y = GSL_IMAG(sffe_position) * scale;
 
@@ -2170,8 +2176,8 @@ sfarg *sfsierpinskyt(sfarg *const p)
 
 /**
  * @brief The Sierpinski carpet, as a field over the plane.
- * @details sierpinskyc(radius, squares) fills the square of that half-side at
- * the origin, cuts it into squares by squares, throws the middle one away and
+ * @details sierpinskyc(radius, squares) fills the square whose half-side is the
+ * square root of radius, at the origin, cuts it into squares by squares, throws the middle one away and
  * does the same to each of the rest. Three is the carpet as it is usually
  * drawn; five or seven give a lacier one, and two gives a gasket again, since
  * a square cut in four with one corner taken away is what a gasket is.
@@ -2194,9 +2200,10 @@ sfarg *sfsierpinskyc(sfarg *const p)
     if (!(radius > 0) || squares < 2 || squares > 64)
         return p;
 
-    number_t scale = 1 / (2 * radius);
-    number_t u = (GSL_REAL(sffe_position) + radius) * scale;
-    number_t v = (GSL_IMAG(sffe_position) + radius) * scale;
+    number_t half = nsqrt(radius); /* squared, as bailout is */
+    number_t scale = 1 / (2 * half);
+    number_t u = (GSL_REAL(sffe_position) + half) * scale;
+    number_t v = (GSL_IMAG(sffe_position) + half) * scale;
     if (!(u >= 0) || u >= 1 || !(v >= 0) || v >= 1)
         return p; /* outside the square */
 
@@ -2297,8 +2304,8 @@ static inline int koch_under(double x, double y, int depth)
 
 /**
  * @brief The Koch snowflake, as a field over the plane.
- * @details snowflake(radius) stands an equilateral triangle of that
- * circumradius at the origin, point upwards, and grows a Koch snowflake out of
+ * @details snowflake(radius) stands an equilateral triangle whose corners are
+ * the square root of radius from the origin, point upwards, and grows a Koch snowflake out of
  * it: one over the body, tapering as the fringe the point stands in gets finer,
  * zero outside altogether. The body is most of the figure and the fringe is
  * where the detail is, which is what a snowflake looks like.
@@ -2320,7 +2327,7 @@ sfarg *sfsnowflake(sfarg *const p)
     if (!(radius > 0))
         return p;
 
-    number_t scale = 1 / radius;
+    number_t scale = 1 / nsqrt(radius); /* squared, as bailout is */
     number_t x = GSL_REAL(sffe_position) * scale;
     number_t y = GSL_IMAG(sffe_position) * scale;
 
