@@ -199,10 +199,11 @@ int main(void)
 
     /* --- a figure written alone is the fractal -----------------------------
      *
-     * sierpinskyt and sierpinskyc carry the point to the parent of the hole it
-     * stands in, so it leaves on the pass numbered by the level that cut it and
-     * the iteration count draws the figure. The snowflake has no parent to walk
-     * to and is drawn whole: a body, a ground, and the fringe between them.
+     * All three carry the point to the parent of the part it stands in, so it
+     * leaves on the pass numbered by that part's level and the iteration count
+     * draws the figure. A snowflake counts from two rather than from one: the
+     * ground it leaves in the corners of its hexagon goes first, so that the
+     * body can have a pass to itself.
      *
      * They were a field before this -- a number between nought and one, meant
      * to be multiplied into a formula -- and a number between nought and one
@@ -223,12 +224,12 @@ int main(void)
              * is what a figure that never reaches the picture gives */
             {"sierpinskyt()", 6, 64, "a bare gasket draws its levels"},
             {"sierpinskyc()", 6, 64, "and a bare carpet its own"},
-            {"snowflake()", 2, 5, "and a bare snowflake is a snowflake, whole"},
+            {"snowflake()", 4, 64, "and a bare snowflake its own"},
         };
         unsigned long long drew[3];
         for (int k = 0; k < 3; k++) {
             if (sffe_parse(&cfractalc.userformula, reach[k].formula) != 0) {
-                printf("FAIL   will not parse: %s' + chr(92) + 'n", reach[k].formula);
+                printf("FAIL   will not parse: %s\n", reach[k].formula);
                 failures++;
                 continue;
             }
