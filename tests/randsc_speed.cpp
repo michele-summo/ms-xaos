@@ -136,6 +136,67 @@ int main(void)
             marginal[0], marginal[2]);
     check(marginal[2] < marginal[0] * 1.5 + 0.3, what);
 
+
+    /* --- the figures, which must not cost more than the noise does ---------
+     *
+     * sierpinskyt, sierpinskyc and snowflake stand where the noise stands and
+     * are read once a pass for every pixel, so what matters about them is not
+     * how quickly they were written but that a formula does not slow down for
+     * having asked for one. The noise is the thing to measure them against: it
+     * is what they sit beside in the table, and both halves of the comparison
+     * move together when the machine is fast or slow or built at another
+     * precision.
+     *
+     * Two of them had to be rewritten to keep it true, and both times the
+     * culprit was doing in number_t what did not need number_t. The carpet read
+     * its digits in it and came out a third slower than it is now; it reads
+     * them in fixed point, where a level is a multiply and a shift and is exact
+     * besides. The snowflake walked the curve in it and cost twice the noise at
+     * 113 bits of mantissa, where every multiplication is software; it walks in
+     * double, which holds fifty-two bits of a fraction of one edge where
+     * twenty-four levels need thirty-eight.
+     *
+     * Measured on this machine, against randsc: the gasket 0.26, the carpet
+     * 0.34, the lacier carpet 0.47 and the snowflake 0.36 at 64 bits of
+     * mantissa; 0.72, 0.53, 0.52 and 0.99 at 113.
+     */
+    {
+        sffe *noise = compile("randsc({13,0})");
+        sffe *gasket = compile("sierpinskyt()");
+        sffe *carpet = compile("sierpinskyc()");
+        sffe *lace = compile("sierpinskyc(4;7)");
+        sffe *flake = compile("snowflake()");
+        if (!failures) {
+            /* the position has to move, or every one of them answers out of
+             * the same branch and the branch predictor flatters them all */
+            per_eval(noise, 200);
+            double base = per_eval(noise, 400) - nothing0;
+            struct {
+                const char *name;
+                sffe *f;
+            } fig[4] = {{"sierpinskyt", gasket},
+                        {"sierpinskyc", carpet},
+                        {"sierpinskyc(4;7)", lace},
+                        {"snowflake", flake}};
+            printf("\n       %-18s %10s %10s\n", "figure", "ns", "of randsc");
+            for (int i = 0; i < 4; i++) {
+                per_eval(fig[i].f, 200);
+                double cost = per_eval(fig[i].f, 400) - nothing0;
+                double ratio = cost / base;
+                printf("       %-18s %10.1f %10.2f\n", fig[i].name, cost,
+                       ratio);
+                sprintf(what, "%s costs no more than the noise does (%.2f)",
+                        fig[i].name, ratio);
+                check(ratio < 1.15, what);
+            }
+        }
+        sffe_free(&noise);
+        sffe_free(&gasket);
+        sffe_free(&carpet);
+        sffe_free(&lace);
+        sffe_free(&flake);
+    }
+
     if (failures)
         printf("\n%d check(s) failed\n", failures);
     return failures ? 1 : 0;

@@ -127,6 +127,16 @@ foreach(prec ${XAOS_TEST_PRECISIONS})
                         ${CMAKE_SOURCE_DIR}/src/util/xstring.cpp)
    add_test(NAME number_roundtrip_${suffix} COMMAND number_roundtrip_${suffix})
 
+   # --- the ways a palette can be made --------------------------------------
+   # An algorithm and a seed are all a saved position records of its colours,
+   # so the pair has to give back the same palette every time.
+   xaos_add_test_binary(palette_${suffix} ${prec} palette_test.cpp
+                        ${CMAKE_SOURCE_DIR}/src/util/palette.cpp
+                        ${CMAKE_SOURCE_DIR}/src/util/random.cpp
+                        ${CMAKE_SOURCE_DIR}/src/util/xstring.cpp
+                        ${CMAKE_SOURCE_DIR}/src/util/xerror.cpp)
+   add_test(NAME palette_${suffix} COMMAND palette_${suffix})
+
    # --- the history of z a user formula reaches back into -------------------
    # p1 is the previous z, p9999 the one nine thousand back. Kept in a ring
    # now rather than shifted along, so the ring is compared with the shift it

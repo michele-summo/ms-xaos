@@ -742,6 +742,152 @@ static void randomize_segments(int whitemode, int nsegments)
     colors[i - 1][2] = colors[0][2];
 }
 
+
+/* --- palettes that are a colour scheme rather than a scatter ---------------
+ *
+ * The three above all work the same way: every second or third segment is
+ * pinned to black or white and the rest are picked at random, which is what
+ * gives XaoS its banded, high-contrast look. It is a good look and it is the
+ * only one it had. These four choose their colours in relation to each other
+ * instead, so that a palette holds together as one thing.
+ *
+ * They cost what the others cost. A palette is made once, when it is asked
+ * for, and is only some four to nine segments long -- the two hundred odd
+ * entries it ends up with are interpolated between those -- so nothing here is
+ * per pixel and none of it does more per segment than one conversion out of
+ * hue, saturation and value. That shortness is also why none of them tries to
+ * lay a pattern along the palette: there is no length to lay one along.
+ *
+ * Each is driven by XaoS_random from the seed the caller set, so the same
+ * algorithm and seed give the same palette, which is what lets a saved
+ * position bring its colours back with it.
+ */
+
+/* A cycle right round the hue circle, at full strength: the smooth spectrum a
+ * fractal is usually shown in elsewhere and could not be shown in here. One
+ * turn, or two or three, so that a palette of the same length can band the
+ * iterations coarsely or finely. */
+static void spectrum_segments(int whitemode, int nsegments)
+{
+    int start = (int)XaoS_random() % 256;
+    /* Round it one way or the other, which is the only variety a single turn
+     * allows and is enough of one: warm to cool reads differently from cool to
+     * warm. More than one turn is not on offer -- a palette is four to six
+     * segments long, and two turns across five stops is not a spectrum, it is
+     * two hues alternating, which is what algorithm 7 is for. */
+    int direction = ((int)XaoS_random() & 1) ? 1 : -1;
+    int sat = 170 + (int)XaoS_random() % 86;
+    int bright = whitemode ? 255 : 200 + (int)XaoS_random() % 56;
+    int dark = 15 + (int)XaoS_random() % 40;
+    int span = nsegments > 1 ? nsegments - 1 : 1;
+    int i;
+
+    for (i = 0; i < nsegments; i++) {
+        int h = start + direction * 256 * i / span;
+        /* Round the circle in hue, and up and back down in brightness.
+         *
+         * A cycle at one brightness is a cycle no channel sum varies along:
+         * every colour in it is as light as every other, and a fractal shown
+         * in it has hue where it should have shape. Six of the seven ways to
+         * make a palette were three hundred of the seven hundred and sixty-five
+         * a channel sum can span; this one was five, until the swell. */
+        int rise = i * 2 <= span ? i * 2 : (span - i) * 2;
+        int top = (span / 2) * 2;
+        int val = dark + (bright - dark) * rise / (top ? top : 1);
+        hsv_to_rgb(h, sat, val, colors[i], colors[i] + 1, colors[i] + 2);
+    }
+    colors[i - 1][0] = colors[0][0];
+    colors[i - 1][1] = colors[0][1];
+    colors[i - 1][2] = colors[0][2];
+}
+
+/* One hue, taken from the dark of it up through the pure colour to the pale of
+ * it and back down: a tonal palette, which shows the shape of a fractal the
+ * way a photograph of it in one ink would. */
+static void duotone_segments(int whitemode, int nsegments)
+{
+    int hue = (int)XaoS_random() % 256;
+    /* a second hue a little way round, so the shadows are not the same colour
+     * as the highlights -- what a painter would call a warm and a cool end */
+    int drift = 12 + (int)XaoS_random() % 32;
+    int i;
+
+    for (i = 0; i < nsegments; i++) {
+        /* up the ramp and back down again, so that the two ends meet */
+        int half = nsegments > 1 ? nsegments - 1 : 1;
+        int up = i * 2 <= half ? i * 2 : (half - i) * 2 + half;
+        int t = up * 255 / (half ? half : 1);
+        if (t < 0)
+            t = 0;
+        if (t > 255)
+            t = 255;
+        /* dark and saturated at one end, pale and washed out at the other */
+        int val = whitemode ? 40 + t * 215 / 255 : 20 + t * 200 / 255;
+        int sat = 255 - t * 180 / 255;
+        hsv_to_rgb(hue + drift * t / 255, sat, val, colors[i], colors[i] + 1,
+                   colors[i] + 2);
+    }
+    colors[i - 1][0] = colors[0][0];
+    colors[i - 1][1] = colors[0][1];
+    colors[i - 1][2] = colors[0][2];
+}
+
+/* Hues within one narrow arc of the circle, wandering in strength and
+ * brightness: neighbouring colours, which agree with each other the way the
+ * colours of one afternoon do. */
+static void analogous_segments(int whitemode, int nsegments)
+{
+    int centre = (int)XaoS_random() % 256;
+    int arc = 20 + (int)XaoS_random() % 30; /* a fifth of the circle at most */
+    int i;
+
+    for (i = 0; i < nsegments; i++) {
+        int h = centre + (int)XaoS_random() % (2 * arc + 1) - arc;
+        int s = 120 + (int)XaoS_random() % 136;
+        /* Dark and light take turns, and which they are is settled by where
+         * the segment sits rather than by the dice. Left to the dice, four
+         * segments drawn from one narrow arc came out four shades of the same
+         * thing often enough to be the usual case, and a palette with no dark
+         * in it shows a fractal as one flat wash. */
+        int v = (i & 1) ? 190 + (int)XaoS_random() % 66
+                        : 25 + (int)XaoS_random() % 55;
+        /* and the pale end of the palette is where whitemode is felt */
+        if (whitemode && (i & 1))
+            s = s / 3;
+        hsv_to_rgb(h, s, v, colors[i], colors[i] + 1, colors[i] + 2);
+    }
+    colors[i - 1][0] = colors[0][0];
+    colors[i - 1][1] = colors[0][1];
+    colors[i - 1][2] = colors[0][2];
+}
+
+/* Two hues from opposite sides of the circle, taking turns: the loudest
+ * agreement two colours can make, and the one that shows a boundary between
+ * two bands most plainly. */
+static void complementary_segments(int whitemode, int nsegments)
+{
+    int hue = (int)XaoS_random() % 256;
+    int spread = (int)XaoS_random() % 24 - 12; /* not exactly opposite */
+    int i;
+
+    for (i = 0; i < nsegments; i++) {
+        int h = (i & 1) ? hue + 128 + spread : hue;
+        int s = 170 + (int)XaoS_random() % 86;
+        int v = 110 + (int)XaoS_random() % 146;
+        /* one segment in four goes to the extreme, which gives the pair
+         * somewhere to come from and somewhere to go */
+        if (i % 4 == 2) {
+            s = (int)XaoS_random() % 48;
+            v = whitemode ? 230 + (int)XaoS_random() % 26
+                          : (int)XaoS_random() % 30;
+        }
+        hsv_to_rgb(h, s, v, colors[i], colors[i] + 1, colors[i] + 2);
+    }
+    colors[i - 1][0] = colors[0][0];
+    colors[i - 1][1] = colors[0][1];
+    colors[i - 1][2] = colors[0][2];
+}
+
 #define MYLONG_MAX 0xffffff
 #define rrandom(i) ((int)(((int)XaoS_random() / (double)MYLONG_MAX) * (i)))
 /*Do not use modulo type random since it should bring very different results
@@ -802,13 +948,25 @@ int mkpalette(struct palette *c, int seed, int algorithm)
     XaoS_srandom(seed);
 
     switch (algorithm) {
+        case 6:
+            complementary_segments(whitemode, i1);
+            break;
+        case 5:
+            analogous_segments(whitemode, i1);
+            break;
+        case 4:
+            duotone_segments(whitemode, i1);
+            break;
+        case 3:
+            spectrum_segments(whitemode, i1);
+            break;
         case 2:
             randomize_segments3(whitemode, i1);
             break;
         case 1:
             randomize_segments2(whitemode, i1);
             break;
-        case 0:
+        default:
             randomize_segments(whitemode, i1);
     }
     mksmooth(i1, i);

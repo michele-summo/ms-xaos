@@ -13,7 +13,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
-#define sffnctscount 99
+#define sffnctscount 102
 /* sfcmplxfunc starts with the operators, which are reached through
  * sffe_operator/sffe_unary_operator rather than by name. Lookups by name start
  * after them. */
@@ -151,6 +151,10 @@ sfarg *sfrandscp(sfarg *const p);
 sfarg *sfrandsch(sfarg *const p);
 sfarg *sfrandsct(sfarg *const p);
 sfarg *sfpoly(sfarg *const p);   /* a polynomial in the first argument */
+/* figures over the position, the deterministic cousins of the noise */
+sfarg *sfsierpinskyt(sfarg *const p); /* the Sierpinski gasket */
+sfarg *sfsierpinskyc(sfarg *const p); /* the Sierpinski carpet */
+sfarg *sfsnowflake(sfarg *const p);   /* the Koch snowflake */
 sfarg *sftrap(sfarg *const p);   /* how near the orbit came to a shape */
 sfarg *sfstripe(sfarg *const p); /* a wave averaged along the orbit */
 int sffe_uses_noise(sffe *const parser);

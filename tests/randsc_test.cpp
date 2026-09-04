@@ -586,6 +586,117 @@ int main(void)
         }
     }
 
+
+    /* --- the figures: the same field, drawn rather than diced --------------
+     *
+     * sierpinskyt, sierpinskyc and snowflake stand where the noise stands --
+     * at the position, which is the same point in either mode -- and answer
+     * the same question about it, how solidly the point belongs to a figure.
+     * Nothing about them is random, so unlike the noise they can be checked
+     * against points whose answer is known by looking at the figure.
+     */
+    {
+        sffe *tri = compile("sierpinskyt()");
+        sffe *tri4 = compile("sierpinskyt(4)");
+        sffe *tri8 = compile("sierpinskyt(8)");
+        sffe *carpet = compile("sierpinskyc()");
+        sffe *carpet33 = compile("sierpinskyc(4;3)");
+        sffe *carpet5 = compile("sierpinskyc(4;5)");
+        sffe *carpet5e = compile("sierpinskyc( ;5)");
+        sffe *flake = compile("snowflake()");
+        sffe *flake4 = compile("snowflake(4)");
+        if (!failures) {
+            /* every argument has a default, so the bare call is a call */
+            check(at(tri, (number_t)1 / 3, (number_t)1 / 7, 0) ==
+                      at(tri4, (number_t)1 / 3, (number_t)1 / 7, 0),
+                  "sierpinskyt defaults to a circumradius of four");
+            check(at(carpet, (number_t)1 / 3, (number_t)1 / 7, 0) ==
+                      at(carpet33, (number_t)1 / 3, (number_t)1 / 7, 0),
+                  "sierpinskyc to four and to three squares");
+            check(at(flake, (number_t)1 / 3, (number_t)1 / 7, 0) ==
+                      at(flake4, (number_t)1 / 3, (number_t)1 / 7, 0),
+                  "and snowflake to four");
+            check(at(carpet5e, (number_t)1 / 3, (number_t)1 / 7, 0) ==
+                      at(carpet5, (number_t)1 / 3, (number_t)1 / 7, 0),
+                  "and the radius may be left empty and the squares given");
+
+            /* the middle of the triangle is a hole, and an early one; the
+             * apex is never cut away at all */
+            check(at(tri4, 0, 0, 0) > 0 && at(tri4, 0, 0, 0) < (number_t)1 / 10,
+                  "the centre of the gasket was cut away, and cut away early");
+            /* A corner of the triangle is in the gasket however deep the
+             * cutting goes -- it is a corner of one sub-triangle at every
+             * level. Its neighbourhood is not: the line of symmetry through it
+             * is holes almost everywhere, which is what a gasket is. */
+            check(at(tri4, 0, 4, 0) == 1, "and the apex survives every cut");
+            check(at(tri4, 0, (number_t)399 / 100, 0) < 1,
+                  "while the point just under it does not");
+            check(at(tri4, 10, 10, 0) == 0 && at(tri4, 0, -10, 0) == 0,
+                  "outside the triangle there is no figure");
+
+            /* the same shape twice the size, read at twice the distance */
+            int scaled = 1;
+            for (int i = 1; i < 40; i++) {
+                number_t x = (number_t)(i % 7) / 3 - 1;
+                number_t y = (number_t)(i % 11) / 5 - 1;
+                if (at(tri8, 2 * x, 2 * y, 0) != at(tri4, x, y, 0))
+                    scaled = 0;
+            }
+            check(scaled, "and the radius scales the figure and nothing else");
+
+            /* the carpet: the middle square goes first, a corner never goes */
+            check(at(carpet33, 0, 0, 0) > 0 &&
+                      at(carpet33, 0, 0, 0) < (number_t)1 / 20,
+                  "the centre of the carpet is what the first cut removed");
+            check(at(carpet33, -4, -4, 0) == 1,
+                  "and the corner survives every cut");
+            check(at(carpet33, 10, 0, 0) == 0,
+                  "outside the square there is no figure");
+            /* two squares to a side with the middle one taken away is the top
+             * right quarter taken away, which is a gasket again */
+            sffe *carpet2 = compile("sierpinskyc(4;2)");
+            if (!failures) {
+                check(at(carpet2, 3, 3, 0) > 0 &&
+                          at(carpet2, 3, 3, 0) < (number_t)1 / 20,
+                      "cut in two, the quarter that goes is the far corner");
+                check(at(carpet2, -4, -4, 0) == 1, "and the near one stays");
+                sffe_free(&carpet2);
+            }
+
+            /* the snowflake: solid in the body, nothing outside, and the bump
+             * on the middle of an edge belongs to it although the triangle
+             * does not reach there. The base is at y = -radius/2. */
+            check(at(flake4, 0, 0, 0) == 1, "the body of the snowflake is solid");
+            check(at(flake4, 0, -10, 0) == 0 && at(flake4, 10, 10, 0) == 0,
+                  "and beyond its fringe there is nothing");
+            number_t bump = at(flake4, 0, (number_t)-23 / 10, 0);
+            check(bump > 0 && bump < 1,
+                  "the bump under the base belongs to it, and is fringe");
+            /* that bump is an equilateral triangle on the middle third of an
+             * edge whose own length is radius*sqrt(3), so it reaches a whole
+             * radius past the base, and no further */
+            check(at(flake4, 0, (number_t)-45 / 10, 0) == 0,
+                  "and past the point of that bump there is nothing again");
+
+            /* the same point twice is the same number: these are figures, not
+             * noise, and nothing in them is drawn from a seed */
+            check(at(tri4, (number_t)1 / 3, (number_t)1 / 7, 0) ==
+                          at(tri4, (number_t)1 / 3, (number_t)1 / 7, 9) &&
+                      at(flake4, (number_t)1 / 3, (number_t)1 / 7, 0) ==
+                          at(flake4, (number_t)1 / 3, (number_t)1 / 7, 9),
+                  "and none of them moves with the pass, as the noise does");
+        }
+        sffe_free(&tri);
+        sffe_free(&tri4);
+        sffe_free(&tri8);
+        sffe_free(&carpet);
+        sffe_free(&carpet33);
+        sffe_free(&carpet5);
+        sffe_free(&carpet5e);
+        sffe_free(&flake);
+        sffe_free(&flake4);
+    }
+
     /* Defaults, where a call that stops short of an argument, or leaves its
      * place empty, takes them.
      *
