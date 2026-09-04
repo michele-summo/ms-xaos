@@ -126,6 +126,38 @@ static double hue_spread(const struct made *m)
     return 1 - widest;
 }
 
+/* How far the palette travels in brightness against how far it reaches: two if
+ * it swells once from dark to light and back, and one more for every band it
+ * turns at after that.
+ *
+ * This is what "the gradient is too slow" measures. A palette that swells once
+ * across its whole length changes colour over a hundred entries where one that
+ * alternates band by band changes over thirty, and a fractal drawn in the first
+ * has no edges to its rings. Two of the four new ways swelled once and were
+ * told so in as many words.
+ *
+ * Absolute numbers are no use here: how many bands there are to turn at is
+ * chosen before any of the seven is asked, and at four segments not one of them
+ * can do better than two. What can be asked is that the new ways are no slower
+ * than the three that were always here, seed for seed. */
+static double variation(const struct made *m)
+{
+    long travel = 0;
+    int lo = 766, hi = -1;
+    for (int i = 0; i < m->size; i++) {
+        int v = m->rgb[i][0] + m->rgb[i][1] + m->rgb[i][2];
+        if (v < lo)
+            lo = v;
+        if (v > hi)
+            hi = v;
+        if (i) {
+            int u = m->rgb[i - 1][0] + m->rgb[i - 1][1] + m->rgb[i - 1][2];
+            travel += v > u ? v - u : u - v;
+        }
+    }
+    return hi > lo ? (double)travel / (hi - lo) : 0;
+}
+
 /* The lightest and the darkest entry, as the sum of their three channels. */
 static void range(const struct made *m, int *lo, int *hi)
 {
@@ -214,6 +246,35 @@ int main(void)
         sprintf(what, "algorithm %d has dark and light in it (%d of 765)",
                 alg + 1, worst);
         check(ranged, what);
+    }
+
+    /* --- and none of them fades slowly from one end to the other -----------
+     *
+     * The three that were always here alternate light and dark segment by
+     * segment, and that is where their banding comes from. Two of the four new
+     * ones swelled once across the whole palette instead and were told, in as
+     * many words, that the gradient was too slow. */
+    for (int alg = 3; alg < PALGORITHMS; alg++) {
+        double worst = 1e9;
+        for (int s = 0; s < 6; s++) {
+            /* what the three that were always here manage on this seed */
+            double old = 1e9;
+            for (int k = 0; k < 3; k++) {
+                make(&a, k, seeds[s]);
+                double v = variation(&a);
+                if (v < old)
+                    old = v;
+            }
+            make(&a, alg, seeds[s]);
+            double ratio = old > 0 ? variation(&a) / old : 1;
+            if (ratio < worst)
+                worst = ratio;
+        }
+        sprintf(what,
+                "algorithm %d turns as often as the older ones do (%.2f of "
+                "them)",
+                alg + 1, worst);
+        check(worst >= 0.95, what);
     }
 
     /* --- and the four that are schemes have more than one colour in them ---

@@ -779,11 +779,10 @@ static void randomize_segments(int whitemode, int nsegments)
 static void spectrum_segments(int whitemode, int nsegments)
 {
     int start = (int)XaoS_random() % 256;
-    /* Round it one way or the other, which is the only variety a single turn
-     * allows and is enough of one: warm to cool reads differently from cool to
-     * warm. More than one turn is not on offer -- a palette is four to six
-     * segments long, and two turns across five stops is not a spectrum, it is
-     * two hues alternating, which is what algorithm 7 is for. */
+    /* Round it one way or the other: warm to cool reads differently from cool
+     * to warm, and with four to nine stops a single turn is all a cycle can
+     * be -- two turns across five stops is not a spectrum, it is two hues
+     * alternating, which is what algorithm 7 is for. */
     int direction = ((int)XaoS_random() & 1) ? 1 : -1;
     int bright = whitemode ? 255 : 220 + (int)XaoS_random() % 36;
     /* deep rather than dark: at a fifth of full value a hue is already too
@@ -801,17 +800,24 @@ static void spectrum_segments(int whitemode, int nsegments)
 
     for (i = 0; i < nsegments; i++) {
         int h = start + direction * 256 * i / span;
-        /* Round the circle in hue, and up and back down in brightness.
+        /* Round the circle in hue, and light and deep by turns in brightness.
          *
-         * A cycle at one brightness is a cycle no channel sum varies along:
-         * every colour in it is as light as every other, and a fractal shown
-         * in it has hue where it should have shape. Six of the seven ways to
-         * make a palette were three hundred of the seven hundred and sixty-five
-         * a channel sum can span; this one was five, until the swell. */
-        int rise = i * 2 <= span ? i * 2 : (span - i) * 2;
-        int top = (span / 2) * 2;
-        int val = dark + (bright - dark) * rise / (top ? top : 1);
-        int sat = deepsat - (deepsat - palesat) * rise / (top ? top : 1);
+         * Swelling once across the whole palette instead put every band a
+         * quarter of the way from its neighbour, and the colour then changes
+         * over sixty entries where the three older ways change over thirty:
+         * the gradient reads as slow. Alternating gives every band an edge
+         * against both its neighbours, which is what makes a fractal's rings
+         * visible, and costs the spectrum nothing -- the hue goes round all
+         * the same. */
+        int deep = !(i & 1);
+        int val = deep ? dark : bright;
+        int sat = deep ? deepsat : palesat;
+        /* the first and last segment are one segment, so an odd count would
+         * put two deep ones side by side at the seam */
+        if ((nsegments & 1) && i == nsegments - 2) {
+            val = (dark + bright) / 2;
+            sat = (deepsat + palesat) / 2;
+        }
         hsv_to_rgb(h, sat, val, colors[i], colors[i] + 1, colors[i] + 2);
     }
     colors[i - 1][0] = colors[0][0];
@@ -838,13 +844,21 @@ static void duotone_segments(int whitemode, int nsegments)
     int i;
 
     for (i = 0; i < nsegments; i++) {
-        /* out along the ramp and back, so that the two ends meet */
+        /* The hue walks from the first ink to the second and back, so the
+         * palette is still the two of them mixing; the weight alternates band
+         * by band, so the picture has an edge every band instead of one long
+         * fade from end to end. */
         int rise = i * 2 <= span ? i * 2 : (span - i) * 2;
         int top = (span / 2) * 2;
         int t = rise * 255 / (top ? top : 1);
-        /* dark and saturated in the first hue, bright and paler in the second */
-        int val = whitemode ? 70 + t * 185 / 255 : 60 + t * 175 / 255;
-        int sat = 255 - t * 110 / 255;
+        int deep = !(i & 1);
+        int val = deep ? (whitemode ? 75 : 60) + t * 30 / 255
+                       : 215 + t * 40 / 255;
+        int sat = deep ? 210 + t * 45 / 255 : 95 + t * 45 / 255;
+        if ((nsegments & 1) && i == nsegments - 2) {
+            val = (val + 255) / 2;
+            sat = sat * 2 / 3;
+        }
         hsv_to_rgb(shadow + apart * t / 255, sat, val, colors[i],
                    colors[i] + 1, colors[i] + 2);
     }

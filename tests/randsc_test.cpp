@@ -609,7 +609,7 @@ int main(void)
             /* every argument has a default, so the bare call is a call */
             check(at(tri, (number_t)1 / 3, (number_t)1 / 7, 0) ==
                       at(tri4, (number_t)1 / 3, (number_t)1 / 7, 0),
-                  "sierpinskyt defaults to a circumradius of four");
+                  "sierpinskyt defaults to a radius of four");
             check(at(carpet, (number_t)1 / 3, (number_t)1 / 7, 0) ==
                       at(carpet33, (number_t)1 / 3, (number_t)1 / 7, 0),
                   "sierpinskyc to four and to three squares");
@@ -624,10 +624,11 @@ int main(void)
              * apex is never cut away at all */
             check(at(tri4, 0, 0, 0) > 0 && at(tri4, 0, 0, 0) < (number_t)1 / 10,
                   "the centre of the gasket was cut away, and cut away early");
-            /* radius is read the way bailout is read, as the square of the
-             * distance, so four puts the corners two from the origin -- the
-             * circle a bailout of four lets an orbit run to, and so the part
-             * of the plane the fractals shipped with XaoS draw in */
+            /* The corners stand the square root of the radius out, the way
+             * bailout reads its number, so that a default call fills a default
+             * view. Not where a bailout polygon has its corners: those are its
+             * apothem over the cosine of half a turn between sides, which for
+             * a triangle is twice as far and taller than the picture. */
             check(at(tri4, 0, 2, 0) == 1,
                   "the apex stands at the square root of the radius");
             check(at(tri4, 0, (number_t)201 / 100, 0) == 0,
@@ -678,6 +679,11 @@ int main(void)
             check(at(flake4, 0, 0, 0) == 1, "the body of the snowflake is solid");
             check(at(flake4, 0, -5, 0) == 0 && at(flake4, 5, 5, 0) == 0,
                   "and beyond its fringe there is nothing");
+            /* the six points stand as far out as the corners of the triangle
+             * they grew from, in the directions a hexagon has its corners */
+            check(at(flake4, 0, (number_t)-199 / 100, 0) > 0 &&
+                      at(flake4, 0, (number_t)-201 / 100, 0) == 0,
+                  "the points reach the square root of the radius, all six");
             number_t bump = at(flake4, 0, (number_t)-115 / 100, 0);
             check(bump > 0 && bump < 1,
                   "the bump under the base belongs to it, and is fringe");
