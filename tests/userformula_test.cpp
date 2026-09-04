@@ -196,6 +196,71 @@ int main(void)
     check(picture("z^2+c", "p1") == square,
           "an initialization may name p1, which before any pass is where z starts");
 
+
+    /* --- a figure has to reach the picture --------------------------------
+     *
+     * These functions hand back a number between zero and one, and a number
+     * between zero and one cannot leave a bailout of four. Written alone, the
+     * formula therefore sets z to a value that never escapes: every pixel runs
+     * to the iteration limit, every pixel gets the same colour, and the picture
+     * is the bailout shape in one flat tone with the figure nowhere in it. That
+     * is what a bare call draws, and it is worth having said so in a test as
+     * well as in the guide, because it looks like the figure is broken.
+     *
+     * Add it to z and the value drives the escape instead: a point in the
+     * gasket climbs to the bailout in a few passes and one in a deep hole takes
+     * many, so the levels of the figure come out as the bands of the picture.
+     * That is the same thing the noise functions ask for and are documented
+     * asking for.
+     */
+    {
+        /* how many different iteration counts a formula draws with */
+        struct {
+            const char *formula;
+            int least;
+            const char *what;
+        } reach[6] = {
+            {"sierpinskyt()", 0, "a bare gasket draws one flat tone"},
+            {"sierpinskyc()", 0, "and so does a bare carpet"},
+            {"snowflake()", 0, "and a bare snowflake"},
+            {"z+sierpinskyt()", 12, "added to z, the gasket draws its levels"},
+            {"z+sierpinskyc()", 12, "and the carpet draws its own"},
+            {"z+snowflake()", 4, "and the snowflake its fringe"},
+        };
+        for (int k = 0; k < 6; k++) {
+            if (sffe_parse(&cfractalc.userformula, reach[k].formula) != 0) {
+                printf("FAIL   will not parse: %s\n", reach[k].formula);
+                failures++;
+                continue;
+            }
+            sffe_setlocal(&cfractalc);
+            iterationfunc fn = userformula()->calculate;
+            /* a coarse grid over the figure, and how many answers it gives */
+            unsigned seen[64];
+            int n = 0;
+            for (int iy = 0; iy < 24 && n < 64; iy++)
+                for (int ix = 0; ix < 24 && n < 64; ix++) {
+                    number_t px = (number_t)-15 / 10 +
+                                  (number_t)ix * (number_t)3 / 23;
+                    number_t py = (number_t)-15 / 10 +
+                                  (number_t)iy * (number_t)3 / 23;
+                    cmplxset(sffe_position, px, py);
+                    unsigned v = fn(px, py, px, py);
+                    int known = 0;
+                    for (int q = 0; q < n; q++)
+                        if (seen[q] == v)
+                            known = 1;
+                    if (!known)
+                        seen[n++] = v;
+                }
+            char line[160];
+            sprintf(line, "%s (%d tones)", reach[k].what, n);
+            /* a bare call gives one or two, which is a flat picture; added to
+             * z it has to give many more than that */
+            check(reach[k].least ? n >= reach[k].least : n <= 2, line);
+        }
+    }
+
     if (failures)
         printf("\n%d problem(s)\n", failures);
     else
