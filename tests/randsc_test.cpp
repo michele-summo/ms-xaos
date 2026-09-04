@@ -598,7 +598,7 @@ int main(void)
     {
         sffe *tri = compile("sierpinskyt()");
         sffe *tri4 = compile("sierpinskyt(4)");
-        sffe *tri8 = compile("sierpinskyt(8)");
+        sffe *tri16 = compile("sierpinskyt(16)");
         sffe *carpet = compile("sierpinskyc()");
         sffe *carpet33 = compile("sierpinskyc(4;3)");
         sffe *carpet5 = compile("sierpinskyc(4;5)");
@@ -624,14 +624,21 @@ int main(void)
              * apex is never cut away at all */
             check(at(tri4, 0, 0, 0) > 0 && at(tri4, 0, 0, 0) < (number_t)1 / 10,
                   "the centre of the gasket was cut away, and cut away early");
+            /* radius is read the way bailout is read, as the square of the
+             * distance, so four puts the corners two from the origin -- the
+             * circle a bailout of four lets an orbit run to, and so the part
+             * of the plane the fractals shipped with XaoS draw in */
+            check(at(tri4, 0, 2, 0) == 1,
+                  "the apex stands at the square root of the radius");
+            check(at(tri4, 0, (number_t)201 / 100, 0) == 0,
+                  "and just past it the figure has ended");
             /* A corner of the triangle is in the gasket however deep the
              * cutting goes -- it is a corner of one sub-triangle at every
              * level. Its neighbourhood is not: the line of symmetry through it
              * is holes almost everywhere, which is what a gasket is. */
-            check(at(tri4, 0, 4, 0) == 1, "and the apex survives every cut");
-            check(at(tri4, 0, (number_t)399 / 100, 0) < 1,
-                  "while the point just under it does not");
-            check(at(tri4, 10, 10, 0) == 0 && at(tri4, 0, -10, 0) == 0,
+            check(at(tri4, 0, (number_t)199 / 100, 0) < 1,
+                  "while the point just under it was cut away");
+            check(at(tri4, 5, 5, 0) == 0 && at(tri4, 0, -5, 0) == 0,
                   "outside the triangle there is no figure");
 
             /* the same shape twice the size, read at twice the distance */
@@ -639,27 +646,29 @@ int main(void)
             for (int i = 1; i < 40; i++) {
                 number_t x = (number_t)(i % 7) / 3 - 1;
                 number_t y = (number_t)(i % 11) / 5 - 1;
-                if (at(tri8, 2 * x, 2 * y, 0) != at(tri4, x, y, 0))
+                if (at(tri16, 2 * x, 2 * y, 0) != at(tri4, x, y, 0))
                     scaled = 0;
             }
-            check(scaled, "and the radius scales the figure and nothing else");
+            check(scaled,
+                  "and four times the radius is twice the figure, as bailout");
 
             /* the carpet: the middle square goes first, a corner never goes */
             check(at(carpet33, 0, 0, 0) > 0 &&
                       at(carpet33, 0, 0, 0) < (number_t)1 / 20,
                   "the centre of the carpet is what the first cut removed");
-            check(at(carpet33, -4, -4, 0) == 1,
+            check(at(carpet33, -2, -2, 0) == 1,
                   "and the corner survives every cut");
-            check(at(carpet33, 10, 0, 0) == 0,
+            check(at(carpet33, 5, 0, 0) == 0,
                   "outside the square there is no figure");
             /* two squares to a side with the middle one taken away is the top
              * right quarter taken away, which is a gasket again */
             sffe *carpet2 = compile("sierpinskyc(4;2)");
             if (!failures) {
-                check(at(carpet2, 3, 3, 0) > 0 &&
-                          at(carpet2, 3, 3, 0) < (number_t)1 / 20,
+                check(at(carpet2, (number_t)3 / 2, (number_t)3 / 2, 0) > 0 &&
+                          at(carpet2, (number_t)3 / 2, (number_t)3 / 2, 0) <
+                              (number_t)1 / 20,
                       "cut in two, the quarter that goes is the far corner");
-                check(at(carpet2, -4, -4, 0) == 1, "and the near one stays");
+                check(at(carpet2, -2, -2, 0) == 1, "and the near one stays");
                 sffe_free(&carpet2);
             }
 
@@ -667,15 +676,15 @@ int main(void)
              * on the middle of an edge belongs to it although the triangle
              * does not reach there. The base is at y = -radius/2. */
             check(at(flake4, 0, 0, 0) == 1, "the body of the snowflake is solid");
-            check(at(flake4, 0, -10, 0) == 0 && at(flake4, 10, 10, 0) == 0,
+            check(at(flake4, 0, -5, 0) == 0 && at(flake4, 5, 5, 0) == 0,
                   "and beyond its fringe there is nothing");
-            number_t bump = at(flake4, 0, (number_t)-23 / 10, 0);
+            number_t bump = at(flake4, 0, (number_t)-115 / 100, 0);
             check(bump > 0 && bump < 1,
                   "the bump under the base belongs to it, and is fringe");
             /* that bump is an equilateral triangle on the middle third of an
-             * edge whose own length is radius*sqrt(3), so it reaches a whole
-             * radius past the base, and no further */
-            check(at(flake4, 0, (number_t)-45 / 10, 0) == 0,
+             * edge whose own length is sqrt(3) times the corner distance, so it
+             * reaches that whole distance past the base, and no further */
+            check(at(flake4, 0, (number_t)-225 / 100, 0) == 0,
                   "and past the point of that bump there is nothing again");
 
             /* the same point twice is the same number: these are figures, not
@@ -688,7 +697,7 @@ int main(void)
         }
         sffe_free(&tri);
         sffe_free(&tri4);
-        sffe_free(&tri8);
+        sffe_free(&tri16);
         sffe_free(&carpet);
         sffe_free(&carpet33);
         sffe_free(&carpet5);

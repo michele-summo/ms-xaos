@@ -159,8 +159,9 @@ struct image {
 
 /* How many ways a palette can be made: 1 to 3 scatter colours between black
  * and white anchors, which is the look XaoS has always had; 4 to 7 pick their
- * colours in relation to each other -- a spectrum, one hue in tones,
- * neighbouring hues, opposite ones. mkpalette takes them counting from zero.
+ * colours in relation to each other -- a spectrum, two hues in tones, three
+ * spread round the circle, two opposite. mkpalette takes them counting from
+ * zero.
  *
  * A position saved with one of the new ones names an algorithm the original
  * XaoS does not have and will refuse; one saved with 1 to 3 is unaffected. */

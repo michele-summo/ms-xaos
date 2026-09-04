@@ -2,7 +2,7 @@
 
 A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Everything the
 original does, it still does; this describes what has been added or changed,
-and why. Version 1.5.
+and why. Version 1.6.
 
 ## Two binaries
 
@@ -290,17 +290,23 @@ that falls into the first hole scores almost nothing and one that survives every
 cut scores one; the snowflake is made by adding, so the body scores one and the
 fringe tapers.
 
+`radius` means what `bailout` means and is read the same way: **as the square of
+the distance**. The default of 4 therefore draws a figure 2 from the origin to
+its corners — which is the circle a default bailout of 4 lets an orbit run to,
+and so the part of the plane the fractals shipped with XaoS draw in. Written
+with the same number as the bailout, a figure fills the same picture they do.
+
 **`sierpinskyt([radius=4])`** — the Sierpinski gasket, in an equilateral
-triangle of that circumradius standing at the origin, point upwards.
+triangle standing at the origin, point upwards, its corners `sqrt(radius)` away.
 
 **`sierpinskyc([radius=4]; [squares=3])`** — the Sierpinski carpet, in a square
-of that half-side. The square is cut into `squares` by `squares`, the middle one
-is thrown away, and the same is done to each of the rest. Three is the carpet as
-it is usually drawn; five or seven give a lacier one; two gives a gasket again,
-since a square cut in four with one corner taken away is what a gasket is.
+of half-side `sqrt(radius)`. The square is cut into `squares` by `squares`, the
+middle one is thrown away, and the same is done to each of the rest. Three is
+the carpet as it is usually drawn; five or seven give a lacier one; two gives a
+gasket again, since a square cut in four with one corner taken away is what a
+gasket is.
 
-**`snowflake([radius=4])`** — the Koch snowflake grown from a triangle of that
-circumradius.
+**`snowflake([radius=4])`** — the Koch snowflake grown from that triangle.
 
 Every argument has a default, so `snowflake()` is a call, and so is
 `sierpinskyc( ;5)` — a lacier carpet at the default size.
@@ -333,8 +339,8 @@ Four more choose their colours in relation to each other:
 | --- | --- |
 | 1–3 | colours scattered between black and white anchors — as before |
 | 4 | **spectrum** — right round the hue circle, one turn, darkening at both ends |
-| 5 | **duotone** — one hue from the dark of it through the pure colour to the pale of it |
-| 6 | **analogous** — hues from one narrow arc, dark and light taking turns |
+| 5 | **duotone** — two hues, one owning the shadows and the other the highlights, as a press does it with two inks |
+| 6 | **triad** — three hues spread round the circle, taken in turn, deep and bright alternating |
 | 7 | **complementary** — two hues from opposite sides of the circle, alternating |
 
 They cost what the others cost: a palette is made once, when it is asked for,
@@ -343,12 +349,25 @@ saturation and value. Each is driven from the seed the dialog holds, so an
 algorithm and a seed give the same palette every time — which is all a saved
 position records of its colours.
 
-Two things had to be settled by position rather than by the dice, and a test
-now keeps them settled. A hue cycle at one brightness has no dark anywhere in
-it, and a fractal shown in it has hue where it should have shape — so the
-spectrum swells from dark to bright and back. Colours drawn at random from one
-narrow arc came out four shades of the same thing more often than not — so in
-the analogous palette dark and light alternate.
+Three things had to be settled by hand, and a test now keeps them settled.
+
+A hue cycle at one brightness has no dark anywhere in it, and a fractal shown
+in it has hue where it should have shape — so the spectrum swells from deep to
+bright and back, with saturation running the other way. Holding saturation
+steady instead, the channel sum could not span more than twice the value, and
+the palette was a fifth of what it can be.
+
+Every segment keeps its colour. The three older ways get their character by
+pinning segments to black and white, and a segment pinned to either has no hue
+at all; done in a palette whose whole point is which hues it holds, it leaves
+the hues invisible. Two of these four went that way — alternating near-black
+with a washed-out near-white — and came out grey with a tint, which is what
+"monochrome" means when it is a complaint. Contrast here is between a deep
+colour and a bright one, never between nothing and nothing.
+
+And which segment is deep and which is bright is settled by where the segment
+sits, not by the dice: left to the dice, a palette four segments long comes out
+all one weight more often than not.
 
 A position saved with one of the new four names an algorithm the original XaoS
 does not have and will refuse to load; one saved with 1 to 3 is unaffected.
