@@ -2,7 +2,7 @@
 
 A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Everything the
 original does, it still does; this describes what has been added or changed,
-and why. Version 2.3.
+and why. Version 2.4.
 
 ## Two binaries
 
@@ -288,17 +288,30 @@ Fractal → More Formulae draws its **Sierpinski**, **Sierpinski Carpet** and
 All three do it by **carrying the point to its parent**. Every part of one of
 these figures has one: a hole in a gasket sits inside a bigger hole one level up,
 a hole in a carpet inside the cell that was cut the same way, a triangle of a
-snowflake on the edge of the triangle it grew from. The step onto the parent is a
-scaling about the right point — doubling away from the nearest corner for the
-gasket, blowing a cell up by the number of cells for the carpet, blowing a child
-up by three for the snowflake. The topmost part has no parent inside the figure,
-so its step carries it out of the bailout, and a part *n* levels down takes *n*
-steps to get there: **the pass a point leaves on is the level it stands at**, and
-the iteration count is the picture.
+snowflake on a side of the hexagon at its middle or on the free edge of another
+triangle. The step onto the parent is a motion of the plane — doubling away from
+the nearest corner for the gasket, blowing a cell up by the number of cells for
+the carpet. The topmost part has no parent inside the figure, so its step carries
+it out of the bailout, and a part *n* levels down takes *n* steps to get there:
+**the pass a point leaves on is the level it stands at**, and the iteration count
+is the picture.
 
-A snowflake adds one thing to that. Its three children sit on three edges facing
-three different ways, so a child is **turned as well as moved** and the step onto
-the parent has to turn it back. Nothing else about it differs.
+A snowflake is read **from a hexagon out**, which is the thing to know about it.
+It comes apart exactly into a regular hexagon at the middle, six triangles of
+that hexagon's own side standing on its six sides, twelve of a third that on
+their free edges, forty-eight of a ninth on theirs, and so on for ever. Three of
+the six are the corners of the triangle the figure grew from and three are the
+first bumps put on its edges, and **nothing tells them apart**: from the hexagon
+out a snowflake has six-fold symmetry.
+
+Read from the first triangle instead, five eighths of the figure is level one —
+one flat triangle filling the picture, with the snowflake only in the fringe
+around it, and nothing for the outside colour to say. Read from the hexagon, the
+first two levels are five twelfths each and the rest come down evenly. So the
+step onto the parent is a **fold** for a triangle standing on the hexagon —
+across the side it stands on, which lands it exactly on one of the six the
+hexagon is made of — and, for one standing on the free edge of another triangle,
+a blowing-up by three **and a turn**, each free edge facing a different way.
 
 The point really travels, and that is what makes these usable rather than merely
 correct: `z` along the way is a point of the plane like any other, so the
@@ -316,7 +329,7 @@ the figure.
 That is the one place these figures cost something. A ground pixel is asked the
 membership question once a pass for as long as it is looked at, where the other
 two figures and the body of the snowflake leave on the pass their level names.
-Drawn straight through the iteration loop, a whole snowflake costs about 2.2
+Drawn straight through the iteration loop, a whole snowflake costs about 2.4
 times what it cost when the ground was given a band of its own. Boundary tracing
 is left on for these formulas — their bands really are solid, which is the
 condition for it — and the ground is one solid region, so what reaches the
@@ -351,10 +364,11 @@ ring to speak of, and there the far corner goes instead, which is a gasket again
 — a square cut in four with one corner taken away is what a gasket is.
 
 **`snowflake([radius=4])`** — the Koch snowflake, its points on that hexagon's
-corners, banded by generation: the body on the first pass, the three triangles
-on its edges on the second, the nine on theirs on the third. The six corners of
-ground the figure does not cover are not banded at all — they never leave, and
-are drawn in the inside colour.
+corners, banded by generation from its middle out: the hexagon on the first
+pass, the six triangles on its sides on the second, the twelve on their free
+edges on the third, the forty-eight on the fourth. The six corners of ground the
+figure does not cover are not banded at all — they never leave, and are drawn in
+the inside colour.
 
 Every argument has a default, so `snowflake()` is a call, and so is
 `sierpinskyc( ;5)` — a lacier carpet at the default size.
@@ -365,8 +379,11 @@ Every argument has a default, so `snowflake()` is a call, and so is
     snowflake()          with bailout shape hexagon 0
 
 None of them costs more than the noise beside them, pass for pass: measured
-against `randsc`, the gasket 0.44, the carpet 0.57 and the snowflake 0.60 of it
-at 64 bits of mantissa, and 0.50, 0.89 and 0.84 at 113. What a snowflake costs
+against `randsc`, the gasket 0.44, the carpet 0.54 and the snowflake 0.51 of it
+at 64 bits of mantissa, and 0.50, 0.87 and 0.45 at 113. Reading a snowflake from
+its middle made it cheaper as well as better to look at: six sevenths of the
+figure is the hexagon or a triangle standing on it, and those are answered by
+four multiplications and a comparison without walking the curve at all. What a snowflake costs
 over a whole picture is the paragraph above, and is about how many passes the
 ground takes rather than about what a pass costs. That was not free, and at 113 bits it
 was very nearly lost — a square root and a division are both software there, and
