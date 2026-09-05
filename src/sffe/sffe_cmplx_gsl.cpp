@@ -1407,6 +1407,39 @@ static number_t randsc_unit(uint64_t x)
     return (number_t)(x >> 11) / (number_t)((uint64_t)1 << 53);
 }
 
+/* One hash stirred again, so that a second number can be taken from a cell
+ * without hashing it twice. The constants are Stafford's mix13. */
+static uint64_t randsc_remix(uint64_t x)
+{
+    x ^= x >> 30;
+    x *= 0xBF58476D1CE4E5B9ULL;
+    x ^= x >> 27;
+    x *= 0x94D049BB133111EBULL;
+    x ^= x >> 31;
+    return x;
+}
+
+/* A cell's hash as a point of the plane rather than a number on the real axis.
+ *
+ * Every one of these fields used to hand back its value with nothing in the
+ * imaginary part, and the engine reads the orbit's two components to colour
+ * with: real and zmag had the field to work on, while imag, angle and real
+ * over imag had one number for the whole picture and drew one flat tone.
+ * Measured over a picture of nine hundred pixels, those three had exactly one
+ * value each.
+ *
+ * So the field is a point now: the real part is the number it always was, to
+ * the bit, and the imaginary part is a second number from the same cell. The
+ * cell is the one the kaleidoscope chose, so the second number is folded with
+ * the first and the modes that read it show the kaleidoscope as the others do.
+ *
+ * It costs one stirring of a hash that has already been taken. */
+static inline void randsc_point(uint64_t x, number_t *re, number_t *im)
+{
+    *re = randsc_unit(x);
+    *im = randsc_unit(randsc_remix(x));
+}
+
 /* A real seed has to survive being written once and read by two builds:
  * "0.525" lands just below the exact value at long double and just above it at
  * quad, so the two differ around 1e-20 and a hash of them shares nothing.
@@ -1679,8 +1712,11 @@ static RANDSC_INLINE int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, 
  * A zero in either component of either argument would divide by zero once the
  * degradation reached it, so the function returns zero instead of computing.
  *
- * The result is real, in [0, 1), with the imaginary part left at zero, as rand
- * does. Two independent fields are two calls with different seeds.
+ * Both components are in [0, 1): the real one is the field as it always was,
+ * the imaginary one a second number from the same cell, so that every
+ * colouring mode has something to read and the kaleidoscope reaches all of
+ * them. See randsc_point. Two independent fields are two calls with different
+ * seeds.
  *
  * @param p The call; the arguments are read right to left, see sfaramN.
  * @return Pointer to the last argument, per the sffe convention.
@@ -1697,22 +1733,29 @@ sfarg *sfrandsc(sfarg *const p)
         return sfaram1(p);
     }
     if (state == RANDSC_BEYOND) {
-        GSL_SET_COMPLEX(&sfvalue(p),
-                        randsc_unit(randsc_hash(cx, cy, h)), 0);
+        number_t re, im;
+        randsc_point(randsc_hash(cx, cy, h), &re, &im);
+        GSL_SET_COMPLEX(&sfvalue(p), re, im);
         return sfaram1(p);
     }
 
     u = u * u * (3 - 2 * u); /* smoothstep: flat at both ends, so the value */
     v = v * v * (3 - 2 * v); /* meets its neighbour without a crease */
 
-    number_t a = randsc_unit(randsc_hash(cx, cy, h));
-    number_t b = randsc_unit(randsc_hash(cx + 1, cy, h));
-    number_t c = randsc_unit(randsc_hash(cx, cy + 1, h));
-    number_t d = randsc_unit(randsc_hash(cx + 1, cy + 1, h));
+    /* Both components off the same four corners and the same two weights, so
+     * the second is as smooth as the first and costs the four stirrings and
+     * three blends rather than four fresh hashes. */
+    number_t a, b, c, d, ai, bi, ci, di;
+    randsc_point(randsc_hash(cx, cy, h), &a, &ai);
+    randsc_point(randsc_hash(cx + 1, cy, h), &b, &bi);
+    randsc_point(randsc_hash(cx, cy + 1, h), &c, &ci);
+    randsc_point(randsc_hash(cx + 1, cy + 1, h), &d, &di);
     number_t lo = a + (b - a) * u;
     number_t hi = c + (d - c) * u;
+    number_t loi = ai + (bi - ai) * u;
+    number_t hii = ci + (di - ci) * u;
 
-    GSL_SET_COMPLEX(&sfvalue(p), lo + (hi - lo) * v, 0);
+    GSL_SET_COMPLEX(&sfvalue(p), lo + (hi - lo) * v, loi + (hii - loi) * v);
     return sfaram1(p);
 }
 
@@ -1729,15 +1772,6 @@ static number_t randsc_unit32(uint32_t x)
 
 /* The splitmix64 finalizer, to get a value out of a hash already spent on
  * placing a seed without the two being related. */
-static uint64_t randsc_remix(uint64_t x)
-{
-    x ^= x >> 30;
-    x *= 0xBF58476D1CE4E5B9ULL;
-    x ^= x >> 27;
-    x *= 0x94D049BB133111EBULL;
-    x ^= x >> 31;
-    return x;
-}
 
 /**
  * @brief The same field again with straight edges: irregular flat polygons.
@@ -1783,8 +1817,9 @@ sfarg *sfrandscp(sfarg *const p)
         return sfaram1(p);
     }
     if (state == RANDSC_BEYOND) {
-        GSL_SET_COMPLEX(&sfvalue(p),
-                        randsc_unit(randsc_remix(randsc_hash(cx, cy, h))), 0);
+        number_t re, im;
+        randsc_point(randsc_remix(randsc_hash(cx, cy, h)), &re, &im);
+        GSL_SET_COMPLEX(&sfvalue(p), re, im);
         return sfaram1(p);
     }
 
@@ -1809,7 +1844,9 @@ sfarg *sfrandscp(sfarg *const p)
             }
         }
 
-    GSL_SET_COMPLEX(&sfvalue(p), randsc_unit(randsc_remix(besth)), 0);
+    number_t re, im;
+    randsc_point(randsc_remix(besth), &re, &im);
+    GSL_SET_COMPLEX(&sfvalue(p), re, im);
     return sfaram1(p);
 }
 
@@ -2735,12 +2772,15 @@ sfarg *sfrandscq(sfarg *const p)
         return sfaram1(p);
     }
     if (state == RANDSC_BEYOND) {
-        GSL_SET_COMPLEX(&sfvalue(p),
-                        randsc_unit(randsc_hash(cx, cy, h)), 0);
+        number_t re, im;
+        randsc_point(randsc_hash(cx, cy, h), &re, &im);
+        GSL_SET_COMPLEX(&sfvalue(p), re, im);
         return sfaram1(p);
     }
 
-    GSL_SET_COMPLEX(&sfvalue(p), randsc_unit(randsc_hash(cx, cy, h)), 0);
+    number_t re, im;
+    randsc_point(randsc_hash(cx, cy, h), &re, &im);
+    GSL_SET_COMPLEX(&sfvalue(p), re, im);
     return sfaram1(p);
 }
 
@@ -2802,8 +2842,9 @@ sfarg *sfrandsch(sfarg *const p)
         return sfaram1(p);
     }
     if (state == RANDSC_BEYOND) {
-        GSL_SET_COMPLEX(&sfvalue(p),
-                        randsc_unit(randsc_hash(cx, cy, h ^ RANDSCH_SALT)), 0);
+        number_t re, im;
+        randsc_point(randsc_hash(cx, cy, h ^ RANDSCH_SALT), &re, &im);
+        GSL_SET_COMPLEX(&sfvalue(p), re, im);
         return sfaram1(p);
     }
 
@@ -2827,10 +2868,10 @@ sfarg *sfrandsch(sfarg *const p)
     else
         rz = -rx - ry;
 
-    GSL_SET_COMPLEX(&sfvalue(p),
-                    randsc_unit(randsc_hash((int64_t)rx, (int64_t)rz,
-                                            h ^ RANDSCH_SALT)),
-                    0);
+    number_t re, im;
+    randsc_point(randsc_hash((int64_t)rx, (int64_t)rz, h ^ RANDSCH_SALT), &re,
+                 &im);
+    GSL_SET_COMPLEX(&sfvalue(p), re, im);
     return sfaram1(p);
 }
 
@@ -2865,8 +2906,9 @@ sfarg *sfrandsct(sfarg *const p)
         return sfaram1(p);
     }
     if (state == RANDSC_BEYOND) {
-        GSL_SET_COMPLEX(&sfvalue(p),
-                        randsc_unit(randsc_hash(cx, cy, h ^ RANDSCT_SALT)), 0);
+        number_t re, im;
+        randsc_point(randsc_hash(cx, cy, h ^ RANDSCT_SALT), &re, &im);
+        GSL_SET_COMPLEX(&sfvalue(p), re, im);
         return sfaram1(p);
     }
 
@@ -2883,12 +2925,12 @@ sfarg *sfrandsct(sfarg *const p)
     randsc_cell(b, &ib, &fb);
     int upper = fa + fb >= 1;
 
-    GSL_SET_COMPLEX(
-        &sfvalue(p),
-        randsc_unit(randsc_hash(ia, ib,
-                                upper ? h ^ RANDSCT_SALT ^ RANDSCT_UPPER
-                                      : h ^ RANDSCT_SALT)),
-        0);
+    number_t re, im;
+    randsc_point(randsc_hash(ia, ib,
+                             upper ? h ^ RANDSCT_SALT ^ RANDSCT_UPPER
+                                   : h ^ RANDSCT_SALT),
+                 &re, &im);
+    GSL_SET_COMPLEX(&sfvalue(p), re, im);
     return sfaram1(p);
 }
 

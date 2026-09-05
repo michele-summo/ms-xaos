@@ -2,7 +2,7 @@
 
 A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Everything the
 original does, it still does; this describes what has been added or changed,
-and why. Version 2.9.
+and why. Version 3.0.
 
 ## Two binaries
 
@@ -169,6 +169,21 @@ over `1+i` gives `1+i` on the first pass, then `0.5+0.2i`, then `0.25+0.04i`.
 A zero in either component of either argument returns zero rather than dividing
 by zero. The last two are the kaleidoscope, below. Only the seed is required.
 
+**What comes back is a point of the plane, not a number on the real axis.** The
+engine colours with both components of the orbit — `real` and `zmag` read one,
+`imag`, `angle` and `real / imag` the other — so a field with nothing in its
+imaginary part left those three with one value for the whole picture and they
+drew one flat tone. Measured over nine hundred pixels they had exactly one value
+each. The real part is the number it always was, to the bit; the imaginary part
+is a second number from the same cell, and since the cell is the one the
+kaleidoscope chose, both are folded with it and every mode shows the fold. It
+costs one stirring of a hash already taken — measured, two per cent on `randsc`
+and nothing on the other four.
+
+This is a **breaking change** for a field used as a multiplier: `randsc(7)*z`
+scaled `z` and now turns it as well, and the iteration counts move with it. What
+a picture coloured by `real` shows is unchanged.
+
 **`randscq(...)`** — the same field without the interpolation: a mosaic of flat
 square cells instead of blobs. Same arguments, same meaning.
 
@@ -254,8 +269,8 @@ comparison.
 
 ### Getting a picture out of the noise
 
-`randsc` returns a value in `[0, 1)`. Used alone the iteration never leaves a
-bailout of 4, so nothing escapes and the image is flat. Multiply it, or let it
+`randsc` returns a point with both components in `[0, 1)`. Used alone the
+iteration never leaves a bailout of 4, so nothing escapes and the image is flat. Multiply it, or let it
 perturb an iteration that does escape:
 
     z+randsc(13;{0.35,0.35};{1,1})*0.25       blobs

@@ -58,6 +58,16 @@ static number_t at(sffe *parser, number_t x, number_t y, unsigned int n)
     return GSL_REAL(sffe_eval(parser));
 }
 
+/* Both components. These fields hand back a point of the plane, not a number
+ * on the real axis, and the engine colours with both -- so what is watched for
+ * drift has to be both. */
+static cmplx atc(sffe *parser, number_t x, number_t y, unsigned int n)
+{
+    GSL_SET_COMPLEX(&sffe_position, x, y);
+    sffe_iteration = n;
+    return sffe_eval(parser);
+}
+
 
 /* --- driving a figure the way the iteration loops drive one ---------------
  *
@@ -1209,11 +1219,11 @@ int main(void)
             const char *name;
             unsigned long long expected[2]; /* 64 bits, 113 bits */
         } golden[] = {
-            {"randsc", {0x82c777cee11cf0acULL, 0x256878588c8eb491ULL}},
-            {"randscq", {0x7b41886762e6b000ULL, 0x7b41886762e6b000ULL}},
-            {"randscp", {0x7f716aced74a4000ULL, 0x7f716aced74a4000ULL}},
-            {"randsch", {0x46b88bf1d206f000ULL, 0x46b88bf1d206f000ULL}},
-            {"randsct", {0x224342c97c8b0800ULL, 0x224342c97c8b0800ULL}},
+            {"randsc", {0xa85dcf1a6c37bca0ULL, 0xcd40c8f41af8e1beULL}},
+            {"randscq", {0x1c5cf4d7523c1000ULL, 0x1c5cf4d7523c1000ULL}},
+            {"randscp", {0x32a4319779adf000ULL, 0x32a4319779adf000ULL}},
+            {"randsch", {0x1cdc450ac06c0000ULL, 0x1cdc450ac06c0000ULL}},
+            {"randsct", {0x6378fd7e350b0800ULL, 0x6378fd7e350b0800ULL}},
         };
         const int which = NUMBER_MANTISSA_BITS == 113 ? 1 : 0;
         for (int g = 0; g < 5; g++) {
@@ -1227,13 +1237,84 @@ int main(void)
             for (int i = -20; i < 20; i++)
                 for (int j = -20; j < 20; j++)
                     for (int k = 0; k < 6; k++) {
-                        number_t val = at(f, (number_t)i / 7, (number_t)j / 9,
-                                          passes[k]);
+                        cmplx val = atc(f, (number_t)i / 7, (number_t)j / 9,
+                                        passes[k]);
                         sum = sum * 0x100000001B3ULL +
-                              (unsigned long long)(val * 18446744073709551616.0);
+                              (unsigned long long)(GSL_REAL(val) *
+                                                   18446744073709551616.0);
+                        sum = sum * 0x100000001B3ULL +
+                              (unsigned long long)(GSL_IMAG(val) *
+                                                   18446744073709551616.0);
                     }
             sprintf(what, "%s draws what it drew (%#llx)", golden[g].name, sum);
             check(sum == golden[g].expected[which], what);
+        }
+    }
+
+    /* --- what the colouring modes have to read ------------------------------
+     *
+     * The engine colours with the two components of the orbit: real and zmag
+     * read one of them, imag and angle and real-over-imag the other. A field
+     * that handed back a number on the real axis left those three with one
+     * value for the whole picture and they drew one flat tone.
+     *
+     * So both components carry a number now, and both come from the cell the
+     * kaleidoscope chose, so both are folded with it.
+     */
+    {
+        static const char *fields[5] = {"randsc", "randscq", "randsch",
+                                        "randsct", "randscp"};
+        for (int g = 0; g < 5; g++) {
+            char expr[96];
+            sprintf(expr, "%s(12;{0.7,0.7})", fields[g]);
+            sffe *f = compile(expr);
+            if (!f)
+                break;
+            /* how many values each component takes over a picture */
+            number_t seenr[64], seeni[64];
+            int nr = 0, ni = 0;
+            for (int i = 0; i < 24; i++)
+                for (int j = 0; j < 24; j++) {
+                    cmplx v = atc(f, (number_t)i / 5 - 2, (number_t)j / 5 - 2, 0);
+                    int knownr = 0, knowni = 0;
+                    for (int q = 0; q < nr; q++)
+                        if (seenr[q] == GSL_REAL(v))
+                            knownr = 1;
+                    for (int q = 0; q < ni; q++)
+                        if (seeni[q] == GSL_IMAG(v))
+                            knowni = 1;
+                    if (!knownr && nr < 64)
+                        seenr[nr++] = GSL_REAL(v);
+                    if (!knowni && ni < 64)
+                        seeni[ni++] = GSL_IMAG(v);
+                }
+            sprintf(what, "%s gives both components something to say (%d and %d)",
+                    fields[g], nr, ni);
+            check(nr > 8 && ni > 8, what);
+            sffe_free(&f);
+
+            /* and a kaleidoscope folds both of them alike */
+            sprintf(expr, "%s(12;{0.7,0.7};{0.5,0.5};6)", fields[g]);
+            f = compile(expr);
+            if (!f)
+                break;
+            int folded = 1;
+            for (int i = 1; i < 40; i++) {
+                number_t x = (number_t)(i % 9) / 3 - 1;
+                number_t y = (number_t)(i % 7) / 2 - 1;
+                /* a sixth of a turn */
+                number_t rx = x / 2 - y * (number_t)8660254 / 10000000;
+                number_t ry = x * (number_t)8660254 / 10000000 + y / 2;
+                cmplx a = atc(f, x, y, 0);
+                cmplx b = atc(f, rx, ry, 0);
+                if (nfabs(GSL_REAL(a) - GSL_REAL(b)) > (number_t)1 / 100000 ||
+                    nfabs(GSL_IMAG(a) - GSL_IMAG(b)) > (number_t)1 / 100000)
+                    folded = 0;
+            }
+            sprintf(what, "and a kaleidoscope folds both of %s alike",
+                    fields[g]);
+            check(folded, what);
+            sffe_free(&f);
         }
     }
 
