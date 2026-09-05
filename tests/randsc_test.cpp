@@ -882,6 +882,40 @@ int main(void)
                   "a snowflake puts every point it lets go in its own place");
             check(lands_apart(tri4, 3, (number_t)18 / 10),
                   "and so does a gasket, as it always did");
+
+            /* Every step one of these figures takes moves two points apart --
+             * the gasket doubles, the carpet blows a cell up by the number of
+             * cells, a snowflake blows a triangle up by three or, at the level
+             * that stands on the hexagon, by the square root of three. Nothing
+             * may be an isometry: written inside a larger formula an isometry
+             * hands that formula a rigid picture of the figure, and the formula
+             * draws a flat region wherever it applies. */
+            struct {
+                sffe *f;
+                number_t x;
+                number_t y;
+                number_t by;
+                const char *what;
+            } apart[3] = {
+                {tri4, 0, (number_t)3, 2, "a gasket moves two points twice as"},
+                {carpet33, (number_t)3 / 2, (number_t)3 / 2, 3,
+                 "a carpet by the number of cells"},
+                {flake4, 0, (number_t)16 / 10, 0,
+                 "and a snowflake by the root of three where it stands on the "
+                 "hexagon, and by three below that"}};
+            for (int a = 0; a < 3; a++) {
+                number_t d = (number_t)1 / 1000;
+                cmplx one, two;
+                GSL_SET_COMPLEX(&sffe_z, apart[a].x, apart[a].y);
+                one = sffe_eval(apart[a].f);
+                GSL_SET_COMPLEX(&sffe_z, apart[a].x + d, apart[a].y);
+                two = sffe_eval(apart[a].f);
+                number_t dx = GSL_REAL(two) - GSL_REAL(one);
+                number_t dy = GSL_IMAG(two) - GSL_IMAG(one);
+                number_t got = nsqrt(dx * dx + dy * dy) / d;
+                number_t want = apart[a].by ? apart[a].by : nsqrt((number_t)3);
+                check(nfabs(got - want) < (number_t)1 / 100, apart[a].what);
+            }
             /* The ground is turned a sixth of a turn rather than handed back
              * where it stood. A fixed point is a stopped orbit, not a bounded
              * one: the loop would run to the limit with nothing changing, the

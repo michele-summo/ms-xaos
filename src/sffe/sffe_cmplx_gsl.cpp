@@ -2543,11 +2543,24 @@ sfarg *sfsnowflake(sfarg *const p)
     number_t across = FIG_SQRT3 * (xr < 0 ? -xr : xr);
     if (yr + across <= 1) {
         /* The triangle standing on that side of the hexagon: apex out at the
-         * figure's reach, base along the side. Folding it across the side lands
-         * it exactly on one of the six the hexagon is made of, so the fold is
-         * its step onto its parent and it goes on the next pass. */
-        nx = xr;
-        ny = 1 - yr;
+         * figure's reach, base along the side. Its step is onto the hexagon,
+         * and what it lands on is the largest triangle the hexagon holds --
+         * corner on corner, three times the area, so the step blows the point
+         * up by the square root of three and turns it a twelfth of a turn.
+         *
+         * Folding it flat across the side it stands on would land it on one of
+         * the six the hexagon is made of, which is tidier and was what this
+         * did. But a fold is an isometry, and an isometry has no sensitivity to
+         * where the point started: written inside a larger formula the figure
+         * then handed that formula a rigid picture of itself over the whole of
+         * this level, which is five twelfths of it, and the formula drew a flat
+         * region there. Every other step these three figures take expands --
+         * the gasket doubles, the carpet blows a cell up by the number of
+         * cells, the levels below this one blow up by three -- and this one now
+         * does too. */
+        number_t px = xr, py = yr - (number_t)2 / 3;
+        nx = (number_t)3 / 2 * px + FIG_SIN60 * py;
+        ny = -FIG_SIN60 * px + (number_t)3 / 2 * py;
     } else {
         /* Deeper, and the walk is the one a triangle has always taken -- in
          * that triangle's own frame, where it has circumradius one and stands
