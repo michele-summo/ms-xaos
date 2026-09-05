@@ -2,7 +2,7 @@
 
 A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Everything the
 original does, it still does; this describes what has been added or changed,
-and why. Version 2.7.
+and why. Version 2.8.
 
 ## Two binaries
 
@@ -379,12 +379,28 @@ formula built on it runs out of figure almost at once and draws whatever it draw
 on its own. The detail is along the Koch boundary, where the levels run deep, and
 the flat regions are the interiors, where they do not.
 
-Measured at one zoom — the fraction of pixels standing on a band edge, which is
-what "detail" amounts to — `sierpinskyt()^-2+sierpinskyt()` gives 24 per cent and
-`snowflake()^-2+snowflake()` 6. Making every step expand took the snowflake from
-4.5 to 6; the rest is the difference between a dust and a solid figure. The only
-way to get a dust out of a snowflake is to read it by its Koch levels instead,
-and then the bare call draws one flat tone, which is where this started.
+**What a pass knows is what that pass paid for.** The snowflake decides whether a
+point is ground by walking down the Koch curve, and that walk is allowed **one
+level per pass**. It used to run all twenty-four of its levels in a single
+evaluation, so a formula written around the figure was handed the whole boundary
+on its first pass and drew it in full however few passes it was given — at
+`Iterations: 2` you still got every bump of the Koch curve, which no other
+formula in XaoS does and which is not what an iteration count is for. Running out
+of levels is not the same as being outside: a point out of the frame or above the
+hull is ground and known to be ground now, while an undecided one is carried on
+as part of the figure and asked again next pass with a level more to spend. The
+picture `snowflake()` itself draws is unchanged — a point in the figure never
+needed the deep walk, only the assurance that it was not ground.
+
+What is left is the honest difference between the two figures, and no work on
+either will close it. A gasket is a **dust**: no area, its points never leave,
+every one of them doubled every pass, so a formula built on it has something
+chaotic under it at every depth. A snowflake is **solid**, and ten twelfths of it
+is the hexagon and the six triangles, which leave on the first and second pass.
+Measured at one zoom — the fraction of pixels standing on a band edge —
+`sierpinskyt()^-2+sierpinskyt()` reaches 17 per cent by twelve passes and
+`snowflake()^-2+snowflake()` 2.5; both grow with the pass count, which is the
+point, and where they stop is what the figures are.
 
 `radius` means what `bailout` means and is read the same way: **as the square of
 the distance**. What it draws is the shape a bailout of that number draws,

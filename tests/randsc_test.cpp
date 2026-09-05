@@ -878,6 +878,43 @@ int main(void)
              * always done this -- its topmost hole is doubled away from a
              * corner like any other and lands outside the triangle, which is
              * outside the bailout, carrying where it came from with it. */
+            /* What a figure knows on a pass is what that pass paid for.
+             *
+             * The snowflake asks whether a point is ground by walking down the
+             * Koch curve, and that walk used to run all twenty-four of its
+             * levels in one evaluation. So a formula written around the figure
+             * was handed the whole boundary on its first pass and drew it in
+             * full however few passes it was given, where a gasket, whose
+             * answer is one doubling, shows one level more for each pass it is
+             * allowed. The walk is now allowed one level a pass.
+             *
+             * Read off the boundary: a point deep in a notch of the ground has
+             * to be carried along with the figure until the pass count reaches
+             * its depth, and only then is it known for ground and set to turn
+             * in place. */
+            {
+                /* Beside the lowest of the six points, where the ground
+                 * narrows to a needle and its notches run deep. */
+                int grew = 0;
+                for (int i = 0; i < 24; i++) {
+                    number_t nx = (number_t)(i % 6 + 1) / 400;
+                    number_t ny = (number_t)-2300 / 1000 + (number_t)(i / 6) / 400;
+                    cmplx early, late;
+                    sffe_iteration = 0;
+                    GSL_SET_COMPLEX(&sffe_z, nx, ny);
+                    early = sffe_eval(flake4);
+                    sffe_iteration = 20;
+                    GSL_SET_COMPLEX(&sffe_z, nx, ny);
+                    late = sffe_eval(flake4);
+                    if (GSL_REAL(early) != GSL_REAL(late) ||
+                        GSL_IMAG(early) != GSL_IMAG(late))
+                        grew = 1;
+                }
+                sffe_iteration = 0;
+                check(grew, "what a snowflake knows of the ground grows with "
+                            "the pass, as a gasket's picture of itself does");
+            }
+
             check(lands_apart(flake4, 6, (number_t)12 / 10),
                   "a snowflake puts every point it lets go in its own place");
             check(lands_apart(tri4, 3, (number_t)18 / 10),
