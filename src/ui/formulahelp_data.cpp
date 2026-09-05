@@ -116,7 +116,7 @@ const struct formula_help_row formula_help_functions[] = {
     {"ifiterl", "a; b; ...", "as ifiter, but holding the last argument once the iterations run out", NULL}, /* variadic */
     {"ifiterf", "a; b", "b on the last iteration the limit allows, a on the rest; only the chosen one runs", NULL}, /* 2 */
     {"ifiterr", "a; b; n", "a while the iteration is below n, b from n on; only the chosen one runs", NULL}, /* 3 */
-    {NULL, NULL, NULL, "randomness: all but the seed optional, and a new field every iteration; what the kaleidoscope and its mode do is in the Values tab"},
+    {NULL, NULL, NULL, "randomness: all but the seed optional, and a new field every iteration; what the kaleidoscope and its mode do is in the Values tab. Each hands back a point of the plane -- a second number from the same cell in the imaginary part -- so that imag, angle and real/imag have something to read and show the kaleidoscope as real and zmag do"},
     {"rand", "a", "real(a) times a random number in [0, 1); depends on call order, so a redraw differs", NULL},
     {"randsc", "seed; [size=1+i]; [degradation=0.5+0.5i]; [kaleidoscope=1]; [mode=0]", "coherent noise over the point: soft blobs, size wide and size high", NULL},
     {"randscq", "seed; [size=1+i]; [degradation=0.5+0.5i]; [kaleidoscope=1]; [mode=0]", "the same field with no interpolation: a mosaic of flat square cells", NULL},
