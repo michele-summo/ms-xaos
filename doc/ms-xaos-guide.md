@@ -2,7 +2,7 @@
 
 A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Everything the
 original does, it still does; this describes what has been added or changed,
-and why. Version 2.6.
+and why. Version 2.7.
 
 ## Two binaries
 
@@ -317,11 +317,22 @@ out a snowflake has six-fold symmetry.
 Read from the first triangle instead, five eighths of the figure is level one —
 one flat triangle filling the picture, with the snowflake only in the fringe
 around it, and nothing for the outside colour to say. Read from the hexagon, the
-first two levels are five twelfths each and the rest come down evenly. So the
-step onto the parent is a **fold** for a triangle standing on the hexagon —
-across the side it stands on, which lands it exactly on one of the six the
-hexagon is made of — and, for one standing on the free edge of another triangle,
-a blowing-up by three **and a turn**, each free edge facing a different way.
+first two levels are five twelfths each and the rest come down evenly. A
+triangle standing on the hexagon steps onto the largest triangle the hexagon
+holds — corner on corner, three times the area — so it is blown up by the square
+root of three and turned a twelfth of a turn; one standing on the free edge of
+another triangle is blown up by three and turned to face the way that edge
+faces.
+
+**Every step expands**, and that is a rule rather than an accident. The gasket
+doubles, the carpet blows a cell up by the number of cells, the snowflake by
+three or by the root of three. A triangle standing on the hexagon could instead
+be folded flat across the side it stands on, which lands it on one of the six the
+hexagon is made of and is tidier; but a fold is an isometry, and an isometry has
+no sensitivity to where the point started. Written inside a larger formula the
+figure would then hand that formula a rigid picture of itself over five twelfths
+of its area, and the formula would draw a flat region there. A test asserts the
+three expansions.
 
 The point really travels, and that is what makes these usable rather than merely
 correct: `z` along the way is a point of the plane like any other, so the
@@ -357,13 +368,23 @@ condition for it — and the ground is one solid region, so what reaches the
 screen is less than that number suggests.
 
 Written inside a larger formula — `snowflake()^-2+snowflake()` and the like — the
-three behave alike now, but not identically, and the difference is worth knowing.
-A gasket's dust never leaves and is doubled every pass, so a formula built on it
-has something chaotic to chew on everywhere. A snowflake's pieces all have a
-finite level and leave on it, so the hexagon at its middle comes out as one flat
-band in any such formula — exactly as the gasket's own middle hole does, for the
-same reason. What the turn gives back is the ground, which is a snowflake's
-answer to a gasket's dust.
+three do **not** behave alike, and the reason is worth stating plainly because no
+amount of work on the figure will change it.
+
+A gasket is a **dust**: it has no area, its points never leave, and every one of
+them is doubled every pass. A formula built on it has something chaotic under it
+everywhere, at every depth. A snowflake is **solid**: ten twelfths of it is the
+hexagon and the six triangles, which leave on the first and second pass, so a
+formula built on it runs out of figure almost at once and draws whatever it draws
+on its own. The detail is along the Koch boundary, where the levels run deep, and
+the flat regions are the interiors, where they do not.
+
+Measured at one zoom — the fraction of pixels standing on a band edge, which is
+what "detail" amounts to — `sierpinskyt()^-2+sierpinskyt()` gives 24 per cent and
+`snowflake()^-2+snowflake()` 6. Making every step expand took the snowflake from
+4.5 to 6; the rest is the difference between a dust and a solid figure. The only
+way to get a dust out of a snowflake is to read it by its Koch levels instead,
+and then the bare call draws one flat tone, which is where this started.
 
 `radius` means what `bailout` means and is read the same way: **as the square of
 the distance**. What it draws is the shape a bailout of that number draws,
