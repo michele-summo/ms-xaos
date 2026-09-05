@@ -2231,6 +2231,10 @@ static inline number_t fig_cached(sfarg *const p, number_t radius, int recip)
 #define KOCH_DEPTH 24
 /* sin 60 again, in the type the walk is done in */
 #define KOCH_SIN60 0.86602540378443864676
+/* What the walk says when it ran out of levels without deciding: the point is
+ * not known to be ground, so it is carried on as a point of the figure and
+ * asked again next pass, one level further down. */
+#define KOCH_UNDECIDED (-1)
 /**
  * @brief The Sierpinski gasket, as a field over the plane.
  * @details sierpinskyt(radius) stands the triangle a triangular bailout of
@@ -2396,11 +2400,11 @@ static inline int koch_under(double x, double y, int depth)
     const double slope = apex * 2; /* the hull rises this fast from each end */
     for (int level = 1; level <= depth; level += 1) {
         if (y < 0)
-            return level;
+            return level; /* under the curve, and this is how far down */
         if (x < 0 || x > 1)
-            return 0;
+            return 0; /* out of the frame: ground, and known now */
         if (y > x * slope || y > (1 - x) * slope)
-            return 0;
+            return 0; /* above the hull: ground, and known now */
         if (x < third) {
             x *= 3;
             y *= 3;
@@ -2419,7 +2423,7 @@ static inline int koch_under(double x, double y, int depth)
             y *= 3;
         }
     }
-    return 0;
+    return KOCH_UNDECIDED; /* out of levels: not yet known either way */
 }
 
 /**
@@ -2577,7 +2581,29 @@ sfarg *sfsnowflake(sfarg *const p)
             number_t off = rx * FIG_AY[e] - ry * FIG_AX[e];
             if (off <= 0 || along < 0 || along > 1)
                 continue;
-            if (koch_under((double)along, (double)off, KOCH_DEPTH))
+            /* One level a pass, and no further.
+             *
+             * The walk used to run all twenty-four levels in a single
+             * evaluation, so a formula written around this figure was handed
+             * the whole Koch boundary on its first pass and drew it in full
+             * however few passes it was given -- where a gasket, whose answer
+             * is one doubling, shows one level more for each pass it is
+             * allowed. Tying the depth to the pass puts the two on the same
+             * footing: what a picture shows is what its iteration count paid
+             * for.
+             *
+             * Running out of levels is not the same as being outside. A point
+             * that is out of the frame or above the hull is ground and is known
+             * to be ground now; one that is merely undecided is carried on as
+             * part of the figure, climbs a level with the rest of them, and is
+             * asked again with one level more to spend. So the figure itself is
+             * drawn exactly as it was -- a point in it never needed the deep
+             * walk, only the assurance that it was not ground -- and it is the
+             * ground that comes in a level at a time. */
+            int depth = (int)sffe_iteration + 1;
+            if (depth > KOCH_DEPTH)
+                depth = KOCH_DEPTH;
+            if (koch_under((double)along, (double)off, depth))
                 edge = e;
         }
         if (edge < 0) {
