@@ -767,6 +767,61 @@ int main(void)
                   "and the corner survives cut after cut");
             check(leaves(carpet33, 4, 5, 0) == 0,
                   "outside the square the point never started");
+
+            /* A bailout larger than the radius leaves a margin between the
+             * figure and the shape it is drawn in. That margin is no part of
+             * the figure and has no level: it is turned by the figure's own
+             * symmetry, which keeps it outside the figure and inside the
+             * bailout, so it never leaves and is drawn in the inside colour --
+             * where it used to leave on the first pass and take the lowest band
+             * of the outside colour, which is one flat tone over the whole of
+             * it. Read at a bailout of nine, where the apothem is three and the
+             * figures still stand where a radius of four puts them. */
+            struct {
+                sffe *f;
+                int sides;
+                number_t x;
+                number_t y;
+                const char *what;
+            } margin[3] = {
+                {tri4, 3, 0, (number_t)-25 / 10,
+                 "the margin below a gasket in too large a bailout never "
+                 "leaves"},
+                {carpet33, 4, (number_t)25 / 10, 0,
+                 "nor the margin beside a carpet"},
+                {flake4, 6, 0, (number_t)26 / 10,
+                 "nor the corner a snowflake leaves in one"}};
+            for (int m = 0; m < 3; m++)
+                check(leavesa(margin[m].f, margin[m].sides, 3, margin[m].x,
+                              margin[m].y) == NEVER,
+                      margin[m].what);
+
+            /* And what it hands back turns with the point, so that turning the
+             * picture turns what is drawn on it. The carpet used to throw the
+             * middle of a square one way for the whole of it, which drew that
+             * middle as a ramp from one side to the other with nothing across
+             * it; it is thrown the way its own quarter faces now, and the four
+             * quarters answer alike. */
+            {
+                int fourfold = 1;
+                for (int t = 1; t < 40; t++) {
+                    /* off the diagonals, where which quarter a point is
+                     * in is decided by the last bit and not by the square */
+                    number_t px = (number_t)(t % 9) / 4 - 1 + (number_t)1 / 16;
+                    number_t py = (number_t)(t % 7) / 3 - 1 + (number_t)1 / 40;
+                    cmplx a, b;
+                    GSL_SET_COMPLEX(&sffe_z, px, py);
+                    a = sffe_eval(carpet33);
+                    GSL_SET_COMPLEX(&sffe_z, -py, px); /* a quarter turn */
+                    b = sffe_eval(carpet33);
+                    /* the answer turned by the same quarter */
+                    if (nfabs(GSL_REAL(b) + GSL_IMAG(a)) > (number_t)1 / 10000 ||
+                        nfabs(GSL_IMAG(b) - GSL_REAL(a)) > (number_t)1 / 10000)
+                        fourfold = 0;
+                }
+                check(fourfold,
+                      "a carpet answers a quarter turn with a quarter turn");
+            }
             /* What the cut leaves, counted rather than described: a cell in
              * the middle block goes on the first pass, and one in the border
              * ring is carried onto the middle block and goes on the second.
