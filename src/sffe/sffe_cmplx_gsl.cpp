@@ -2218,12 +2218,31 @@ static inline number_t fig_cached(sfarg *const p, number_t radius, int recip)
     return v;
 }
 
-/* What a figure hands back once the pass has reached the level that decides
- * the point: a number no bailout shape can hold, so the point leaves on that
- * pass whatever shape and however large a bailout was chosen. Its square is
- * still far inside what any of the three number types can carry, which is what
- * keeps the squares the loops take of it finite. */
-#define FIG_ESCAPED ((number_t)1e10)
+/* What a figure hands back for a point that is no part of it at all: the point
+ * turned by the figure's own symmetry.
+ *
+ * Turned, it is still outside the figure -- a third of a turn leaves a triangle
+ * where it was, a quarter leaves a square, half leaves a snowflake -- and still
+ * inside the bailout that matches the figure, so it never leaves. That puts it
+ * in the inside colour with its own position for the incolouring to read: an
+ * empty space stays empty rather than taking the lowest band of the outside
+ * colour, which is what filled the margin between a figure and a bailout larger
+ * than its radius with one flat tone.
+ *
+ * Turned rather than handed back where it stood, for the reason the ground of a
+ * snowflake is: a fixed point is a stopped orbit and not a bounded one, and a
+ * figure written inside a larger formula would hand that formula back the point
+ * it was already holding.
+ *
+ * A turn and not a mirror, though a mirror would keep it outside every one of
+ * these and inside every bailout shape as well: a turn is what carries the
+ * value round with the point, so that turning the picture turns what is drawn
+ * on it, and a mirror turns it the other way. The distance from the centre is
+ * left alone either way. */
+#define FIG_TURN(p, cs, sn)                                                    \
+    GSL_SET_COMPLEX(&sfvalue(p),                                               \
+                    (cs) * GSL_REAL(sffe_z) - (sn) * GSL_IMAG(sffe_z),         \
+                    (sn) * GSL_REAL(sffe_z) + (cs) * GSL_IMAG(sffe_z))
 /* Twenty-four levels puts the finest bump at three to the minus twenty-four of
  * the radius, which is smaller than anything a picture of a figure this size
  * will ever be asked to show. What the mantissa could carry is beside the
@@ -2286,8 +2305,9 @@ sfarg *sfsierpinskyt(sfarg *const p)
     number_t wb = corner - y - across;
     number_t wc = corner - y + across;
     if (wa < 0 || wb < 0 || wc < 0) {
-        /* already out of the triangle, and further out for having been asked */
-        GSL_SET_COMPLEX(&sfvalue(p), FIG_ESCAPED, 0);
+        /* out of the triangle, so no part of the figure: a third of a turn,
+         * which is the triangle's own, and it never leaves */
+        FIG_TURN(p, (number_t)-1 / 2, FIG_SIN60);
         return p;
     }
 
@@ -2339,7 +2359,9 @@ sfarg *sfsierpinskyc(sfarg *const p)
     number_t tu = (GSL_REAL(sffe_z) + half) * invhalf * squares / 2;
     number_t tv = (GSL_IMAG(sffe_z) + half) * invhalf * squares / 2;
     if (!(tu >= 0) || tu >= squares || !(tv >= 0) || tv >= squares) {
-        GSL_SET_COMPLEX(&sfvalue(p), FIG_ESCAPED, 0); /* already out */
+        /* out of the square, so no part of the figure: a quarter of a turn,
+         * which is the square's own, and it never leaves */
+        FIG_TURN(p, 0, 1);
         return p;
     }
 
@@ -2351,10 +2373,22 @@ sfarg *sfsierpinskyc(sfarg *const p)
      *
      * The cells the border ring encloses are the ones that were thrown away --
      * one at three squares to a side, four at four, nine at five. They have no
-     * parent inside the figure, so a point in one is scaled about the cell next
-     * to it instead and lands a whole square outside, which is what makes it
-     * leave: one pass for the middle of the square, two for the middles inside
-     * each cell of the ring, and so on down.
+     * parent inside the figure, so a point in one is thrown out of the square
+     * instead, which is what makes it leave: one pass for the middle of the
+     * square, two for the middles inside each cell of the ring, and so on down.
+     *
+     * Thrown the way its own quarter of the square faces -- the quarters being
+     * cut by the diagonals, so which one a point is in is a comparison of the
+     * two distances from the middle and their signs. Four times the half-side
+     * clears every bailout shape of the same number, the worst being the
+     * triangle, whose corners stand at twice its apothem: the nearest this can
+     * leave a point is four less the corner of the square itself, which is
+     * 2.59 half-sides against the 2 the triangle reaches.
+     *
+     * Thrown four ways rather than always the same way, which is what the cell
+     * beside it amounted to: the square has four-fold symmetry and so should
+     * what is drawn on it, and one direction for the whole middle drew it as a
+     * ramp from one side to the other with nothing across it.
      *
      * One cell a pass rather than all of them at once: the pass is doing the
      * counting now, so the loop that used to read thirty digits, and the fixed
@@ -2364,8 +2398,17 @@ sfarg *sfsierpinskyc(sfarg *const p)
     int cut = squares > 2 ? (i > 0 && i < squares - 1 && j > 0 &&
                              j < squares - 1)
                           : (i == 1 && j == 1);
-    if (cut)
-        i -= 1;
+    if (cut) {
+        number_t zx = GSL_REAL(sffe_z), zy = GSL_IMAG(sffe_z);
+        number_t ax = zx < 0 ? -zx : zx, ay = zy < 0 ? -zy : zy;
+        number_t throwx = 0, throwy = 0;
+        if (ax >= ay)
+            throwx = zx < 0 ? -4 * half : 4 * half;
+        else
+            throwy = zy < 0 ? -4 * half : 4 * half;
+        GSL_SET_COMPLEX(&sfvalue(p), zx + throwx, zy + throwy);
+        return p;
+    }
     GSL_SET_COMPLEX(&sfvalue(p), half * (2 * (tu - i) - 1),
                     half * (2 * (tv - j) - 1));
     return p;
@@ -2496,7 +2539,9 @@ sfarg *sfsnowflake(sfarg *const p)
      * are on and most of the plane can be turned away in three multiplications.
      */
     if (x * x + y * y > 1) {
-        GSL_SET_COMPLEX(&sfvalue(p), FIG_ESCAPED, 0);
+        /* past the whole figure, so no part of it: half about, and it never
+         * leaves -- see FIG_TURN */
+        FIG_TURN(p, -1, 0);
         return p;
     }
 
@@ -2618,17 +2663,13 @@ sfarg *sfsnowflake(sfarg *const p)
              * gave that formula the point it was already holding -- where the
              * gasket and the carpet move every point they are given.
              *
-             * Half about rather than a sixth of a turn, which the figure's
-             * own symmetry would also allow: both land ground on ground, but
-             * half about leaves the point inside a square and a circle as well
-             * as inside the hexagon, where a sixth of a turn carries it out of
-             * the square. It costs two negations and no multiplication, and it
-             * leaves the distance from the centre alone, so the incolouring
-             * modes that read that see what they saw before. The orbit closes
-             * after two passes, so the modes that read where the point finally
-             * stood see it through the middle on every other pass count. */
-            GSL_SET_COMPLEX(&sfvalue(p), -GSL_REAL(sffe_z),
-                            -GSL_IMAG(sffe_z));
+             * Half about rather than the sixth of a turn the figure's own
+             * symmetry would also allow: both land ground on ground, but half
+             * about leaves the point inside a square and a circle as well as
+             * inside the hexagon, where a sixth of a turn carries it out of the
+             * square. It is the motion the other two figures give what is no
+             * part of them, each by its own symmetry -- see FIG_TURN. */
+            FIG_TURN(p, -1, 0);
             return p;
         }
         /* onto the parent: take the child off the corner its edge faces away

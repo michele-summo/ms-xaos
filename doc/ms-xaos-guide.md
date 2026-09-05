@@ -2,7 +2,7 @@
 
 A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Everything the
 original does, it still does; this describes what has been added or changed,
-and why. Version 2.8.
+and why. Version 2.9.
 
 ## Two binaries
 
@@ -418,6 +418,28 @@ of the bailout from the centre — that is its apothem, not its circumradius —
 its corners are further out than the number says: twice as far for a triangle,
 and by a seventh for a hexagon. `sierpinskyt(4)` therefore reaches 4 to its
 corners while `sierpinskyc(4)` reaches 2 to its sides, and both are right.
+
+Set the bailout larger than the radius and the figure no longer fills the shape:
+there is a **margin** between the two, and set it smaller and the figure is cut
+off. Both are what was asked for and neither is corrected. But the margin is no
+part of the figure and has no level, so it is not given one: it is **turned by
+the figure's own symmetry** — a third of a turn for a gasket, a quarter for a
+carpet, half about for a snowflake — which keeps it outside the figure and inside
+the bailout, so it never leaves and is drawn in the **inside colour** with the
+incolouring modes working on it. It used to leave on the first pass and take the
+lowest band of the outside colour, which drew the whole margin in one flat tone
+and took a band off the figure.
+
+A turn and not a mirror, though a mirror would serve as well for keeping it
+where it is: what a figure hands back has to turn with the point, so that turning
+the picture turns what is drawn on it, and a mirror turns it the other way. For
+the same reason the middle of a carpet — the block of cells the border ring
+encloses, which has no parent and so has to be thrown out — is thrown the way its
+own **quarter** of the square faces, the quarters cut by the diagonals. Thrown
+always the same way, as it was, it drew that middle as a ramp from one side to
+the other with nothing across it; the square has four-fold symmetry and so should
+what is drawn on it. A test asserts that each figure answers a turn of its own
+order with the same turn.
 
 **`sierpinskyt([radius=4])`** — the Sierpinski gasket, in that triangle.
 
