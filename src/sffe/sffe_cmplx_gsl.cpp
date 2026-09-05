@@ -2455,12 +2455,12 @@ static inline int koch_under(double x, double y, int depth)
  * something to read there. See FIG_THROW_X.
  *
  * The six corners of ground the figure leaves in its hexagon are no part of it
- * and have no level. A point standing there is handed back exactly where it
- * stands, so it never leaves and comes out in the inside colour, and the
- * incolouring modes have the point itself to work with. It costs the membership
+ * and have no level. A point standing there is turned half about, which lands
+ * ground on ground and so never leaves: the space comes out in the inside
+ * colour instead of taking a band of the outside one off the figure, and the
+ * incolouring modes have a moving point to work with. It costs the membership
  * question once a pass for as long as the pixel is looked at, and that is the
- * price of an empty space that stays empty instead of taking a band of the
- * outside colour off the figure.
+ * price of an empty space that stays empty.
  *
  * Under a circular bailout the six points reach a seventh further out than the
  * number says and are cut off: the honest answer to asking for a figure in a
@@ -2568,11 +2568,28 @@ sfarg *sfsnowflake(sfarg *const p)
                 edge = e;
         }
         if (edge < 0) {
-            /* The ground, which is no part of the figure: handed back where it
-             * stands, so it stays there, never leaves, and is drawn in the
-             * inside colour with its own position for the incolouring to
-             * read. */
-            sfvalue(p) = sffe_z;
+            /* The ground, which is no part of the figure: turned half about,
+             * which is a motion that keeps it there.
+             *
+             * It has to be a motion. Handed back where it stood it was a fixed
+             * point, and a fixed point is not a bounded orbit but a stopped
+             * one: the loop ran every pass to the limit with nothing changing,
+             * the incolouring modes that read the pass before this one had
+             * nothing to read, and a figure written inside a larger formula
+             * gave that formula the point it was already holding -- where the
+             * gasket and the carpet move every point they are given.
+             *
+             * Half about rather than a sixth of a turn, which the figure's
+             * own symmetry would also allow: both land ground on ground, but
+             * half about leaves the point inside a square and a circle as well
+             * as inside the hexagon, where a sixth of a turn carries it out of
+             * the square. It costs two negations and no multiplication, and it
+             * leaves the distance from the centre alone, so the incolouring
+             * modes that read that see what they saw before. The orbit closes
+             * after two passes, so the modes that read where the point finally
+             * stood see it through the middle on every other pass count. */
+            GSL_SET_COMPLEX(&sfvalue(p), -GSL_REAL(sffe_z),
+                            -GSL_IMAG(sffe_z));
             return p;
         }
         /* onto the parent: take the child off the corner its edge faces away

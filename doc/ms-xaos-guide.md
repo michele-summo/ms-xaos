@@ -2,7 +2,7 @@
 
 A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Everything the
 original does, it still does; this describes what has been added or changed,
-and why. Version 2.5.
+and why. Version 2.6.
 
 ## Two binaries
 
@@ -331,10 +331,21 @@ larger formula all mean something.
 A gasket and a carpet fill their shape, so every point in one has a level and
 leaves on it. A snowflake does not fill its hexagon: it leaves six corners of
 **ground**, and that ground is no part of the figure and has no level. It is
-handed back exactly where it stands, so it never leaves and comes out in the
-**inside colour** — the incolouring modes work there, on the point itself, and
-the empty space stays empty instead of taking a band of the outside colour off
-the figure.
+**turned half about**, which lands ground on ground, so it never leaves and comes
+out in the **inside colour** — the empty space stays empty instead of taking a
+band of the outside colour off the figure.
+
+Turned, and not handed back where it stood, because **a fixed point is a stopped
+orbit and not a bounded one**. Standing still, the loop ran every pass to the
+limit with nothing changing; the incolouring modes that compare a pass with the
+one before had nothing to compare; and `snowflake()` written inside a larger
+formula handed that formula back the point it was already holding, where
+`sierpinskyt()` and `sierpinskyc()` move every point they are given. Half about
+is the choice over a sixth of a turn, which the figure's symmetry would also
+allow: both land ground on ground, but half about keeps the point inside a square
+and a circle as well as inside the hexagon. It leaves the distance from the
+centre alone, so the incolouring modes that read that are untouched, and the
+picture `snowflake()` draws is unchanged to the pixel.
 
 That is the one place these figures cost something. A ground pixel is asked the
 membership question once a pass for as long as it is looked at, where the other
@@ -344,6 +355,15 @@ times what it cost when the ground was given a band of its own. Boundary tracing
 is left on for these formulas — their bands really are solid, which is the
 condition for it — and the ground is one solid region, so what reaches the
 screen is less than that number suggests.
+
+Written inside a larger formula — `snowflake()^-2+snowflake()` and the like — the
+three behave alike now, but not identically, and the difference is worth knowing.
+A gasket's dust never leaves and is doubled every pass, so a formula built on it
+has something chaotic to chew on everywhere. A snowflake's pieces all have a
+finite level and leave on it, so the hexagon at its middle comes out as one flat
+band in any such formula — exactly as the gasket's own middle hole does, for the
+same reason. What the turn gives back is the ground, which is a snowflake's
+answer to a gasket's dust.
 
 `radius` means what `bailout` means and is read the same way: **as the square of
 the distance**. What it draws is the shape a bailout of that number draws,

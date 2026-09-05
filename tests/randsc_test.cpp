@@ -882,14 +882,34 @@ int main(void)
                   "a snowflake puts every point it lets go in its own place");
             check(lands_apart(tri4, 3, (number_t)18 / 10),
                   "and so does a gasket, as it always did");
-            /* the ground is handed back untouched, which is what leaves the
-             * incolouring something to say about it */
+            /* The ground is turned a sixth of a turn rather than handed back
+             * where it stood. A fixed point is a stopped orbit, not a bounded
+             * one: the loop would run to the limit with nothing changing, the
+             * incolouring modes that compare a pass with the one before would
+             * have nothing to compare, and a figure written inside a larger
+             * formula would hand that formula back the point it was already
+             * holding. Half about is a motion that lands ground on
+             * ground, so it still never leaves; it keeps the distance from the
+             * centre, so the incolouring modes that read that are untouched;
+             * and it closes after two passes. */
             {
-                GSL_SET_COMPLEX(&sffe_z, 1, (number_t)-15 / 10);
-                cmplx same = sffe_eval(flake4);
-                check(GSL_REAL(same) == 1 &&
-                          GSL_IMAG(same) == (number_t)-15 / 10,
-                      "and stands exactly where it stood");
+                number_t gx = 1, gy = (number_t)-15 / 10;
+                cmplx w;
+                GSL_SET_COMPLEX(&sffe_z, gx, gy);
+                w = sffe_eval(flake4);
+                check(GSL_REAL(w) != gx || GSL_IMAG(w) != gy,
+                      "the ground moves rather than standing still");
+                check(nfabs(GSL_REAL(w) * GSL_REAL(w) +
+                           GSL_IMAG(w) * GSL_IMAG(w) - (gx * gx + gy * gy)) <
+                          (number_t)1 / 1000,
+                      "and keeps its distance from the middle while it does");
+                for (int t = 1; t < 2; t++) {
+                    sffe_z = w;
+                    w = sffe_eval(flake4);
+                }
+                check(nfabs(GSL_REAL(w) - gx) < (number_t)1 / 100000 &&
+                          nfabs(GSL_IMAG(w) - gy) < (number_t)1 / 100000,
+                      "and is back where it started after two passes");
             }
             /* A triangle on a free edge is its parent cut down by three and
              * turned to face the way that edge faces, so a step off it lands on
