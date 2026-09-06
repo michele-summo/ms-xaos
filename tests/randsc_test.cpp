@@ -58,6 +58,16 @@ static number_t at(sffe *parser, number_t x, number_t y, unsigned int n)
     return GSL_REAL(sffe_eval(parser));
 }
 
+/* Both components. The skew puts something in the imaginary part, and whether
+ * it is there -- and whether it is nought when the skew is nought -- is the
+ * whole of what has to be watched. */
+static cmplx atc(sffe *parser, number_t x, number_t y, unsigned int n)
+{
+    GSL_SET_COMPLEX(&sffe_position, x, y);
+    sffe_iteration = n;
+    return sffe_eval(parser);
+}
+
 
 /* --- driving a figure the way the iteration loops drive one ---------------
  *
@@ -1234,6 +1244,96 @@ int main(void)
                     }
             sprintf(what, "%s draws what it drew (%#llx)", golden[g].name, sum);
             check(sum == golden[g].expected[which], what);
+        }
+    }
+
+    /* --- the skew ----------------------------------------------------------
+     *
+     * The last argument turns a cell's value by where in the cell the point
+     * stands, so that a colouring mode has something to read inside a cell and
+     * not only between two. At nought -- which is what a call that says nothing
+     * gets -- it does nothing at all: the checksums above are the proof of
+     * that, since they are the ones from before the argument existed and they
+     * are taken over calls that do not name it.
+     *
+     * What is asked here is the rest: that naming nought is the same as not
+     * naming it, that the value is on the real axis while it is nought and off
+     * it when it is not, and that the kaleidoscope still folds either way.
+     */
+    {
+        static const char *fields[5] = {"randsc", "randscq", "randsch",
+                                        "randsct", "randscp"};
+        for (int g = 0; g < 5 && !failures; g++) {
+            char expr[128];
+            sprintf(expr, "%s(7;{0.4,0.4})", fields[g]);
+            sffe *plain = compile(expr);
+            sprintf(expr, "%s(7;{0.4,0.4};{0.5,0.5};1;0;0)", fields[g]);
+            sffe *zero = compile(expr);
+            sprintf(expr, "%s(7;{0.4,0.4};{0.5,0.5};1;0;{0.05,0.02})",
+                    fields[g]);
+            sffe *bent = compile(expr);
+            if (failures)
+                break;
+
+            int alike = 1, flat = 1;
+            number_t seen[40];
+            int nseen = 0;
+            for (int i = 0; i < 40; i++) {
+                number_t x = (number_t)(i % 7) / 3 - 1 + (number_t)1 / 32;
+                number_t y = (number_t)(i % 11) / 5 - 1 + (number_t)1 / 48;
+                cmplx a = atc(plain, x, y, 0);
+                cmplx b = atc(zero, x, y, 0);
+                if (GSL_REAL(a) != GSL_REAL(b) || GSL_IMAG(a) != GSL_IMAG(b))
+                    alike = 0;
+                if (GSL_IMAG(a) != 0)
+                    flat = 0;
+                /* and the skew takes it off the axis, differently each time */
+                cmplx c = atc(bent, x, y, 0);
+                int known = 0;
+                for (int q = 0; q < nseen; q++)
+                    if (seen[q] == GSL_IMAG(c))
+                        known = 1;
+                if (!known && nseen < 40)
+                    seen[nseen++] = GSL_IMAG(c);
+            }
+            sprintf(what, "a skew of nought is no skew at all, for %s",
+                    fields[g]);
+            check(alike && flat, what);
+            sprintf(what, "and a skew turns %s off the axis (%d values)",
+                    fields[g], nseen);
+            check(nseen > 8, what);
+
+            /* the fold holds with the skew on: a third of a turn leaves every
+             * value where it was, both components of it */
+            sprintf(expr, "%s(7;{0.4,0.4};{0.5,0.5};3;0;{0.05,0.02})",
+                    fields[g]);
+            sffe *folded = compile(expr);
+            if (failures)
+                break;
+            number_t ct = ncos((number_t)2 * (number_t)M_PI / 3);
+            number_t st = nsin((number_t)2 * (number_t)M_PI / 3);
+            int apart = 0;
+            for (int i = 1; i < 120; i++) {
+                number_t x = (number_t)(i % 13) / 5 - 1 + (number_t)137 / 10000;
+                number_t y = (number_t)(i % 17) / 7 - 1 + (number_t)71 / 10000;
+                if (x * x + y * y < (number_t)1 / 25)
+                    continue;
+                cmplx a = atc(folded, x, y, 0);
+                cmplx b = atc(folded, x * ct - y * st, x * st + y * ct, 0);
+                if (nfabs(GSL_REAL(a) - GSL_REAL(b)) >
+                        (number_t)1 / 1000000000 ||
+                    nfabs(GSL_IMAG(a) - GSL_IMAG(b)) >
+                        (number_t)1 / 1000000000)
+                    apart++;
+            }
+            sprintf(what, "and %s still folds with it on (%d apart)",
+                    fields[g], apart);
+            check(apart <= 2, what);
+
+            sffe_free(&plain);
+            sffe_free(&zero);
+            sffe_free(&bent);
+            sffe_free(&folded);
         }
     }
 

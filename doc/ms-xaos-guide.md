@@ -158,7 +158,7 @@ the bargain.
     poly(z;1;0;0)+c            the Mandelbrot, written out
     poly(z;1;0;0;{0.7,0.2})    z^3 + 0.7+0.2i
 
-**`randsc(seed; size; degradation; kaleidoscope; mode)`** — coherent
+**`randsc(seed; size; degradation; kaleidoscope; mode; skew)`** — coherent
 noise over the point, giving blobs rather than per-pixel snow. `size`
 (default `1+i`) is the average width of a blob along the real axis and its
 height along the imaginary one.
@@ -167,7 +167,49 @@ the iteration proceeds: the
 size is multiplied by it at every pass, component by component, so `0.5+0.2i`
 over `1+i` gives `1+i` on the first pass, then `0.5+0.2i`, then `0.25+0.04i`.
 A zero in either component of either argument returns zero rather than dividing
-by zero. The last two are the kaleidoscope, below. Only the seed is required.
+by zero. Then come the two kaleidoscope arguments, below, and last `skew`
+(default `0`). Only the seed is required.
+
+### The skew, and why these fields are hard to colour
+
+The engine colours with the two components of the orbit: `real` and `zmag` read
+one, `imag`, `angle` and `real / imag` the other. These fields hand back one
+number for a whole cell, on the real axis, so every mode draws **one tone a
+cell** — `zmag` and `iter + real` look like the value truncated, and the other
+three have nothing at all to read. Measured over nine hundred pixels: 14 to 126
+values for the first two, and exactly **one** for the rest.
+
+Varying the value inside a cell cannot be done with one real number. The same
+number decides whether the point leaves, so a value that moves across a cell
+takes half the cell out and leaves the other half in, and the cell comes out
+**cut in two by a straight line**. That was tried twice and cut the mosaics both
+times.
+
+`skew` does it with the second component instead. The value is multiplied by
+`1 + skew * (du + i*dv)`, where `du` and `dv` say where in the cell the point
+stands, measured from the middle in units of the cell:
+
+* at **`0`**, which is what a call that does not name it gets, the factor is one,
+  the imaginary part stays at nought, and every value is the number it always
+  was **to the bit** — the golden checksums from before the argument existed pass
+  unchanged, and a saved position renders identically;
+* away from nought the value turns with the position. The **argument** of the
+  skew says which way the turn goes, its **modulus** how far, and every
+  colouring mode then has something to read inside a cell as well as between
+  two: measured, all of them go from one value to nine hundred at a skew as
+  small as `0.02`.
+
+What it costs is cutting, and there is no avoiding it: the modulus of the factor
+moves with the position as well as its argument, so a cell whose level sits near
+where the bailout falls is still cut. How much is proportional to the skew — over
+a picture of 48400 pixels, `0.02` cuts 36 to 55 pixels' worth of line, a tenth of
+a per cent, and `0.4` cuts twenty times that. **Small is the useful range**, and
+nought is the way out.
+
+Two things follow from it. The value is complex while the skew is not nought, so
+`randsc(7;;;;;0.02)*z` turns `z` as well as scaling it. And the kaleidoscope
+still folds either way: measured over five fields, two, three, five and six
+wedges and both mirrors, a turn of one wedge leaves every value where it was.
 
 **`randscq(...)`** — the same field without the interpolation: a mosaic of flat
 square cells instead of blobs. Same arguments, same meaning.
