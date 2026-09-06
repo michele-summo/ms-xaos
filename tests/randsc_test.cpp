@@ -592,6 +592,83 @@ int main(void)
         }
     }
 
+    /* --- and the fold still holds, now that a cell leans -------------------
+     *
+     * Two questions, and they were not worth asking while a cell was flat. A
+     * fold that met a flat cell could not show a join inside one, and a step
+     * of a hundred-thousandth never left the cell it started in, so neither
+     * question had anything to measure. A field that moves across a cell can
+     * answer both.
+     *
+     * The first is whether the picture still repeats: the field is sampled at
+     * the folded point, so a turn of one wedge must leave every value where it
+     * was. The second is whether it repeats without a seam -- whether the field
+     * moves more across a wedge boundary than it moves over the same distance
+     * anywhere else. It moves less, and it should: the boundary is where the
+     * mirror lies, so the field is even across it and its slope there is
+     * nought.
+     */
+    {
+        static const char *fields[5] = {"randsc", "randscq", "randsch",
+                                        "randsct", "randscp"};
+        static const int wedges[3] = {2, 3, 6};
+        for (int g = 0; g < 5 && !failures; g++)
+            for (int w = 0; w < 3 && !failures; w++)
+                for (int mode = 0; mode <= 1 && !failures; mode++) {
+                    char expr[128];
+                    sprintf(expr, "%s(12;{0.3,0.3};{1,1};%d;%d)", fields[g],
+                            wedges[w], mode);
+                    sffe *f = compile(expr);
+                    if (!f)
+                        break;
+                    double th = 2 * 3.14159265358979323846 / wedges[w];
+                    number_t ct = (number_t)ncos((number_t)th);
+                    number_t st = (number_t)nsin((number_t)th);
+                    /* Off the round numbers: a point that lands exactly on a
+                     * cell edge has its two copies fall on opposite sides of
+                     * it, the field being discontinuous there, and that is a
+                     * property of a mosaic and not of the fold. A couple of
+                     * them are allowed for all the same. */
+                    int apart = 0;
+                    for (int i = 1; i < 200; i++) {
+                        number_t x = (number_t)(i % 17) / 4 - 2 +
+                                     (number_t)137 / 10000;
+                        number_t y = (number_t)(i % 23) / 6 - 2 +
+                                     (number_t)71 / 10000;
+                        if (x * x + y * y < (number_t)1 / 25)
+                            continue; /* the middle, where the fold has no angle */
+                        if (nfabs(at(f, x, y, 0) -
+                                  at(f, x * ct - y * st, x * st + y * ct, 0)) >
+                            (number_t)1 / 1000000000)
+                            apart++;
+                    }
+                    sprintf(what, "%s folds into %d, mirror %d (%d apart)",
+                            fields[g], wedges[w], mode, apart);
+                    check(apart <= 2, what);
+
+                    /* across a wedge boundary against the same step elsewhere */
+                    number_t seam = 0, plain = 0;
+                    number_t eps = (number_t)1 / 100000;
+                    for (int k = 1; k <= 60; k++) {
+                        number_t r = (number_t)3 / 10 + (number_t)3 * k / 200;
+                        for (int e = 0; e < wedges[w]; e++) {
+                            number_t t = (number_t)e * (number_t)th;
+                            seam += nfabs(
+                                at(f, r * ncos(t - eps), r * nsin(t - eps), 0) -
+                                at(f, r * ncos(t + eps), r * nsin(t + eps), 0));
+                            number_t u = t + (number_t)37 * (number_t)th / 100;
+                            plain += nfabs(
+                                at(f, r * ncos(u - eps), r * nsin(u - eps), 0) -
+                                at(f, r * ncos(u + eps), r * nsin(u + eps), 0));
+                        }
+                    }
+                    sprintf(what, "%s has no seam at %d wedges", fields[g],
+                            wedges[w]);
+                    check(seam * 100 < plain, what);
+                    sffe_free(&f);
+                }
+    }
+
     /* Orbit traps and stripe averaging.
      *
      * Both keep one number about a whole orbit, which is what the colouring
