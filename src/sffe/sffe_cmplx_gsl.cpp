@@ -1428,8 +1428,8 @@ static number_t randsc_unit(uint64_t x)
  *
  * Out is measured in the cell's own geometry, so the colour follows the shape
  * the field is cut into rather than cutting across it: squares get square
- * contours, hexagons hexagonal ones, triangles triangular, a Voronoi cell rings
- * about its own seed, and the smooth field follows its own blobs. A straight
+ * contours, hexagons hexagonal ones, triangles triangular, a Voronoi cell its
+ * own polygon shrunk, and the smooth field follows its own blobs. A straight
  * ramp was tried first and drew diagonal, vertical or horizontal bands across
  * every cell alike -- the same lines in the same direction whatever the field
  * was cut into, which is not a picture of anything.
@@ -1908,13 +1908,81 @@ sfarg *sfrandscp(sfarg *const p)
             }
         }
 
-    /* how far from the seed it belongs to, squared and already worked out by
-     * the search above: a Voronoi cell is the set of points nearest that seed,
-     * so its own reckoning of distance is the distance to it, and the contours
-     * are rings about the seed */
+    /* How far the point stands from the edge of its cell, which is what puts
+     * the contours on the polygon.
+     *
+     * A cell here is a convex polygon, and the points a given distance inside
+     * its edge are that polygon shrunk, so a value that follows the distance
+     * to the edge draws the cell's own outline over and over -- polygons, and
+     * each cell its own. The distance to the boundary the winning seed shares
+     * with another is (|b|^2 - |a|^2) / (2|b - a|), a and b being the two seeds
+     * seen from the point, and the edge is the nearest of the eight.
+     *
+     * The comparison cross-multiplies the squares, so the candidates cost no
+     * division and no root and one of each is taken at the end. A distance is
+     * never negative here, the winner being the nearest seed there is, so
+     * squaring loses nothing. None of it is done at all when there is no skew
+     * to feed.
+     *
+     * Nought at the edge on both sides of it, so the turn meets itself across
+     * a boundary as the other four do. */
+    number_t pout = 0;
+    if (GSL_REAL(skew) != 0 || GSL_IMAG(skew) != 0) {
+        /* The nine seeds again, kept this time, so that the search above needs
+         * to carry nothing for a skew that is usually not there: it runs for
+         * every point, and this runs only when there is one. The winner is the
+         * one whose hash is the winning hash. */
+        number_t dxs[9], dys[9];
+        int bidx = 0;
+        for (int j = -1, k = 0; j <= 1; j++)
+            for (int i = -1; i <= 1; i++, k++) {
+                uint64_t hh = randsc_hash(cx + i, cy + j, h);
+                number_t fx =
+                    RANDSCP_JITTER_LOW +
+                    RANDSCP_JITTER_SPAN * randsc_unit32((uint32_t)hh);
+                number_t fy =
+                    RANDSCP_JITTER_LOW +
+                    RANDSCP_JITTER_SPAN * randsc_unit32((uint32_t)(hh >> 32));
+                dxs[k] = (number_t)i + fx - u;
+                dys[k] = (number_t)j + fy - v;
+                if (hh == besth)
+                    bidx = k;
+            }
+        number_t bx = dxs[bidx], by = dys[bidx];
+        /* out of reach of any real candidate, so the first one always wins */
+        number_t bestn = 256, bests = 1;
+        /* and the closest other seed, which is what makes the cell its own
+         * measure: the seed's distance to the boundary it shares with another
+         * is exactly half their separation, so the smallest of those halves is
+         * the distance from the seed to its cell's edge */
+        number_t nearsep = 256;
+        for (int k = 0; k < 9; k++) {
+            if (k == bidx)
+                continue;
+            number_t dx = dxs[k], dy = dys[k];
+            number_t ex = dx - bx, ey = dy - by;
+            number_t sep = ex * ex + ey * ey;
+            if (sep <= 0)
+                continue;
+            if (sep < nearsep)
+                nearsep = sep;
+            number_t num = dx * dx + dy * dy - bestd;
+            number_t n2 = num * num;
+            if (n2 * bests < bestn * sep) {
+                bestn = n2;
+                bests = sep;
+            }
+        }
+        /* the distance to the edge over the seed's own distance to it, which
+         * is nought at the seed and one along the whole boundary however
+         * lopsided the cell. Both halves cancel, leaving one root and one
+         * division for the lot. */
+        number_t pin = 1 - nsqrt(bestn / (bests * nearsep));
+        pout = pin < 0 ? 0 : (pin > 1 ? 1 : pin);
+    }
+
     number_t pre_, pim_;
-    number_t pd = 4 * bestd;
-    randsc_skewed(randsc_remix(besth), pd > 1 ? 1 : pd, skew, &pre_, &pim_);
+    randsc_skewed(randsc_remix(besth), pout, skew, &pre_, &pim_);
     GSL_SET_COMPLEX(&sfvalue(p), pre_, pim_);
     return sfaram1(p);
 }

@@ -193,7 +193,7 @@ at the edge, the value is turned by twice the arc tangent of
 
 `out` is measured **in the cell's own geometry**, so what the colour draws
 inside a cell is the shape the field is cut into, not a set of lines laid across
-it:
+it — nought in the middle of a cell, one along the whole of its edge:
 
 | field | what the colour draws inside a cell |
 | --- | --- |
@@ -201,7 +201,7 @@ it:
 | `randscq` | squares, about the middle of the square |
 | `randsch` | hexagons, about the middle of the hexagon |
 | `randsct` | triangles, about the middle of the triangle |
-| `randscp` | rings about the seed the cell was grown from, which is what a Voronoi cell is |
+| `randscp` | its own polygon, shrunk in step by step — no two cells the same shape |
 
 The **real part** of the skew is that gradient across a cell. The **imaginary
 part** is a flat turn the whole cell shares: it shifts a cell's colour without
@@ -250,9 +250,9 @@ over the five fields:
 | bailout shape | corners over apothem | skew 0.01 | skew 0.05 | skew 0.3 | skew 1 |
 | --- | --- | --- | --- | --- | --- |
 | circle | 1.00 | **0%** | **0%** | **0%** | **0%** |
-| hexagon | 1.15 | **0%** | 0.0–0.8% | 0.7–2.2% | 0.8–2.4% |
+| hexagon | 1.15 | **0%** | 0.0–0.8% | 0.7–2.2% | 0.4–2.4% |
 | square | 1.41 | **0%** | 0.0–1.0% | 0.8–2.8% | 1.2–12.8% |
-| triangle | 2.00 | 0.1–1.3% | 1.0–5.0% | 2.6–6.4% | 7.4–21.6% |
+| triangle | 2.00 | 0.05–1.3% | 0.7–5.0% | 2.6–6.4% | 7.4–21.6% |
 
 The **number** the bailout is set to moves it as well, and for the same reason:
 what can change side is a value whose modulus falls between the polygon's
