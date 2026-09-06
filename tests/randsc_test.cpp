@@ -1209,11 +1209,11 @@ int main(void)
             const char *name;
             unsigned long long expected[2]; /* 64 bits, 113 bits */
         } golden[] = {
-            {"randsc", {0x82c777cee11cf0acULL, 0x256878588c8eb491ULL}},
-            {"randscq", {0x7b41886762e6b000ULL, 0x7b41886762e6b000ULL}},
-            {"randscp", {0x7f716aced74a4000ULL, 0x7f716aced74a4000ULL}},
-            {"randsch", {0x46b88bf1d206f000ULL, 0x46b88bf1d206f000ULL}},
-            {"randsct", {0x224342c97c8b0800ULL, 0x224342c97c8b0800ULL}},
+            {"randsc", {0x7091894218009046ULL, 0x162a50b5f482b6e3ULL}},
+            {"randscq", {0xded06219d8b9ac00ULL, 0xded06219d8b9ac00ULL}},
+            {"randscp", {0x9fdc5ab3b5d29000ULL, 0x9fdc5ab3b5d29000ULL}},
+            {"randsch", {0x91ae22fc7481bc00ULL, 0x91ae22fc7481bc00ULL}},
+            {"randsct", {0x4890d0b25f22c200ULL, 0x4890d0b25f22c200ULL}},
         };
         const int which = NUMBER_MANTISSA_BITS == 113 ? 1 : 0;
         for (int g = 0; g < 5; g++) {
@@ -1229,11 +1229,83 @@ int main(void)
                     for (int k = 0; k < 6; k++) {
                         number_t val = at(f, (number_t)i / 7, (number_t)j / 9,
                                           passes[k]);
+                        /* Scaled by 2^60, not 2^64. The field reaches twice
+                         * the square root of its radius -- four, at the
+                         * default -- where it used to stay under one, and
+                         * 2^64 times four does not fit in the integer this is
+                         * accumulated in. Overflowing it made the two
+                         * precisions disagree on fields that agree to the
+                         * bit. */
                         sum = sum * 0x100000001B3ULL +
-                              (unsigned long long)(val * 18446744073709551616.0);
+                              (unsigned long long)(val * 1152921504606846976.0);
                     }
             sprintf(what, "%s draws what it drew (%#llx)", golden[g].name, sum);
             check(sum == golden[g].expected[which], what);
+        }
+    }
+
+    /* --- radius, and having something for the iteration count to count -----
+     *
+     * radius is read the way bailout is read, as the square of a distance, and
+     * the field reaches twice its square root. So with the two numbers equal,
+     * half the field is outside the bailout, half of what is left goes on the
+     * pass after, and the picture comes out in bands. The field used to stay
+     * under one, which no bailout of four could ever let go of, so a call
+     * written alone drew one flat tone and had to be multiplied by hand.
+     */
+    {
+        static const char *fields[5] = {"randsc", "randscq", "randsch",
+                                        "randsct", "randscp"};
+        for (int g = 0; g < 5; g++) {
+            /* the default radius, against a bailout of the same four */
+            char expr[96];
+            sprintf(expr, "%s(12;{0.3,0.3})", fields[g]);
+            sffe *f = compile(expr);
+            if (!f)
+                break;
+            int bands[40];
+            int nb = 0, left = 0, seen = 0;
+            for (int i = 0; i < 40; i++)
+                bands[i] = 0;
+            for (int j = 0; j < 30; j++)
+                for (int i = 0; i < 30; i++) {
+                    number_t x = (number_t)i / 8 - 2, y = (number_t)j / 8 - 2;
+                    seen++;
+                    for (int t = 0; t < 40; t++) {
+                        number_t val = at(f, x, y, (unsigned int)t);
+                        if (val * val >= 4) {
+                            left++;
+                            if (!bands[t]) {
+                                bands[t] = 1;
+                                nb++;
+                            }
+                            break;
+                        }
+                    }
+                }
+            sprintf(what, "%s draws bands at radius 4 (%d, over %d%%)",
+                    fields[g], nb, 100 * left / seen);
+            check(nb >= 5 && left > seen / 2, what);
+
+            /* and the reach follows the radius: four times the number is twice
+             * the reach, as it is for a bailout */
+            sprintf(expr, "%s(12;{0.3,0.3};{0.5,0.5};1;0;16)", fields[g]);
+            sffe *wide = compile(expr);
+            if (!wide)
+                break;
+            int scaled = 1;
+            for (int i = 1; i < 30; i++) {
+                number_t x = (number_t)(i % 7) / 3 - 1;
+                number_t y = (number_t)(i % 11) / 5 - 1;
+                if (nfabs(at(wide, x, y, 0) - 2 * at(f, x, y, 0)) >
+                    (number_t)1 / 100000)
+                    scaled = 0;
+            }
+            sprintf(what, "and %s reaches twice as far at four times it",
+                    fields[g]);
+            check(scaled, what);
+            sffe_free(&wide);
+            sffe_free(&f);
         }
     }
 
