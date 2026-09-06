@@ -179,13 +179,32 @@ which no bailout of 4 could ever let go of, so a bare call drew one flat tone an
 had to be multiplied by hand. Four times the radius is twice the reach, as it is
 for a bailout.
 
-**`randscq(...)`** — the same field without the interpolation: a mosaic of flat
-square cells instead of blobs. Same arguments, same meaning.
+**Every one of these is made to be coloured.** The engine colours with the two
+components of the orbit, and a field that hands back one number for a whole cell
+gives every mode one tone for that cell — `zmag` and `iter + real` come out
+looking like the value truncated, however smooth the mode is. So a cell keeps its
+own level and gains a **lean** across it: three fifths of the range is the level,
+a fifth is a slope in one of eight directions taken from the cell's own hash. Two
+cells of the same level then look different, and a colouring mode has something
+to read inside a cell as well as between two. It is the same thing the Sierpinski
+figures do with the pieces they carry a point through.
+
+`randsc` had a different trouble: it interpolated the **level** at each corner of
+its lattice, so every corner was an extreme of the field and the extremes stood
+on a square grid that the eye finds however smooth the interpolation. It
+interpolates a **slope** at each corner now — gradient noise — so the field is
+nought at every corner and its extremes fall between them, off the lattice. The
+fade is quintic rather than cubic, flat in the first and the second derivative at
+both ends, so neither the value nor its slope creases at a cell edge.
+
+**`randscq(...)`** — the same field without the interpolation: a mosaic of square
+cells, each with its own level and lean, instead of blobs. Same arguments, same
+meaning.
 
 **`randscp(...)`** — the same field again with the curves taken out but not the
 irregularity: one seed is scattered inside each cell and every position takes
-the value of the nearest seed, which draws a Voronoi diagram — flat convex
-polygons with straight edges, no two the same shape.
+the value of the nearest seed, which draws a Voronoi diagram — convex polygons
+with straight edges, no two the same shape.
 
 **`randsch(...)`** — the same again on hexagons: a honeycomb of flat cells. Of
 the regular polygons that tile the plane this is the one without a grain —

@@ -297,12 +297,43 @@ int main(void)
             sprintf(what, "%s declines to compute on a zero", mosaic[m].name);
             check(at(mosaic[m].zero, 0.3, 0.7, 0) == 0, what);
 
-            /* Flat cells: within one cell the value does not move, where the
-             * interpolated field does. */
-            sprintf(what, "%s is flat across a cell", mosaic[m].name);
-            check(at(mosaic[m].cells, 0.3, 0.7, 0) ==
-                      at(mosaic[m].cells, (number_t)0.3 + step, 0.7, 0),
-                  what);
+            /* A cell leans.
+             *
+             * These were flat -- one level for the whole of a cell -- and that
+             * is what made them hard to colour: every mode reads one number
+             * for the whole cell, so zmag and iter+real drew one tone a cell
+             * however smooth the mode. Each cell now keeps its own level and
+             * gains a slope across it, so a colouring mode has something to
+             * read inside a cell as well as between two.
+             *
+             * The lean is a straight ramp, so three points in a row a step
+             * apart are evenly spaced -- until a cell edge falls between two
+             * of them, where the level jumps. Walking a line and asking how
+             * often the spacing holds tells the two apart: a ramp with a few
+             * jumps in it, not a staircase and not a straight line. */
+            {
+                int even = 0, jumps = 0;
+                /* a hundredth at a time, so four hundred of them cross four
+                 * cells of the default size rather than staying inside one */
+                number_t walk = (number_t)1 / 100;
+                number_t prev = at(mosaic[m].cells, -1, (number_t)0.7, 0);
+                number_t d0 = at(mosaic[m].cells, -1 + walk, (number_t)0.7, 0) -
+                              prev;
+                for (int i = 2; i < 400; i++) {
+                    number_t x = -1 + walk * i;
+                    number_t v = at(mosaic[m].cells, x, (number_t)0.7, 0);
+                    number_t d = v - prev;
+                    if (nfabs(d - d0) < (number_t)1 / 100000)
+                        even++;
+                    else
+                        jumps++;
+                    d0 = d;
+                    prev = v;
+                }
+                sprintf(what, "%s leans across a cell (%d even, %d jumps)",
+                        mosaic[m].name, even, jumps);
+                check(even > 200 && jumps > 5, what);
+            }
 
             /* Four ways of cutting the plane, four different fields. */
             for (int n = m + 1; n < nmosaic; n++) {
@@ -333,27 +364,36 @@ int main(void)
          * to match. Without that, changing one letter of a formula changed
          * the scale of the picture by a factor of six from end to end.
          *
-         * Counting the flat regions over an area of 144 measures it: the
-         * count is the area plus whatever the border cuts through, which is
-         * of the order of the perimeter. Well away from a sixfold error.
+         * Counting the cell edges along a line measures it. A cell leans, so
+         * the value walks a straight ramp inside one and jumps at an edge:
+         * counting the jumps over a length of a hundred counts the edges, and
+         * a cell of unit size puts about one in every unit. Well away from a
+         * sixfold error either way.
          */
         for (int m = 0; !failures && m < nmosaic; m++) {
-            number_t seen[400];
-            int nseen = 0;
-            for (int i = 0; i < 300 && nseen < 400; i++)
-                for (int j = 0; j < 300 && nseen < 400; j++) {
-                    number_t val =
-                        at(mosaic[m].cells, (number_t)i / 25, (number_t)j / 25, 0);
-                    int k;
-                    for (k = 0; k < nseen; k++)
-                        if (seen[k] == val)
-                            break;
-                    if (k == nseen)
-                        seen[nseen++] = val;
-                }
-            sprintf(what, "%s gives one cell per unit square (%d over 144)",
-                    mosaic[m].name, nseen);
-            check(nseen >= 144 && nseen <= 260, what);
+            int edges = 0;
+            number_t walk = (number_t)1 / 50;
+            number_t prev = at(mosaic[m].cells, 0, (number_t)0.317, 0);
+            number_t d0 =
+                at(mosaic[m].cells, walk, (number_t)0.317, 0) - prev;
+            for (int i = 2; i < 5000; i++) {
+                number_t x = walk * i;
+                number_t v = at(mosaic[m].cells, x, (number_t)0.317, 0);
+                number_t d = v - prev;
+                if (nfabs(d - d0) >= (number_t)1 / 100000)
+                    edges++;
+                d0 = d;
+                prev = v;
+            }
+            /* How many edges a straight line meets per unit differs with
+             * the shape -- a hexagon or a triangle presents more of them to a
+             * horizontal line than a square does -- so the bound is wide. What
+             * it is watching for is a scale wrong by a factor of six, which is
+             * what dropping the area correction between the four shapes would
+             * cost, and that is far outside it either way. */
+            sprintf(what, "%s gives one cell per unit (%d edges over 100)",
+                    mosaic[m].name, edges);
+            check(edges >= 100 && edges <= 450, what);
         }
     }
 
@@ -469,8 +509,12 @@ int main(void)
                         for (unsigned int n = 0; n < passes; n++) {
                             number_t v = at(f, (number_t)(i % 71) / 23,
                                             (number_t)(i % 59) / 17, n);
+                            /* 2^60, not 2^64: the field reaches twice the
+                             * root of its radius, four by default, and 2^64
+                             * times that does not fit the integer this is
+                             * accumulated in */
                             sum ^= (unsigned long long)((double)v *
-                                                        18446744073709551616.0);
+                                                        1152921504606846976.0);
                             sum *= 1099511628211ULL;
                         }
                         out[i] = sum;
@@ -1209,11 +1253,16 @@ int main(void)
             const char *name;
             unsigned long long expected[2]; /* 64 bits, 113 bits */
         } golden[] = {
-            {"randsc", {0x7091894218009046ULL, 0x162a50b5f482b6e3ULL}},
-            {"randscq", {0xded06219d8b9ac00ULL, 0xded06219d8b9ac00ULL}},
-            {"randscp", {0x9fdc5ab3b5d29000ULL, 0x9fdc5ab3b5d29000ULL}},
-            {"randsch", {0x91ae22fc7481bc00ULL, 0x91ae22fc7481bc00ULL}},
-            {"randsct", {0x4890d0b25f22c200ULL, 0x4890d0b25f22c200ULL}},
+            /* All five differ between the two precisions now, where the four
+             * flat ones used to agree to the bit: a cell's value follows where
+             * in the cell the point stands, and that is arithmetic in the
+             * number type rather than a hash. randsc was already in this
+             * position, for the same reason. */
+            {"randsc", {0xfc8d3e6549089c29ULL, 0x00c62c666bf104b4ULL}},
+            {"randscq", {0xfad0625a657cd6eaULL, 0x1bb922519afa9cd7ULL}},
+            {"randscp", {0x14572402d58c0078ULL, 0x23d0da7d5b570e27ULL}},
+            {"randsch", {0x7996de8410e76ddaULL, 0x0e36aaadcf364583ULL}},
+            {"randsct", {0xfff8ca946ff6b314ULL, 0xdd4071d14f7c677aULL}},
         };
         const int which = NUMBER_MANTISSA_BITS == 113 ? 1 : 0;
         for (int g = 0; g < 5; g++) {
