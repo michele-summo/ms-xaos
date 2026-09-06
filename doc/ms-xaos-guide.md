@@ -185,31 +185,41 @@ takes half the cell out and leaves the other half in, and the cell comes out
 **cut in two by a straight line**. That was tried twice and cut the mosaics both
 times.
 
-`skew` does it with the second component instead. The value is multiplied by
-`1 + skew * (du + i*dv)`, where `du` and `dv` say where in the cell the point
-stands, measured from the middle in units of the cell:
+`skew` does it with the second component instead, and it **turns** the value
+rather than scaling it. How far it turns follows where in the cell the point
+stands: with `du` and `dv` measured from the middle of the cell in units of the
+cell, the value is turned by twice the arc tangent of
+`skew_re*du + skew_im*dv`. So the **argument** of the skew says which way across
+a cell the turn grows and its **modulus** how fast.
 
-* at **`0`**, which is what a call that does not name it gets, the factor is one,
-  the imaginary part stays at nought, and every value is the number it always
-  was **to the bit** — the golden checksums from before the argument existed pass
-  unchanged, and a saved position renders identically;
-* away from nought the value turns with the position. The **argument** of the
-  skew says which way the turn goes, its **modulus** how far, and every
-  colouring mode then has something to read inside a cell as well as between
-  two: measured, all of them go from one value to nine hundred at a skew as
-  small as `0.02`.
+* At **`0`**, which is what a call that does not name it gets, the turn is
+  nothing, the imaginary part stays at nought, and every value is the number it
+  always was **to the bit** — the golden checksums from before the argument
+  existed pass unchanged, and a saved position renders identically. The `talc`
+  position, three noise calls and a `c` over 345600 values, comes out to the
+  same signature as the build before the argument.
+* Away from nought, the modes that read the two components apart — `real`,
+  `imag`, `angle`, `real / imag` — go from one value to nine hundred over a
+  picture.
 
-What it costs is cutting, and there is no avoiding it: the modulus of the factor
-moves with the position as well as its argument, so a cell whose level sits near
-where the bailout falls is still cut. How much is proportional to the skew — over
-a picture of 48400 pixels, `0.02` cuts 36 to 55 pixels' worth of line, a tenth of
-a per cent, and `0.4` cuts twenty times that. **Small is the useful range**, and
-nought is the way out.
+**A turn and not a scaling, and that is the point.** Scaling moved the modulus
+of the value, and the modulus is exactly what the bailout looks at: a cell whose
+level sat near where the bailout falls came out cut in two by a straight line,
+and the mosaics lost their shapes. A turn leaves the modulus where it is, so the
+escape cannot see the skew at all. Measured over 48400 pixels, at every skew
+from `0.02` to `1.4`: **nought pixels leaving differently, and nought cells
+cut**. There is no trade to make and no small range to stay inside — the figure
+is the figure whatever the skew is set to.
 
-Two things follow from it. The value is complex while the skew is not nought, so
-`randsc(7;;;;;0.02)*z` turns `z` as well as scaling it. And the kaleidoscope
-still folds either way: measured over five fields, two, three, five and six
-wedges and both mirrors, a turn of one wedge leaves every value where it was.
+What a turn cannot touch is **`zmag`**, which reads the modulus and so stays one
+tone a cell. Colour with something that reads the two components apart instead:
+`iter + real`, `iter + imag`, `angle`, `real / imag` outside, and `real` or
+`real / imag` in the incolouring.
+
+Two things follow. The value is complex while the skew is not nought, so
+`randsc(7;;;;;0.05)*z` turns `z` as well as scaling it. And the kaleidoscope
+folds either way: measured over five fields, two, three, five and six wedges and
+both mirrors, a turn of one wedge leaves every value where it was.
 
 **`randscq(...)`** — the same field without the interpolation: a mosaic of flat
 square cells instead of blobs. Same arguments, same meaning.

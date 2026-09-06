@@ -1303,6 +1303,35 @@ int main(void)
                     fields[g], nseen);
             check(nseen > 8, what);
 
+            /* And it turns it without moving it out.
+             *
+             * The modulus of the value is what the bailout looks at, so if the
+             * skew moved it a cell whose level sits near where the bailout
+             * falls would come out cut in two -- which is what happened when
+             * this was written as a scaling, and what took the shapes out of
+             * the mosaics. A turn leaves the modulus where it was, to the last
+             * bit the one division in it allows, so the escape cannot see the
+             * skew at all and the figure is the figure whatever the skew. */
+            {
+                number_t worst = 0;
+                for (int i = 0; i < 60; i++) {
+                    number_t x = (number_t)(i % 9) / 4 - 1 + (number_t)1 / 32;
+                    number_t y = (number_t)(i % 13) / 6 - 1 + (number_t)1 / 48;
+                    cmplx a = atc(plain, x, y, 0);
+                    cmplx b = atc(bent, x, y, 0);
+                    number_t ma = GSL_REAL(a) * GSL_REAL(a) +
+                                  GSL_IMAG(a) * GSL_IMAG(a);
+                    number_t mb = GSL_REAL(b) * GSL_REAL(b) +
+                                  GSL_IMAG(b) * GSL_IMAG(b);
+                    number_t d = nfabs(ma - mb);
+                    if (d > worst)
+                        worst = d;
+                }
+                sprintf(what, "and leaves the modulus of %s alone (%.1g)",
+                        fields[g], (double)worst);
+                check(worst < (number_t)1 / 1000000000, what);
+            }
+
             /* the fold holds with the skew on: a third of a turn leaves every
              * value where it was, both components of it */
             sprintf(expr, "%s(7;{0.4,0.4};{0.5,0.5};3;0;{0.05,0.02})",

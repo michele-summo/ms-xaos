@@ -1420,22 +1420,30 @@ static number_t randsc_unit(uint64_t x)
  * cell takes half the cell out and leaves the other half in, and the cell comes
  * out cut in two. That was tried twice and cut the mosaics both times.
  *
- * The skew does it with the second component. The value is multiplied by
- * 1 + skew*(du + i*dv), where du and dv say where in the cell the point stands,
- * measured from the middle in units of the cell. At a skew of nought -- which
- * is what a call that says nothing gets -- the factor is one, the imaginary
- * part stays at nought, and every value is the number it always was, to the
- * bit. Away from nought the value turns with the position: the argument of the
- * skew says which way, its modulus how far, and every colouring mode has
- * something to read inside a cell as well as between two.
+ * The skew does it with the second component, and does it by turning the value
+ * rather than by scaling it. How far it turns follows where in the cell the
+ * point stands: t = skew_re*du + skew_im*dv, with du and dv measured from the
+ * middle of the cell in units of the cell, and the value is turned by twice the
+ * arc tangent of t. So the argument of the skew says which way across a cell
+ * the turn grows and its modulus how fast.
  *
- * What it costs is cutting, and there is no avoiding it: the modulus of the
- * factor moves with the position as well as its argument, so a cell whose level
- * sits near where the bailout falls is still cut. How much is proportional to
- * the skew -- measured over a picture of 48400 pixels, a skew of 0.02 cuts 36
- * to 55 pixels' worth of line, a tenth of a per cent, while bringing every
- * colouring quantity from one value to nine hundred. A skew of 0.4 cuts twenty
- * times that. Small is the useful range, and nought is the way out. */
+ * A turn and not a scaling, which is what this was first written as. Scaling
+ * moved the modulus of the value, and the modulus is exactly what the bailout
+ * looks at: a cell whose level sat near where the bailout falls came out cut in
+ * two, and the mosaics lost their shapes. A turn leaves the modulus where it
+ * is, so the escape cannot see it at all -- measured over 48400 pixels, at
+ * every skew tried, from 0.02 to 1.4: nought pixels leaving differently and
+ * nought cells cut. What was a trade is not one any more.
+ *
+ * (1 + it)^2 / (1 + t^2) is the cosine and the sine of that turn without any
+ * trigonometry: its modulus is one exactly, and one to the last bit the single
+ * division leaves. A skew of nought gives t = 0 and a factor of exactly one,
+ * with no arithmetic done at all, so every value is the number it always was.
+ *
+ * What is left flat is zmag, which reads the modulus and so is the one thing a
+ * turn cannot touch. The modes that read the two components apart -- real,
+ * imag, angle, real over imag -- go from one value to nine hundred over a
+ * picture. */
 static inline void randsc_skewed(uint64_t k, number_t du, number_t dv,
                                  cmplx skew, number_t *re, number_t *im)
 {
@@ -1447,8 +1455,10 @@ static inline void randsc_skewed(uint64_t k, number_t du, number_t dv,
         *im = 0;
         return;
     }
-    *re = level * (1 + sr * du - si * dv);
-    *im = level * (si * du + sr * dv);
+    number_t t = sr * du + si * dv;
+    number_t q = 1 + t * t;
+    *re = level * (1 - t * t) / q;
+    *im = level * 2 * t / q;
 }
 
 /* A real seed has to survive being written once and read by two builds:
@@ -1773,9 +1783,9 @@ sfarg *sfrandsc(sfarg *const p)
      * meets itself across a line. It only reaches a tenth either way, so it is
      * opened out to the half the mosaics use. */
     number_t du = 5 * (u - su), dv = 5 * (v - sv);
-    number_t sr = GSL_REAL(skew), si = GSL_IMAG(skew);
-    GSL_SET_COMPLEX(&sfvalue(p), level * (1 + sr * du - si * dv),
-                    level * (si * du + sr * dv));
+    number_t t = GSL_REAL(skew) * du + GSL_IMAG(skew) * dv;
+    number_t q = 1 + t * t;
+    GSL_SET_COMPLEX(&sfvalue(p), level * (1 - t * t) / q, level * 2 * t / q);
     return sfaram1(p);
 }
 
