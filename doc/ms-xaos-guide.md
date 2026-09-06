@@ -230,13 +230,20 @@ number decides. A hexagon at a skew of 0.3, over the same picture: 0.65 per cent
 at a bailout of 0.64, 1.00 at 1.44, 0.80 at 2.56, 0.69 at 4. A circle at the same
 three: nought, nought, nought.
 
-Read it the useful way round: **a skew of `0.05` already brings every mode to
-full variation**, and at `0.05` nothing but a triangular bailout notices — three
-hundredths of a per cent at worst. Turn the skew up and the pointier shapes begin
-to show it, and moving the bailout moves which cells it shows it on. **If you
-want it free whatever the skew and whatever the bailout, use a circular
-bailout** — there the escape reads the modulus, which is the one thing a turn
-never touches.
+Read it the useful way round. **The useful range is `0.02` to `0.05`**, and
+there is nothing to gain by going past it: at `0.05` every colouring mode is
+already at full variation — one value to nine hundred over a picture — and a
+square or hexagonal bailout shows **no change at all**, a triangular one three
+tenths of a per cent. What costs is turning it up. A skew of `2+2i` turns the
+value by 126 degrees at the edge of a cell, forty times what is needed, and
+moves two to seven per cent of the picture under a bailout that is not round.
+
+**If you want it free whatever the skew, use a circular bailout** — there the
+escape reads the modulus, which is the one thing a turn never touches. Under any
+other shape it cannot be made free at a large skew, and not for want of trying:
+the escape reads the two components of the value and so does the colouring, so
+anything that gives the colour something to read is something the escape can
+see. A small skew is the answer, not a cleverer one.
 
 What a turn cannot touch is **`zmag`**, which reads the modulus and so stays one
 tone a cell. Colour with something that reads the two components apart instead:
