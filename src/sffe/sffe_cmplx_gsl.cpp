@@ -1564,9 +1564,9 @@ static void randsc_kaleido(number_t *px, number_t *py, int level, int mode)
 #endif
 
 static RANDSC_INLINE int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, number_t *u,
-                        number_t *v, uint64_t *hash, number_t *scale)
+                        number_t *v, uint64_t *hash)
 {
-    if (p->argc < 1 || p->argc > 6)
+    if (p->argc < 1 || p->argc > 5)
         return RANDSC_STOP;
 
     /* Seed, cell size, degradation, kaleidoscope level and its mode, in the
@@ -1581,27 +1581,10 @@ static RANDSC_INLINE int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, 
     cmplx degradation = sfarg_or(p, 3, (number_t)1 / 2, (number_t)1 / 2);
     int level = (int)GSL_REAL(sfarg_or(p, 4, 1, 0));
     int mode = (int)GSL_REAL(sfarg_or(p, 5, 0, 0));
-    number_t radius = GSL_REAL(sfarg_or(p, 6, 4, 0));
 
     if (GSL_REAL(size) == 0 || GSL_IMAG(size) == 0 ||
-        GSL_REAL(degradation) == 0 || GSL_IMAG(degradation) == 0 ||
-        !(radius > 0))
+        GSL_REAL(degradation) == 0 || GSL_IMAG(degradation) == 0)
         return RANDSC_STOP;
-
-    /* How far the field reaches, from a number read the way bailout is read:
-     * as the square of a distance. A bailout of radius lets a point stay while
-     * it is nearer the origin than the square root of radius, and the field
-     * reaches twice that -- so with the two numbers equal, half of the field
-     * is outside the bailout and half of what is left goes on the pass after,
-     * and the iteration count has something to count. Written alone and with
-     * both left at four, the call draws bands instead of one flat tone, where
-     * before it drew a value under one that no bailout of four could let go
-     * and had to be multiplied by hand.
-     *
-     * Four is the default, and twice its root is four again, so the usual call
-     * pays a comparison rather than a square root -- which at 113 bits of
-     * mantissa is software and would cost more than the hashing does. */
-    *scale = radius == 4 ? 4 : 2 * nsqrt(radius);
 
     /* size * degradation^n, per component, carried from one pass to the next
      * rather than worked out again.
@@ -1696,9 +1679,8 @@ static RANDSC_INLINE int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, 
  * A zero in either component of either argument would divide by zero once the
  * degradation reached it, so the function returns zero instead of computing.
  *
- * The result is real, in [0, twice the square root of radius), with the
- * imaginary part left at zero, as rand does. Two independent fields are two
- * calls with different seeds.
+ * The result is real, in [0, 1), with the imaginary part left at zero, as rand
+ * does. Two independent fields are two calls with different seeds.
  *
  * @param p The call; the arguments are read right to left, see sfaramN.
  * @return Pointer to the last argument, per the sffe convention.
@@ -1709,15 +1691,14 @@ sfarg *sfrandsc(sfarg *const p)
     number_t u, v;
     uint64_t h;
 
-    number_t scale;
-    int state = randsc_setup(p, &cx, &cy, &u, &v, &h, &scale);
+    int state = randsc_setup(p, &cx, &cy, &u, &v, &h);
     if (state == RANDSC_STOP) {
         GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
         return sfaram1(p);
     }
     if (state == RANDSC_BEYOND) {
         GSL_SET_COMPLEX(&sfvalue(p),
-                        scale * randsc_unit(randsc_hash(cx, cy, h)), 0);
+                        randsc_unit(randsc_hash(cx, cy, h)), 0);
         return sfaram1(p);
     }
 
@@ -1731,7 +1712,7 @@ sfarg *sfrandsc(sfarg *const p)
     number_t lo = a + (b - a) * u;
     number_t hi = c + (d - c) * u;
 
-    GSL_SET_COMPLEX(&sfvalue(p), scale * (lo + (hi - lo) * v), 0);
+    GSL_SET_COMPLEX(&sfvalue(p), lo + (hi - lo) * v, 0);
     return sfaram1(p);
 }
 
@@ -1796,16 +1777,14 @@ sfarg *sfrandscp(sfarg *const p)
     number_t u, v;
     uint64_t h;
 
-    number_t scale;
-    int state = randsc_setup(p, &cx, &cy, &u, &v, &h, &scale);
+    int state = randsc_setup(p, &cx, &cy, &u, &v, &h);
     if (state == RANDSC_STOP) {
         GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
         return sfaram1(p);
     }
     if (state == RANDSC_BEYOND) {
-        GSL_SET_COMPLEX(
-            &sfvalue(p),
-            scale * randsc_unit(randsc_remix(randsc_hash(cx, cy, h))), 0);
+        GSL_SET_COMPLEX(&sfvalue(p),
+                        randsc_unit(randsc_remix(randsc_hash(cx, cy, h))), 0);
         return sfaram1(p);
     }
 
@@ -1830,8 +1809,7 @@ sfarg *sfrandscp(sfarg *const p)
             }
         }
 
-    GSL_SET_COMPLEX(&sfvalue(p), scale * randsc_unit(randsc_remix(besth)),
-                    0);
+    GSL_SET_COMPLEX(&sfvalue(p), randsc_unit(randsc_remix(besth)), 0);
     return sfaram1(p);
 }
 
@@ -2751,20 +2729,18 @@ sfarg *sfrandscq(sfarg *const p)
     number_t u, v;
     uint64_t h;
 
-    number_t scale;
-    int state = randsc_setup(p, &cx, &cy, &u, &v, &h, &scale);
+    int state = randsc_setup(p, &cx, &cy, &u, &v, &h);
     if (state == RANDSC_STOP) {
         GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
         return sfaram1(p);
     }
     if (state == RANDSC_BEYOND) {
         GSL_SET_COMPLEX(&sfvalue(p),
-                        scale * randsc_unit(randsc_hash(cx, cy, h)), 0);
+                        randsc_unit(randsc_hash(cx, cy, h)), 0);
         return sfaram1(p);
     }
 
-    GSL_SET_COMPLEX(&sfvalue(p), scale * randsc_unit(randsc_hash(cx, cy, h)),
-                    0);
+    GSL_SET_COMPLEX(&sfvalue(p), randsc_unit(randsc_hash(cx, cy, h)), 0);
     return sfaram1(p);
 }
 
@@ -2820,16 +2796,14 @@ sfarg *sfrandsch(sfarg *const p)
     number_t u, v;
     uint64_t h;
 
-    number_t scale;
-    int state = randsc_setup(p, &cx, &cy, &u, &v, &h, &scale);
+    int state = randsc_setup(p, &cx, &cy, &u, &v, &h);
     if (state == RANDSC_STOP) {
         GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
         return sfaram1(p);
     }
     if (state == RANDSC_BEYOND) {
-        GSL_SET_COMPLEX(
-            &sfvalue(p),
-            scale * randsc_unit(randsc_hash(cx, cy, h ^ RANDSCH_SALT)), 0);
+        GSL_SET_COMPLEX(&sfvalue(p),
+                        randsc_unit(randsc_hash(cx, cy, h ^ RANDSCH_SALT)), 0);
         return sfaram1(p);
     }
 
@@ -2854,8 +2828,8 @@ sfarg *sfrandsch(sfarg *const p)
         rz = -rx - ry;
 
     GSL_SET_COMPLEX(&sfvalue(p),
-                    scale * randsc_unit(randsc_hash((int64_t)rx, (int64_t)rz,
-                                                    h ^ RANDSCH_SALT)),
+                    randsc_unit(randsc_hash((int64_t)rx, (int64_t)rz,
+                                            h ^ RANDSCH_SALT)),
                     0);
     return sfaram1(p);
 }
@@ -2885,16 +2859,14 @@ sfarg *sfrandsct(sfarg *const p)
     number_t u, v;
     uint64_t h;
 
-    number_t scale;
-    int state = randsc_setup(p, &cx, &cy, &u, &v, &h, &scale);
+    int state = randsc_setup(p, &cx, &cy, &u, &v, &h);
     if (state == RANDSC_STOP) {
         GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
         return sfaram1(p);
     }
     if (state == RANDSC_BEYOND) {
-        GSL_SET_COMPLEX(
-            &sfvalue(p),
-            scale * randsc_unit(randsc_hash(cx, cy, h ^ RANDSCT_SALT)), 0);
+        GSL_SET_COMPLEX(&sfvalue(p),
+                        randsc_unit(randsc_hash(cx, cy, h ^ RANDSCT_SALT)), 0);
         return sfaram1(p);
     }
 
@@ -2913,9 +2885,9 @@ sfarg *sfrandsct(sfarg *const p)
 
     GSL_SET_COMPLEX(
         &sfvalue(p),
-        scale * randsc_unit(randsc_hash(ia, ib,
-                                        upper ? h ^ RANDSCT_SALT ^ RANDSCT_UPPER
-                                              : h ^ RANDSCT_SALT)),
+        randsc_unit(randsc_hash(ia, ib,
+                                upper ? h ^ RANDSCT_SALT ^ RANDSCT_UPPER
+                                      : h ^ RANDSCT_SALT)),
         0);
     return sfaram1(p);
 }

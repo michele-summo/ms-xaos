@@ -2,7 +2,7 @@
 
 A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Everything the
 original does, it still does; this describes what has been added or changed,
-and why. Version 1.4.
+and why. Version 1.4.1.
 
 ## Two binaries
 
@@ -158,7 +158,7 @@ the bargain.
     poly(z;1;0;0)+c            the Mandelbrot, written out
     poly(z;1;0;0;{0.7,0.2})    z^3 + 0.7+0.2i
 
-**`randsc(seed; size; degradation; kaleidoscope; mode; radius)`** — coherent
+**`randsc(seed; size; degradation; kaleidoscope; mode)`** — coherent
 noise over the point, giving blobs rather than per-pixel snow. `size`
 (default `1+i`) is the average width of a blob along the real axis and its
 height along the imaginary one.
@@ -167,17 +167,7 @@ the iteration proceeds: the
 size is multiplied by it at every pass, component by component, so `0.5+0.2i`
 over `1+i` gives `1+i` on the first pass, then `0.5+0.2i`, then `0.25+0.04i`.
 A zero in either component of either argument returns zero rather than dividing
-by zero. Then come the two kaleidoscope arguments, below, and last `radius`
-(default `4`). Only the seed is required.
-
-**`radius` is read the way `bailout` is read: as the square of a distance**, and
-the field reaches **twice its square root**. So set the two to the same number
-and half of the field is outside the bailout, half of what is left goes on the
-pass after, and the iteration count has something to count — `randsc(7)` written
-alone against a bailout of 4 draws bands. It used to return a value under one,
-which no bailout of 4 could ever let go of, so a bare call drew one flat tone and
-had to be multiplied by hand. Four times the radius is twice the reach, as it is
-for a bailout.
+by zero. The last two are the kaleidoscope, below. Only the seed is required.
 
 **`randscq(...)`** — the same field without the interpolation: a mosaic of flat
 square cells instead of blobs. Same arguments, same meaning.
@@ -264,25 +254,17 @@ comparison.
 
 ### Getting a picture out of the noise
 
-`randsc` reaches twice the square root of its `radius`, which is 4 unless it is
-told otherwise — so a bare call against a bailout of 4 already draws bands, and
-what used to need a multiplier by hand does not:
+`randsc` returns a value in `[0, 1)`. Used alone the iteration never leaves a
+bailout of 4, so nothing escapes and the image is flat. Multiply it, or let it
+perturb an iteration that does escape:
 
-    randsc(13;{0.15,0.15};{0.5,0.5})          brownian motion
-    randscq(13;{0.15,0.15};{0.5,0.5})         scattered squares, shrinking
-
-To perturb an iteration that escapes on its own, ask for a small radius rather
-than multiplying — a radius of `r` reaches `2*sqrt(r)`, so `0.015` reaches about
-a quarter:
-
-    z+randsc(13;{0.35,0.35};{1,1};1;0;0.015)     blobs
-    z+randscp(13;{0.3,0.3};{1,1};1;0;0.015)      irregular polygons
-    z+randsch(13;{0.3,0.3};{1,1};1;0;0.015)      a honeycomb
-    z+randsct(13;{0.3,0.3};{1,1};1;0;0.015)      triangles
-    z^2+c+randsc(13;{0.25,0.25};{1,1};1;0;0.36)  the set itself deformed
-
-Multiplying still works and is shorter when the kaleidoscope is left alone:
-`randsc(13;{0.15,0.15};{0.5,0.5})*0.25` is a quarter of the field as before.
+    z+randsc(13;{0.35,0.35};{1,1})*0.25       blobs
+    randsc(13;{0.15,0.15};{0.5,0.5})*2.5      brownian motion
+    randscq(13;{0.15,0.15};{0.5,0.5})*2.5     scattered squares, shrinking
+    z+randscp(13;{0.3,0.3};{1,1})*0.25        irregular polygons
+    z+randsch(13;{0.3,0.3};{1,1})*0.25        a honeycomb
+    z+randsct(13;{0.3,0.3};{1,1})*0.25        triangles
+    z^2+c+randsc(13;{0.25,0.25};{1,1})*1.2    the set itself deformed
 
 A degradation of 0.5 halves the blobs every pass, so after twenty iterations
 they are a millionth of their size and below a pixel. For a slow fade over a
