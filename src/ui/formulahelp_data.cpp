@@ -154,7 +154,7 @@ const struct formula_help_row formula_help_values[] = {
     {NULL, NULL, NULL, "randsc family: how many wedges the kaleidoscope folds the plane into"},
     {"1", "", "no folding at all, which is what a call that says nothing gets", NULL},
     {"2 or more", "", "that many wedges around the origin, the field taken from one", NULL},
-    {NULL, NULL, NULL, "randsc family: the skew, which turns a cell's value by where in the cell the point stands so that the colouring modes have something to read inside a cell. A turn and not a scaling, so the modulus is untouched and the bailout cannot see it: the figure is the figure whatever the skew. zmag reads the modulus and so stays flat; colour with real, imag, angle or real/imag"},
+    {NULL, NULL, NULL, "randsc family: the skew, which turns a cell's value by where in the cell the point stands so that the colouring modes have something to read inside a cell. A turn and not a scaling, so the modulus is untouched and a circular bailout cannot see it at all, at any skew. A bailout polygon looks at the components instead and does see it, the more so the further its corners stand out past its sides -- nothing at 0.05 but a triangle, a few per cent at 1. zmag reads the modulus and so stays flat; colour with real, imag, angle or real/imag"},
     {"0", "", "the default: the factor is one, the value stays on the real axis and is the number it always was, to the bit", NULL},
     {"0.05 to 1", "", "the value turns across a cell, more with a larger skew; the argument says which way across the cell the turn grows", NULL},
     {"larger", "", "a fuller turn still; nothing is cut at any value of it", NULL},

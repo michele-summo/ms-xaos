@@ -203,13 +203,40 @@ a cell the turn grows and its **modulus** how fast.
   picture.
 
 **A turn and not a scaling, and that is the point.** Scaling moved the modulus
-of the value, and the modulus is exactly what the bailout looks at: a cell whose
-level sat near where the bailout falls came out cut in two by a straight line,
-and the mosaics lost their shapes. A turn leaves the modulus where it is, so the
-escape cannot see the skew at all. Measured over 48400 pixels, at every skew
-from `0.02` to `1.4`: **nought pixels leaving differently, and nought cells
-cut**. There is no trade to make and no small range to stay inside — the figure
-is the figure whatever the skew is set to.
+of the value, and a round bailout looks at exactly that: a cell whose level sat
+near where the bailout falls came out cut in two by a straight line, and the
+mosaics lost their shapes. A turn leaves the modulus where it is.
+
+So **under a circular bailout the skew is free at any strength** — measured over
+40000 pixels, at 0.05, 0.3 and 1: not one pixel leaves differently. A bailout
+polygon is another matter, because it does not look at the modulus but at the
+components, and a turn walks the point round a circle that can cross a side. How
+much it can cross by is how much the shape's corners stand out past its sides,
+and the numbers follow that exactly — the fraction of the picture whose escape
+changes:
+
+| bailout shape | corners over apothem | skew 0.05 | skew 0.3 | skew 1 |
+| --- | --- | --- | --- | --- |
+| circle | 1.00 | **0%** | **0%** | **0%** |
+| octagon | 1.08 | 0.00–0.03% | 0.3–1.1% | 0.6–2.7% |
+| hexagon | 1.15 | 0.00–0.03% | 0.3–1.1% | 2.0–5.0% |
+| square | 1.41 | 0.00–0.03% | 0.3–1.1% | 4.2–8.1% |
+| triangle | 2.00 | 0.3–1.2% | 1.6–4.4% | 1.9–6.6% |
+
+The **number** the bailout is set to moves it as well, and for the same reason:
+what can change side is a point whose modulus falls between the polygon's
+apothem and its corners, and where that ring sits among the cells is what the
+number decides. A hexagon at a skew of 0.3, over the same picture: 0.65 per cent
+at a bailout of 0.64, 1.00 at 1.44, 0.80 at 2.56, 0.69 at 4. A circle at the same
+three: nought, nought, nought.
+
+Read it the useful way round: **a skew of `0.05` already brings every mode to
+full variation**, and at `0.05` nothing but a triangular bailout notices — three
+hundredths of a per cent at worst. Turn the skew up and the pointier shapes begin
+to show it, and moving the bailout moves which cells it shows it on. **If you
+want it free whatever the skew and whatever the bailout, use a circular
+bailout** — there the escape reads the modulus, which is the one thing a turn
+never touches.
 
 What a turn cannot touch is **`zmag`**, which reads the modulus and so stays one
 tone a cell. Colour with something that reads the two components apart instead:
