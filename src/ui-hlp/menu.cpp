@@ -1579,7 +1579,11 @@ void uih_registermenus_i18n(void)
     MENUDIALOG_I("dynamic", NULL, TR("Menu", "Dynamic resolution mode"),
                  "fastmode", MENUFLAG_NOMENU, uih_setfastmode,
                  uih_fastmodedialog);
-    MENUNOPCB_I("ui", "a", TR("Menu", "Autopilot"), "autopilot", 0,
+    /* No shortcut. "a" is one letter from the arrow keys and next to nothing
+     * else, and the autopilot takes the view away from wherever it was left --
+     * pressed by accident there is no getting back to where you were. It stays
+     * on the menu and in the scripting language under the same name. */
+    MENUNOPCB_I("ui", NULL, TR("Menu", "Autopilot"), "autopilot", 0,
                 uih_autopilotsw, uih_autopilotselected);
     MENUSEPARATOR_I("ui");
     MENUNOPCB_I("ui", "v", TR("Menu", "Hide Messages"), "inhibittextoutput", 0,
