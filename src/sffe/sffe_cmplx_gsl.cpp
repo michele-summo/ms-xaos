@@ -1407,67 +1407,6 @@ static number_t randsc_unit(uint64_t x)
     return (number_t)(x >> 11) / (number_t)((uint64_t)1 << 53);
 }
 
-/* Eight directions a cell can lean in, each of length one measured as the sum
- * of its parts, so that a lean across half a cell never moves the value by
- * more than half of what it is given below.
- *
- * Taken from the bottom bits of the hash, which randsc_unit throws away -- it
- * reads from bit eleven up -- so which way a cell leans is independent of how
- * high it stands. Reading them off the top would have made every pale cell
- * lean the same way. */
-static const number_t RANDSC_GX[8] = {1, -1, 0,           0,
-                                      (number_t)1 / 2,    (number_t)-1 / 2,
-                                      (number_t)1 / 2,    (number_t)-1 / 2};
-static const number_t RANDSC_GY[8] = {0, 0, 1,            -1,
-                                      (number_t)1 / 2,    (number_t)1 / 2,
-                                      (number_t)-1 / 2,   (number_t)-1 / 2};
-
-/* A cell's level with a lean of its own across it, from the hash and from
- * where in the cell the point stands, measured from the middle in units of the
- * cell.
- *
- * Flat cells are what made these fields hard to colour: every mode reads one
- * number for the whole of a cell, so zmag and iter+real came out as one tone a
- * cell -- the value truncated, in effect, however smooth the mode. A lean
- * gives each cell a gradient across it while it keeps its own level, which is
- * what the Sierpinski figures do with the pieces they carry a point through,
- * and it is what makes two cells of the same level look different.
- *
- * Three fifths of the range goes to the level and a fifth to the lean, which
- * leaves the whole between nought and one. The offsets are clamped to half a
- * cell: what half a cell means differs between a square, a hexagon, a triangle
- * and a Voronoi cell, and the clamp saves each of them from having to know. */
-static inline number_t randsc_lean(uint64_t k, number_t du, number_t dv)
-{
-    number_t u = randsc_unit(k);
-    number_t d = du * RANDSC_GX[k & 7] + dv * RANDSC_GY[k & 7];
-    if (d > (number_t)1 / 2)
-        d = (number_t)1 / 2;
-    else if (d < (number_t)-1 / 2)
-        d = (number_t)-1 / 2;
-
-    /* The lean is kept on one side of the half-way mark.
-     *
-     * A field that reaches twice the square root of its radius leaves a bailout
-     * of that same number exactly when it is past half its reach, so the half-
-     * way mark is where a cell decides whether it goes. A lean that crossed it
-     * would take half of a cell out and leave the other half in, and the cell
-     * would be cut in two by a straight line -- which is what happened: the
-     * squares, hexagons and triangles came out sliced, the shape broken by the
-     * level line of its own lean.
-     *
-     * So the cell picks its side first, from its level alone, and the level and
-     * the lean are then fitted inside that side. Which cells leave, and on what
-     * pass, is exactly what it was before there was any lean at all; what the
-     * lean does is vary the value within the band, where a colouring mode can
-     * read it and the escape cannot. */
-    number_t side = u < (number_t)1 / 2 ? 0 : (number_t)1 / 2;
-    number_t t = 2 * u - (u < (number_t)1 / 2 ? 0 : 1);
-    return side + ((number_t)3 / 5 * t + (number_t)1 / 5 +
-                   (number_t)2 / 5 * d) /
-                      2;
-}
-
 /* A real seed has to survive being written once and read by two builds:
  * "0.525" lands just below the exact value at long double and just above it at
  * quad, so the two differ around 1e-20 and a hash of them shares nothing.
@@ -1782,38 +1721,17 @@ sfarg *sfrandsc(sfarg *const p)
         return sfaram1(p);
     }
 
-    /* Each corner gives a slope and not a level.
-     *
-     * Interpolating the levels put an extreme of the field on every corner, so
-     * the extremes stood on a square lattice and the eye found it: the blobs
-     * lined up in rows and columns however smooth the interpolation was. With
-     * slopes the field is nought at every corner and its extremes fall between
-     * them, off the lattice, which is what takes the grid out of the picture.
-     *
-     * The fade is the quintic one, flat in the first and the second derivative
-     * at both ends, so neither the value nor its slope creases at a cell edge;
-     * the cubic that was here is flat only in the first. */
-    number_t su = u * u * u * (u * (u * 6 - 15) + 10);
-    number_t sv = v * v * v * (v * (v * 6 - 15) + 10);
+    u = u * u * (3 - 2 * u); /* smoothstep: flat at both ends, so the value */
+    v = v * v * (3 - 2 * v); /* meets its neighbour without a crease */
 
-    uint64_t ka = randsc_hash(cx, cy, h);
-    uint64_t kb = randsc_hash(cx + 1, cy, h);
-    uint64_t kc = randsc_hash(cx, cy + 1, h);
-    uint64_t kd = randsc_hash(cx + 1, cy + 1, h);
-    number_t a = RANDSC_GX[ka & 7] * u + RANDSC_GY[ka & 7] * v;
-    number_t b = RANDSC_GX[kb & 7] * (u - 1) + RANDSC_GY[kb & 7] * v;
-    number_t c = RANDSC_GX[kc & 7] * u + RANDSC_GY[kc & 7] * (v - 1);
-    number_t d = RANDSC_GX[kd & 7] * (u - 1) + RANDSC_GY[kd & 7] * (v - 1);
-    number_t lo = a + (b - a) * su;
-    number_t hi = c + (d - c) * su;
+    number_t a = randsc_unit(randsc_hash(cx, cy, h));
+    number_t b = randsc_unit(randsc_hash(cx + 1, cy, h));
+    number_t c = randsc_unit(randsc_hash(cx, cy + 1, h));
+    number_t d = randsc_unit(randsc_hash(cx + 1, cy + 1, h));
+    number_t lo = a + (b - a) * u;
+    number_t hi = c + (d - c) * u;
 
-    /* The slopes are of length one in the sum of their parts and the offsets
-     * are within a cell, so the field is between minus one and one, and this
-     * puts it where the levels used to be, between nought and one. */
-    GSL_SET_COMPLEX(&sfvalue(p),
-                    scale * ((number_t)1 / 2 +
-                             (number_t)1 / 2 * (lo + (hi - lo) * sv)),
-                    0);
+    GSL_SET_COMPLEX(&sfvalue(p), scale * (lo + (hi - lo) * v), 0);
     return sfaram1(p);
 }
 
@@ -1894,8 +1812,6 @@ sfarg *sfrandscp(sfarg *const p)
     /* Larger than any distance the nine cells can produce. */
     number_t bestd = 16;
     uint64_t besth = 0;
-    /* where the point stands from the seed it belongs to, for the lean */
-    number_t bestx = 0, besty = 0;
 
     for (int j = -1; j <= 1; j++)
         for (int i = -1; i <= 1; i++) {
@@ -1911,16 +1827,10 @@ sfarg *sfrandscp(sfarg *const p)
             if (d < bestd) {
                 bestd = d;
                 besth = hh;
-                bestx = -dx;
-                besty = -dy;
             }
         }
 
-    GSL_SET_COMPLEX(&sfvalue(p),
-                    /* the winning seed can be a whole cell away, so half the
-                     * offset keeps the lean inside its range without a clamp */
-                    scale * randsc_lean(randsc_remix(besth), bestx / 2,
-                                        besty / 2),
+    GSL_SET_COMPLEX(&sfvalue(p), scale * randsc_unit(randsc_remix(besth)),
                     0);
     return sfaram1(p);
 }
@@ -2853,10 +2763,7 @@ sfarg *sfrandscq(sfarg *const p)
         return sfaram1(p);
     }
 
-    GSL_SET_COMPLEX(&sfvalue(p),
-                    scale * randsc_lean(randsc_hash(cx, cy, h),
-                                        u - (number_t)1 / 2,
-                                        v - (number_t)1 / 2),
+    GSL_SET_COMPLEX(&sfvalue(p), scale * randsc_unit(randsc_hash(cx, cy, h)),
                     0);
     return sfaram1(p);
 }
@@ -2946,19 +2853,10 @@ sfarg *sfrandsch(sfarg *const p)
     else
         rz = -rx - ry;
 
-    /* the lean is measured in the hexagon's own axial reckoning, where a cell
-     * runs from minus a half to a half about its middle */
-    GSL_SET_COMPLEX(
-        &sfvalue(p),
-        scale * randsc_lean(randsc_hash((int64_t)rx, (int64_t)rz,
-                                        h ^ RANDSCH_SALT),
-                            /* axial rounding leaves the offset within two
-                             * thirds of a cell, so three quarters of it is
-                             * within a half and the clamp never bites -- a
-                             * clamp inside a cell would crease the lean */
-                            (q - rx) * (number_t)3 / 4,
-                            (r - rz) * (number_t)3 / 4),
-        0);
+    GSL_SET_COMPLEX(&sfvalue(p),
+                    scale * randsc_unit(randsc_hash((int64_t)rx, (int64_t)rz,
+                                                    h ^ RANDSCH_SALT)),
+                    0);
     return sfaram1(p);
 }
 
@@ -3015,10 +2913,9 @@ sfarg *sfrandsct(sfarg *const p)
 
     GSL_SET_COMPLEX(
         &sfvalue(p),
-        scale * randsc_lean(randsc_hash(ia, ib,
+        scale * randsc_unit(randsc_hash(ia, ib,
                                         upper ? h ^ RANDSCT_SALT ^ RANDSCT_UPPER
-                                              : h ^ RANDSCT_SALT),
-                            fa - (number_t)1 / 2, fb - (number_t)1 / 2),
+                                              : h ^ RANDSCT_SALT)),
         0);
     return sfaram1(p);
 }

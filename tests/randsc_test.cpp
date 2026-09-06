@@ -297,85 +297,12 @@ int main(void)
             sprintf(what, "%s declines to compute on a zero", mosaic[m].name);
             check(at(mosaic[m].zero, 0.3, 0.7, 0) == 0, what);
 
-            /* A cell leans.
-             *
-             * These were flat -- one level for the whole of a cell -- and that
-             * is what made them hard to colour: every mode reads one number
-             * for the whole cell, so zmag and iter+real drew one tone a cell
-             * however smooth the mode. Each cell now keeps its own level and
-             * gains a slope across it, so a colouring mode has something to
-             * read inside a cell as well as between two.
-             *
-             * The lean is a straight ramp, so three points in a row a step
-             * apart are evenly spaced -- until a cell edge falls between two
-             * of them, where the level jumps. Walking a line and asking how
-             * often the spacing holds tells the two apart: a ramp with a few
-             * jumps in it, not a staircase and not a straight line. */
-            {
-                int even = 0, jumps = 0;
-                /* a hundredth at a time, so four hundred of them cross four
-                 * cells of the default size rather than staying inside one */
-                number_t walk = (number_t)1 / 100;
-                number_t prev = at(mosaic[m].cells, -1, (number_t)0.7, 0);
-                number_t d0 = at(mosaic[m].cells, -1 + walk, (number_t)0.7, 0) -
-                              prev;
-                for (int i = 2; i < 400; i++) {
-                    number_t x = -1 + walk * i;
-                    number_t v = at(mosaic[m].cells, x, (number_t)0.7, 0);
-                    number_t d = v - prev;
-                    if (nfabs(d - d0) < (number_t)1 / 100000)
-                        even++;
-                    else
-                        jumps++;
-                    d0 = d;
-                    prev = v;
-                }
-                sprintf(what, "%s leans across a cell (%d even, %d jumps)",
-                        mosaic[m].name, even, jumps);
-                check(even > 200 && jumps > 5, what);
-            }
-
-            /* And a cell goes whole, or stays whole.
-             *
-             * A field that reaches twice the square root of its radius leaves a
-             * bailout of that same number when it is past half its reach, so
-             * the half-way mark is where a cell decides. The lean must not
-             * cross it: a lean that did took half a cell out and left the other
-             * half in, and the cell came out cut in two by the level line of
-             * its own lean -- squares, hexagons and triangles sliced, the shape
-             * broken.
-             *
-             * Walking a line: whenever the side changes, the value must jump as
-             * well. A side that changes in the middle of a ramp is a cell being
-             * cut. The default radius is four, so the field reaches four and
-             * the mark is at two. */
-            {
-                int cuts = 0, crossings = 0;
-                number_t walk = (number_t)1 / 100;
-                number_t prev = at(mosaic[m].cells, -1, (number_t)0.43, 0);
-                number_t d0 =
-                    at(mosaic[m].cells, -1 + walk, (number_t)0.43, 0) - prev;
-                int side = prev >= 2;
-                for (int i = 2; i < 800; i++) {
-                    number_t x = -1 + walk * i;
-                    number_t v = at(mosaic[m].cells, x, (number_t)0.43, 0);
-                    number_t d = v - prev;
-                    int now = v >= 2;
-                    if (now != side) {
-                        crossings++;
-                        if (nfabs(d - d0) < (number_t)1 / 100000)
-                            cuts++; /* the side turned inside a ramp */
-                    }
-                    side = now;
-                    d0 = d;
-                    prev = v;
-                }
-                sprintf(what, "%s goes whole (%d crossings, %d cuts)",
-                        mosaic[m].name, crossings, cuts);
-                /* eight units of walk over cells of one, so a handful of
-                 * crossings is what there is to find */
-                check(crossings >= 2 && cuts == 0, what);
-            }
+            /* Flat cells: within one cell the value does not move, where the
+             * interpolated field does. */
+            sprintf(what, "%s is flat across a cell", mosaic[m].name);
+            check(at(mosaic[m].cells, 0.3, 0.7, 0) ==
+                      at(mosaic[m].cells, (number_t)0.3 + step, 0.7, 0),
+                  what);
 
             /* Four ways of cutting the plane, four different fields. */
             for (int n = m + 1; n < nmosaic; n++) {
@@ -406,36 +333,27 @@ int main(void)
          * to match. Without that, changing one letter of a formula changed
          * the scale of the picture by a factor of six from end to end.
          *
-         * Counting the cell edges along a line measures it. A cell leans, so
-         * the value walks a straight ramp inside one and jumps at an edge:
-         * counting the jumps over a length of a hundred counts the edges, and
-         * a cell of unit size puts about one in every unit. Well away from a
-         * sixfold error either way.
+         * Counting the flat regions over an area of 144 measures it: the
+         * count is the area plus whatever the border cuts through, which is
+         * of the order of the perimeter. Well away from a sixfold error.
          */
         for (int m = 0; !failures && m < nmosaic; m++) {
-            int edges = 0;
-            number_t walk = (number_t)1 / 50;
-            number_t prev = at(mosaic[m].cells, 0, (number_t)0.317, 0);
-            number_t d0 =
-                at(mosaic[m].cells, walk, (number_t)0.317, 0) - prev;
-            for (int i = 2; i < 5000; i++) {
-                number_t x = walk * i;
-                number_t v = at(mosaic[m].cells, x, (number_t)0.317, 0);
-                number_t d = v - prev;
-                if (nfabs(d - d0) >= (number_t)1 / 100000)
-                    edges++;
-                d0 = d;
-                prev = v;
-            }
-            /* How many edges a straight line meets per unit differs with
-             * the shape -- a hexagon or a triangle presents more of them to a
-             * horizontal line than a square does -- so the bound is wide. What
-             * it is watching for is a scale wrong by a factor of six, which is
-             * what dropping the area correction between the four shapes would
-             * cost, and that is far outside it either way. */
-            sprintf(what, "%s gives one cell per unit (%d edges over 100)",
-                    mosaic[m].name, edges);
-            check(edges >= 100 && edges <= 450, what);
+            number_t seen[400];
+            int nseen = 0;
+            for (int i = 0; i < 300 && nseen < 400; i++)
+                for (int j = 0; j < 300 && nseen < 400; j++) {
+                    number_t val =
+                        at(mosaic[m].cells, (number_t)i / 25, (number_t)j / 25, 0);
+                    int k;
+                    for (k = 0; k < nseen; k++)
+                        if (seen[k] == val)
+                            break;
+                    if (k == nseen)
+                        seen[nseen++] = val;
+                }
+            sprintf(what, "%s gives one cell per unit square (%d over 144)",
+                    mosaic[m].name, nseen);
+            check(nseen >= 144 && nseen <= 260, what);
         }
     }
 
@@ -551,12 +469,8 @@ int main(void)
                         for (unsigned int n = 0; n < passes; n++) {
                             number_t v = at(f, (number_t)(i % 71) / 23,
                                             (number_t)(i % 59) / 17, n);
-                            /* 2^60, not 2^64: the field reaches twice the
-                             * root of its radius, four by default, and 2^64
-                             * times that does not fit the integer this is
-                             * accumulated in */
                             sum ^= (unsigned long long)((double)v *
-                                                        1152921504606846976.0);
+                                                        18446744073709551616.0);
                             sum *= 1099511628211ULL;
                         }
                         out[i] = sum;
@@ -632,83 +546,6 @@ int main(void)
             check(lr > 40, "the two kaleidoscope modes are two fields");
             check(lo == 0, "a mode that is neither folds the way zero does");
         }
-    }
-
-    /* --- and the fold still holds, now that a cell leans -------------------
-     *
-     * Two questions, and they were not worth asking while a cell was flat. A
-     * fold that met a flat cell could not show a join inside one, and a step
-     * of a hundred-thousandth never left the cell it started in, so neither
-     * question had anything to measure. A field that moves across a cell can
-     * answer both.
-     *
-     * The first is whether the picture still repeats: the field is sampled at
-     * the folded point, so a turn of one wedge must leave every value where it
-     * was. The second is whether it repeats without a seam -- whether the field
-     * moves more across a wedge boundary than it moves over the same distance
-     * anywhere else. It moves less, and it should: the boundary is where the
-     * mirror lies, so the field is even across it and its slope there is
-     * nought.
-     */
-    {
-        static const char *fields[5] = {"randsc", "randscq", "randsch",
-                                        "randsct", "randscp"};
-        static const int wedges[3] = {2, 3, 6};
-        for (int g = 0; g < 5 && !failures; g++)
-            for (int w = 0; w < 3 && !failures; w++)
-                for (int mode = 0; mode <= 1 && !failures; mode++) {
-                    char expr[128];
-                    sprintf(expr, "%s(12;{0.3,0.3};{1,1};%d;%d)", fields[g],
-                            wedges[w], mode);
-                    sffe *f = compile(expr);
-                    if (!f)
-                        break;
-                    double th = 2 * 3.14159265358979323846 / wedges[w];
-                    number_t ct = (number_t)ncos((number_t)th);
-                    number_t st = (number_t)nsin((number_t)th);
-                    /* Off the round numbers: a point that lands exactly on a
-                     * cell edge has its two copies fall on opposite sides of
-                     * it, the field being discontinuous there, and that is a
-                     * property of a mosaic and not of the fold. A couple of
-                     * them are allowed for all the same. */
-                    int apart = 0;
-                    for (int i = 1; i < 200; i++) {
-                        number_t x = (number_t)(i % 17) / 4 - 2 +
-                                     (number_t)137 / 10000;
-                        number_t y = (number_t)(i % 23) / 6 - 2 +
-                                     (number_t)71 / 10000;
-                        if (x * x + y * y < (number_t)1 / 25)
-                            continue; /* the middle, where the fold has no angle */
-                        if (nfabs(at(f, x, y, 0) -
-                                  at(f, x * ct - y * st, x * st + y * ct, 0)) >
-                            (number_t)1 / 1000000000)
-                            apart++;
-                    }
-                    sprintf(what, "%s folds into %d, mirror %d (%d apart)",
-                            fields[g], wedges[w], mode, apart);
-                    check(apart <= 2, what);
-
-                    /* across a wedge boundary against the same step elsewhere */
-                    number_t seam = 0, plain = 0;
-                    number_t eps = (number_t)1 / 100000;
-                    for (int k = 1; k <= 60; k++) {
-                        number_t r = (number_t)3 / 10 + (number_t)3 * k / 200;
-                        for (int e = 0; e < wedges[w]; e++) {
-                            number_t t = (number_t)e * (number_t)th;
-                            seam += nfabs(
-                                at(f, r * ncos(t - eps), r * nsin(t - eps), 0) -
-                                at(f, r * ncos(t + eps), r * nsin(t + eps), 0));
-                            number_t u = t + (number_t)37 * (number_t)th / 100;
-                            plain += nfabs(
-                                at(f, r * ncos(u - eps), r * nsin(u - eps), 0) -
-                                at(f, r * ncos(u + eps), r * nsin(u + eps), 0));
-                        }
-                    }
-                    sprintf(what, "%s has no seam at %d wedges", fields[g],
-                            wedges[w]);
-                    check(seam * 100 < plain, what);
-                    sffe_free(&f);
-                }
     }
 
     /* Orbit traps and stripe averaging.
@@ -1372,16 +1209,11 @@ int main(void)
             const char *name;
             unsigned long long expected[2]; /* 64 bits, 113 bits */
         } golden[] = {
-            /* All five differ between the two precisions now, where the four
-             * flat ones used to agree to the bit: a cell's value follows where
-             * in the cell the point stands, and that is arithmetic in the
-             * number type rather than a hash. randsc was already in this
-             * position, for the same reason. */
-            {"randsc", {0xfc8d3e6549089c29ULL, 0x00c62c666bf104b4ULL}},
-            {"randscq", {0x78b860ca77c94561ULL, 0x4764519b648022b5ULL}},
-            {"randscp", {0x0e5aad2a1b14a6f0ULL, 0x2ef62912689fd07aULL}},
-            {"randsch", {0x879b9eb98f225844ULL, 0xf8e45e7c9bcfd191ULL}},
-            {"randsct", {0xb5fcc205a19f6fbaULL, 0x3e341f1c639bd5c8ULL}},
+            {"randsc", {0x7091894218009046ULL, 0x162a50b5f482b6e3ULL}},
+            {"randscq", {0xded06219d8b9ac00ULL, 0xded06219d8b9ac00ULL}},
+            {"randscp", {0x9fdc5ab3b5d29000ULL, 0x9fdc5ab3b5d29000ULL}},
+            {"randsch", {0x91ae22fc7481bc00ULL, 0x91ae22fc7481bc00ULL}},
+            {"randsct", {0x4890d0b25f22c200ULL, 0x4890d0b25f22c200ULL}},
         };
         const int which = NUMBER_MANTISSA_BITS == 113 ? 1 : 0;
         for (int g = 0; g < 5; g++) {
