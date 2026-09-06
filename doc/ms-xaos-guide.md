@@ -186,72 +186,92 @@ takes half the cell out and leaves the other half in, and the cell comes out
 times.
 
 `skew` does it with the second component instead, and it **turns** the value
-rather than scaling it. How far it turns follows where in the cell the point
-stands: with `du` and `dv` measured from the middle of the cell in units of the
-cell, the value is turned by twice the arc tangent of
-`skew_re*du + skew_im*dv`. So the **argument** of the skew says which way across
-a cell the turn grows and its **modulus** how fast.
+rather than scaling it. How far it turns follows **how far out of the middle of
+its cell** the point stands: with `out` running from nought in the middle to one
+at the edge, the value is turned by twice the arc tangent of
+`skew_re*out + skew_im`.
 
-* At **`0`**, which is what a call that does not name it gets, the turn is
-  nothing, the imaginary part stays at nought, and every value is the number it
-  always was **to the bit** — the golden checksums from before the argument
-  existed pass unchanged, and a saved position renders identically. The `talc`
-  position, three noise calls and a `c` over 345600 values, comes out to the
-  same signature as the build before the argument.
-* Away from nought, the modes that read the two components apart — `real`,
-  `imag`, `angle`, `real / imag` — go from one value to nine hundred over a
-  picture.
+`out` is measured **in the cell's own geometry**, so what the colour draws
+inside a cell is the shape the field is cut into, not a set of lines laid across
+it:
 
-**A turn and not a scaling, and that is the point.** Scaling moved the modulus
-of the value, and a round bailout looks at exactly that: a cell whose level sat
-near where the bailout falls came out cut in two by a straight line, and the
-mosaics lost their shapes. A turn leaves the modulus where it is.
+| field | what the colour draws inside a cell |
+| --- | --- |
+| `randsc` | its own blobs — the turn follows the level, so the contours are the field's |
+| `randscq` | squares, about the middle of the square |
+| `randsch` | hexagons, about the middle of the hexagon |
+| `randsct` | triangles, about the middle of the triangle |
+| `randscp` | rings about the seed the cell was grown from, which is what a Voronoi cell is |
 
-So **under a circular bailout the skew is free at any strength** — measured over
-40000 pixels, at 0.05, 0.3 and 1: not one pixel leaves differently. A bailout
-polygon is another matter, because it does not look at the modulus but at the
-components, and a turn walks the point round a circle that can cross a side. How
-much it can cross by is how much the shape's corners stand out past its sides,
-and the numbers follow that exactly — the fraction of the picture whose escape
-changes:
+The **real part** of the skew is that gradient across a cell. The **imaginary
+part** is a flat turn the whole cell shares: it shifts a cell's colour without
+drawing anything inside it, so `0.4+0.2i` gives the shape's contours and a
+per-cell shift together.
 
-| bailout shape | corners over apothem | skew 0.05 | skew 0.3 | skew 1 |
-| --- | --- | --- | --- | --- |
-| circle | 1.00 | **0%** | **0%** | **0%** |
-| octagon | 1.08 | 0.00–0.03% | 0.3–1.1% | 0.6–2.7% |
-| hexagon | 1.15 | 0.00–0.03% | 0.3–1.1% | 2.0–5.0% |
-| square | 1.41 | 0.00–0.03% | 0.3–1.1% | 4.2–8.1% |
-| triangle | 2.00 | 0.3–1.2% | 1.6–4.4% | 1.9–6.6% |
+A straight ramp was written first — `skew_re*du + skew_im*dv` across the cell —
+and it is what this replaces. It coloured, but it drew the same diagonal,
+vertical or horizontal bands across every cell alike whatever the field was cut
+into, and the bands ruined the picture.
+
+At **`0`**, which is what a call that does not name it gets, the turn is
+nothing, the imaginary part stays at nought, and every value is the number it
+always was **to the bit** — the golden checksums from before the argument
+existed pass unchanged, and a saved position renders identically. The `talc`
+position, three noise calls and a `c` over 345600 values, comes out to the same
+signature as the build before the argument.
+
+**How much colour it gives.** The engine's index is
+`(iter + quantity) * speed + shift`, so a spread of one in the quantity is one
+band's worth at a speed of one. The spread of `imag` inside a cell:
+
+| skew | 0.02 | 0.05 | 0.1 | 0.2 | 0.4 | 0.6 | 1 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `randsc`, `randsct` | 0.08 | 0.21 | 0.43 | 0.83 | 1.5 | 1.9 | 2.1 |
+| the three mosaics | 0.06 | 0.14 | 0.28 | 0.53 | 0.96 | 1.2 | 1.4 |
+
+So **`0.3` to `0.6` is where a band appears at a speed of one**, which is the
+thing these fields were missing. Counting distinct values would say `0.01` is
+enough — nine hundred of them — but a thousand values inside a hundredth of a
+band are all one colour.
+
+**What it costs.** Scaling moved the modulus of the value, and a round bailout
+looks at exactly that: a cell whose level sat near where the bailout falls came
+out cut in two, and the mosaics lost their shapes. A turn leaves the modulus
+where it is, so **under a circular bailout the skew is free at any strength** —
+over 90000 pixels, at 0.05, 0.3 and 1, and over all five fields: not one pixel
+leaves differently.
+
+A bailout polygon is another matter, because it does not read the modulus but
+the components, and a turn walks the value round a circle that can cross a side.
+How far it can cross by is how far the shape's corners stand out past its sides,
+and the numbers follow that — the fraction of the picture whose escape changes,
+over the five fields:
+
+| bailout shape | corners over apothem | skew 0.01 | skew 0.05 | skew 0.3 | skew 1 |
+| --- | --- | --- | --- | --- | --- |
+| circle | 1.00 | **0%** | **0%** | **0%** | **0%** |
+| hexagon | 1.15 | **0%** | 0.0–0.8% | 0.7–2.2% | 0.8–2.4% |
+| square | 1.41 | **0%** | 0.0–1.0% | 0.8–2.8% | 1.2–12.8% |
+| triangle | 2.00 | 0.1–1.3% | 1.0–5.0% | 2.6–6.4% | 7.4–21.6% |
 
 The **number** the bailout is set to moves it as well, and for the same reason:
-what can change side is a point whose modulus falls between the polygon's
+what can change side is a value whose modulus falls between the polygon's
 apothem and its corners, and where that ring sits among the cells is what the
-number decides. A hexagon at a skew of 0.3, over the same picture: 0.65 per cent
-at a bailout of 0.64, 1.00 at 1.44, 0.80 at 2.56, 0.69 at 4. A circle at the same
-three: nought, nought, nought.
+number decides.
 
-Read it the useful way round. **The useful range is `0.02` to `0.05`**, and
-there is nothing to gain by going past it: at `0.05` every colouring mode is
-already at full variation — one value to nine hundred over a picture — and a
-square or hexagonal bailout shows **no change at all**, a triangular one three
-tenths of a per cent. What costs is turning it up. A skew of `2+2i` turns the
-value by 126 degrees at the edge of a cell, forty times what is needed, and
-moves two to seven per cent of the picture under a bailout that is not round.
+So the two wants pull against each other under a polygon, and there is no
+arranging otherwise: the escape reads the two components of the value and so
+does the colouring, so anything that gives the colour something to read is
+something the escape can see. **Pair the skew with a circular bailout** and it
+costs nothing at any strength. Under a polygon, either take the few per cent or
+keep the skew at `0.05` and raise the colour speed instead.
 
-**If you want it free whatever the skew, use a circular bailout** — there the
-escape reads the modulus, which is the one thing a turn never touches. Under any
-other shape it cannot be made free at a large skew, and not for want of trying:
-the escape reads the two components of the value and so does the colouring, so
-anything that gives the colour something to read is something the escape can
-see. A small skew is the answer, not a cleverer one.
-
-What a turn cannot touch is **`zmag`**, which reads the modulus and so stays one
-tone a cell. Colour with something that reads the two components apart instead:
-`iter + real`, `iter + imag`, `angle`, `real / imag` outside, and `real` or
-`real / imag` in the incolouring.
+What a turn cannot touch is **`zmag`**, which reads the modulus. Colour with
+something that reads the two components apart: `iter + real`, `iter + imag`,
+`angle`, `real / imag` outside, and `real` or `real / imag` in the incolouring.
 
 Two things follow. The value is complex while the skew is not nought, so
-`randsc(7;;;;;0.05)*z` turns `z` as well as scaling it. And the kaleidoscope
+`randsc(7;;;;;0.4)*z` turns `z` as well as scaling it. And the kaleidoscope
 folds either way: measured over five fields, two, three, five and six wedges and
 both mirrors, a turn of one wedge leaves every value where it was.
 

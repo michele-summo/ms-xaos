@@ -1421,31 +1421,57 @@ static number_t randsc_unit(uint64_t x)
  * out cut in two. That was tried twice and cut the mosaics both times.
  *
  * The skew does it with the second component, and does it by turning the value
- * rather than by scaling it. How far it turns follows where in the cell the
- * point stands: t = skew_re*du + skew_im*dv, with du and dv measured from the
- * middle of the cell in units of the cell, and the value is turned by twice the
- * arc tangent of t. So the argument of the skew says which way across a cell
- * the turn grows and its modulus how fast.
+ * rather than by scaling it. How far it turns follows how far out of the middle
+ * of its cell the point stands -- t = skew_re*out + skew_im, where out runs from
+ * nought at the middle to one at the edge -- and the value is turned by twice
+ * the arc tangent of t.
+ *
+ * Out is measured in the cell's own geometry, so the colour follows the shape
+ * the field is cut into rather than cutting across it: squares get square
+ * contours, hexagons hexagonal ones, triangles triangular, a Voronoi cell rings
+ * about its own seed, and the smooth field follows its own blobs. A straight
+ * ramp was tried first and drew diagonal, vertical or horizontal bands across
+ * every cell alike -- the same lines in the same direction whatever the field
+ * was cut into, which is not a picture of anything.
+ *
+ * The real part of the skew is that gradient and the imaginary part is a turn
+ * the whole cell shares, which shifts its colour without drawing anything
+ * across it.
  *
  * A turn and not a scaling, which is what this was first written as. Scaling
- * moved the modulus of the value, and the modulus is exactly what the bailout
- * looks at: a cell whose level sat near where the bailout falls came out cut in
- * two, and the mosaics lost their shapes. A turn leaves the modulus where it
- * is, so the escape cannot see it at all -- measured over 48400 pixels, at
- * every skew tried, from 0.02 to 1.4: nought pixels leaving differently and
- * nought cells cut. What was a trade is not one any more.
+ * moved the modulus of the value, and a round bailout looks at exactly that: a
+ * cell whose level sat near where the bailout falls came out cut in two, and
+ * the mosaics lost their shapes. A turn leaves the modulus where it is, so
+ * under a circular bailout the skew is free at any strength -- measured over
+ * 90000 pixels, at 0.05, 0.3 and 1, over all five fields: not one pixel leaves
+ * differently.
+ *
+ * A bailout polygon reads the components instead of the modulus, and a turn
+ * walks the value round a circle that can cross a side, by as much as the
+ * shape's corners stand out past them. So there it does move which cells leave:
+ * at a skew of 0.3, seven tenths to two and a half per cent of the picture
+ * under a hexagon or a square, two and a half to six and a half under a
+ * triangle. That cannot be arranged away -- the escape reads the two components
+ * and so does the colouring, so anything the colour can read the escape can see
+ * as well. A circular bailout is the way to have it for nothing.
  *
  * (1 + it)^2 / (1 + t^2) is the cosine and the sine of that turn without any
  * trigonometry: its modulus is one exactly, and one to the last bit the single
  * division leaves. A skew of nought gives t = 0 and a factor of exactly one,
  * with no arithmetic done at all, so every value is the number it always was.
  *
+ * How much colour it gives is what the skew is worth setting by. The engine's
+ * index is (iter + quantity) * speed + shift, so a spread of one in the
+ * quantity is a band at a speed of one, and inside a cell imag spreads by 0.14
+ * at a skew of 0.05, 0.53 at 0.2, and about one at 0.4 to 0.6. Counting
+ * distinct values would call 0.01 enough, at nine hundred of them, but a
+ * thousand values inside a hundredth of a band are all one colour.
+ *
  * What is left flat is zmag, which reads the modulus and so is the one thing a
- * turn cannot touch. The modes that read the two components apart -- real,
- * imag, angle, real over imag -- go from one value to nine hundred over a
- * picture. */
-static inline void randsc_skewed(uint64_t k, number_t du, number_t dv,
-                                 cmplx skew, number_t *re, number_t *im)
+ * turn cannot touch. Colour with the modes that read the two components
+ * apart -- real, imag, angle, real over imag. */
+static inline void randsc_skewed(uint64_t k, number_t out, cmplx skew,
+                                 number_t *re, number_t *im)
 {
     number_t level = randsc_unit(k);
     number_t sr = GSL_REAL(skew), si = GSL_IMAG(skew);
@@ -1455,7 +1481,7 @@ static inline void randsc_skewed(uint64_t k, number_t du, number_t dv,
         *im = 0;
         return;
     }
-    number_t t = sr * du + si * dv;
+    number_t t = sr * out + si;
     number_t q = 1 + t * t;
     *re = level * (1 - t * t) / q;
     *im = level * 2 * t / q;
@@ -1776,14 +1802,11 @@ sfarg *sfrandsc(sfarg *const p)
         return sfaram1(p);
     }
 
-    /* Where in the cell the point stands, for a field that has no cell edges
-     * to speak of. Taking the fraction alone would jump from half to minus half
-     * at every lattice line and draw the grid this field is at pains not to
-     * show; the fraction less its own smoothstep is nought at both ends and so
-     * meets itself across a line. It only reaches a tenth either way, so it is
-     * opened out to the half the mosaics use. */
-    number_t du = 5 * (u - su), dv = 5 * (v - sv);
-    number_t t = GSL_REAL(skew) * du + GSL_IMAG(skew) * dv;
+    /* This field has no cell edges to follow, and what it does have is its own
+     * blobs: taking the level itself as the measure puts the turn's contours on
+     * the field's contours, so the colour follows the shape that is there. It
+     * is continuous across a lattice line for the same reason the level is. */
+    number_t t = GSL_REAL(skew) * level + GSL_IMAG(skew);
     number_t q = 1 + t * t;
     GSL_SET_COMPLEX(&sfvalue(p), level * (1 - t * t) / q, level * 2 * t / q);
     return sfaram1(p);
@@ -1867,10 +1890,6 @@ sfarg *sfrandscp(sfarg *const p)
     /* Larger than any distance the nine cells can produce. */
     number_t bestd = 16;
     uint64_t besth = 0;
-    /* which of the nine the seed came from; the offset is worked out from it
-     * afterwards rather than carried through the loop, two integers being
-     * cheaper to keep than two of a type that is sixteen bytes wide */
-    int bi = 0, bj = 0;
 
     for (int j = -1; j <= 1; j++)
         for (int i = -1; i <= 1; i++) {
@@ -1886,26 +1905,16 @@ sfarg *sfrandscp(sfarg *const p)
             if (d < bestd) {
                 bestd = d;
                 besth = hh;
-                bi = i;
-                bj = j;
             }
         }
 
+    /* how far from the seed it belongs to, squared and already worked out by
+     * the search above: a Voronoi cell is the set of points nearest that seed,
+     * so its own reckoning of distance is the distance to it, and the contours
+     * are rings about the seed */
     number_t pre_, pim_;
-    number_t bestx = 0, besty = 0;
-    if (GSL_REAL(skew) != 0 || GSL_IMAG(skew) != 0) {
-        /* where the point stands from the seed it belongs to, from that seed's
-         * own hash. A seed can be most of a cell away, so half of it keeps the
-         * skew in the range the other four give it. */
-        number_t fx = RANDSCP_JITTER_LOW +
-                      RANDSCP_JITTER_SPAN * randsc_unit32((uint32_t)besth);
-        number_t fy = RANDSCP_JITTER_LOW +
-                      RANDSCP_JITTER_SPAN *
-                          randsc_unit32((uint32_t)(besth >> 32));
-        bestx = (u - (number_t)bi - fx) / 2;
-        besty = (v - (number_t)bj - fy) / 2;
-    }
-    randsc_skewed(randsc_remix(besth), bestx, besty, skew, &pre_, &pim_);
+    number_t pd = 4 * bestd;
+    randsc_skewed(randsc_remix(besth), pd > 1 ? 1 : pd, skew, &pre_, &pim_);
     GSL_SET_COMPLEX(&sfvalue(p), pre_, pim_);
     return sfaram1(p);
 }
@@ -2841,8 +2850,10 @@ sfarg *sfrandscq(sfarg *const p)
      * leaves it where it has always been. See randsc_skewed. */
     cmplx skew = sfarg_or(p, 6, 0, 0);
     number_t qre, qim;
-    randsc_skewed(randsc_hash(cx, cy, h), u - (number_t)1 / 2,
-                  v - (number_t)1 / 2, skew, &qre, &qim);
+    /* the larger of the two distances from the middle, which draws squares */
+    number_t qu = nfabs(u - (number_t)1 / 2), qv = nfabs(v - (number_t)1 / 2);
+    randsc_skewed(randsc_hash(cx, cy, h), 2 * (qu > qv ? qu : qv), skew, &qre,
+                  &qim);
     GSL_SET_COMPLEX(&sfvalue(p), qre, qim);
     return sfaram1(p);
 }
@@ -2935,11 +2946,13 @@ sfarg *sfrandsch(sfarg *const p)
      * leaves it where it has always been. See randsc_skewed. */
     cmplx skew = sfarg_or(p, 6, 0, 0);
     number_t hre, him;
-    /* axial rounding leaves the offset within two thirds of a cell, so three
-     * quarters of it sits in the half the others use */
+    /* how far out of the hexagon's middle, in the hexagon's own reckoning:
+     * half the sum of the three cube coordinates' absolute values, which is
+     * one at an edge and draws hexagonal contours */
+    number_t ha = q - rx, hb = r - rz;
+    number_t hd = (nfabs(ha) + nfabs(hb) + nfabs(ha + hb));
     randsc_skewed(randsc_hash((int64_t)rx, (int64_t)rz, h ^ RANDSCH_SALT),
-                  (q - rx) * (number_t)3 / 4, (r - rz) * (number_t)3 / 4, skew,
-                  &hre, &him);
+                  hd > 1 ? 1 : hd, skew, &hre, &him);
     GSL_SET_COMPLEX(&sfvalue(p), hre, him);
     return sfaram1(p);
 }
@@ -2998,10 +3011,21 @@ sfarg *sfrandsct(sfarg *const p)
      * leaves it where it has always been. See randsc_skewed. */
     cmplx skew = sfarg_or(p, 6, 0, 0);
     number_t tre, tim;
+    /* the three shares of the triangle the point stands in: the smallest of
+     * them is nought on an edge and a third at the middle, so one less three
+     * times it runs from nought in the middle to one at an edge, and its
+     * contours are triangles */
+    number_t s1 = upper ? 1 - fa : fa;
+    number_t s2 = upper ? 1 - fb : fb;
+    number_t s3 = 1 - s1 - s2;
+    number_t sm = s1 < s2 ? s1 : s2;
+    if (s3 < sm)
+        sm = s3;
+    number_t td = 1 - 3 * sm;
     randsc_skewed(randsc_hash(ia, ib,
                               upper ? h ^ RANDSCT_SALT ^ RANDSCT_UPPER
                                     : h ^ RANDSCT_SALT),
-                  fa - (number_t)1 / 2, fb - (number_t)1 / 2, skew, &tre, &tim);
+                  td < 0 ? 0 : (td > 1 ? 1 : td), skew, &tre, &tim);
     GSL_SET_COMPLEX(&sfvalue(p), tre, tim);
     return sfaram1(p);
 }
