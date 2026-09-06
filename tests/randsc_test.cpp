@@ -335,6 +335,48 @@ int main(void)
                 check(even > 200 && jumps > 5, what);
             }
 
+            /* And a cell goes whole, or stays whole.
+             *
+             * A field that reaches twice the square root of its radius leaves a
+             * bailout of that same number when it is past half its reach, so
+             * the half-way mark is where a cell decides. The lean must not
+             * cross it: a lean that did took half a cell out and left the other
+             * half in, and the cell came out cut in two by the level line of
+             * its own lean -- squares, hexagons and triangles sliced, the shape
+             * broken.
+             *
+             * Walking a line: whenever the side changes, the value must jump as
+             * well. A side that changes in the middle of a ramp is a cell being
+             * cut. The default radius is four, so the field reaches four and
+             * the mark is at two. */
+            {
+                int cuts = 0, crossings = 0;
+                number_t walk = (number_t)1 / 100;
+                number_t prev = at(mosaic[m].cells, -1, (number_t)0.43, 0);
+                number_t d0 =
+                    at(mosaic[m].cells, -1 + walk, (number_t)0.43, 0) - prev;
+                int side = prev >= 2;
+                for (int i = 2; i < 800; i++) {
+                    number_t x = -1 + walk * i;
+                    number_t v = at(mosaic[m].cells, x, (number_t)0.43, 0);
+                    number_t d = v - prev;
+                    int now = v >= 2;
+                    if (now != side) {
+                        crossings++;
+                        if (nfabs(d - d0) < (number_t)1 / 100000)
+                            cuts++; /* the side turned inside a ramp */
+                    }
+                    side = now;
+                    d0 = d;
+                    prev = v;
+                }
+                sprintf(what, "%s goes whole (%d crossings, %d cuts)",
+                        mosaic[m].name, crossings, cuts);
+                /* eight units of walk over cells of one, so a handful of
+                 * crossings is what there is to find */
+                check(crossings >= 2 && cuts == 0, what);
+            }
+
             /* Four ways of cutting the plane, four different fields. */
             for (int n = m + 1; n < nmosaic; n++) {
                 int alike = 0;
@@ -1336,10 +1378,10 @@ int main(void)
              * number type rather than a hash. randsc was already in this
              * position, for the same reason. */
             {"randsc", {0xfc8d3e6549089c29ULL, 0x00c62c666bf104b4ULL}},
-            {"randscq", {0xfad0625a657cd6eaULL, 0x1bb922519afa9cd7ULL}},
-            {"randscp", {0x14572402d58c0078ULL, 0x23d0da7d5b570e27ULL}},
-            {"randsch", {0x7996de8410e76ddaULL, 0x0e36aaadcf364583ULL}},
-            {"randsct", {0xfff8ca946ff6b314ULL, 0xdd4071d14f7c677aULL}},
+            {"randscq", {0x78b860ca77c94561ULL, 0x4764519b648022b5ULL}},
+            {"randscp", {0x0e5aad2a1b14a6f0ULL, 0x2ef62912689fd07aULL}},
+            {"randsch", {0x879b9eb98f225844ULL, 0xf8e45e7c9bcfd191ULL}},
+            {"randsct", {0xb5fcc205a19f6fbaULL, 0x3e341f1c639bd5c8ULL}},
         };
         const int which = NUMBER_MANTISSA_BITS == 113 ? 1 : 0;
         for (int g = 0; g < 5; g++) {

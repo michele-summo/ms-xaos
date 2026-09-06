@@ -1439,13 +1439,33 @@ static const number_t RANDSC_GY[8] = {0, 0, 1,            -1,
  * and a Voronoi cell, and the clamp saves each of them from having to know. */
 static inline number_t randsc_lean(uint64_t k, number_t du, number_t dv)
 {
+    number_t u = randsc_unit(k);
     number_t d = du * RANDSC_GX[k & 7] + dv * RANDSC_GY[k & 7];
     if (d > (number_t)1 / 2)
         d = (number_t)1 / 2;
     else if (d < (number_t)-1 / 2)
         d = (number_t)-1 / 2;
-    return (number_t)3 / 5 * randsc_unit(k) + (number_t)1 / 5 +
-           (number_t)2 / 5 * d;
+
+    /* The lean is kept on one side of the half-way mark.
+     *
+     * A field that reaches twice the square root of its radius leaves a bailout
+     * of that same number exactly when it is past half its reach, so the half-
+     * way mark is where a cell decides whether it goes. A lean that crossed it
+     * would take half of a cell out and leave the other half in, and the cell
+     * would be cut in two by a straight line -- which is what happened: the
+     * squares, hexagons and triangles came out sliced, the shape broken by the
+     * level line of its own lean.
+     *
+     * So the cell picks its side first, from its level alone, and the level and
+     * the lean are then fitted inside that side. Which cells leave, and on what
+     * pass, is exactly what it was before there was any lean at all; what the
+     * lean does is vary the value within the band, where a colouring mode can
+     * read it and the escape cannot. */
+    number_t side = u < (number_t)1 / 2 ? 0 : (number_t)1 / 2;
+    number_t t = 2 * u - (u < (number_t)1 / 2 ? 0 : 1);
+    return side + ((number_t)3 / 5 * t + (number_t)1 / 5 +
+                   (number_t)2 / 5 * d) /
+                      2;
 }
 
 /* A real seed has to survive being written once and read by two builds:
