@@ -154,15 +154,15 @@ const struct formula_help_row formula_help_values[] = {
     {NULL, NULL, NULL, "randsc family: how many wedges the kaleidoscope folds the plane into"},
     {"1", "", "no folding at all, which is what a call that says nothing gets", NULL},
     {"2 or more", "", "that many wedges around the origin, the field taken from one", NULL},
+    {NULL, NULL, NULL, "randsc family: which mirror the kaleidoscope folds with"},
+    {"0", "", "the far half of each wedge mirrors the near half, so a wedge is symmetric about its bisector", NULL},
+    {"1", "", "the same the other way about, the near half mirroring the far one", NULL},
+    {"anything else", "", "folds the way 0 does", NULL},
     {NULL, NULL, NULL, "randsc family: the skew, which turns a cell's value by how far out of the middle of its cell the point stands, so that the colouring modes have something to read inside a cell. It is measured in the cell's own geometry, so the colour follows the shape the field is cut into: squares in randscq, hexagons in randsch, triangles in randsct, each cell's own polygon in randscp, and its own blobs in randsc. The real part is that gradient, the imaginary part a flat turn the whole cell shares. A turn and not a scaling, so the modulus is untouched and a circular bailout cannot see it at all, at any skew; a polygon reads the components instead and does see it, the more so the further its corners stand out past its sides. zmag reads the modulus and so stays flat; colour with real, imag, angle or real/imag"},
     {"0", "", "the default: no turn at all, the value stays on the real axis and is the number it always was, to the bit", NULL},
     {"0.05", "", "a seventh of a colour band across a cell: shows at a colour speed of about 8, and costs nothing under a circular, square or hexagonal bailout", NULL},
     {"0.3 to 0.6", "", "about one band across a cell, which is what shows at a colour speed of 1. Free under a circular bailout; one to three per cent of the picture changes which cells leave under a polygon", NULL},
     {"larger", "", "no more colour to speak of past 1, and more of the picture moving under a polygonal bailout. Pair a large skew with a circular bailout", NULL},
-    {NULL, NULL, NULL, "randsc family: which mirror the kaleidoscope folds with"},
-    {"0", "", "the far half of each wedge mirrors the near half, so a wedge is symmetric about its bisector", NULL},
-    {"1", "", "the same the other way about, the near half mirroring the far one", NULL},
-    {"anything else", "", "folds the way 0 does", NULL},
     {NULL, NULL, NULL, NULL}};
 
 /* The variables the engine registers before parsing a user formula; see the
