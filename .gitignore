@@ -61,3 +61,6 @@ qrc_*
 # Mac stuff
 .DS_Store
 build/
+
+# the bundle tools/ms-release builds
+tools/ms-xaos-*-windows-x64.zip
