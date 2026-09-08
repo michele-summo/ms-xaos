@@ -281,6 +281,12 @@ extern int iters2, guessed2, unguessed2, total2;
 
 void set_formula(fractal_context *, int);
 void set_fractalc(fractal_context *, struct image *img);
+
+/* The cell of the palette one point of the plane is drawn from, or nought for
+ * the inside colour, which is no cell. Returns 0 when it cannot be had. See
+ * fractal.cpp. */
+int fractal_palette_cell(fractal_context *context, struct image *img,
+                         number_t x, number_t y, int *cell);
 void fractalc_resize_to(fractal_context *, float, float);
 void update_view(fractal_context *);
 void free_fractalc(fractal_context *);

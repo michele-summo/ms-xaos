@@ -284,7 +284,11 @@ void MainWindow::processEvents(bool wait)
     int mousey = widget->mousePosition().y();
     /* While a rectangle is being dragged the engine must not see the button,
      * or it would zoom continuously underneath the selection. */
-    int buttons = uih_selectionzoom_active(uih) ? 0 : mouseButtons();
+    /* The probe and the selection both take the click for themselves; the
+     * engine must not also read it as a drag. */
+    int buttons = (uih_selectionzoom_active(uih) || uih_palettepick_active(uih))
+                      ? 0
+                      : mouseButtons();
     int key = keyCombination();
     tl_update_time();
     assert(!((key) & ~(KEYLEFT | KEYRIGHT | KEYUP | KEYDOWN)) &&

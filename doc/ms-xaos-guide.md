@@ -82,6 +82,39 @@ two parts of a complex number. That is gone. A semicolon is now refused where it
 stands — *Invalid operator: ;* — and the comma is the separator throughout, as
 it is everywhere else in the syntax.
 
+### The palette probe
+
+**View → Palette probe (click a point)** turns the pointer into a probe: click
+anywhere on the fractal and the message line says **where in the palette that
+point was drawn from**, as a number rather than as a colour —
+*Palette place 12.375*, and nothing else.
+
+The palette editor lays **31 colours** down, and the palette is built by walking
+from each to the next **eight cells at a time**. So the number is the cell over
+eight: `12.000` is exactly the editor's twelfth colour, `12.375` three eighths
+of the way from the twelfth to the thirteenth. A cell is an eighth of a colour,
+finer than anyone reads off the editor.
+
+* With the **custom palette** in use the number is brought round to **`0` to
+  `31`**, which is the editor's own numbering.
+* With any other palette it is **left where it falls and runs far past 31** — a
+  palette of 65534 cells reaches 8191. The number out of range is what says the
+  palette is not the one the editor draws.
+* A point that took the **inside colour** reads *Palette place none*: that
+  colour is one flat tone no cell of the palette stands for.
+
+What it is for is less "what colour is this" than **which part of the palette
+the picture actually uses**, and the answer is often sobering. With the plain
+`iter` colouring at 60 iterations the cells run 1 to 59 — `0.125` to `7.375` —
+so the picture never touches the editor's colours 8 to 30 and editing them
+changes nothing. A colouring that spreads, `iter + real` say, walks the whole
+ring instead, several times over.
+
+It reads the point rather than the screen, so it is exact: the same colour can
+sit in two cells, and a truecolour picture blends two neighbouring cells
+together, so no colour names a cell of its own. Like the selection zoom, the
+probe hands the pointer back to fast julia mode while that is running.
+
 **Under the bar there is a line saying what the call you are in takes**, with
 the argument you are writing in bold. Put the cursor inside `randsc(` and it
 reads *randsc(**seed**, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1],

@@ -1724,6 +1724,85 @@ int uih_selectionzoom_active(uih_context *c)
     return uih_selectionzoom_mode && c != NULL && !c->juliamode;
 }
 
+/* --- the palette probe ----------------------------------------------------
+ *
+ * Click a point and it says where in the palette that point was drawn from,
+ * as one number rather than as a colour.
+ *
+ * A colour cannot answer the question. The palette editor lays thirty-one
+ * colours down and the palette is built by walking between them eight cells at
+ * a time, so a colour tells you what it looks like and not which of the
+ * thirty-one it came from -- and with the count colouring a picture may never
+ * reach past the first few of them, which is worth being able to see rather
+ * than guess. fractal_palette_cell works the point out again and hands back
+ * the cell; here it is turned into the number and put into words.
+ *
+ * The number is the cell over eight: whole at one of the editor's colours, and
+ * between two of them in between. It is reduced modulo thirty-one only when
+ * the custom palette is the one in use. Otherwise it is left as it is and runs
+ * far past thirty-one, which is how it says the palette is somebody else's:
+ * a palette of 65534 cells reaches 8191.
+ */
+int uih_palettepick_mode = 0;
+
+void uih_palettepick(uih_context *c)
+{
+    uih_palettepick_mode = !uih_palettepick_mode;
+    /* as for the selection: whatever the continuous zoom had built up stops
+     * here, or the view would drift under the point being probed */
+    c->step = 0;
+    uih_updatemenus(c, "palettepick");
+}
+
+int uih_palettepickenabled(uih_context *) { return uih_palettepick_mode; }
+
+/* Whether the click belongs to the probe right now. Fast julia holds the
+ * pointer for itself, the way it does for the selection. */
+int uih_palettepick_active(uih_context *c)
+{
+    return uih_palettepick_mode && c != NULL && !c->juliamode;
+}
+
+void uih_palettepick_at(uih_context *c, int x, int y)
+{
+    number_t cr, ci;
+    int cell = 0;
+    char s[256];
+
+    if (c == NULL || c->fcontext == NULL || c->zengine == NULL ||
+        c->zengine->image == NULL)
+        return;
+
+    /* The same mapping the selection zoom uses, so the two agree about where a
+     * click landed however the view is turned or filtered. */
+    uih_getcoord(c, x, y, &cr, &ci);
+
+    if (!fractal_palette_cell(c->fcontext, c->zengine->image, cr, ci, &cell)) {
+        uih_error(c, TR("Error", "The palette cannot be read here"));
+        return;
+    }
+
+    if (cell <= 0) {
+        /* pixels[0], the inside colour: one flat tone that no cell of the
+         * palette stands for */
+        uih_message(c, TR("Message", "Palette place none"));
+        return;
+    }
+
+    {
+        double place = cell / 8.0;
+        /* Round the ring only when the custom palette is the one drawing it.
+         * Under any other palette the number is left where it falls and runs
+         * far past thirty-one, which is what says the palette is not the one
+         * the editor lays out. */
+        if (c->palettepickerenabled)
+            place -= 31.0 * floor(place / 31.0);
+        sprintf(s, TR("Message", "Palette place %.3f"), place);
+        uih_message(c, s);
+    }
+}
+
+
 /*main uih loop */
 
 int uih_update(uih_context *c, int mousex, int mousey, int mousebuttons)

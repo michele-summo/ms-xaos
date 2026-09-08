@@ -1266,6 +1266,9 @@ void uih_registermenus_i18n(void)
     MENUNOPCB_I("ui", NULL, TR("Menu", "Selection zoom (drag a rectangle)"),
                 "selectionzoom", MENUFLAG_INTERRUPT | MENUFLAG_NOPLAY,
                 uih_selectionzoom, uih_selectionzoomenabled);
+    MENUNOPCB_I("ui", NULL, TR("Menu", "Palette probe (click a point)"),
+                "palettepick", MENUFLAG_INTERRUPT | MENUFLAG_NOPLAY,
+                uih_palettepick, uih_palettepickenabled);
     MENUNOP_I("ui", NULL, TR("Menu", "Zoom in 2x"), "zoomin2",
               MENUFLAG_INTERRUPT, uih_zoomin2);
     MENUNOP_I("ui", NULL, TR("Menu", "Zoom in 10x"), "zoomin10",

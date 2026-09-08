@@ -561,6 +561,14 @@ void uih_selectionzoom(uih_context *c);
 int uih_selectionzoom_active(uih_context *c);
 int uih_selectionzoomenabled(uih_context *c);
 extern int uih_selectionzoom_mode;
+
+/* The palette probe: a click says where in the palette that point was drawn
+ * from, as a number rather than as a colour. See ui_helper.cpp. */
+void uih_palettepick(uih_context *c);
+int uih_palettepick_active(uih_context *c);
+int uih_palettepickenabled(uih_context *c);
+void uih_palettepick_at(uih_context *c, int x, int y);
+extern int uih_palettepick_mode;
 void uih_undo(uih_context *c);
 void uih_redo(uih_context *c);
 

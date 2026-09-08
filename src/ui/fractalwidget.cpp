@@ -126,6 +126,15 @@ QRectF FractalWidget::selection() const
 void FractalWidget::mousePressEvent(QMouseEvent *event)
 {
     m_mousePosition = event->pos();
+    if (uih_palettepick_active(m_uih) && event->button() == Qt::LeftButton) {
+        /* Into device pixels, which is what the engine measures the image in,
+         * the same way the selection hands its rectangle over. */
+        const qreal ratio = devicePixelRatioF();
+        uih_palettepick_at(m_uih, qRound(event->position().x() * ratio),
+                           qRound(event->position().y() * ratio));
+        event->accept();
+        return;
+    }
     if (uih_selectionzoom_active(m_uih) &&
         event->button() == Qt::LeftButton) {
         m_selectionStart = event->pos();
