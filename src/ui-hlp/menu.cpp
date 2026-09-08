@@ -1478,40 +1478,6 @@ void uih_registermenus_i18n(void)
     SUBMENU_I("fractal", "f", TR("Menu", "Incoloring mode"), "mincoloring");
     SUBMENU_I("fractal", "c", TR("Menu", "Outcoloring mode"), "moutcoloring");
 
-    /* The fractional Brownian motion, a menu of its own on each side: the
-     * three modes that read it and the five numbers it is made of.
-     *
-     * The shortnames are the ones uih_setincoloringmode and
-     * uih_setoutcoloringmode build when they tell the menus which mode is
-     * chosen -- "in23", "out18" -- so these tick and untick with the rest. */
-    SUBMENU_I("mothincoloring", NULL,
-              TR("Menu", "Fractional Brownian Motion"), "mincolorfbm");
-    MENUINTRB_I("mincolorfbm", NULL, TR("Menu", "fbm"), "in23",
-                UI | MENUFLAG_INTERRUPT, uih_setincoloringmode,
-                INCOLORING_FBM, uih_selectedincoloring);
-    MENUINTRB_I("mincolorfbm", NULL, TR("Menu", "fbm + zmag"), "in24",
-                UI | MENUFLAG_INTERRUPT, uih_setincoloringmode,
-                INCOLORING_FBM_ZMAG, uih_selectedincoloring);
-    MENUINTRB_I("mincolorfbm", NULL, TR("Menu", "fbm + decomposition"), "in25",
-                UI | MENUFLAG_INTERRUPT, uih_setincoloringmode,
-                INCOLORING_FBM_DECOMP, uih_selectedincoloring);
-    MENUCDIALOG_I("mincolorfbm", NULL, TR("Menu", "Settings"), "infbmset",
-                  MENUFLAG_INTERRUPT, uih_setinfbm, uih_getinfbmdialog);
-
-    SUBMENU_I("mothoutcoloring", NULL,
-              TR("Menu", "Fractional Brownian Motion"), "moutcolorfbm");
-    MENUINTRB_I("moutcolorfbm", NULL, TR("Menu", "fbm + smooth"), "out18",
-                UI | MENUFLAG_INTERRUPT, uih_setoutcoloringmode,
-                OutColormodeType::ColOut_fbm_smooth, uih_selectedoutcoloring);
-    MENUINTRB_I("moutcolorfbm", NULL, TR("Menu", "fbm + iter"), "out19",
-                UI | MENUFLAG_INTERRUPT, uih_setoutcoloringmode,
-                OutColormodeType::ColOut_fbm_iter, uih_selectedoutcoloring);
-    MENUINTRB_I("moutcolorfbm", NULL, TR("Menu", "fbm"), "out20",
-                UI | MENUFLAG_INTERRUPT, uih_setoutcoloringmode,
-                OutColormodeType::ColOut_fbm, uih_selectedoutcoloring);
-    MENUCDIALOG_I("moutcolorfbm", NULL, TR("Menu", "Settings"), "outfbmset",
-                  MENUFLAG_INTERRUPT, uih_setoutfbm, uih_getoutfbmdialog);
-
     SUBMENU_I("fractal", "i", TR("Menu", "Plane"), "mplane");
     SUBMENU_I("fractal", NULL, TR("Menu", "Palette"), "palettemenu");
     MENUSEPARATOR_I("fractal");
@@ -1950,6 +1916,79 @@ void uih_registermenus(void)
     menu_genernumbered(TCOLOR - 1, "toutcoloring", tcolorname, NULL, MENU_INT,
                        UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
                        uih_setouttruecolor, uih_selectedouttcoloring, "outt");
+
+    /* The fractional Brownian motion, at the foot of Other coloring mode on
+     * each side: the three modes that read it and the five numbers it is made
+     * of.
+     *
+     * Built here rather than among the other translated items because those
+     * are all added to the menus before any of these, and the modes above were
+     * generated a moment ago -- registered there, this would come out at the
+     * head of the list instead of the end of it.
+     *
+     * The shortnames are the ones uih_setincoloringmode and
+     * uih_setoutcoloringmode build when they tell the menus which mode is
+     * chosen -- "in23", "out18" -- so these tick and untick with the rest. */
+    {
+        static menuitem fbmitems[10];
+        int n = 0;
+        static const struct {
+            const char *menu;
+            const char *sub;
+        } sides[2] = {{"mothincoloring", "mincolorfbm"},
+                      {"mothoutcoloring", "moutcolorfbm"}};
+        static const int modes[2][3] = {
+            {INCOLORING_FBM, INCOLORING_FBM_ZMAG, INCOLORING_FBM_DECOMP},
+            {OutColormodeType::ColOut_fbm_smooth,
+             OutColormodeType::ColOut_fbm_iter, OutColormodeType::ColOut_fbm}};
+        static const char *shorts[2][3] = {{"in23", "in24", "in25"},
+                                           {"out18", "out19", "out20"}};
+        const char *names[2][3] = {
+            {TR("Menu", "fbm"), TR("Menu", "fbm + zmag"),
+             TR("Menu", "fbm + decomposition")},
+            {TR("Menu", "fbm + smooth"), TR("Menu", "fbm + iter"),
+             TR("Menu", "fbm")}};
+
+        for (int side = 0; side < 2; side++) {
+            fbmitems[n].menuname = sides[side].menu;
+            fbmitems[n].key = NULL;
+            fbmitems[n].name = TR("Menu", "Fractional Brownian Motion");
+            fbmitems[n].shortname = sides[side].sub;
+            fbmitems[n].type = MENU_SUBMENU;
+            fbmitems[n].flags = 0;
+            n++;
+            for (int k = 0; k < 3; k++) {
+                fbmitems[n].menuname = sides[side].sub;
+                fbmitems[n].key = NULL;
+                fbmitems[n].name = names[side][k];
+                fbmitems[n].shortname = shorts[side][k];
+                fbmitems[n].type = MENU_INT;
+                fbmitems[n].flags =
+                    UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT;
+                fbmitems[n].iparam = modes[side][k];
+                fbmitems[n].function =
+                    (void (*)(void))(side ? uih_setoutcoloringmode
+                                          : uih_setincoloringmode);
+                fbmitems[n].control =
+                    (int (*)(void))(side ? uih_selectedoutcoloring
+                                         : uih_selectedincoloring);
+                n++;
+            }
+            fbmitems[n].menuname = sides[side].sub;
+            fbmitems[n].key = NULL;
+            fbmitems[n].name = TR("Menu", "Settings");
+            fbmitems[n].shortname = side ? "outfbmset" : "infbmset";
+            fbmitems[n].type = MENU_CUSTOMDIALOG;
+            fbmitems[n].flags = MENUFLAG_INTERRUPT;
+            fbmitems[n].function =
+                (void (*)(void))(side ? uih_setoutfbm : uih_setinfbm);
+            fbmitems[n].dialog =
+                (const menudialog *(*)(struct uih_context *))(
+                    side ? uih_getoutfbmdialog : uih_getinfbmdialog);
+            n++;
+        }
+        menu_add(fbmitems, n);
+    }
 
     menu_genernumbered(COLORFUN - 1, "mincolorfun", colorfun, NULL, MENU_INT,
                        UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,

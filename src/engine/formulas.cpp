@@ -328,8 +328,9 @@ static inline number_t bailout_threshold(void)
              * the motion pulled the count under nought. smoothed is the same   \
              * count in a number_t, which is what the negative case below is    \
              * already written for. */                                          \
-            if (cfractalc.coloringmode == OutColormodeClass::ColOut_fbm_smooth) \
-                smoothed += fbm_at_pixel(0) * 256;                             \
+            if (cfractalc.coloringmode ==                                      \
+                OutColormodeClass::ColOut_fbm_smooth)                          \
+                smoothed = fbm_fold(smoothed + fbm_at_pixel(0) * 256);         \
             int cycle = (int)(((unsigned int)(cpalette.size - 1)) << 8);       \
             color_precalc(smoothed, 0);                                        \
             wrapped = (int)smoothed;                                           \
@@ -425,6 +426,14 @@ static number_t fbm_octave(number_t x, number_t y, int seed)
 /* The motion at the pixel, in bands of colour: brought back to about minus a
  * half to a half so that it moves the value both ways and leaves it where it
  * was on average, then taken up to the intensity asked for. */
+/* A value the motion has pulled under nought, mirrored.
+ *
+ * The colouring wraps a negative round to the far end of the palette, which is
+ * right for a shift someone asked for and wrong here: the motion crosses zero
+ * wherever it likes, and a wrap draws a hard edge along every crossing. A
+ * mirror meets itself there, so the marks go on being marks. */
+static inline number_t fbm_fold(number_t v) { return v < 0 ? -v : v; }
+
 static number_t fbm_at_pixel(int inset)
 {
     number_t freq = inset ? cfractalc.infbmfrequency : cfractalc.outfbmfrequency;
@@ -858,15 +867,17 @@ static unsigned int color_output(number_t zre, number_t zim, unsigned int iter)
         case OutColormodeType::ColOut_fbm_iter:
             /* the plain count worn, for a formula or a taste that does not
              * want the smoothing */
-            i_f = (iter + fbm_at_pixel(0) * SMUL);
+            i_f = fbm_fold(iter + fbm_at_pixel(0) * SMUL);
             break;
         case OutColormodeType::ColOut_fbm:
-            /* the motion alone: no count at all, so what is drawn outside the
+            /* The motion alone: no count at all, so what is drawn outside the
              * set is the noise itself. Half the intensity is added so that it
-             * runs from nought upwards rather than either side of it, which
-             * would wrap round the palette and put a seam through the middle
-             * of every mark. */
-            i_f = ((fbm_at_pixel(0) + cfractalc.outfbmintensity / 2) * SMUL);
+             * runs from nought upwards rather than either side of it -- the
+             * fold would otherwise halve the range and crease the field along
+             * its own average, which is a different picture and not this one.
+             */
+            i_f = fbm_fold((fbm_at_pixel(0) + cfractalc.outfbmintensity / 2) *
+                           SMUL);
             break;
         case OutColormodeType::ColOut_abs_real_minus_abs_imag:
             /* how lopsided the escape point is, with no count: the level sets
@@ -921,23 +932,23 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
 
     switch (cfractalc.incoloringmode) {
     case INCOLORING_FBM:
-        /* the motion alone, which gives the inside a surface where it had one
-         * flat tone; half the intensity for the reason the outside one has it
+        /* The motion alone, which gives the inside a surface where it had one
+         * flat tone; half the intensity for the reason the outside one has it.
          */
-        i_f = ((fbm_at_pixel(1) + cfractalc.infbmintensity / 2) * SMUL);
+        i_f = fbm_fold((fbm_at_pixel(1) + cfractalc.infbmintensity / 2) * SMUL);
         break;
     case INCOLORING_FBM_ZMAG:
         /* zmag worn: the inside keeps what it says about the orbit and stops
          * being clean about it */
-        i_f = (((zre * zre + zim * zim) *
-                    (number_t)(cfractalc.maxiter >> 1) * SMUL +
-                SMUL) +
-               fbm_at_pixel(1) * SMUL);
+        i_f = fbm_fold(((zre * zre + zim * zim) *
+                            (number_t)(cfractalc.maxiter >> 1) * SMUL +
+                        SMUL) +
+                       fbm_at_pixel(1) * SMUL);
         break;
     case INCOLORING_FBM_DECOMP:
         /* and the same over the decomposition */
-        i_f = (((atan2l(zre, zim) / (M_PI + M_PI) + 0.75) * 20000) +
-               fbm_at_pixel(1) * SMUL);
+        i_f = fbm_fold(((atan2l(zre, zim) / (M_PI + M_PI) + 0.75) * 20000) +
+                       fbm_at_pixel(1) * SMUL);
         break;
     case 1: /* zmag */
         i_f = (((zre * zre + zim * zim) *
