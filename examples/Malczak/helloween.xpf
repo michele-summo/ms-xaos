@@ -5,7 +5,7 @@
 (filter 'anti #t)
 (palette 3 456535883 0)
 (formula 'user)
-(usrform "POWD(SINH(POWD(Z;1.2));2.8)+C")
+(usrform "POWD(SINH(POWD(Z,1.2)),2.8)+C")
 (usrformInit "")
 (angle 90.724)
 (maxiter 20)

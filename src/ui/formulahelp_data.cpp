@@ -186,11 +186,10 @@ const struct formula_help_row formula_help_variables[] = {
 const struct formula_help_row formula_help_notation[] = {
     {NULL, NULL, NULL, "writing a value"},
     {"{re,im}", "", "a complex number given by its two parts, as in {0,2} for 2i", NULL},
-    {"{re;im}", "", "the same with a semicolon, which the shipped formulas use: both separators are read, and a comma is what the rest of this reference writes", NULL},
     {"i", "", "the imaginary unit, as the shipped formulas use it", NULL},
     {"1.5", "", "a real number, read at the full precision of this build", NULL},
     {NULL, NULL, NULL, "calling"},
-    {"f(a, b)", "", "arguments are separated by a comma", NULL},
+    {"f(a, b)", "", "arguments are separated by a comma, and by nothing else: a semicolon used to serve as well and is now refused where it stands", NULL},
     {"[b=1]", "", "an argument shown in square brackets may be left out; the value shown is what the function uses instead", NULL},
     {"f(a, ,c)", "", "one may be left out in the middle as well, by leaving its place empty; spaces make no difference", NULL},
     {"poly(z,1, ,1)", "", "an empty coefficient of poly is a term that is not there: this is z^2 + 1", NULL},

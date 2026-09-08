@@ -75,10 +75,19 @@ test, so a function that gains or loses an argument cannot go on being
 described with the one it used to have. An argument that may be left out is
 shown in brackets with the value it takes when it is: `a, [b=1], [c=1]`.
 
-**Arguments are separated by a comma.** A semicolon is read as one too, and the
-formulas XaoS ships use it — `LOGN(5;Z^2)+C` parses now as it always did, and a
-saved position is unaffected — but everything written here uses the comma, as
-the rest of the syntax does.
+**Arguments are separated by a comma, and by nothing else.** A semicolon used
+to serve as well: the parser turned it into a comma before reading anything, so
+`LOGN(5;Z^2)+C` and `LOGN(5,Z^2)+C` were one formula, and the same went for the
+two parts of a complex number. That is gone. A semicolon is now refused where it
+stands — *Invalid operator: ;* — and the comma is the separator throughout, as
+it is everywhere else in the syntax.
+
+Six of the shipped positions were written the old way and have been rewritten
+with commas: `circle`, `heart`, `helloween`, `pentafrac`, `warriormask` and
+`burnship`, all under **File → Load position → examples/Malczak**. **A position
+of your own that has a semicolon in its formula will not load** until the
+formula is written with commas — the message names the character, and the fix
+is to open the formula and replace them.
 
 **Leaving a place empty.** An argument shown in brackets may be left out in the
 middle of a call as well as at the end, by writing nothing between the two

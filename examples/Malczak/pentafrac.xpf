@@ -4,7 +4,7 @@
 (initstate)
 (defaultpalette 0)
 (formula 'user)
-(usrform "I*LOGN(10;Z^6)^3+C")
+(usrform "I*LOGN(10,Z^6)^3+C")
 (usrformInit "")
 (maxiter 710)
 (outcoloring 7)

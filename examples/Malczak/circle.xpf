@@ -5,7 +5,7 @@
 (filter 'anti #t)
 (defaultpalette 0)
 (formula 'user)
-(usrform "LOGN(5;Z^2)+C")
+(usrform "LOGN(5,Z^2)+C")
 (usrformInit "")
 (maxiter 200)
 (outcoloring 1)

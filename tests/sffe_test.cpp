@@ -315,20 +315,33 @@ static const testcase cases[] = {
     /* --- formulas shipped in examples/ and catalogs/ --------------------
      * These are the compatibility corpus: whatever we change in the parser,
      * every formula XaoS ships must still parse and evaluate.
+     *
+     * Six of them were written with a semicolon between the arguments, which
+     * the parser turned into a comma before reading anything. It no longer
+     * does -- the comma is the separator and nothing else is -- so those six
+     * positions were rewritten with commas, and they are quoted here as they
+     * now stand. A semicolon is refused, which is the case below them.
      */
     T_VAL("(z^5)+((0.8+0.4i)*(z^4))+z", 46.8, 6.4, "shipped: implicit i suffix"),
     T_OK("C*Z*LOG(Z)", "shipped"),
     T_OK("COSH(Z^3+C)SINH(Z^1.2)+C", "shipped: implicit multiplication"),
     T_OK("EXP(Z)+C", "shipped"),
-    T_OK("I*LOGN(10;Z^6)^3+C", "shipped: ';' argument separator"),
-    T_OK("LOGN(5;Z^2)+C", "shipped"),
-    T_OK("POWD(SINH(POWD(Z;1.2));2.8)+C", "shipped: nested calls"),
-    T_OK("POWD(SINH(POWD(Z;1.2));2.8)+C-0.2P^2", "shipped: implicit 0.2*P"),
-    T_VAL("POW(RABS(Z)+I*RABS(IM(Z));2)+C", 7, 0,
+    T_OK("I*LOGN(10,Z^6)^3+C", "shipped"),
+    T_OK("LOGN(5,Z^2)+C", "shipped"),
+    T_OK("POWD(SINH(POWD(Z,1.2)),2.8)+C", "shipped: nested calls"),
+    T_OK("POWD(SINH(POWD(Z,1.2)),2.8)+C-0.2P^2", "shipped: implicit 0.2*P"),
+    T_VAL("POW(RABS(Z)+I*RABS(IM(Z)),2)+C", 7, 0,
           "shipped; was POWI, an alias of POW removed at 1.0"),
-    T_OK("RTNI(Z;12;6)(1-Z)+C", "shipped: implicit multiplication after ')'"),
+    T_OK("RTNI(Z,12,6)(1-Z)+C", "shipped: implicit multiplication after ')'"),
     T_VAL("z+(1/z)*(-1)^n", 2.5, 0, "shipped: (-1)^n"),
     T_VAL("(abs(re(z))+i*abs(im(z)))^2+c", 7, 0, "shipped: USER_FORMULA default"),
+
+    /* --- and the semicolon, which is not a separator -----------------------
+     * It was one until the comma was made the only one. A formula that still
+     * has it is refused where it stands rather than read as something else,
+     * which is what a user who opens an old position needs to be told. */
+    T_ERR("logn(5;z^2)+c", InvalidOperators, "a semicolon is not a separator"),
+    T_ERR("{1;2}+z", InvalidNumber, "nor does it part a complex number"),
 };
 
 static const int case_count = (int)(sizeof(cases) / sizeof(cases[0]));

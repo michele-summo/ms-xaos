@@ -580,7 +580,7 @@ sffunction *userfunction(const sffe *const p, char *fname, size_t len)
 
 #ifdef SFFE_COMPLEX
 /* parse complex number in format
- * { [-+]ddd[.dddd[e[+-]ddd]] ; [-+]ddd[.dddd[e[+-]ddd]] }  */
+ * { [-+]ddd[.dddd[e[+-]ddd]] , [-+]ddd[.dddd[e[+-]ddd]] }  */
 char sffe_docmplx(char **str, sfarg **arg)
 {
 
@@ -869,8 +869,15 @@ int sffe_parse(sffe **parser, const char *expression)
            _parser->expression);
 #endif
 
-    /*! PHASE 1 !!!!!!!!! remove spaces, count brackets, change separators
-     * ';' -> ',' and '[' ']' -> '{' '}'.
+    /*! PHASE 1 !!!!!!!!! remove spaces, count brackets, change '[' ']' into
+     * '{' '}'.
+     *
+     * A semicolon used to be turned into a comma here, so that either could
+     * separate two arguments and either could stand between the parts of a
+     * complex number. It no longer is: the comma is the separator, and a
+     * semicolon is an unknown character like any other and is refused with the
+     * position it stands at. Two spellings of one thing was one too many, and
+     * the one that went is the one nothing else in the syntax uses.
      *
      * Signs are deliberately left untouched. Phase 2 decides for each '+'/'-'
      * whether it is a prefix or an infix operator, so runs like "--" need no
@@ -885,7 +892,7 @@ int sffe_parse(sffe **parser, const char *expression)
         ech += 1;
     }
 
-    /*handle brackets and change ';'->',', '['->'{', ']'->'}' */
+    /*handle brackets and change '['->'{', ']'->'}' */
     while (*ech) {
         switch (*ech) {
         case '[':
@@ -899,9 +906,6 @@ int sffe_parse(sffe **parser, const char *expression)
             break;
         case ')':
             ui1 -= 1;
-            break;
-        case ';':
-            *ech = ',';
             break;
         }
 
