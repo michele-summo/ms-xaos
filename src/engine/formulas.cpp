@@ -423,15 +423,28 @@ static number_t fbm_octave(number_t x, number_t y, int seed)
     return top + (bottom - top) * sv;
 }
 
-/* The motion at the pixel, in bands of colour: brought back to about minus a
- * half to a half so that it moves the value both ways and leaves it where it
- * was on average, then taken up to the intensity asked for. */
-/* A value the motion has pulled under nought, mirrored.
+/* The motion at the pixel, in bands of colour: nought to the intensity asked
+ * for, and never below.
  *
- * The colouring wraps a negative round to the far end of the palette, which is
- * right for a shift someone asked for and wrong here: the motion crosses zero
- * wherever it likes, and a wrap draws a hard edge along every crossing. A
- * mirror meets itself there, so the marks go on being marks. */
+ * It used to be centred, moving the value both ways and leaving it where it was
+ * on average, and that is what took it under nought wherever the value it was
+ * added to was smaller than the motion. What came of that had to be repaired --
+ * wrapped round the palette, which drew a hard edge, or mirrored, which creased
+ * the field -- and neither repair is as good as not needing one.
+ *
+ * A motion that only ever adds cannot take a value under nought, and it draws
+ * the same picture: adding a half of the intensity to every point of a centred
+ * motion is a constant, and a constant moves the whole picture along the
+ * palette without changing a mark of it. What it costs is that shift, which
+ * Coloring shift undoes for anyone who wants the old place back. */
+/* A value under nought, mirrored.
+ *
+ * The motion cannot put one there any more -- it only ever adds -- so this is a
+ * guard and not the mechanism: what it catches is a quantity that was negative
+ * before the motion was added to it, which the smooth count can be when its
+ * logarithm goes the other way. The colouring would wrap such a value round to
+ * the far end of the palette and draw a hard edge along the crossing; a mirror
+ * meets itself there. */
 static inline number_t fbm_fold(number_t v) { return v < 0 ? -v : v; }
 
 static number_t fbm_at_pixel(int inset)
@@ -460,7 +473,7 @@ static number_t fbm_at_pixel(int inset)
     }
     if (!(norm > 0))
         return 0;
-    return (sum / norm - (number_t)1 / 2) * much;
+    return (sum / norm) * much;
 }
 
 /* 2021-02-09 MSUMMO calculate color functions */
@@ -870,14 +883,9 @@ static unsigned int color_output(number_t zre, number_t zim, unsigned int iter)
             i_f = fbm_fold(iter + fbm_at_pixel(0) * SMUL);
             break;
         case OutColormodeType::ColOut_fbm:
-            /* The motion alone: no count at all, so what is drawn outside the
-             * set is the noise itself. Half the intensity is added so that it
-             * runs from nought upwards rather than either side of it -- the
-             * fold would otherwise halve the range and crease the field along
-             * its own average, which is a different picture and not this one.
-             */
-            i_f = fbm_fold((fbm_at_pixel(0) + cfractalc.outfbmintensity / 2) *
-                           SMUL);
+            /* the motion alone: no count at all, so what is drawn outside the
+             * set is the noise itself */
+            i_f = fbm_fold(fbm_at_pixel(0) * SMUL);
             break;
         case OutColormodeType::ColOut_abs_real_minus_abs_imag:
             /* how lopsided the escape point is, with no count: the level sets
@@ -932,10 +940,9 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
 
     switch (cfractalc.incoloringmode) {
     case INCOLORING_FBM:
-        /* The motion alone, which gives the inside a surface where it had one
-         * flat tone; half the intensity for the reason the outside one has it.
-         */
-        i_f = fbm_fold((fbm_at_pixel(1) + cfractalc.infbmintensity / 2) * SMUL);
+        /* the motion alone, which gives the inside a surface where it had one
+         * flat tone */
+        i_f = fbm_fold(fbm_at_pixel(1) * SMUL);
         break;
     case INCOLORING_FBM_ZMAG:
         /* zmag worn: the inside keeps what it says about the orbit and stops
