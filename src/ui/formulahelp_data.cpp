@@ -25,7 +25,7 @@ const struct formula_help_row formula_help_functions[] = {
     {"acos", "a", "arccos(a)", NULL}, /* 1 */
     {"atan", "a", "arctan(a)", NULL}, /* 1 */
     {"acot", "a", "arccot(a)", NULL}, /* 1 */
-    {"atan2", "a; b", "atan2 of the real parts, plus i times atan2 of the imaginary parts", NULL}, /* 2 */
+    {"atan2", "a, b", "atan2 of the real parts, plus i times atan2 of the imaginary parts", NULL}, /* 2 */
     {NULL, NULL, NULL, "hyperbolic"},
     {"sinh", "a", "nsinh(a)", NULL}, /* 1 */
     {"cosh", "a", "ncosh(a)", NULL}, /* 1 */
@@ -36,13 +36,13 @@ const struct formula_help_row formula_help_functions[] = {
     {"log", "a", "natural logarithm of a", NULL}, /* 1 */
     {"log10", "a", "logarithm of a in base 10", NULL}, /* 1 */
     {"log2", "a", "logarithm of a in base 2", NULL}, /* 1 */
-    {"logn", "a; b", "logarithm of b in base a -- the base comes first", NULL}, /* 2 */
+    {"logn", "a, b", "logarithm of b in base a -- the base comes first", NULL}, /* 2 */
     {NULL, NULL, NULL, "powers and roots"},
-    {"pow", "a; b", "a ^ b", NULL}, /* 2 */
-    {"powd", "a; b", "a ^ real(b); the imaginary part of b is ignored", NULL}, /* 2 */
+    {"pow", "a, b", "a ^ b", NULL}, /* 2 */
+    {"powd", "a, b", "a ^ real(b); the imaginary part of b is ignored", NULL}, /* 2 */
     {"sqr", "a", "a * a. This used to raise a to itself: sqr(3) was 27", NULL}, /* 1 */
     {"sqrt", "a", "principal square root of a", NULL}, /* 1 */
-    {"rtni", "a; b; c", "the c-th of the b b-th roots of a", NULL}, /* 3 */
+    {"rtni", "a, b, c", "the c-th of the b b-th roots of a", NULL}, /* 3 */
     {"inv", "a", "1 / a", NULL}, /* 1 */
     {NULL, NULL, NULL, "rounding, and pulling a value apart"},
     {"ceil", "a", "ceiling of each component", NULL}, /* 1 */
@@ -59,23 +59,23 @@ const struct formula_help_row formula_help_functions[] = {
     {"bshipr", "a", "|real(a)| + i*imag(a)", NULL}, /* 1 */
     {"bshipi", "a", "real(a) + i*|imag(a)|", NULL}, /* 1 */
     {NULL, NULL, NULL, "assembling one value out of two"},
-    {"rect", "a; b", "real(a) + i*imag(b)", NULL}, /* 2 */
-    {"polar", "a; b", "|a| * e^(i*arg(b))", NULL}, /* 2 */
+    {"rect", "a, b", "real(a) + i*imag(b)", NULL}, /* 2 */
+    {"polar", "a, b", "|a| * e^(i*arg(b))", NULL}, /* 2 */
     {NULL, NULL, NULL, "smaller of two; the suffix says which part is compared"},
-    {"min", "a; b", "smaller real part and smaller imaginary part", NULL}, /* 2 */
-    {"minr", "a; b", "smaller real part; imaginary part taken from a", NULL}, /* 2 */
-    {"mini", "a; b", "smaller imaginary part; real part taken from a", NULL}, /* 2 */
-    {"minm", "a; b", "smaller modulus, held at the angle of a", NULL}, /* 2 */
+    {"min", "a, b", "smaller real part and smaller imaginary part", NULL}, /* 2 */
+    {"minr", "a, b", "smaller real part; imaginary part taken from a", NULL}, /* 2 */
+    {"mini", "a, b", "smaller imaginary part; real part taken from a", NULL}, /* 2 */
+    {"minm", "a, b", "smaller modulus, held at the angle of a", NULL}, /* 2 */
     {NULL, NULL, NULL, "larger of two, same convention"},
-    {"max", "a; b", "larger real part and larger imaginary part", NULL}, /* 2 */
-    {"maxr", "a; b", "larger real part; imaginary part taken from a", NULL}, /* 2 */
-    {"maxi", "a; b", "larger imaginary part; real part taken from a", NULL}, /* 2 */
-    {"maxm", "a; b", "larger modulus, held at the angle of a", NULL}, /* 2 */
+    {"max", "a, b", "larger real part and larger imaginary part", NULL}, /* 2 */
+    {"maxr", "a, b", "larger real part; imaginary part taken from a", NULL}, /* 2 */
+    {"maxi", "a, b", "larger imaginary part; real part taken from a", NULL}, /* 2 */
+    {"maxm", "a, b", "larger modulus, held at the angle of a", NULL}, /* 2 */
     {NULL, NULL, NULL, "mid(a, b, c) confines a to the range b..c."},
-    {"mid", "a; b; c", "both components confined", NULL}, /* 3 */
-    {"midr", "a; b; c", "real part confined; imaginary part taken from a", NULL}, /* 3 */
-    {"midi", "a; b; c", "imaginary part confined; real part taken from a", NULL}, /* 3 */
-    {"midm", "a; b; c", "modulus confined, held at the angle of a", NULL}, /* 3 */
+    {"mid", "a, b, c", "both components confined", NULL}, /* 3 */
+    {"midr", "a, b, c", "real part confined; imaginary part taken from a", NULL}, /* 3 */
+    {"midi", "a, b, c", "imaginary part confined; real part taken from a", NULL}, /* 3 */
+    {"midm", "a, b, c", "modulus confined, held at the angle of a", NULL}, /* 3 */
     {NULL, NULL, NULL, "real trigonometry applied to each component separately"},
     {"sincos", "a", "nsin(real(a)) + i*ncos(imag(a))", NULL}, /* 1 */
     {"cossin", "a", "ncos(real(a)) + i*nsin(imag(a))", NULL}, /* 1 */
@@ -94,44 +94,44 @@ const struct formula_help_row formula_help_functions[] = {
     {"sawtooth", "a", "x - nfloor(x), a ramp in [0, 1)", NULL}, /* 1 */
     {"twave", "a", "triangle wave of period 2, in [-1, 1]", NULL}, /* 1 */
     {NULL, NULL, NULL, "assorted"},
-    {"julian", "a; [b=1]; [c=1]", "|a|^b * e^(i*c*arg(a))", NULL}, /* 3 */
-    {"inveps", "a; [b=0.01+0.01i]", "an inverse softened by b, so that it stays finite at the origin", NULL}, /* 2 */
-    {"atan2s", "a; b", "atan2 of each pair of components; differs from atan2 on real arguments only", NULL}, /* 2 */
-    {"ngon", "a; [b=0]; [c=3]; [d=1]", "folds a about the centre b onto a c-sided polygon, corner radius raised to d", NULL}, /* 4 */
-    {"parchment", "a; b", "quantises the angle of a into |b| sectors, keeping |a|", NULL}, /* 2 */
-    {"parchmenta", "a; b", "as parchment, but mirroring alternate half sectors", NULL}, /* 2 */
+    {"julian", "a, [b=1], [c=1]", "|a|^b * e^(i*c*arg(a))", NULL}, /* 3 */
+    {"inveps", "a, [b=0.01+0.01i]", "an inverse softened by b, so that it stays finite at the origin", NULL}, /* 2 */
+    {"atan2s", "a, b", "atan2 of each pair of components; differs from atan2 on real arguments only", NULL}, /* 2 */
+    {"ngon", "a, [b=0], [c=3], [d=1]", "folds a about the centre b onto a c-sided polygon, corner radius raised to d", NULL}, /* 4 */
+    {"parchment", "a, b", "quantises the angle of a into |b| sectors, keeping |a|", NULL}, /* 2 */
+    {"parchmenta", "a, b", "as parchment, but mirroring alternate half sectors", NULL}, /* 2 */
     {NULL, NULL, NULL, "snapping to a grid of step 1/n; n == 0 leaves the value alone"},
-    {"truncv", "a; b", "both components, step 1/|b|", NULL}, /* 2 */
-    {"truncc", "a; b", "real step 1/real(b), imaginary step 1/imag(b)", NULL}, /* 2 */
-    {"truncvr", "a; b", "real component only, step 1/|b|", NULL}, /* 2 */
-    {"truncvi", "a; b", "imaginary component only, step 1/|b|", NULL}, /* 2 */
-    {"truncvm", "a; b", "the modulus, angle kept", NULL}, /* 2 */
-    {"truncva", "a; b", "the angle, modulus kept", NULL}, /* 2 */
+    {"truncv", "a, b", "both components, step 1/|b|", NULL}, /* 2 */
+    {"truncc", "a, b", "real step 1/real(b), imaginary step 1/imag(b)", NULL}, /* 2 */
+    {"truncvr", "a, b", "real component only, step 1/|b|", NULL}, /* 2 */
+    {"truncvi", "a, b", "imaginary component only, step 1/|b|", NULL}, /* 2 */
+    {"truncvm", "a, b", "the modulus, angle kept", NULL}, /* 2 */
+    {"truncva", "a, b", "the angle, modulus kept", NULL}, /* 2 */
     {NULL, NULL, NULL, "special functions, none of them elementary"},
     {"erf", "a", "error function over the complex plane", NULL}, /* 1 */
     {"gamma", "a", "the gamma function over the complex plane", NULL}, /* 1 */
     {"lambertw", "a", "principal branch of the Lambert W of a", NULL}, /* 1 */
     {NULL, NULL, NULL, "choosing by iteration"},
-    {"ifiter", "a; b; ...", "picks one argument by iteration number, cycling; only that one runs", NULL}, /* variadic */
-    {"ifiterl", "a; b; ...", "as ifiter, but holding the last argument once the iterations run out", NULL}, /* variadic */
-    {"ifiterf", "a; b", "b on the last iteration the limit allows, a on the rest; only the chosen one runs", NULL}, /* 2 */
-    {"ifiterr", "a; b; n", "a while the iteration is below n, b from n on; only the chosen one runs", NULL}, /* 3 */
+    {"ifiter", "a, b, ...", "picks one argument by iteration number, cycling; only that one runs", NULL}, /* variadic */
+    {"ifiterl", "a, b, ...", "as ifiter, but holding the last argument once the iterations run out", NULL}, /* variadic */
+    {"ifiterf", "a, b", "b on the last iteration the limit allows, a on the rest; only the chosen one runs", NULL}, /* 2 */
+    {"ifiterr", "a, b, n", "a while the iteration is below n, b from n on; only the chosen one runs", NULL}, /* 3 */
     {NULL, NULL, NULL, "randomness: all but the seed optional, and a new field every iteration; what the kaleidoscope and its mode do is in the Values tab"},
     {"rand", "a", "real(a) times a random number in [0, 1); depends on call order, so a redraw differs", NULL},
-    {"randsc", "seed; [size=1+i]; [degradation=0.5+0.5i]; [kaleidoscope=1]; [mode=0]; [skew=0]", "coherent noise over the point: soft blobs, size wide and size high", NULL},
-    {"randscq", "seed; [size=1+i]; [degradation=0.5+0.5i]; [kaleidoscope=1]; [mode=0]; [skew=0]", "the same field with no interpolation: a mosaic of flat square cells", NULL},
-    {"randscp", "seed; [size=1+i]; [degradation=0.5+0.5i]; [kaleidoscope=1]; [mode=0]; [skew=0]", "the same field cut into irregular flat polygons, with straight edges", NULL},
-    {"randsch", "seed; [size=1+i]; [degradation=0.5+0.5i]; [kaleidoscope=1]; [mode=0]; [skew=0]", "the same field cut into hexagons: a honeycomb of flat cells", NULL},
-    {"randsct", "seed; [size=1+i]; [degradation=0.5+0.5i]; [kaleidoscope=1]; [mode=0]; [skew=0]", "the same field cut into equilateral triangles, alternating in orientation", NULL},
+    {"randsc", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0]", "coherent noise over the point: soft blobs, size wide and size high", NULL},
+    {"randscq", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0]", "the same field with no interpolation: a mosaic of flat square cells", NULL},
+    {"randscp", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0]", "the same field cut into irregular flat polygons, with straight edges", NULL},
+    {"randsch", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0]", "the same field cut into hexagons: a honeycomb of flat cells", NULL},
+    {"randsct", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0]", "the same field cut into equilateral triangles, alternating in orientation", NULL},
     {NULL, NULL, NULL, "watching the orbit: both hand back their argument until the last iteration, and what they gathered on it, which the inside colouring modes then draw"},
-    {"trap", "a; [shape=0]; [centre=0]; [size=1]", "how near the orbit ever came to a shape; the shapes are in the Values tab", NULL},
-    {"stripe", "a; [density=4]", "the average of (sin(density*arg a)+1)/2 along the orbit; density a whole number, how many stripes go round a turn", NULL},
+    {"trap", "a, [shape=0], [centre=0], [size=1]", "how near the orbit ever came to a shape; the shapes are in the Values tab", NULL},
+    {"stripe", "a, [density=4]", "the average of (sin(density*arg a)+1)/2 along the orbit; density a whole number, how many stripes go round a turn", NULL},
     {NULL, NULL, NULL, "figures, drawn the same in mandelbrot and julia mode as the noise is -- but fractals of their own rather than fields: each carries the point to the parent of the part it stands in, so the pass it leaves on is the level of that part and writing one alone draws the figure. The topmost part, having no parent, is thrown out of the bailout rather than declared gone, so that the outside colouring modes that read z have a point of the plane to read there. radius is read the way bailout is, as the square of the distance, and the figure is inscribed in the shape a bailout of that number draws: the gasket in the triangle at -90 degrees, the carpet in the square, the snowflake with its points on the corners of the hexagon at 0. Each takes the kaleidoscope the randsc family takes, written last: a figure folds z, the point it is carrying, where a field folds the position, and what comes of it is the same -- the figure drawn in one wedge and repeated round the origin. A bailout larger than the radius leaves a margin between figure and shape: that is no part of the figure and gets no iteration, being turned by the figure's own symmetry so that it never leaves and takes the inside colour"},
-    {"sierpinskyt", "[radius=4]; [kaleidoscope=1]; [mode=0]", "the Sierpinski gasket: doubling away from the nearest corner carries a point to the parent of its hole, so it leaves on the pass numbered by the cut that took it", NULL},
-    {"sierpinskyc", "[radius=4]; [squares=3]; [kaleidoscope=1]; [mode=0]", "the Sierpinski carpet: cut into squares by squares, the border ring kept and all it encloses thrown away, so one square stands in the middle and 4*squares-4 around it. 3 is the usual carpet, 5 or 7 a lacier one, 2 a gasket", NULL},
-    {"snowflake", "[radius=4]; [kaleidoscope=1]; [mode=0]", "the Koch snowflake, read from its middle out and banded by generation: a regular hexagon, six triangles of its own side standing on its six sides, twelve of a third that on their free edges, and so on. Each step onto a parent expands -- by the root of three onto the hexagon, by three below that -- so that the figure stays sensitive when it is written inside a larger formula. Whether a point is ground is decided by walking down the Koch curve one level a pass, so what a picture shows is what its iteration count paid for. The ground it leaves in the corners of the hexagon is no part of the figure: it is turned half about, which lands ground on ground, so it never leaves and takes the inside colour -- turned rather than left where it stood, so that the point keeps moving as it does in the other two", NULL},
+    {"sierpinskyt", "[radius=4], [kaleidoscope=1], [mode=0]", "the Sierpinski gasket: doubling away from the nearest corner carries a point to the parent of its hole, so it leaves on the pass numbered by the cut that took it", NULL},
+    {"sierpinskyc", "[radius=4], [squares=3], [kaleidoscope=1], [mode=0]", "the Sierpinski carpet: cut into squares by squares, the border ring kept and all it encloses thrown away, so one square stands in the middle and 4*squares-4 around it. 3 is the usual carpet, 5 or 7 a lacier one, 2 a gasket", NULL},
+    {"snowflake", "[radius=4], [kaleidoscope=1], [mode=0]", "the Koch snowflake, read from its middle out and banded by generation: a regular hexagon, six triangles of its own side standing on its six sides, twelve of a third that on their free edges, and so on. Each step onto a parent expands -- by the root of three onto the hexagon, by three below that -- so that the figure stays sensitive when it is written inside a larger formula. Whether a point is ground is decided by walking down the Koch curve one level a pass, so what a picture shows is what its iteration count paid for. The ground it leaves in the corners of the hexagon is no part of the figure: it is turned half about, which lands ground on ground, so it never leaves and takes the inside colour -- turned rather than left where it stood, so that the point keeps moving as it does in the other two", NULL},
     {NULL, NULL, NULL, "polynomials"},
-    {"poly", "z; k1; k2; ...", "k1*z^(m-1) + k2*z^(m-2) + ... + km: the first coefficient written multiplies the highest power, the last stands alone", NULL},
+    {"poly", "z, k1, k2, ...", "k1*z^(m-1) + k2*z^(m-2) + ... + km: the first coefficient written multiplies the highest power, the last stands alone", NULL},
     {NULL, NULL, NULL, NULL}};
 
 /* The numbers that appear as arguments and mean something particular.
@@ -186,15 +186,15 @@ const struct formula_help_row formula_help_variables[] = {
 const struct formula_help_row formula_help_notation[] = {
     {NULL, NULL, NULL, "writing a value"},
     {"{re,im}", "", "a complex number given by its two parts, as in {0,2} for 2i", NULL},
-    {"{re;im}", "", "the same, with a semicolon; both separators are accepted", NULL},
+    {"{re;im}", "", "the same with a semicolon, which the shipped formulas use: both separators are read, and a comma is what the rest of this reference writes", NULL},
     {"i", "", "the imaginary unit, as the shipped formulas use it", NULL},
     {"1.5", "", "a real number, read at the full precision of this build", NULL},
     {NULL, NULL, NULL, "calling"},
-    {"f(a; b)", "", "arguments are separated by a semicolon or a comma", NULL},
+    {"f(a, b)", "", "arguments are separated by a comma", NULL},
     {"[b=1]", "", "an argument shown in square brackets may be left out; the value shown is what the function uses instead", NULL},
-    {"f(a; ;c)", "", "one may be left out in the middle as well, by leaving its place empty; spaces make no difference", NULL},
-    {"poly(z;1; ;1)", "", "an empty coefficient of poly is a term that is not there: this is z^2 + 1", NULL},
-    {"ifiter(a; ;b)", "", "an empty branch of ifiter or ifiterl repeats the one before it: two iterations of a, then b", NULL},
+    {"f(a, ,c)", "", "one may be left out in the middle as well, by leaving its place empty; spaces make no difference", NULL},
+    {"poly(z,1, ,1)", "", "an empty coefficient of poly is a term that is not there: this is z^2 + 1", NULL},
+    {"ifiter(a, ,b)", "", "an empty branch of ifiter or ifiterl repeats the one before it: two iterations of a, then b", NULL},
     {"2z", "", "multiplication may be left out before a name or a bracket", NULL},
     {"(a)(b)", "", "the same, between two bracketed groups", NULL},
     {"-z^2", "", "a leading minus binds looser than a power: it means -(z^2)", NULL},

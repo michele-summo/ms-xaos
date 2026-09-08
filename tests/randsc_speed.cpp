@@ -86,8 +86,8 @@ int main(void)
 {
     sffe *plain = compile("{0.3,0.3}");
     sffe *timesone = compile("{0.3,0.3}*{1.1,1.1}");
-    sffe *unit = compile("randsch({13,0};{0.3,0.3};{1,1})");
-    sffe *fade = compile("randsch({13,0};{0.3,0.3};{0.97,0.97})");
+    sffe *unit = compile("randsch({13,0},{0.3,0.3},{1,1})");
+    sffe *fade = compile("randsch({13,0},{0.3,0.3},{0.97,0.97})");
     if (failures)
         return 1;
 
@@ -164,7 +164,7 @@ int main(void)
         sffe *noise = compile("randsc({13,0})");
         sffe *gasket = compile("sierpinskyt()");
         sffe *carpet = compile("sierpinskyc()");
-        sffe *lace = compile("sierpinskyc(4;7)");
+        sffe *lace = compile("sierpinskyc(4,7)");
         sffe *flake = compile("snowflake()");
         if (!failures) {
             /* the position has to move, or every one of them answers out of
@@ -176,7 +176,7 @@ int main(void)
                 sffe *f;
             } fig[4] = {{"sierpinskyt", gasket},
                         {"sierpinskyc", carpet},
-                        {"sierpinskyc(4;7)", lace},
+                        {"sierpinskyc(4,7)", lace},
                         {"snowflake", flake}};
             printf("\n       %-18s %10s %10s\n", "figure", "ns", "of randsc");
             for (int i = 0; i < 4; i++) {

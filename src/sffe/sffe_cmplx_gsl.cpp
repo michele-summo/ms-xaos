@@ -292,7 +292,7 @@ sfarg *sfifiterl(sfarg *const p)
 
 /**
  * @brief The second formula on the last pass, the first on every other.
- * @details ifiterf(a; b) evaluates a on every pass but the final one, and b on
+ * @details ifiterf(a, b) evaluates a on every pass but the final one, and b on
  * that. The final pass is the last the iteration limit allows, since a formula
  * has no way of knowing which pass will be the one that escapes -- that
  * depends on the value it has not produced yet.
@@ -311,7 +311,7 @@ sfarg *sfifiterf(sfarg *const p)
 
 /**
  * @brief The second formula once the passes reach a count, the first before.
- * @details ifiterr(a; b; n) evaluates a while the pass number is below n and b
+ * @details ifiterr(a, b, n) evaluates a while the pass number is below n and b
  * from n onwards. n is read as a real number and may be any expression.
  *
  * Only the chosen branch is evaluated, as with ifiter, though the threshold
@@ -1735,7 +1735,7 @@ static RANDSC_INLINE int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, 
 
 /**
  * @brief Coherent noise over the position, seeded and reproducible.
- * @details randsc(seed), randsc(seed; size), randsc(seed; size; degradation).
+ * @details randsc(seed), randsc(seed, size), randsc(seed, size, degradation).
  *
  * Value noise: the plane is cut into cells, each corner is hashed to a number,
  * and the value between them is interpolated with a smooth curve. Nearby
@@ -2008,7 +2008,7 @@ sfarg *sfrandscp(sfarg *const p)
  */
 /**
  * @brief A polynomial in the first argument, the rest being its coefficients.
- * @details poly(z; k1; k2; ...; km) is
+ * @details poly(z, k1, k2, ..., km) is
  *
  *     k1*z^(m-1) + k2*z^(m-2) + ... + k(m-1)*z + km
  *
@@ -2064,7 +2064,7 @@ sfarg *sfpoly(sfarg *const p)
  *
  * Both hand back the value they were given until the last pass the iteration
  * limit allows, where they hand back what they have gathered instead. So a
- * whole formula is trap(z^2+c; 3) and nothing else: the fractal iterates as it
+ * whole formula is trap(z^2+c, 3) and nothing else: the fractal iterates as it
  * would, and on the last pass the value becomes the trap, which the inside
  * colouring modes then draw. A point that escapes never reaches that pass and
  * keeps its ordinary outside colour, so what these draw is the inside.
@@ -2114,7 +2114,7 @@ static int sftrap_last(void)
 
 /**
  * @brief How near the orbit came to a shape.
- * @details trap(a; shape; centre; size) measures the distance from a to the
+ * @details trap(a, shape, centre, size) measures the distance from a to the
  * shape, keeps the smallest seen so far, and hands back a unchanged until the
  * last pass, where it hands back that smallest distance instead. shape
  * defaults to 0, centre to the origin, size to 1.
@@ -2152,7 +2152,7 @@ sfarg *sftrap(sfarg *const p)
 
 /**
  * @brief A wave averaged along the orbit.
- * @details stripe(a; density) averages (sin(density * arg a) + 1) / 2 over the
+ * @details stripe(a, density) averages (sin(density * arg a) + 1) / 2 over the
  * passes so far and hands back a unchanged until the last one, where it hands
  * back that average. density defaults to 4 and is how many stripes go round a
  * turn; a whole number, or the stripes do not meet where the turn closes.

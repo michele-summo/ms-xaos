@@ -69,24 +69,29 @@ kaleidoscope folds with — rather than burying them in the description of the
 function that takes them.
 
 Each row of the function list says what the call takes and in what order —
-"a; b", or "seed; size; degradation" where the position means something. The
+"a, b", or "seed, size, degradation" where the position means something. The
 list and those counts are both checked against the parser’s own table by a
 test, so a function that gains or loses an argument cannot go on being
 described with the one it used to have. An argument that may be left out is
-shown in brackets with the value it takes when it is: `a; [b=1]; [c=1]`.
+shown in brackets with the value it takes when it is: `a, [b=1], [c=1]`.
+
+**Arguments are separated by a comma.** A semicolon is read as one too, and the
+formulas XaoS ships use it — `LOGN(5;Z^2)+C` parses now as it always did, and a
+saved position is unaffected — but everything written here uses the comma, as
+the rest of the syntax does.
 
 **Leaving a place empty.** An argument shown in brackets may be left out in the
 middle of a call as well as at the end, by writing nothing between the two
-separators: `julian(z; ;3)` gives the first and the third and lets the function
+separators: `julian(z, ,3)` gives the first and the third and lets the function
 say what the second is. Spaces make no difference — `f(z, ,5)` and `f(z,,5)`
 are the same call — and an argument that is not in brackets must still be
-written, so `poly( ;1;2)` and `sin(,)` are refused rather than guessed at.
+written, so `poly( ,1,2)` and `sin(,)` are refused rather than guessed at.
 
 What an empty place means is the function's own business. Most take the default
 they declare; a coefficient of `poly` left empty is a term that is not there,
-so `poly(z;1; ;1)` is `z^2 + 1`; and a branch of `ifiter` or `ifiterl` left
+so `poly(z,1, ,1)` is `z^2 + 1`; and a branch of `ifiter` or `ifiterl` left
 empty repeats the one before it, which is how a branch is given more than one
-pass in the cycle. `ifiter(f(z); ; ;g(z); ; ; ; )` runs `f` for three passes
+pass in the cycle. `ifiter(f(z), , ,g(z), , , , )` runs `f` for three passes
 and `g` for five, and costs no more to evaluate than writing them out would:
 where each choice leads is settled once, when the formula is parsed.
 
@@ -94,12 +99,12 @@ A user formula that has not been written yet says `z^2+c`. It used to say the
 burning ship, which is a fractal of its own and a puzzle to meet as a starting
 point.
 
-**`ifiterf(a; b)`** — evaluates `a` on every pass but the final one and `b`
+**`ifiterf(a, b)`** — evaluates `a` on every pass but the final one and `b`
 on that. The final pass is the last the iteration limit allows: a formula has
 no way of knowing which pass will be the one that escapes, that depending on
 the value it has not produced yet. Only the chosen one is evaluated.
 
-**`ifiterr(a; b; n)`** — evaluates `a` while the pass number is below `n`
+**`ifiterr(a, b, n)`** — evaluates `a` while the pass number is below `n`
 and `b` from `n` onwards. Only the chosen one is evaluated, as with the other
 two, though the threshold had to be taught to the parser first: an argument
 may now be marked as read by the selector rather than chosen by it, and is
@@ -145,7 +150,7 @@ alias should use the name that remains — the function is identical.
 **`erf(z)`** — the error function over the complex plane. Accurate to about
 three ulp inside a bailout of two, where a fractal actually iterates.
 
-**`poly(z; k1; k2; ...; km)`** — a polynomial in `z`:
+**`poly(z, k1, k2, ..., km)`** — a polynomial in `z`:
 
     k1*z^(m-1) + k2*z^(m-2) + ... + k(m-1)*z + km
 
@@ -155,10 +160,10 @@ Horner's rule, which is m−1 multiplications rather than the m(m−1)/2 that
 raising each power separately would take, and the more accurate of the two into
 the bargain.
 
-    poly(z;1;0;0)+c            the Mandelbrot, written out
-    poly(z;1;0;0;{0.7,0.2})    z^3 + 0.7+0.2i
+    poly(z,1,0,0)+c            the Mandelbrot, written out
+    poly(z,1,0,0,{0.7,0.2})    z^3 + 0.7+0.2i
 
-**`randsc(seed; size; degradation; kaleidoscope; mode; skew)`** — coherent
+**`randsc(seed, size, degradation, kaleidoscope, mode, skew)`** — coherent
 noise over the point, giving blobs rather than per-pixel snow. `size`
 (default `1+i`) is the average width of a blob along the real axis and its
 height along the imaginary one.
@@ -271,7 +276,7 @@ something that reads the two components apart: `iter + real`, `iter + imag`,
 `angle`, `real / imag` outside, and `real` or `real / imag` in the incolouring.
 
 Two things follow. The value is complex while the skew is not nought, so
-`randsc(7;;;;;0.4)*z` turns `z` as well as scaling it. And the kaleidoscope
+`randsc(7,,,,,0.4)*z` turns `z` as well as scaling it. And the kaleidoscope
 folds either way: measured over five fields, two, three, five and six wedges and
 both mirrors, a turn of one wedge leaves every value where it was.
 
@@ -347,8 +352,8 @@ default — leaving it alone; the second is which mirror does the folding:
 | `0` (and anything else) | the far half of each wedge mirrors the near half, so every wedge is symmetric about its own bisector |
 | `1` | the same the other way about, the near half mirroring the far one |
 
-    randsc(13;{0.6,0.6};{1,1};6;0)     six wedges, each a mirror of itself
-    randsc(13;{0.6,0.6};{1,1};3;1)     three wedges, folded the other way
+    randsc(13,{0.6,0.6},{1,1},6,0)     six wedges, each a mirror of itself
+    randsc(13,{0.6,0.6},{1,1},3,1)     three wedges, folded the other way
 
 Both folds are continuous where the wedges meet, so the noise stays
 coherent and the two precisions go on agreeing; a fold that met itself unevenly
@@ -364,13 +369,13 @@ comparison.
 bailout of 4, so nothing escapes and the image is flat. Multiply it, or let it
 perturb an iteration that does escape:
 
-    z+randsc(13;{0.35,0.35};{1,1})*0.25       blobs
-    randsc(13;{0.15,0.15};{0.5,0.5})*2.5      brownian motion
-    randscq(13;{0.15,0.15};{0.5,0.5})*2.5     scattered squares, shrinking
-    z+randscp(13;{0.3,0.3};{1,1})*0.25        irregular polygons
-    z+randsch(13;{0.3,0.3};{1,1})*0.25        a honeycomb
-    z+randsct(13;{0.3,0.3};{1,1})*0.25        triangles
-    z^2+c+randsc(13;{0.25,0.25};{1,1})*1.2    the set itself deformed
+    z+randsc(13,{0.35,0.35},{1,1})*0.25       blobs
+    randsc(13,{0.15,0.15},{0.5,0.5})*2.5      brownian motion
+    randscq(13,{0.15,0.15},{0.5,0.5})*2.5     scattered squares, shrinking
+    z+randscp(13,{0.3,0.3},{1,1})*0.25        irregular polygons
+    z+randsch(13,{0.3,0.3},{1,1})*0.25        a honeycomb
+    z+randsct(13,{0.3,0.3},{1,1})*0.25        triangles
+    z^2+c+randsc(13,{0.25,0.25},{1,1})*1.2    the set itself deformed
 
 A degradation of 0.5 halves the blobs every pass, so after twenty iterations
 they are a millionth of their size and below a pixel. For a slow fade over a
@@ -547,10 +552,10 @@ the other with nothing across it; the square has four-fold symmetry and so shoul
 what is drawn on it. A test asserts that each figure answers a turn of its own
 order with the same turn.
 
-**`sierpinskyt([radius=4]; [kaleidoscope=1]; [mode=0])`** — the Sierpinski
+**`sierpinskyt([radius=4], [kaleidoscope=1], [mode=0])`** — the Sierpinski
 gasket, in that triangle.
 
-**`sierpinskyc([radius=4]; [squares=3]; [kaleidoscope=1]; [mode=0])`** — the
+**`sierpinskyc([radius=4], [squares=3], [kaleidoscope=1], [mode=0])`** — the
 Sierpinski carpet, in that square. The square is cut into `squares` by
 `squares`, the ring of cells along the border is kept, everything that ring
 encloses is thrown away, and the same is done to each cell that was kept. So
@@ -560,7 +565,7 @@ at five. Two is the one number with no ring to speak of, and there the far
 corner goes instead, which is a gasket again — a square cut in four with one
 corner taken away is what a gasket is.
 
-**`snowflake([radius=4]; [kaleidoscope=1]; [mode=0])`** — the Koch snowflake,
+**`snowflake([radius=4], [kaleidoscope=1], [mode=0])`** — the Koch snowflake,
 its points on that hexagon's corners, banded by generation from its middle
 out: the hexagon on the first
 pass, the six triangles on its sides on the second, the twelve on their free
@@ -569,7 +574,7 @@ figure does not cover are not banded at all — they never leave, and are drawn 
 the inside colour.
 
 Every argument has a default, so `snowflake()` is a call, and so is
-`sierpinskyc( ;5)` — a lacier carpet at the default size.
+`sierpinskyc( ,5)` — a lacier carpet at the default size.
 
 **The kaleidoscope is the noise family's**, written last on each of the three
 and meaning the same: how many wedges the plane is cut into, and which mirror
@@ -585,13 +590,13 @@ way down, every step being taken on the folded point and folded again on the
 pass after. Inside the half wedge the fold leaves alone, the figure is the
 figure.
 
-    sierpinskyt(4;6;0)      the gasket six times round the origin
-    sierpinskyc(4;3;5;1)    the carpet in five wedges, the near mirror
-    snowflake(4;5)          five wedges of snowflake
+    sierpinskyt(4,6,0)      the gasket six times round the origin
+    sierpinskyc(4,3,5,1)    the carpet in five wedges, the near mirror
+    snowflake(4,5)          five wedges of snowflake
 
 A snowflake already has the six-fold symmetry with the mirror down each
 bisector, so folding one into six wedges that way is the identity on the
-picture: `snowflake(4;6;0)` comes out **pixel for pixel** the same as
+picture: `snowflake(4,6,0)` comes out **pixel for pixel** the same as
 `snowflake(4)` over 90000 pixels. Ask for five wedges, or four, to see it fold.
 
 One thing to know about the carpet: what it cuts away it throws one of four
@@ -605,7 +610,7 @@ part in 10^16.
 
     sierpinskyt()        with Fractal -> Bailout shape -> triangle -90
     sierpinskyc()        with bailout shape square
-    sierpinskyc( ;5)     a lacier carpet
+    sierpinskyc( ,5)     a lacier carpet
     snowflake()          with bailout shape hexagon 0
 
 None of them costs more than the noise beside them, pass for pass: measured
@@ -696,14 +701,14 @@ costs the engine nothing.
 Both hand back the value they were given until the last pass the iteration
 limit allows, and what they gathered on that one. So a whole formula is
 
-    trap(z^2+c; 3)
+    trap(z^2+c, 3)
 
 and nothing else: the fractal iterates as it would, and on the last pass the
 value becomes the trap, which the inside colouring modes then draw. A point
 that escapes never reaches that pass and keeps its ordinary outside colour, so
 what these draw is the inside.
 
-**`trap(a; shape; centre; size)`** — the nearest the orbit ever came to a
+**`trap(a, shape, centre, size)`** — the nearest the orbit ever came to a
 shape. `shape` defaults to 0, `centre` to the origin, `size` to 1.
 
 | shape | |
@@ -716,16 +721,16 @@ shape. `shape` defaults to 0, `centre` to the origin, `size` to 1.
 | `5` | a square of half-side `size` |
 | `6` | a diamond of half-diagonal `size` |
 
-**`stripe(a; density)`** — the average of `(sin(density * arg a) + 1) / 2`
+**`stripe(a, density)`** — the average of `(sin(density * arg a) + 1) / 2`
 along the orbit. `density` defaults to 4 and is how many stripes go round a
 turn; a whole number, or they do not meet where the turn closes. An average
 over the orbit changes smoothly with the point even where the iteration count
 jumps, which is what draws the fibres the method is known for.
 
-    trap(z^2+c;0)                    how near the orbit passed the origin
-    trap(z^2+c;3)                    a cross, which draws rays
-    trap(z^2+c;4;{0,0};{0.5,0})      rings inside the cardioid
-    stripe(z^2+c;6)                  six stripes to a turn
+    trap(z^2+c,0)                    how near the orbit passed the origin
+    trap(z^2+c,3)                    a cross, which draws rays
+    trap(z^2+c,4,{0,0},{0.5,0})      rings inside the cardioid
+    stripe(z^2+c,6)                  six stripes to a turn
 
 The running quantity lives on the call site, so two traps in one formula keep
 their own and a thread cannot disturb another. Both turn boundary tracing off,

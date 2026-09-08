@@ -23,7 +23,7 @@ const char *qt_gettext(const char * /*context*/, const char *text)
 
 static int failures = 0;
 
-/* How many arguments a "takes" line describes: the parts between semicolons,
+/* How many arguments a "takes" line describes: the parts between commas,
  * with a trailing "..." meaning any number more. */
 static int described_arity(const char *args, int *open_ended)
 {
@@ -32,7 +32,7 @@ static int described_arity(const char *args, int *open_ended)
         return 0;
     int parts = 1;
     for (const char *c = args; *c; c++)
-        if (*c == ';')
+        if (*c == ',')
             parts++;
     if (strstr(args, "...") != NULL) {
         *open_ended = 1;

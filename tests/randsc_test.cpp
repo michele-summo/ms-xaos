@@ -175,14 +175,14 @@ int main(void)
 {
     char what[96];
     sffe *bare = compile("randsc({7,0})");
-    sffe *full = compile("randsc({7,0};{1,1};{1,1})");
-    sffe *asdefault = compile("randsc({7,0};{1,1};{0.5,0.5})");
-    sffe *fade = compile("randsc({7,0};{1,1};{0.5,0.2})");
-    sffe *sized = compile("randsc({7,0};{0.5,0.2};{1,1})");
-    sffe *half = compile("randsc({7,0};{1,1};{0.5,1})");
-    sffe *fifth = compile("randsc({7,0};{0.03125,1};{1,1})");
-    sffe *zsize = compile("randsc({7,0};{0,1})");
-    sffe *zfade = compile("randsc({7,0};{1,1};{1,0})");
+    sffe *full = compile("randsc({7,0},{1,1},{1,1})");
+    sffe *asdefault = compile("randsc({7,0},{1,1},{0.5,0.5})");
+    sffe *fade = compile("randsc({7,0},{1,1},{0.5,0.2})");
+    sffe *sized = compile("randsc({7,0},{0.5,0.2},{1,1})");
+    sffe *half = compile("randsc({7,0},{1,1},{0.5,1})");
+    sffe *fifth = compile("randsc({7,0},{0.03125,1},{1,1})");
+    sffe *zsize = compile("randsc({7,0},{0,1})");
+    sffe *zfade = compile("randsc({7,0},{1,1},{1,0})");
     if (failures)
         return 1;
 
@@ -251,12 +251,12 @@ int main(void)
      * value each time.
      */
     {
-        sffe *held = compile("randsc({13,0};{0.3,0.3};{1,1})");
-        sffe *slow = compile("randsc({13,0};{0.3,0.3};{0.99,0.99})");
-        sffe *heldq = compile("randscq({13,0};{0.3,0.3};{1,1})");
-        sffe *heldp = compile("randscp({13,0};{0.3,0.3};{1,1})");
-        sffe *heldh = compile("randsch({13,0};{0.3,0.3};{1,1})");
-        sffe *heldt = compile("randsct({13,0};{0.3,0.3};{1,1})");
+        sffe *held = compile("randsc({13,0},{0.3,0.3},{1,1})");
+        sffe *slow = compile("randsc({13,0},{0.3,0.3},{0.99,0.99})");
+        sffe *heldq = compile("randscq({13,0},{0.3,0.3},{1,1})");
+        sffe *heldp = compile("randscp({13,0},{0.3,0.3},{1,1})");
+        sffe *heldh = compile("randsch({13,0},{0.3,0.3},{1,1})");
+        sffe *heldt = compile("randsct({13,0},{0.3,0.3},{1,1})");
         if (!failures) {
             int mheld = 0, mslow = 0, mq = 0, mp = 0, mh = 0, mt = 0;
             for (unsigned int n = 0; n < 20; n++) {
@@ -302,13 +302,13 @@ int main(void)
             sffe *zero;
         } mosaic[] = {
             {"randscq", compile("randscq({7,0})"),
-             compile("randscq({7,0};{0,1})")},
+             compile("randscq({7,0},{0,1})")},
             {"randscp", compile("randscp({7,0})"),
-             compile("randscp({7,0};{1,1};{1,0})")},
+             compile("randscp({7,0},{1,1},{1,0})")},
             {"randsch", compile("randsch({7,0})"),
-             compile("randsch({7,0};{0,1})")},
+             compile("randsch({7,0},{0,1})")},
             {"randsct", compile("randsct({7,0})"),
-             compile("randsct({7,0};{1,1};{1,0})")},
+             compile("randsct({7,0},{1,1},{1,0})")},
         };
         const int nmosaic = (int)(sizeof(mosaic) / sizeof(mosaic[0]));
         sffe *smooth = compile("randsc({7,0})");
@@ -388,9 +388,9 @@ int main(void)
      * resolve -- but two things about it matter, and both were wrong once.
      */
     {
-        sffe *bh = compile("randsch({13,0};{0.3,0.3};{0.5,0.5})");
-        sffe *bt = compile("randsct({14,0};{0.3,0.3};{0.5,0.5})");
-        sffe *bq = compile("randscq({13,0};{0.3,0.3};{0.5,0.5})");
+        sffe *bh = compile("randsch({13,0},{0.3,0.3},{0.5,0.5})");
+        sffe *bt = compile("randsct({14,0},{0.3,0.3},{0.5,0.5})");
+        sffe *bq = compile("randscq({13,0},{0.3,0.3},{0.5,0.5})");
         if (!failures) {
             check(at(bh, 0.7, 0.4, 200) == at(bh, -1.3, 0.9, 200),
                   "past the resolution the field is flat");
@@ -426,7 +426,7 @@ int main(void)
      * The call site's running product is reset by asking for pass zero, which
      * is what the engine does at the start of every pixel. */
     {
-        sffe *walk = compile("randsc({7,0};{0.4,0.6};{0.93,0.87})");
+        sffe *walk = compile("randsc({7,0},{0.4,0.6},{0.93,0.87})");
         if (!failures) {
             at(walk, 0.3, 0.7, 0);
             number_t jumped = at(walk, 0.3, 0.7, 50);
@@ -470,7 +470,7 @@ int main(void)
      */
     {
         const int npixels = 600;
-        const char *expr = "randsch({13,0};{0.3,0.3};{0.97,0.97})";
+        const char *expr = "randsch({13,0},{0.3,0.3},{0.97,0.97})";
         std::vector<unsigned long long> one(npixels, 0), many(npixels, 0);
 
         for (int threads = 1; threads <= 4 && !failures; threads += 3) {
@@ -512,13 +512,13 @@ int main(void)
      * arguments cost nothing to a call that does not use them.
      */
     {
-        sffe *bare = compile("randsc({7,0};{0.5,0.5};{1,1})");
-        sffe *one = compile("randsc({7,0};{0.5,0.5};{1,1};{1,0};{0,0})");
-        sffe *left = compile("randsc({7,0};{0.5,0.5};{1,1};{4,0};{0,0})");
-        sffe *right = compile("randsc({7,0};{0.5,0.5};{1,1};{4,0};{1,0})");
+        sffe *bare = compile("randsc({7,0},{0.5,0.5},{1,1})");
+        sffe *one = compile("randsc({7,0},{0.5,0.5},{1,1},{1,0},{0,0})");
+        sffe *left = compile("randsc({7,0},{0.5,0.5},{1,1},{4,0},{0,0})");
+        sffe *right = compile("randsc({7,0},{0.5,0.5},{1,1},{4,0},{1,0})");
         /* anything that is not one folds the way zero does, which is what
              * "and anything else" in the description has to mean */
-        sffe *other = compile("randsc({7,0};{0.5,0.5};{1,1};{4,0};{7,0})");
+        sffe *other = compile("randsc({7,0},{0.5,0.5},{1,1},{4,0},{7,0})");
         if (!failures) {
             /* A level of one is what a call with three arguments already
              * does, to the bit. */
@@ -586,14 +586,14 @@ int main(void)
             double want;
             const char *what;
         } shapes[] = {
-            {"trap({3,4};0)", 5, "shape 0 is the distance to the centre"},
-            {"trap({3,4};1)", 4, "shape 1 is a horizontal line"},
-            {"trap({3,4};2)", 3, "shape 2 is a vertical one"},
-            {"trap({3,4};3)", 3, "shape 3 is the nearer of the two, a cross"},
-            {"trap({3,4};4;{0,0};{2,0})", 3, "shape 4 is a ring"},
-            {"trap({3,4};5;{0,0};{2,0})", 2, "shape 5 is a square"},
-            {"trap({3,4};6;{0,0};{2,0})", 5, "shape 6 is a diamond"},
-            {"trap({3,4};0;{3,0};{1,0})", 4, "the centre moves the shape"},
+            {"trap({3,4},0)", 5, "shape 0 is the distance to the centre"},
+            {"trap({3,4},1)", 4, "shape 1 is a horizontal line"},
+            {"trap({3,4},2)", 3, "shape 2 is a vertical one"},
+            {"trap({3,4},3)", 3, "shape 3 is the nearer of the two, a cross"},
+            {"trap({3,4},4,{0,0},{2,0})", 3, "shape 4 is a ring"},
+            {"trap({3,4},5,{0,0},{2,0})", 2, "shape 5 is a square"},
+            {"trap({3,4},6,{0,0},{2,0})", 5, "shape 6 is a diamond"},
+            {"trap({3,4},0,{3,0},{1,0})", 4, "the centre moves the shape"},
         };
         for (int i = 0; i < 8; i++) {
             sffe *f = compile(shapes[i].expr);
@@ -608,7 +608,7 @@ int main(void)
 
         /* Handed straight back while the passes have not run out, and it is
          * the argument itself, to the bit. */
-        sffe *pass = compile("trap({3,4};0)");
+        sffe *pass = compile("trap({3,4},0)");
         if (!failures) {
             sffe_maxiter = 10;
             check(at(pass, 0.3, 0.7, 0) == 3 && at(pass, 0.3, 0.7, 5) == 3,
@@ -618,7 +618,7 @@ int main(void)
         /* The smallest of the whole orbit, not the last of it. ifiter walks
          * the argument round a cycle, so the orbit here is 3+4i, 0.5, 2, and
          * the smallest distance to the centre is a half. */
-        sffe *walk = compile("trap(ifiter({3,4};{0.5,0};{2,0});0)");
+        sffe *walk = compile("trap(ifiter({3,4},{0.5,0},{2,0}),0)");
         if (!failures) {
             sffe_maxiter = 6;
             for (unsigned int n = 0; n < 5; n++)
@@ -639,7 +639,7 @@ int main(void)
         /* The stripe average of a constant argument is the one sample, since
          * every pass measures the same angle. arg(1+i) is a quarter turn, so
          * a density of four asks for sin(pi) -- a half after the shift. */
-        sffe *flat = compile("stripe({1,1};4)");
+        sffe *flat = compile("stripe({1,1},4)");
         if (!failures) {
             sffe_maxiter = 1;
             check(nfabs(at(flat, 0.3, 0.7, 0) - (number_t)0.5) <
@@ -656,7 +656,7 @@ int main(void)
 
         /* Whatever the orbit, an average of samples between zero and one is
          * between zero and one. */
-        sffe *mixed = compile("stripe(ifiter({3,4};{0.5,-2};{2,1});5)");
+        sffe *mixed = compile("stripe(ifiter({3,4},{0.5,-2},{2,1}),5)");
         if (!failures) {
             sffe_maxiter = 12;
             for (unsigned int n = 0; n < 11; n++)
@@ -670,11 +670,11 @@ int main(void)
     /* poly: a polynomial in its first argument, the rest its coefficients
      * from the highest power down. */
     {
-        sffe *quad = compile("poly({2,0};{3,0};{4,0};{5,0})");
-        sffe *linear = compile("poly({2,0};{3,0};{4,0})");
-        sffe *constant = compile("poly({2,0};{7,0})");
+        sffe *quad = compile("poly({2,0},{3,0},{4,0},{5,0})");
+        sffe *linear = compile("poly({2,0},{3,0},{4,0})");
+        sffe *constant = compile("poly({2,0},{7,0})");
         sffe *empty = compile("poly({2,0})");
-        sffe *cube = compile("poly({2,0};{1,0};{0,0};{0,0};{0,0})");
+        sffe *cube = compile("poly({2,0},{1,0},{0,0},{0,0},{0,0})");
         if (!failures) {
             /* 3*4 + 4*2 + 5 = 25 */
             check(at(quad, 0.3, 0.7, 0) == 25,
@@ -689,7 +689,7 @@ int main(void)
             /* The imaginary part goes through the same arithmetic, so a
              * complex argument is worth one check of its own: (1+i)^2 = 2i,
              * so poly(1+i; 1; 0; 0) is 2i. */
-            sffe *comp = compile("poly({1,1};{1,0};{0,0};{0,0})");
+            sffe *comp = compile("poly({1,1},{1,0},{0,0},{0,0})");
             if (!failures) {
                 GSL_SET_COMPLEX(&sffe_position, 0.3, 0.7);
                 sffe_iteration = 0;
@@ -720,9 +720,9 @@ int main(void)
         sffe *tri4 = compile("sierpinskyt(4)");
         sffe *tri16 = compile("sierpinskyt(16)");
         sffe *carpet = compile("sierpinskyc()");
-        sffe *carpet33 = compile("sierpinskyc(4;3)");
-        sffe *carpet5 = compile("sierpinskyc(4;5)");
-        sffe *carpet5e = compile("sierpinskyc( ;5)");
+        sffe *carpet33 = compile("sierpinskyc(4,3)");
+        sffe *carpet5 = compile("sierpinskyc(4,5)");
+        sffe *carpet5e = compile("sierpinskyc( ,5)");
         sffe *flake = compile("snowflake()");
         sffe *flake4 = compile("snowflake(4)");
         if (!failures) {
@@ -851,9 +851,9 @@ int main(void)
             struct {
                 const char *expr;
                 int n;
-            } cuts[3] = {{"sierpinskyc(4;3)", 3},
-                         {"sierpinskyc(4;4)", 4},
-                         {"sierpinskyc(4;5)", 5}};
+            } cuts[3] = {{"sierpinskyc(4,3)", 3},
+                         {"sierpinskyc(4,4)", 4},
+                         {"sierpinskyc(4,5)", 5}};
             for (int c = 0; c < 3; c++) {
                 sffe *f = compile(cuts[c].expr);
                 if (failures)
@@ -880,7 +880,7 @@ int main(void)
 
             /* two squares to a side has no ring to speak of, so the far
              * quarter goes instead, which is a gasket again */
-            sffe *carpet2 = compile("sierpinskyc(4;2)");
+            sffe *carpet2 = compile("sierpinskyc(4,2)");
             if (!failures) {
                 check(leaves(carpet2, 4, (number_t)3 / 2, (number_t)3 / 2) == 1,
                       "cut in two, the quarter that goes is the far corner");
@@ -1162,40 +1162,40 @@ int main(void)
             const char *written;
             const char *what;
         } defaults[] = {
-            {"julian({0.4,0.7})", "julian({0.4,0.7};{1,0};{1,0})",
+            {"julian({0.4,0.7})", "julian({0.4,0.7},{1,0},{1,0})",
              "julian defaults to the first power and the first turn"},
-            {"julian({0.4,0.7};{2,0})", "julian({0.4,0.7};{2,0};{1,0})",
+            {"julian({0.4,0.7},{2,0})", "julian({0.4,0.7},{2,0},{1,0})",
              "and to the first turn when only the power is given"},
-            {"inveps({0.4,0.7})", "inveps({0.4,0.7};{0.01,0.01})",
+            {"inveps({0.4,0.7})", "inveps({0.4,0.7},{0.01,0.01})",
              "inveps softens by a hundredth each way"},
-            {"ngon({0.4,0.7})", "ngon({0.4,0.7};{0,0};{3,0};{1,0})",
+            {"ngon({0.4,0.7})", "ngon({0.4,0.7},{0,0},{3,0},{1,0})",
              "ngon defaults to a triangle about the origin"},
-            {"ngon({0.4,0.7};{0.1,0.2})",
-             "ngon({0.4,0.7};{0.1,0.2};{3,0};{1,0})",
+            {"ngon({0.4,0.7},{0.1,0.2})",
+             "ngon({0.4,0.7},{0.1,0.2},{3,0},{1,0})",
              "and to a triangle when only the centre is given"},
-            {"randsc({7,0};{1,1})", "randsc({7,0};{1,1};{0.5,0.5})",
+            {"randsc({7,0},{1,1})", "randsc({7,0},{1,1},{0.5,0.5})",
              "randsc halves its cells each pass"},
-            {"randscq({7,0};{1,1})", "randscq({7,0};{1,1};{0.5,0.5};{1,0})",
+            {"randscq({7,0},{1,1})", "randscq({7,0},{1,1},{0.5,0.5},{1,0})",
              "and so does the mosaic, unfolded"},
-            {"trap({0.4,0.7})", "trap({0.4,0.7};{0,0};{0,0};{1,0})",
+            {"trap({0.4,0.7})", "trap({0.4,0.7},{0,0},{0,0},{1,0})",
              "trap measures to the centre by default"},
-            {"stripe({0.4,0.7})", "stripe({0.4,0.7};{4,0})",
+            {"stripe({0.4,0.7})", "stripe({0.4,0.7},{4,0})",
              "stripe lays four to a turn"},
 
-            {"julian({0.4,0.7}; ;{2,0})", "julian({0.4,0.7};{1,0};{2,0})",
+            {"julian({0.4,0.7}, ,{2,0})", "julian({0.4,0.7},{1,0},{2,0})",
              "an empty place takes the default julian declares"},
-            {"inveps({0.4,0.7}; )", "inveps({0.4,0.7};{0.01,0.01})",
+            {"inveps({0.4,0.7}, )", "inveps({0.4,0.7},{0.01,0.01})",
              "and so does one left empty at the end"},
-            {"ngon({0.4,0.7}; ;{5,0})", "ngon({0.4,0.7};{0,0};{5,0};{1,0})",
+            {"ngon({0.4,0.7}, ,{5,0})", "ngon({0.4,0.7},{0,0},{5,0},{1,0})",
              "ngon about the origin with only the sides given"},
-            {"randsc({7,0}; ; )", "randsc({7,0};{1,1};{0.5,0.5})",
+            {"randsc({7,0}, , )", "randsc({7,0},{1,1},{0.5,0.5})",
              "randsc fills in size and degradation alike"},
-            {"randscq({7,0}; ;{0.5,0.5}; )",
-             "randscq({7,0};{1,1};{0.5,0.5};{1,0})",
+            {"randscq({7,0}, ,{0.5,0.5}, )",
+             "randscq({7,0},{1,1},{0.5,0.5},{1,0})",
              "and the mosaic its size and its kaleidoscope level"},
-            {"trap({0.4,0.7}; ; ;{2,0})", "trap({0.4,0.7};{0,0};{0,0};{2,0})",
+            {"trap({0.4,0.7}, , ,{2,0})", "trap({0.4,0.7},{0,0},{0,0},{2,0})",
              "trap keeps its shape and its centre"},
-            {"stripe({0.4,0.7}; )", "stripe({0.4,0.7};{4,0})",
+            {"stripe({0.4,0.7}, )", "stripe({0.4,0.7},{4,0})",
              "stripe keeps its four to a turn"},
         };
         for (int i = 0; i < (int)(sizeof(defaults) / sizeof(defaults[0])) &&
@@ -1239,7 +1239,7 @@ int main(void)
         const int which = NUMBER_MANTISSA_BITS == 113 ? 1 : 0;
         for (int g = 0; g < 5; g++) {
             char expr[64];
-            sprintf(expr, "%s({7,0};{0.4,0.6};{0.9,0.95})", golden[g].name);
+            sprintf(expr, "%s({7,0},{0.4,0.6},{0.9,0.95})", golden[g].name);
             sffe *f = compile(expr);
             if (!f)
                 break;
@@ -1276,11 +1276,11 @@ int main(void)
                                         "randsct", "randscp"};
         for (int g = 0; g < 5 && !failures; g++) {
             char expr[128];
-            sprintf(expr, "%s(7;{0.4,0.4})", fields[g]);
+            sprintf(expr, "%s(7,{0.4,0.4})", fields[g]);
             sffe *plain = compile(expr);
-            sprintf(expr, "%s(7;{0.4,0.4};{0.5,0.5};1;0;0)", fields[g]);
+            sprintf(expr, "%s(7,{0.4,0.4},{0.5,0.5},1,0,0)", fields[g]);
             sffe *zero = compile(expr);
-            sprintf(expr, "%s(7;{0.4,0.4};{0.5,0.5};1;0;{0.05,0.02})",
+            sprintf(expr, "%s(7,{0.4,0.4},{0.5,0.5},1,0,{0.05,0.02})",
                     fields[g]);
             sffe *bent = compile(expr);
             if (failures)
@@ -1345,7 +1345,7 @@ int main(void)
 
             /* the fold holds with the skew on: a third of a turn leaves every
              * value where it was, both components of it */
-            sprintf(expr, "%s(7;{0.4,0.4};{0.5,0.5};3;0;{0.05,0.02})",
+            sprintf(expr, "%s(7,{0.4,0.4},{0.5,0.5},3,0,{0.05,0.02})",
                     fields[g]);
             sffe *folded = compile(expr);
             if (failures)
@@ -1395,11 +1395,11 @@ int main(void)
             const char *flat;
             const char *folded;
             int sides;
-        } figs[3] = {{"sierpinskyt(4)", "sierpinskyt(4;1;0)",
-                      "sierpinskyt(4;6;0)", 3},
-                     {"sierpinskyc(4;3)", "sierpinskyc(4;3;1;0)",
-                      "sierpinskyc(4;3;6;0)", 4},
-                     {"snowflake(4)", "snowflake(4;1;0)", "snowflake(4;6;0)",
+        } figs[3] = {{"sierpinskyt(4)", "sierpinskyt(4,1,0)",
+                      "sierpinskyt(4,6,0)", 3},
+                     {"sierpinskyc(4,3)", "sierpinskyc(4,3,1,0)",
+                      "sierpinskyc(4,3,6,0)", 4},
+                     {"snowflake(4)", "snowflake(4,1,0)", "snowflake(4,6,0)",
                       6}};
         for (int g = 0; g < 3 && !failures; g++) {
             sffe *bare = compile(figs[g].bare);
@@ -1499,9 +1499,9 @@ int main(void)
         /* One argument past the last is a call the figure will not take, and
          * what it hands back then is nought -- the same refusal the family has
          * always given a call it cannot read. */
-        static const char *toomany[3] = {"sierpinskyt(4;6;0;1)",
-                                         "sierpinskyc(4;3;6;0;1)",
-                                         "snowflake(4;6;0;1)"};
+        static const char *toomany[3] = {"sierpinskyt(4,6,0,1)",
+                                         "sierpinskyc(4,3,6,0,1)",
+                                         "snowflake(4,6,0,1)"};
         for (int g = 0; g < 3 && !failures; g++) {
             sffe *f = compile(toomany[g]);
             if (failures)
