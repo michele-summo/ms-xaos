@@ -15,6 +15,48 @@
 #include "config.h"
 #include "formulahelp.h"
 
+/* The line under the formula bar: what the call the cursor is standing in
+ * takes, with the argument being written picked out.
+ *
+ * The bar is one line and the reference is behind a menu, so a formula with
+ * six optional arguments has to be written from memory. This says what the
+ * places are as one moves between them. Which call and which argument is
+ * formula_hint_at, which is written without Qt and tested; what is left here
+ * is the wording, which is why it lives beside the reference it words rather
+ * than beside the bar it is shown under.
+ *
+ * Rich text, since the emphasis is the whole point -- a signature with six
+ * arguments says nothing about which of them is under the cursor. Everything
+ * put in is escaped: the reference holds no markup today, and an argument that
+ * grew a "<" would otherwise vanish instead of being shown.
+ */
+QString formula_hint_text(const QString &text, int cursor)
+{
+    /* The cursor counts in the units QString counts in, and the walk counts
+     * bytes, so the prefix is measured rather than assumed equal. */
+    const QByteArray utf8 = text.toUtf8();
+    const int at = text.left(cursor).toUtf8().size();
+
+    struct formula_hint hint = formula_hint_at(utf8.constData(), at);
+    if (!hint.fn)
+        return QString();
+
+    const QString name = QString::fromUtf8(hint.fn->name).toHtmlEscaped();
+    const char *args = hint.fn->args ? hint.fn->args : "";
+    int start = 0, len = 0;
+    if (hint.arg < 0 || !formula_hint_arg_span(args, hint.arg, &start, &len))
+        start = len = 0;
+
+    const QString all = QString::fromUtf8(args);
+    const QString before = QString::fromUtf8(args, start).toHtmlEscaped();
+    const QString here = QString::fromUtf8(args + start, len).toHtmlEscaped();
+    const QString after = QString::fromUtf8(args + start + len).toHtmlEscaped();
+
+    QString shown = len ? before + "<b>" + here + "</b>" + after
+                        : all.toHtmlEscaped();
+    return name + "(" + shown + ")";
+}
+
 /* A table that measures its rows again whenever its width changes.
  *
  * A wrapped cell is as tall as the width lets it be, and the width is not

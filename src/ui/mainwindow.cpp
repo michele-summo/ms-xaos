@@ -6,6 +6,7 @@
 #include "mainwindow.h"
 #include "fractalwidget.h"
 #include "customdialog.h"
+#include "formulahelp.h"
 
 #include "ui.h"
 #include "ui_helper.h"
@@ -1402,7 +1403,35 @@ void MainWindow::showDialog(const char *name)
 
                 QFormLayout *formLayout = new QFormLayout();
                 formLayout->addRow(label, list);
+
+                /* The line under the bar. It is there whether or not there is
+                 * anything to say, and two lines high so that a long signature
+                 * wraps rather than widening the dialog: a dialog that changed
+                 * size under the cursor would be worse than no hint at all. */
+                QLabel *hint = new QLabel(qDialog);
+                hint->setObjectName(label + "-hint");
+                hint->setTextFormat(Qt::RichText);
+                hint->setWordWrap(true);
+                hint->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+                hint->setMinimumHeight(
+                    2 * QFontMetrics(hint->font()).lineSpacing());
+                formLayout->addRow(QString(), hint);
                 dialogLayout->addLayout(formLayout);
+
+                if (QLineEdit *edit = list->lineEdit()) {
+                    auto showHint = [hint, edit]() {
+                        hint->setText(formula_hint_text(edit->text(),
+                                                      edit->cursorPosition()));
+                    };
+                    /* Both, and neither implies the other: typing moves the
+                     * cursor without the text having to change under it, and
+                     * an arrow key changes where one is without typing. */
+                    connect(edit, &QLineEdit::textChanged, hint,
+                            [showHint](const QString &) { showHint(); });
+                    connect(edit, &QLineEdit::cursorPositionChanged, hint,
+                            [showHint](int, int) { showHint(); });
+                    showHint();
+                }
 
                 QDialogButtonBox *buttonBox =
                     new QDialogButtonBox((QDialogButtonBox::Ok | QDialogButtonBox::Cancel),

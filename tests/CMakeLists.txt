@@ -106,6 +106,16 @@ foreach(prec ${XAOS_TEST_PRECISIONS})
                               PRIVATE ${CMAKE_SOURCE_DIR}/src/ui)
    add_test(NAME formula_help_${suffix} COMMAND formula_help_${suffix})
 
+   # The line under the formula bar reads half-written text and says which
+   # call the cursor is in. The walk over that text is where it can go wrong.
+   xaos_add_test_binary(formula_hint_${suffix} ${prec}
+                        formula_hint_test.cpp
+                        ${CMAKE_SOURCE_DIR}/src/ui/formulahint.cpp
+                        ${CMAKE_SOURCE_DIR}/src/ui/formulahelp_data.cpp)
+   target_include_directories(formula_hint_${suffix}
+                              PRIVATE ${CMAKE_SOURCE_DIR}/src/ui)
+   add_test(NAME formula_hint_${suffix} COMMAND formula_hint_${suffix})
+
    # --- overlays over the image --------------------------------------------
    # The status bar and the messages are drawn into the fractal image, so what
    # they cover has to be saved and put back. Where it is saved matters: the

@@ -82,6 +82,14 @@ two parts of a complex number. That is gone. A semicolon is now refused where it
 stands — *Invalid operator: ;* — and the comma is the separator throughout, as
 it is everywhere else in the syntax.
 
+**Under the bar there is a line saying what the call you are in takes**, with
+the argument you are writing in bold. Put the cursor inside `randsc(` and it
+reads *randsc(**seed**, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1],
+[mode=0], [skew=0])*; move past a comma and the bold moves with you. It needs
+no more of the formula than an open bracket with a name in front of it, so it
+is there while the formula is half written, which is when it is wanted. Put the
+cursor outside every call and the line is empty.
+
 Six of the shipped positions were written the old way and have been rewritten
 with commas: `circle`, `heart`, `helloween`, `pentafrac`, `warriormask` and
 `burnship`, all under **File → Load position → examples/Malczak**. **A position
