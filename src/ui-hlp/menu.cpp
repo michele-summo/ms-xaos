@@ -1484,8 +1484,8 @@ void uih_registermenus_i18n(void)
      * The shortnames are the ones uih_setincoloringmode and
      * uih_setoutcoloringmode build when they tell the menus which mode is
      * chosen -- "in23", "out18" -- so these tick and untick with the rest. */
-    SUBMENU_I("mincoloring", NULL, TR("Menu", "Fractional Brownian Motion"),
-              "mincolorfbm");
+    SUBMENU_I("mothincoloring", NULL,
+              TR("Menu", "Fractional Brownian Motion"), "mincolorfbm");
     MENUINTRB_I("mincolorfbm", NULL, TR("Menu", "fbm"), "in23",
                 UI | MENUFLAG_INTERRUPT, uih_setincoloringmode,
                 INCOLORING_FBM, uih_selectedincoloring);
@@ -1498,8 +1498,8 @@ void uih_registermenus_i18n(void)
     MENUCDIALOG_I("mincolorfbm", NULL, TR("Menu", "Settings"), "infbmset",
                   MENUFLAG_INTERRUPT, uih_setinfbm, uih_getinfbmdialog);
 
-    SUBMENU_I("moutcoloring", NULL, TR("Menu", "Fractional Brownian Motion"),
-              "moutcolorfbm");
+    SUBMENU_I("mothoutcoloring", NULL,
+              TR("Menu", "Fractional Brownian Motion"), "moutcolorfbm");
     MENUINTRB_I("moutcolorfbm", NULL, TR("Menu", "fbm + smooth"), "out18",
                 UI | MENUFLAG_INTERRUPT, uih_setoutcoloringmode,
                 OutColormodeType::ColOut_fbm_smooth, uih_selectedoutcoloring);

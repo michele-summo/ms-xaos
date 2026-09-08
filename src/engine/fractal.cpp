@@ -373,6 +373,11 @@ int fractal_palette_cell(fractal_context *context, struct image *img,
 
     if (cfractalc.plane)
         recalculate(cfractalc.plane, &x, &y);
+    /* Where the pixel is, which calculate() writes for the drawing and this
+     * has to write for itself: the colouring modes that read it would
+     * otherwise answer about the last pixel drawn. */
+    color_px = x;
+    color_py = y;
 #ifdef USE_SFFE
     cmplxset(sffe_position, x, y);
 #endif

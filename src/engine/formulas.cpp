@@ -300,13 +300,6 @@ static inline number_t bailout_threshold(void)
         if (cfractalc.coloringmode == OutColormodeClass::ColOut_smooth_log) { \
            iter = log(iter) * ((cpalette.size - 1))/log(cfractalc.maxiter * 256) + 1;  \
         }\
-        /* The smooth count worn. It has to be done here and not in            \
-         * color_output: this macro works the count out and returns a pixel of \
-         * its own, so a case added there is never reached by a mode that uses \
-         * the smooth iteration function -- which was found by rendering six   \
-         * settings and getting one picture. */                                \
-        if (cfractalc.coloringmode == OutColormodeClass::ColOut_fbm_smooth)    \
-            iter += (int)(fbm_at_pixel(0) * 256);                              \
         /* The colouring speed, the shift and the colouring function. Every    \
          * other outside mode meets color_precalc on its way out of            \
          * color_output; this one returns a pixel of its own and so skipped    \
@@ -321,6 +314,22 @@ static inline number_t bailout_threshold(void)
         {                                                                      \
             number_t smoothed = (number_t)iter;                                \
             int wrapped;                                                       \
+            /* The smooth count worn.                                          \
+             *                                                                 \
+             * Here, and not in color_output: this macro works the count out    \
+             * and returns a pixel of its own without ever passing through      \
+             * color_output, so a case added there is never reached by a mode   \
+             * that uses the smooth iteration function.                         \
+             *                                                                 \
+             * And here rather than four lines up, where it was: iter is an     \
+             * unsigned int and the motion moves the count both ways, so a      \
+             * negative addition wrapped it to four thousand million and the    \
+             * cast below overflowed. What that drew was flat patches wherever  \
+             * the motion pulled the count under nought. smoothed is the same   \
+             * count in a number_t, which is what the negative case below is    \
+             * already written for. */                                          \
+            if (cfractalc.coloringmode == OutColormodeClass::ColOut_fbm_smooth) \
+                smoothed += fbm_at_pixel(0) * 256;                             \
             int cycle = (int)(((unsigned int)(cpalette.size - 1)) << 8);       \
             color_precalc(smoothed, 0);                                        \
             wrapped = (int)smoothed;                                           \
