@@ -83,6 +83,7 @@ static menudialog *uih_perturbationdialog, *uih_juliadialog,
     *uih_bailoutdialog, *uih_threaddialog, *saveanimdialog, *uih_juliamodedialog,
     *uih_textposdialog, *uih_fastmodedialog, *uih_timedialog, *uih_numdialog,
     *uih_fpdialog, *palettedialog, *uih_cyclingdialog, *palettegradientdialog,
+    *uih_infbmdialog, *uih_outfbmdialog,
     *uih_renderimgdialog, *palettepickerdialog, *loadgpldialog, *savegpldialog,
     *uih_palettecolorsdialog
 #ifdef USE_SFFE
@@ -277,6 +278,25 @@ void uih_registermenudialogs_i18n(void)
 
     Register(uih_fpdialog);
     DIALOGFLOAT_I(TR("Dialog", "Number:"), 0);
+    NULL_I();
+
+    /* The five numbers a fractional Brownian motion is made of, one dialog a
+     * side. Together, because they only mean anything together: an intensity
+     * without a frequency says nothing about what will be drawn. */
+    Register(uih_infbmdialog);
+    DIALOGFLOAT_I(TR("Dialog", "Intensity (colour bands):"), 4);
+    DIALOGFLOAT_I(TR("Dialog", "Frequency (cells per unit):"), 8);
+    DIALOGINT_I(TR("Dialog", "Octaves:"), 4);
+    DIALOGFLOAT_I(TR("Dialog", "Roughness:"), 0.5);
+    DIALOGINT_I(TR("Dialog", "Seed:"), 1);
+    NULL_I();
+
+    Register(uih_outfbmdialog);
+    DIALOGFLOAT_I(TR("Dialog", "Intensity (colour bands):"), 4);
+    DIALOGFLOAT_I(TR("Dialog", "Frequency (cells per unit):"), 8);
+    DIALOGINT_I(TR("Dialog", "Octaves:"), 4);
+    DIALOGFLOAT_I(TR("Dialog", "Roughness:"), 0.5);
+    DIALOGINT_I(TR("Dialog", "Seed:"), 1);
     NULL_I();
 
     Register(palettedialog);
@@ -605,6 +625,30 @@ static menudialog *uih_getoutcolorspeeddialog(struct uih_context *c)
     return (uih_fpdialog);
 }
 
+static menudialog *uih_getinfbmdialog(struct uih_context *c)
+{
+    if (c != NULL) {
+        uih_infbmdialog[0].deffloat = c->fcontext->infbmintensity;
+        uih_infbmdialog[1].deffloat = c->fcontext->infbmfrequency;
+        uih_infbmdialog[2].defint = c->fcontext->infbmoctaves;
+        uih_infbmdialog[3].deffloat = c->fcontext->infbmroughness;
+        uih_infbmdialog[4].defint = c->fcontext->infbmseed;
+    }
+    return (uih_infbmdialog);
+}
+
+static menudialog *uih_getoutfbmdialog(struct uih_context *c)
+{
+    if (c != NULL) {
+        uih_outfbmdialog[0].deffloat = c->fcontext->outfbmintensity;
+        uih_outfbmdialog[1].deffloat = c->fcontext->outfbmfrequency;
+        uih_outfbmdialog[2].defint = c->fcontext->outfbmoctaves;
+        uih_outfbmdialog[3].deffloat = c->fcontext->outfbmroughness;
+        uih_outfbmdialog[4].defint = c->fcontext->outfbmseed;
+    }
+    return (uih_outfbmdialog);
+}
+
 static menudialog *uih_getincolorshiftdialog(struct uih_context *c)
 {
     if (c != NULL)
@@ -814,6 +858,48 @@ static void uih_palettecolors(struct uih_context *uih, dialogparam *p){
     uih_newimage(uih);
     uih->palettepickerenabled = 1;
 }
+
+/* The five numbers the fractional Brownian motion is made of, taken from one
+ * dialog rather than five: they are read together and they only mean anything
+ * together -- an intensity without a frequency says nothing about what will be
+ * drawn.
+ *
+ * The picture is redrawn only if something moved, which is what every other
+ * setting here does: a dialog closed on the values it opened with should cost
+ * nothing.
+ */
+static void uih_setfbm(uih_context *c, dialogparam *p, int inset)
+{
+    number_t *intensity = inset ? &c->fcontext->infbmintensity
+                                : &c->fcontext->outfbmintensity;
+    number_t *frequency = inset ? &c->fcontext->infbmfrequency
+                                : &c->fcontext->outfbmfrequency;
+    number_t *roughness = inset ? &c->fcontext->infbmroughness
+                                : &c->fcontext->outfbmroughness;
+    int *octaves = inset ? &c->fcontext->infbmoctaves
+                         : &c->fcontext->outfbmoctaves;
+    int *seed = inset ? &c->fcontext->infbmseed : &c->fcontext->outfbmseed;
+    int moved = 0;
+
+    if (*intensity != (number_t)p[0].number)
+        *intensity = (number_t)p[0].number, moved = 1;
+    if (*frequency != (number_t)p[1].number)
+        *frequency = (number_t)p[1].number, moved = 1;
+    if (*octaves != p[2].dint)
+        *octaves = p[2].dint, moved = 1;
+    if (*roughness != (number_t)p[3].number)
+        *roughness = (number_t)p[3].number, moved = 1;
+    if (*seed != p[4].dint)
+        *seed = p[4].dint, moved = 1;
+
+    if (moved) {
+        c->fcontext->version++;
+        uih_newimage(c);
+    }
+}
+
+static void uih_setinfbm(uih_context *c, dialogparam *p) { uih_setfbm(c, p, 1); }
+static void uih_setoutfbm(uih_context *c, dialogparam *p) { uih_setfbm(c, p, 0); }
 
 static void uih_palettepicker(struct uih_context *uih, dialogparam *p)
 {
@@ -1156,6 +1242,13 @@ static const menuitem *menuitems; /*XaoS menu specifications */
 static menuitem menuitems_i18n[MAX_MENUITEMS_I18N];
 int uih_no_menuitems_i18n;
 
+/* Written further down, beside the other callbacks the generated mode lists
+ * use. The fbm modes are not in those lists -- they have a menu of their own,
+ * with the settings they take -- so they are registered here and need the
+ * same two callbacks. */
+static int uih_selectedincoloring(struct uih_context *c, int n);
+static int uih_selectedoutcoloring(struct uih_context *c, int n);
+
 void uih_registermenus_i18n(void)
 {
     // Special version (currently it's OK):
@@ -1384,6 +1477,41 @@ void uih_registermenus_i18n(void)
     MENUSEPARATOR_I("fractal");
     SUBMENU_I("fractal", "f", TR("Menu", "Incoloring mode"), "mincoloring");
     SUBMENU_I("fractal", "c", TR("Menu", "Outcoloring mode"), "moutcoloring");
+
+    /* The fractional Brownian motion, a menu of its own on each side: the
+     * three modes that read it and the five numbers it is made of.
+     *
+     * The shortnames are the ones uih_setincoloringmode and
+     * uih_setoutcoloringmode build when they tell the menus which mode is
+     * chosen -- "in23", "out18" -- so these tick and untick with the rest. */
+    SUBMENU_I("mincoloring", NULL, TR("Menu", "Fractional Brownian Motion"),
+              "mincolorfbm");
+    MENUINTRB_I("mincolorfbm", NULL, TR("Menu", "fbm"), "in23",
+                UI | MENUFLAG_INTERRUPT, uih_setincoloringmode,
+                INCOLORING_FBM, uih_selectedincoloring);
+    MENUINTRB_I("mincolorfbm", NULL, TR("Menu", "fbm + zmag"), "in24",
+                UI | MENUFLAG_INTERRUPT, uih_setincoloringmode,
+                INCOLORING_FBM_ZMAG, uih_selectedincoloring);
+    MENUINTRB_I("mincolorfbm", NULL, TR("Menu", "fbm + decomposition"), "in25",
+                UI | MENUFLAG_INTERRUPT, uih_setincoloringmode,
+                INCOLORING_FBM_DECOMP, uih_selectedincoloring);
+    MENUCDIALOG_I("mincolorfbm", NULL, TR("Menu", "Settings"), "infbmset",
+                  MENUFLAG_INTERRUPT, uih_setinfbm, uih_getinfbmdialog);
+
+    SUBMENU_I("moutcoloring", NULL, TR("Menu", "Fractional Brownian Motion"),
+              "moutcolorfbm");
+    MENUINTRB_I("moutcolorfbm", NULL, TR("Menu", "fbm + smooth"), "out18",
+                UI | MENUFLAG_INTERRUPT, uih_setoutcoloringmode,
+                OutColormodeType::ColOut_fbm_smooth, uih_selectedoutcoloring);
+    MENUINTRB_I("moutcolorfbm", NULL, TR("Menu", "fbm + iter"), "out19",
+                UI | MENUFLAG_INTERRUPT, uih_setoutcoloringmode,
+                OutColormodeType::ColOut_fbm_iter, uih_selectedoutcoloring);
+    MENUINTRB_I("moutcolorfbm", NULL, TR("Menu", "fbm"), "out20",
+                UI | MENUFLAG_INTERRUPT, uih_setoutcoloringmode,
+                OutColormodeType::ColOut_fbm, uih_selectedoutcoloring);
+    MENUCDIALOG_I("moutcolorfbm", NULL, TR("Menu", "Settings"), "outfbmset",
+                  MENUFLAG_INTERRUPT, uih_setoutfbm, uih_getoutfbmdialog);
+
     SUBMENU_I("fractal", "i", TR("Menu", "Plane"), "mplane");
     SUBMENU_I("fractal", NULL, TR("Menu", "Palette"), "palettemenu");
     MENUSEPARATOR_I("fractal");
@@ -1798,7 +1926,7 @@ void uih_registermenus(void)
     /* The ten the program has always had stay in the menu itself; the ones
      * added since go to a submenu, so that the list does not run off the
      * screen. The numbers do not move: they are what a saved position holds. */
-    menu_genernumberedsplit(INCOLORING - 1, "mincoloring", 10,
+    menu_genernumberedsplit(INCOLORING_LISTED, "mincoloring", 10,
                             "mothincoloring", incolorname, NULL, MENU_INT,
                             UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
                             uih_setincoloringmode, uih_selectedincoloring,
@@ -1813,7 +1941,7 @@ void uih_registermenus(void)
      * only for a formula that escapes on the bailout, which is most of them
      * but not all, and a mode that does nothing at all for the fractal on
      * screen does not belong in the first list. */
-    menu_genernumberedsplit(OUTCOLORING - 1, "moutcoloring", 9,
+    menu_genernumberedsplit(OUTCOLORING_LISTED, "moutcoloring", 9,
                             "mothoutcoloring", outcolorname, NULL, MENU_INT,
                             UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
                             uih_setoutcoloringmode, uih_selectedoutcoloring,

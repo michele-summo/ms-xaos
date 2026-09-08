@@ -79,6 +79,9 @@ const char *const incolorname[] = {"0",
                                    "frac(mag)",
                                    "log(mag)",
                                    "True-color",
+                                   "fbm",
+                                   "fbm + zmag",
+                                   "fbm + decomposition",
                                    NULL};
 
 
@@ -100,6 +103,9 @@ const char *const outcolorname[] = {"iter",
                                     "iter banded",
                                     "|real|-|imag|",
                                     "True-color",
+                                    "fbm + smooth",
+                                    "fbm + iter",
+                                    "fbm",
                                     NULL};
 
 const char *const tcolorname[] = {
@@ -294,6 +300,13 @@ static inline number_t bailout_threshold(void)
         if (cfractalc.coloringmode == OutColormodeClass::ColOut_smooth_log) { \
            iter = log(iter) * ((cpalette.size - 1))/log(cfractalc.maxiter * 256) + 1;  \
         }\
+        /* The smooth count worn. It has to be done here and not in            \
+         * color_output: this macro works the count out and returns a pixel of \
+         * its own, so a case added there is never reached by a mode that uses \
+         * the smooth iteration function -- which was found by rendering six   \
+         * settings and getting one picture. */                                \
+        if (cfractalc.coloringmode == OutColormodeClass::ColOut_fbm_smooth)    \
+            iter += (int)(fbm_at_pixel(0) * 256);                              \
         /* The colouring speed, the shift and the colouring function. Every    \
          * other outside mode meets color_precalc on its way out of            \
          * color_output; this one returns a pixel of its own and so skipped    \
@@ -334,6 +347,103 @@ static inline number_t bailout_threshold(void)
         }                                                                      \
     }
 
+
+/* Where the pixel being coloured stands; see fractal.h. Written once a pixel
+ * by calculate(), read by the fbm modes. */
+thread_local number_t color_px = 0, color_py = 0;
+
+/* --- a fractional Brownian motion, for the colouring modes that want the
+ * picture to look used rather than clean ----------------------------------
+ *
+ * Value noise: the plane is cut into a lattice, every corner is hashed to a
+ * number, and a point takes the four corners of its square blended by a
+ * smoothstep -- which is nought and one at the ends with no slope, so the
+ * field crosses a lattice line without a crease. Octaves of it are summed,
+ * each at twice the frequency and keeping a share of the height of the one
+ * before, and that sum is the motion: no octave is large enough to see on its
+ * own and none is small enough to disappear, which is what makes it read as
+ * wear rather than as a pattern.
+ *
+ * The share is the roughness. At a half -- the plain motion -- the eighth
+ * octave carries a two hundred and fiftieth of the whole, so octaves past
+ * four or five change nothing one can see; measured, four and eighteen came
+ * out the same picture. Raising it gives the fine octaves something to spend
+ * and the count begins to matter, which is why both are offered.
+ *
+ * The seed is a number the user sets and nothing else: no clock, no pass, no
+ * order the pixels happened to be computed in, so a picture comes back the
+ * same tomorrow and at the other precision.
+ *
+ * Read at the pixel and not at the escape point. The escape point is not a
+ * continuous function of the pixel -- it jumps wherever the escape iteration
+ * does -- so noise read there comes out as grain, which was tried and thrown
+ * away.
+ */
+static inline uint64_t fbm_hash(int64_t x, int64_t y, int seed)
+{
+    uint64_t h = (uint64_t)seed * 0x9e3779b97f4a7c15ULL ^
+                 ((uint64_t)x * 0xff51afd7ed558ccdULL) ^
+                 ((uint64_t)y * 0xc4ceb9fe1a85ec53ULL);
+    h ^= h >> 33;
+    h *= 0xff51afd7ed558ccdULL;
+    h ^= h >> 33;
+    h *= 0xc4ceb9fe1a85ec53ULL;
+    h ^= h >> 33;
+    return h;
+}
+
+/* nought to one, out of the top bits, which are the mixed ones */
+static inline number_t fbm_unit(uint64_t h)
+{
+    return (number_t)(h >> 11) / (number_t)9007199254740992.0;
+}
+
+static number_t fbm_octave(number_t x, number_t y, int seed)
+{
+    number_t fx = nfloor(x), fy = nfloor(y);
+    int64_t cx = (int64_t)fx, cy = (int64_t)fy;
+    number_t u = x - fx, v = y - fy;
+    number_t su = u * u * (3 - 2 * u), sv = v * v * (3 - 2 * v);
+    number_t a = fbm_unit(fbm_hash(cx, cy, seed));
+    number_t b = fbm_unit(fbm_hash(cx + 1, cy, seed));
+    number_t c = fbm_unit(fbm_hash(cx, cy + 1, seed));
+    number_t d = fbm_unit(fbm_hash(cx + 1, cy + 1, seed));
+    number_t top = a + (b - a) * su;
+    number_t bottom = c + (d - c) * su;
+    return top + (bottom - top) * sv;
+}
+
+/* The motion at the pixel, in bands of colour: brought back to about minus a
+ * half to a half so that it moves the value both ways and leaves it where it
+ * was on average, then taken up to the intensity asked for. */
+static number_t fbm_at_pixel(int inset)
+{
+    number_t freq = inset ? cfractalc.infbmfrequency : cfractalc.outfbmfrequency;
+    number_t rough = inset ? cfractalc.infbmroughness : cfractalc.outfbmroughness;
+    number_t much = inset ? cfractalc.infbmintensity : cfractalc.outfbmintensity;
+    int octaves = inset ? cfractalc.infbmoctaves : cfractalc.outfbmoctaves;
+    int seed = inset ? cfractalc.infbmseed : cfractalc.outfbmseed;
+
+    if (octaves < 1)
+        octaves = 1;
+    if (octaves > 24)
+        octaves = 24;
+    if (!(rough > 0))
+        rough = (number_t)1 / 2;
+
+    number_t x = color_px * freq, y = color_py * freq;
+    number_t sum = 0, amp = 1, norm = 0;
+    for (int i = 0; i < octaves; i++) {
+        sum += amp * fbm_octave(x, y, seed + i);
+        norm += amp;
+        amp *= rough;
+        x *= 2;
+        y *= 2;
+    }
+    if (!(norm > 0))
+        return 0;
+    return (sum / norm - (number_t)1 / 2) * much;
+}
 
 /* 2021-02-09 MSUMMO calculate color functions */
 const number_t V_MAX = DBL_MAX / SMUL;
@@ -736,6 +846,19 @@ static unsigned int color_output(number_t zre, number_t zim, unsigned int iter)
              * level sets rather than their number */
             i_f = ((number_t)(((unsigned int)i_f >> SHIFT) % 8) * SMUL * 8);
             break;
+        case OutColormodeType::ColOut_fbm_iter:
+            /* the plain count worn, for a formula or a taste that does not
+             * want the smoothing */
+            i_f = (iter + fbm_at_pixel(0) * SMUL);
+            break;
+        case OutColormodeType::ColOut_fbm:
+            /* the motion alone: no count at all, so what is drawn outside the
+             * set is the noise itself. Half the intensity is added so that it
+             * runs from nought upwards rather than either side of it, which
+             * would wrap round the palette and put a seam through the middle
+             * of every mark. */
+            i_f = ((fbm_at_pixel(0) + cfractalc.outfbmintensity / 2) * SMUL);
+            break;
         case OutColormodeType::ColOut_abs_real_minus_abs_imag:
             /* how lopsided the escape point is, with no count: the level sets
              * of the difference rather than of the modulus */
@@ -788,6 +911,25 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
     }
 
     switch (cfractalc.incoloringmode) {
+    case INCOLORING_FBM:
+        /* the motion alone, which gives the inside a surface where it had one
+         * flat tone; half the intensity for the reason the outside one has it
+         */
+        i_f = ((fbm_at_pixel(1) + cfractalc.infbmintensity / 2) * SMUL);
+        break;
+    case INCOLORING_FBM_ZMAG:
+        /* zmag worn: the inside keeps what it says about the orbit and stops
+         * being clean about it */
+        i_f = (((zre * zre + zim * zim) *
+                    (number_t)(cfractalc.maxiter >> 1) * SMUL +
+                SMUL) +
+               fbm_at_pixel(1) * SMUL);
+        break;
+    case INCOLORING_FBM_DECOMP:
+        /* and the same over the decomposition */
+        i_f = (((atan2l(zre, zim) / (M_PI + M_PI) + 0.75) * 20000) +
+               fbm_at_pixel(1) * SMUL);
+        break;
     case 1: /* zmag */
         i_f = (((zre * zre + zim * zim) *
                     (number_t)(cfractalc.maxiter >> 1) * SMUL +

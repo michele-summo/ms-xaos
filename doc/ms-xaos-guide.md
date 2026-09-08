@@ -827,6 +827,64 @@ escapes — so look at the bands.
 Written to a saved position only when it is not the circle, so a position that
 does not ask for a shape stays loadable by any earlier version.
 
+## Fractional Brownian Motion
+
+A menu of its own on each side — **Fractal → Incoloring mode → Fractional
+Brownian Motion** and the same under Outcoloring mode — holding three modes and
+the five numbers they are drawn from.
+
+What it does is make a clean colouring look **used**: the bands keep their shape
+and their order and stop being perfect, as though the thing had been left out in
+the weather. It is not randomness pixel by pixel, which reads as grain and was
+tried and thrown away; it is a noise field with a scale, so what it draws are
+marks.
+
+**Outside** the three modes are `fbm + smooth`, `fbm + iter` and `fbm` alone —
+the smooth count worn, the banded count worn, and the noise on its own, which
+draws clouds around the set with no count in them at all.
+
+**Inside** they are `fbm`, `fbm + zmag` and `fbm + decomposition`. The first is
+the interesting one: the inside is one flat tone by default, and this gives it a
+surface.
+
+### The five numbers
+
+One dialog a side, under **Settings** in the same menu. They are saved with the
+position.
+
+| | |
+| --- | --- |
+| **intensity** | how many bands of colour the noise moves the value by. `4` is the default; below one it is a whisper, above ten the bands stop being bands |
+| **frequency** | cells of the lattice to a unit of the plane — the size of the marks. **This is the one to raise as you zoom in**: at the first view `8` reads well, at a span of `0.02` it takes about `200` |
+| **octaves** | how many are summed, each at twice the frequency of the one before |
+| **roughness** | what each octave keeps of the height of the one before it. `0.5` is the plain motion; higher is grittier |
+| **seed** | the same picture every time. Change it for a different one of the same character |
+
+**Octaves and roughness hold each other up.** At a roughness of `0.5` the eighth
+octave carries a two hundred and fiftieth of the whole, so octaves past four or
+five change nothing you can see — measured, four and eighteen came out the same
+picture. Raise the roughness and the fine octaves have something to spend, and
+then the count starts to matter.
+
+### What it costs, and the one thing it will not do
+
+The noise is worked out **once a pixel**, in the colouring, not once an
+iteration. Over a picture of 90000 points at a span of `0.02` and 400
+iterations, `fbm + smooth` took a fifth longer than plain `smooth` at four
+octaves and a quarter longer at eighteen; at 4000 iterations, where the orbit is
+doing more of the work, the same four octaves cost a tenth.
+
+The marks are anchored **to the plane**, not to the view: it is dirt on the
+thing, not on the lens. So zooming in magnifies them, and if you go far enough
+you end up inside one mark and the picture is clean again. Raising the frequency
+is the answer, and it is why the frequency is a setting rather than a constant.
+It cannot be tied to the zoom instead: the engine reuses pixels computed at the
+previous scale, and a colouring that moved with the view would leave them
+carrying the wrong marks.
+
+The modes are numbered **after** true colour, so every mode number a saved
+position already holds still means what it meant.
+
 ## More colouring modes
 
 Calculation is not what decides the colour of a pixel: the colour comes from a

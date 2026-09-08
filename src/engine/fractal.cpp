@@ -280,7 +280,10 @@ void set_fractalc(fractal_context *context, struct image *img)
     if (cursymmetry.ysym == (number_t)INT_MAX)
         cursymmetry.ysym = cfractalc.rs.mi + INT_MAX;
 
-    if ((cfractalc.coloringmode == OutColormodeType::ColOut_smooth || cfractalc.coloringmode == OutColormodeType::ColOut_smooth_log) && cformula.smooth_calculate != NULL &&
+    if ((cfractalc.coloringmode == OutColormodeType::ColOut_smooth ||
+         cfractalc.coloringmode == OutColormodeType::ColOut_smooth_log ||
+         cfractalc.coloringmode == OutColormodeType::ColOut_fbm_smooth) &&
+        cformula.smooth_calculate != NULL &&
         (cpalette.type &
          (TRUECOLOR | TRUECOLOR16 | TRUECOLOR24 | GRAYSCALE | LARGEITER))) {
         cfractalc.calculate[0] = cformula.smooth_calculate;
@@ -463,6 +466,14 @@ fractal_context *make_fractalc(const int formula, float wi, float he)
     new_ctxt->outcolorfun = 0;
     new_ctxt->outcolorspeed = 1.0f;
     new_ctxt->outcolorshift = 0;
+    /* What the fbm modes start from. Four bands of movement at eight cells to
+     * a unit reads as marks over the first view; a half is the plain motion,
+     * and four octaves are all it can spend there. */
+    new_ctxt->infbmintensity = new_ctxt->outfbmintensity = 4;
+    new_ctxt->infbmfrequency = new_ctxt->outfbmfrequency = 8;
+    new_ctxt->infbmroughness = new_ctxt->outfbmroughness = (number_t)1 / 2;
+    new_ctxt->infbmoctaves = new_ctxt->outfbmoctaves = 4;
+    new_ctxt->infbmseed = new_ctxt->outfbmseed = 1;
     new_ctxt->pndefault = 0;
     new_ctxt->newtonmodesffe = 0;
     new_ctxt->newtonconvergence = 1E-6;

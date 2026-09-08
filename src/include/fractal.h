@@ -31,9 +31,25 @@
  * true colour sits: last, which three places used to spell as the number 10
  * and would have gone on spelling as 10 after modes were added in front of
  * it. */
-#define INCOLORING 23
-#define INCOLORING_TRUECOLOR (INCOLORING - 1)
+#define INCOLORING 26
+/* True colour used to be the last inside mode and was found by counting from
+ * the end. The three fractional Brownian motion modes are written after it so
+ * that every number already saved in a position still means what it meant, so
+ * where it stands is now written down rather than counted. */
+#define INCOLORING_TRUECOLOR 22
+/* How many of them the flat list in the menu offers: the ones up to true
+ * colour, which has a submenu of its own. The fbm modes are not among them --
+ * they live in a submenu of their own with the settings they take. */
+#define INCOLORING_LISTED 22
+/* The three, in the order they are written in incolorname. */
+#define INCOLORING_FBM 23
+#define INCOLORING_FBM_ZMAG 24
+#define INCOLORING_FBM_DECOMP 25
 #define OUTCOLORING (OutColormodeClass::ColOut_MAXMode + 1)
+/* How many of them the flat list in the menu offers: the ones up to true
+ * colour, which has a submenu of its own. The fbm modes are not among them --
+ * they live in a submenu of their own with the settings they take. */
+#define OUTCOLORING_LISTED 17
 /* How many modes the per-formula symmetry tables below describe.
  *
  * They are written out mode by mode, one row apiece, and they were written
@@ -77,7 +93,16 @@ enum OutColormode {
                     ColOut_iter_banded,
                     ColOut_abs_real_minus_abs_imag,
                     ColOut_True_color,
-                    ColOut_MAXMode = ColOut_True_color
+                    /* Written after true colour, not before it. Every mode
+                     * added before had pushed true colour along by one, and
+                     * the mode is saved in a position as a number, so a
+                     * picture saved with true colour came back as whatever
+                     * had taken its place. These three leave every number
+                     * where it is. */
+                    ColOut_fbm_smooth,
+                    ColOut_fbm_iter,
+                    ColOut_fbm,
+                    ColOut_MAXMode = ColOut_fbm
                   };
    enum OutColormode ColorMode;
    int AsInt() {return ColorMode; }
@@ -185,6 +210,22 @@ struct fractal_context {
     number_t incolorspeed, outcolorspeed;
     int incolorfun, outcolorfun;
     int incolorshift, outcolorshift;
+    /* The fractional Brownian motion the fbm colouring modes are drawn from,
+     * kept apart for the two sides as the speed and the shift are.
+     *
+     * intensity  how many bands of colour the noise moves the value by
+     * frequency  cells of the lattice to a unit of the plane: the scale of
+     *            the marks, and what has to be raised as one zooms in
+     * octaves    how many are summed, each at twice the frequency
+     * roughness  what each octave keeps of the one before it; a half is the
+     *            plain fractional Brownian motion, more is grittier
+     * seed       the same picture every time, and a different one on demand
+     */
+    number_t infbmintensity, outfbmintensity;
+    number_t infbmfrequency, outfbmfrequency;
+    number_t infbmroughness, outfbmroughness;
+    int infbmoctaves, outfbmoctaves;
+    int infbmseed, outfbmseed;
     //MSUMMO HACK 20220409
     int pndefault;
     int newtonmodesffe;
@@ -280,6 +321,15 @@ extern int iters2, guessed2, unguessed2, total2;
 #endif
 
 void set_formula(fractal_context *, int);
+/* Where the pixel being coloured stands on the plane.
+ *
+ * The colouring is handed the point the orbit left by and not the point it
+ * started from, and the fbm modes want the second: the escape point jumps
+ * from pixel to pixel, so noise read at it comes out as grain rather than as
+ * marks. The parser keeps the same thing in sffe_position, but only when the
+ * parser is built in, and a colouring mode may not depend on that. */
+extern thread_local number_t color_px, color_py;
+
 void set_fractalc(fractal_context *, struct image *img);
 
 /* The cell of the palette one point of the plane is drawn from, or nought for

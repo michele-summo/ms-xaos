@@ -14,6 +14,12 @@ static pixel32_t inline calculate(number_t x, number_t y, int periodicity)
         recalculate(cfractalc.plane, &x, &y);
     }
     STAT(ncalculated2++);
+    /* Where the pixel stands, for the colouring modes that read the point the
+     * orbit started from rather than the one it left by. Written whether or
+     * not the parser is built in, since a colouring mode may not depend on
+     * that; the parser keeps its own copy just below. */
+    color_px = x;
+    color_py = y;
 #ifdef USE_SFFE
     /* What randsc and randscq hash. Here and not in the INIT macro, because
      * there the pixel is c in mandelbrot mode and z in julia mode -- binding

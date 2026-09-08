@@ -485,6 +485,47 @@ void uih_saveframe(struct uih_context *uih)
         if (s->fcontext->incoloringmode != uih->fcontext->incoloringmode)
             save_intc(uih, "incoloring", uih->fcontext->incoloringmode),
                 s->fcontext->incoloringmode = uih->fcontext->incoloringmode;
+        /* The fractional Brownian motion the fbm colouring modes are drawn
+         * from: five numbers a side, written as one command because they are
+         * read as one, and only when one of them has moved. */
+        if (uih->save ||
+            s->fcontext->infbmintensity != uih->fcontext->infbmintensity ||
+            s->fcontext->infbmfrequency != uih->fcontext->infbmfrequency ||
+            s->fcontext->infbmroughness != uih->fcontext->infbmroughness ||
+            s->fcontext->infbmoctaves != uih->fcontext->infbmoctaves ||
+            s->fcontext->infbmseed != uih->fcontext->infbmseed) {
+            start_save(uih, "infbmset");
+            save_float(uih, uih->fcontext->infbmintensity);
+            save_float(uih, uih->fcontext->infbmfrequency);
+            save_int(uih, uih->fcontext->infbmoctaves);
+            save_float(uih, uih->fcontext->infbmroughness);
+            save_int(uih, uih->fcontext->infbmseed);
+            stop_save(uih);
+            s->fcontext->infbmintensity = uih->fcontext->infbmintensity;
+            s->fcontext->infbmfrequency = uih->fcontext->infbmfrequency;
+            s->fcontext->infbmroughness = uih->fcontext->infbmroughness;
+            s->fcontext->infbmoctaves = uih->fcontext->infbmoctaves;
+            s->fcontext->infbmseed = uih->fcontext->infbmseed;
+        }
+        if (uih->save ||
+            s->fcontext->outfbmintensity != uih->fcontext->outfbmintensity ||
+            s->fcontext->outfbmfrequency != uih->fcontext->outfbmfrequency ||
+            s->fcontext->outfbmroughness != uih->fcontext->outfbmroughness ||
+            s->fcontext->outfbmoctaves != uih->fcontext->outfbmoctaves ||
+            s->fcontext->outfbmseed != uih->fcontext->outfbmseed) {
+            start_save(uih, "outfbmset");
+            save_float(uih, uih->fcontext->outfbmintensity);
+            save_float(uih, uih->fcontext->outfbmfrequency);
+            save_int(uih, uih->fcontext->outfbmoctaves);
+            save_float(uih, uih->fcontext->outfbmroughness);
+            save_int(uih, uih->fcontext->outfbmseed);
+            stop_save(uih);
+            s->fcontext->outfbmintensity = uih->fcontext->outfbmintensity;
+            s->fcontext->outfbmfrequency = uih->fcontext->outfbmfrequency;
+            s->fcontext->outfbmroughness = uih->fcontext->outfbmroughness;
+            s->fcontext->outfbmoctaves = uih->fcontext->outfbmoctaves;
+            s->fcontext->outfbmseed = uih->fcontext->outfbmseed;
+        }
         if ((s->fcontext->incoloringmode == INCOLORING_TRUECOLOR || s->mode >= UIH_SAVEALL) &&
             s->fcontext->intcolor != uih->fcontext->intcolor)
             save_intc(uih, "intcoloring", uih->fcontext->intcolor),
@@ -648,6 +689,11 @@ int uih_save_enable(struct uih_context *uih, xio_file f, int mode)
     s->fcontext->outcolorfun = 0;
     s->fcontext->outcolorspeed = 1.0f;
     s->fcontext->outcolorshift = 0;
+    s->fcontext->infbmintensity = s->fcontext->outfbmintensity = 4;
+    s->fcontext->infbmfrequency = s->fcontext->outfbmfrequency = 8;
+    s->fcontext->infbmroughness = s->fcontext->outfbmroughness = (number_t)1 / 2;
+    s->fcontext->infbmoctaves = s->fcontext->outfbmoctaves = 4;
+    s->fcontext->infbmseed = s->fcontext->outfbmseed = 1;
     s->fcontext->pndefault = 0;
     s->fcontext->newtonmodesffe = 0;
     s->fcontext->newtonconvergence = 1E-6;
