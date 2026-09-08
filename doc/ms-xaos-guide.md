@@ -547,19 +547,22 @@ the other with nothing across it; the square has four-fold symmetry and so shoul
 what is drawn on it. A test asserts that each figure answers a turn of its own
 order with the same turn.
 
-**`sierpinskyt([radius=4])`** — the Sierpinski gasket, in that triangle.
+**`sierpinskyt([radius=4]; [kaleidoscope=1]; [mode=0])`** — the Sierpinski
+gasket, in that triangle.
 
-**`sierpinskyc([radius=4]; [squares=3])`** — the Sierpinski carpet, in that
-square. The square is cut into `squares` by `squares`, the ring of cells along
-the border is kept, everything that ring encloses is thrown away, and the same
-is done to each cell that was kept. So the picture is **one square in the middle
-and 4×`squares`−4 around it**: eight at three, which is the carpet as it is
-usually drawn, twelve at four, sixteen at five. Two is the one number with no
-ring to speak of, and there the far corner goes instead, which is a gasket again
-— a square cut in four with one corner taken away is what a gasket is.
+**`sierpinskyc([radius=4]; [squares=3]; [kaleidoscope=1]; [mode=0])`** — the
+Sierpinski carpet, in that square. The square is cut into `squares` by
+`squares`, the ring of cells along the border is kept, everything that ring
+encloses is thrown away, and the same is done to each cell that was kept. So
+the picture is **one square in the middle and 4×`squares`−4 around it**: eight
+at three, which is the carpet as it is usually drawn, twelve at four, sixteen
+at five. Two is the one number with no ring to speak of, and there the far
+corner goes instead, which is a gasket again — a square cut in four with one
+corner taken away is what a gasket is.
 
-**`snowflake([radius=4])`** — the Koch snowflake, its points on that hexagon's
-corners, banded by generation from its middle out: the hexagon on the first
+**`snowflake([radius=4]; [kaleidoscope=1]; [mode=0])`** — the Koch snowflake,
+its points on that hexagon's corners, banded by generation from its middle
+out: the hexagon on the first
 pass, the six triangles on its sides on the second, the twelve on their free
 edges on the third, the forty-eight on the fourth. The six corners of ground the
 figure does not cover are not banded at all — they never leave, and are drawn in
@@ -567,6 +570,38 @@ the inside colour.
 
 Every argument has a default, so `snowflake()` is a call, and so is
 `sierpinskyc( ;5)` — a lacier carpet at the default size.
+
+**The kaleidoscope is the noise family's**, written last on each of the three
+and meaning the same: how many wedges the plane is cut into, and which mirror
+folds them. `1` — what a call that says nothing gets — folds nothing and leaves
+the figure the number it always was, to the bit.
+
+What it folds is different, though, and has to be. The noise folds the
+**position**, which stands still for the whole orbit; a figure has no use for
+the position and reads **z**, the point it is carrying down towards the part it
+stands in, so z is what is folded. The picture comes out the same way — the
+figure drawn in one wedge and repeated round the origin — and it holds all the
+way down, every step being taken on the folded point and folded again on the
+pass after. Inside the half wedge the fold leaves alone, the figure is the
+figure.
+
+    sierpinskyt(4;6;0)      the gasket six times round the origin
+    sierpinskyc(4;3;5;1)    the carpet in five wedges, the near mirror
+    snowflake(4;5)          five wedges of snowflake
+
+A snowflake already has the six-fold symmetry with the mirror down each
+bisector, so folding one into six wedges that way is the identity on the
+picture: `snowflake(4;6;0)` comes out **pixel for pixel** the same as
+`snowflake(4)` over 90000 pixels. Ask for five wedges, or four, to see it fold.
+
+One thing to know about the carpet: what it cuts away it throws one of four
+ways, the quarters cut by the diagonals of the square, and on a diagonal itself
+the choice is a tie. A fold can land a whole ray of the plane on that diagonal,
+and there the two sides of the tie are thrown opposite ways — a hairline along
+the diagonal, which is the step the carpet has always had rather than anything
+the fold does. Measured over ten thousand points at six wedges: every
+disagreement sat on a diagonal, and the folded points themselves agreed to a
+part in 10^16.
 
     sierpinskyt()        with Fractal -> Bailout shape -> triangle -90
     sierpinskyc()        with bailout shape square

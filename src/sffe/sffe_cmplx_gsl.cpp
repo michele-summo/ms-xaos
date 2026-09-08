@@ -2412,11 +2412,42 @@ static inline number_t fig_cached(sfarg *const p, number_t radius, int recip)
  * these and inside every bailout shape as well: a turn is what carries the
  * value round with the point, so that turning the picture turns what is drawn
  * on it, and a mirror turns it the other way. The distance from the centre is
- * left alone either way. */
-#define FIG_TURN(p, cs, sn)                                                    \
-    GSL_SET_COMPLEX(&sfvalue(p),                                               \
-                    (cs) * GSL_REAL(sffe_z) - (sn) * GSL_IMAG(sffe_z),         \
-                    (sn) * GSL_REAL(sffe_z) + (cs) * GSL_IMAG(sffe_z))
+ * left alone either way.
+ *
+ * The point is handed in rather than read off z, because a kaleidoscope may
+ * have folded it: what is turned has to be the point the figure was read at,
+ * or the empty space would be turned out of the wedge the rest of the figure
+ * lives in. */
+#define FIG_TURN(p, cs, sn, zx, zy)                                            \
+    GSL_SET_COMPLEX(&sfvalue(p), (cs) * (zx) - (sn) * (zy),                    \
+                    (sn) * (zx) + (cs) * (zy))
+
+/* The point a figure reads, folded into one wedge if the call asks for it.
+ *
+ * The noise fields fold the position, which stands still for the whole orbit.
+ * A figure has no use for the position: it reads z, the point it is carrying
+ * down towards the part of the figure it stands in, so z is what is folded
+ * here. What comes of it is the same -- the figure is drawn in one wedge and
+ * repeated round the origin -- and it holds all the way down, every step being
+ * taken on the folded point and folded again on the pass after.
+ *
+ * The two arguments are the ones the noise family takes and mean the same: how
+ * many wedges, and which mirror folds them. They come last, so a call written
+ * before they existed is the call it was.
+ *
+ * A level of one -- which is what a call that says nothing gets -- folds
+ * nothing and works out no angle, so the figure is the figure it always was,
+ * to the bit. */
+static inline void fig_point(sfarg *const p, unsigned int place, number_t *zx,
+                             number_t *zy)
+{
+    *zx = GSL_REAL(sffe_z);
+    *zy = GSL_IMAG(sffe_z);
+    int level = (int)GSL_REAL(sfarg_or(p, place, 1, 0));
+    if (level >= 2)
+        randsc_kaleido(zx, zy, level,
+                       (int)GSL_REAL(sfarg_or(p, place + 1, 0, 0)));
+}
 /* Twenty-four levels puts the finest bump at three to the minus twenty-four of
  * the radius, which is smaller than anything a picture of a figure this size
  * will ever be asked to show. What the mantissa could carry is beside the
@@ -2430,10 +2461,12 @@ static inline number_t fig_cached(sfarg *const p, number_t radius, int recip)
 #define KOCH_UNDECIDED (-1)
 /**
  * @brief The Sierpinski gasket, as a field over the plane.
- * @details sierpinskyt(radius) stands the triangle a triangular bailout of
- * that number draws, point upwards, and cuts the gasket out of it: a point
- * leaves on the pass numbered by the cut that took it, and one on the gasket
- * itself never leaves, so the iteration count is the picture.
+ * @details sierpinskyt(radius, kaleidoscope, mode) stands the triangle a
+ * triangular bailout of that number draws, point upwards, and cuts the gasket
+ * out of it: a point leaves on the pass numbered by the cut that took it, and
+ * one on the gasket itself never leaves, so the iteration count is the
+ * picture. The last two are the kaleidoscope the noise family takes, one and
+ * nought by default; see fig_point.
  *
  * Worked out in barycentric coordinates, where the gasket has a description
  * that costs nothing. Halving the triangle towards each of its corners in turn
@@ -2456,7 +2489,7 @@ static inline number_t fig_cached(sfarg *const p, number_t radius, int recip)
 sfarg *sfsierpinskyt(sfarg *const p)
 {
     GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
-    if (p->argc > 1)
+    if (p->argc > 3)
         return p;
     number_t radius = GSL_REAL(sfarg_or(p, 1, 4, 0));
     if (!(radius > 0))
@@ -2466,8 +2499,8 @@ sfarg *sfsierpinskyt(sfarg *const p)
      * triangular bailout of that number stands its sides, which puts the
      * corners at twice that: a triangle's apothem is half its circumradius. */
     number_t corner = 2 * fig_cached(p, radius, 0);
-    number_t x = GSL_REAL(sffe_z);
-    number_t y = GSL_IMAG(sffe_z);
+    number_t x, y;
+    fig_point(p, 2, &x, &y);
 
     /* The three barycentric weights, each multiplied by three times the corner
      * distance. That is a positive number, so it changes neither which of them
@@ -2481,7 +2514,7 @@ sfarg *sfsierpinskyt(sfarg *const p)
     if (wa < 0 || wb < 0 || wc < 0) {
         /* out of the triangle, so no part of the figure: a third of a turn,
          * which is the triangle's own, and it never leaves */
-        FIG_TURN(p, (number_t)-1 / 2, FIG_SIN60);
+        FIG_TURN(p, (number_t)-1 / 2, FIG_SIN60, x, y);
         return p;
     }
 
@@ -2498,8 +2531,8 @@ sfarg *sfsierpinskyt(sfarg *const p)
 
 /**
  * @brief The Sierpinski carpet, as a field over the plane.
- * @details sierpinskyc(radius, squares) fills the square a square bailout of
- * that number draws -- half a side the square root of radius, at the origin --
+ * @details sierpinskyc(radius, squares, kaleidoscope, mode) fills the square a
+ * square bailout of that number draws -- half a side the square root of radius, at the origin --
  * cuts it into squares by squares, keeps the ring of cells along the border,
  * throws away everything the ring encloses, and does the same to each cell it
  * kept. So the picture is one square in the middle and 4*squares-4 around it:
@@ -2514,7 +2547,7 @@ sfarg *sfsierpinskyt(sfarg *const p)
 sfarg *sfsierpinskyc(sfarg *const p)
 {
     GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
-    if (p->argc > 2)
+    if (p->argc > 4)
         return p;
     number_t radius = GSL_REAL(sfarg_or(p, 1, 4, 0));
     int squares = (int)GSL_REAL(sfarg_or(p, 2, 3, 0));
@@ -2530,12 +2563,14 @@ sfarg *sfsierpinskyc(sfarg *const p)
      * additions cost. */
     number_t invhalf = fig_cached(p, radius, 1);
     number_t half = radius * invhalf;
-    number_t tu = (GSL_REAL(sffe_z) + half) * invhalf * squares / 2;
-    number_t tv = (GSL_IMAG(sffe_z) + half) * invhalf * squares / 2;
+    number_t zx, zy;
+    fig_point(p, 3, &zx, &zy);
+    number_t tu = (zx + half) * invhalf * squares / 2;
+    number_t tv = (zy + half) * invhalf * squares / 2;
     if (!(tu >= 0) || tu >= squares || !(tv >= 0) || tv >= squares) {
         /* out of the square, so no part of the figure: a quarter of a turn,
          * which is the square's own, and it never leaves */
-        FIG_TURN(p, 0, 1);
+        FIG_TURN(p, 0, 1, zx, zy);
         return p;
     }
 
@@ -2573,7 +2608,6 @@ sfarg *sfsierpinskyc(sfarg *const p)
                              j < squares - 1)
                           : (i == 1 && j == 1);
     if (cut) {
-        number_t zx = GSL_REAL(sffe_z), zy = GSL_IMAG(sffe_z);
         number_t ax = zx < 0 ? -zx : zx, ay = zy < 0 ? -zy : zy;
         number_t throwx = 0, throwy = 0;
         if (ax >= ay)
@@ -2645,9 +2679,10 @@ static inline int koch_under(double x, double y, int depth)
 
 /**
  * @brief The Koch snowflake, read from a hexagon out.
- * @details snowflake(radius) draws a Koch snowflake with its six points
- * standing on the six corners of the hexagon a hexagonal bailout of that
- * number draws.
+ * @details snowflake(radius, kaleidoscope, mode) draws a Koch snowflake with
+ * its six points standing on the six corners of the hexagon a hexagonal
+ * bailout of that number draws. The last two are the kaleidoscope the noise
+ * family takes, one and nought by default; see fig_point.
  *
  * A snowflake comes apart exactly: a regular hexagon at the middle, six
  * triangles of the hexagon's own side standing on its six sides, twelve of a
@@ -2693,7 +2728,7 @@ static inline int koch_under(double x, double y, int depth)
 sfarg *sfsnowflake(sfarg *const p)
 {
     GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
-    if (p->argc > 1)
+    if (p->argc > 3)
         return p;
     number_t radius = GSL_REAL(sfarg_or(p, 1, 4, 0));
     if (!(radius > 0))
@@ -2705,8 +2740,10 @@ sfarg *sfsnowflake(sfarg *const p)
      * corners of the hexagon a bailout of this number would draw. */
     number_t inv = fig_cached(p, radius, 1);
     number_t scale = FIG_SIN60 * inv;
-    number_t x = GSL_REAL(sffe_z) * scale;
-    number_t y = GSL_IMAG(sffe_z) * scale;
+    number_t zx, zy;
+    fig_point(p, 2, &zx, &zy);
+    number_t x = zx * scale;
+    number_t y = zy * scale;
 
     /* The six points reach exactly as far as the corners of the triangle the
      * figure grew from, so the whole of it sits inside the circle those corners
@@ -2715,7 +2752,7 @@ sfarg *sfsnowflake(sfarg *const p)
     if (x * x + y * y > 1) {
         /* past the whole figure, so no part of it: half about, and it never
          * leaves -- see FIG_TURN */
-        FIG_TURN(p, -1, 0);
+        FIG_TURN(p, -1, 0, zx, zy);
         return p;
     }
 
@@ -2751,9 +2788,8 @@ sfarg *sfsnowflake(sfarg *const p)
          * the way its sector faces and goes on this pass, carrying where it
          * came from with it for the outside colouring to read. */
         number_t root = radius * inv; /* the square root back, by multiplying */
-        GSL_SET_COMPLEX(&sfvalue(p),
-                        GSL_REAL(sffe_z) + FIG_THROW_X[k] * root,
-                        GSL_IMAG(sffe_z) + FIG_THROW_Y[k] * root);
+        GSL_SET_COMPLEX(&sfvalue(p), zx + FIG_THROW_X[k] * root,
+                        zy + FIG_THROW_Y[k] * root);
         return p;
     }
 
@@ -2843,7 +2879,7 @@ sfarg *sfsnowflake(sfarg *const p)
              * inside the hexagon, where a sixth of a turn carries it out of the
              * square. It is the motion the other two figures give what is no
              * part of them, each by its own symmetry -- see FIG_TURN. */
-            FIG_TURN(p, -1, 0);
+            FIG_TURN(p, -1, 0, zx, zy);
             return p;
         }
         /* onto the parent: take the child off the corner its edge faces away

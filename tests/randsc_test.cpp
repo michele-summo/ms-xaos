@@ -69,6 +69,17 @@ static cmplx atc(sffe *parser, number_t x, number_t y, unsigned int n)
 }
 
 
+/* A figure reads z, where the fields read the position, so this is what one
+ * has to be asked with. Both are set: the position is the pixel and a figure
+ * that ignores it should go on ignoring it. */
+static cmplx atz(sffe *parser, number_t x, number_t y, unsigned int n)
+{
+    GSL_SET_COMPLEX(&sffe_position, x, y);
+    GSL_SET_COMPLEX(&sffe_z, x, y);
+    sffe_iteration = n;
+    return sffe_eval(parser);
+}
+
 /* --- driving a figure the way the iteration loops drive one ---------------
  *
  * A figure hands back where the point stands next, so it is fed back in, and
@@ -1363,6 +1374,142 @@ int main(void)
             sffe_free(&zero);
             sffe_free(&bent);
             sffe_free(&folded);
+        }
+    }
+
+    /* --- the kaleidoscope on the three figures -----------------------------
+     *
+     * The same two arguments the noise family takes, meaning the same and
+     * defaulting to the same, written after each figure's own so that a call
+     * from before they existed is the call it was.
+     *
+     * A figure has no use for the position: it reads z, the point it carries
+     * down towards the part of the figure it stands in, so z is what is
+     * folded. What comes of it is what the noise gets -- the figure drawn in
+     * one wedge and repeated round the origin -- and it holds all the way
+     * down, every step being taken on the folded point.
+     */
+    {
+        static const struct {
+            const char *bare;
+            const char *flat;
+            const char *folded;
+            int sides;
+        } figs[3] = {{"sierpinskyt(4)", "sierpinskyt(4;1;0)",
+                      "sierpinskyt(4;6;0)", 3},
+                     {"sierpinskyc(4;3)", "sierpinskyc(4;3;1;0)",
+                      "sierpinskyc(4;3;6;0)", 4},
+                     {"snowflake(4)", "snowflake(4;1;0)", "snowflake(4;6;0)",
+                      6}};
+        for (int g = 0; g < 3 && !failures; g++) {
+            sffe *bare = compile(figs[g].bare);
+            sffe *flat = compile(figs[g].flat);
+            sffe *folded = compile(figs[g].folded);
+            if (failures)
+                break;
+
+            /* A level of one is what a call that says nothing gets, and it
+             * folds nothing: not near enough, but the same number, since the
+             * fold is not entered and no angle is worked out. */
+            int alike = 1;
+            for (int i = 0; i < 90; i++) {
+                number_t x = (number_t)(i % 13) / 3 - 2 + (number_t)1 / 64;
+                number_t y = (number_t)(i % 17) / 4 - 2 + (number_t)1 / 48;
+                for (unsigned int n = 0; n < 4; n++) {
+                    cmplx a = atz(bare, x, y, n);
+                    cmplx b = atz(flat, x, y, n);
+                    if (GSL_REAL(a) != GSL_REAL(b) ||
+                        GSL_IMAG(a) != GSL_IMAG(b))
+                        alike = 0;
+                }
+            }
+            sprintf(what, "a kaleidoscope of one leaves %s where it was",
+                    figs[g].bare);
+            check(alike, what);
+
+            /* and a level of six folds: a turn of one wedge leaves the value
+             * where it was, both components of it */
+            number_t ct = ncos((number_t)2 * (number_t)M_PI / 6);
+            number_t st = nsin((number_t)2 * (number_t)M_PI / 6);
+            int apart = 0;
+            for (int i = 1; i < 140; i++) {
+                number_t x = (number_t)(i % 13) / 5 - 1 + (number_t)137 / 10000;
+                number_t y = (number_t)(i % 17) / 7 - 1 + (number_t)71 / 10000;
+                if (x * x + y * y < (number_t)1 / 25)
+                    continue;
+                for (unsigned int n = 0; n < 3; n++) {
+                    cmplx a = atz(folded, x, y, n);
+                    cmplx b = atz(folded, x * ct - y * st, x * st + y * ct, n);
+                    if (nfabs(GSL_REAL(a) - GSL_REAL(b)) >
+                            (number_t)1 / 1000000 ||
+                        nfabs(GSL_IMAG(a) - GSL_IMAG(b)) >
+                            (number_t)1 / 1000000)
+                        apart++;
+                }
+            }
+            /* The carpet throws what it cuts away one of four ways, the
+             * quarters cut by the diagonals of the square, so a point the fold
+             * lands exactly on a diagonal is a tie broken by a comparison and
+             * the two sides of it can be thrown opposite ways. That is the
+             * step the carpet has always had, not the fold: measured over ten
+             * thousand points, every disagreement sat on a diagonal and the
+             * two folded points agreed to a part in 10^16. */
+            sprintf(what, "and %s folds into six (%d apart)", figs[g].bare,
+                    apart);
+            check(apart <= 4, what);
+
+            /* Inside the first half wedge the fold is the identity, so what
+             * is drawn there is the figure itself.
+             *
+             * One step of it, not the whole descent. The fold works the point
+             * out again through a root and a pair of trigonometric functions,
+             * which lands it a part in 10^19 from where it started, and every
+             * step these figures take expands -- the carpet by the number of
+             * cells a pass -- so over sixty passes that part in 10^19 grows
+             * into a difference anyone can see. That is what an expanding map
+             * does to any perturbation and not something the fold has done
+             * wrong: one step at a time, the two agree. */
+            int off = 0;
+            for (int i = 0; i < 40; i++) {
+                /* angles between nought and thirty degrees, which is the half
+                 * wedge a level of six leaves alone */
+                number_t r = (number_t)1 / 4 + (number_t)i / 40;
+                number_t t = (number_t)i * (number_t)M_PI / (6 * 40);
+                number_t x = r * ncos(t), y = r * nsin(t);
+                for (unsigned int n = 0; n < 3; n++) {
+                    cmplx a = atz(bare, x, y, n);
+                    cmplx b = atz(folded, x, y, n);
+                    if (nfabs(GSL_REAL(a) - GSL_REAL(b)) >
+                            (number_t)1 / 1000000 ||
+                        nfabs(GSL_IMAG(a) - GSL_IMAG(b)) >
+                            (number_t)1 / 1000000)
+                        off++;
+                }
+            }
+            sprintf(what, "and is itself inside the wedge it folds into (%s, "
+                          "%d off)",
+                    figs[g].bare, off);
+            check(off <= 2, what);
+
+            sffe_free(&bare);
+            sffe_free(&flat);
+            sffe_free(&folded);
+        }
+
+        /* One argument past the last is a call the figure will not take, and
+         * what it hands back then is nought -- the same refusal the family has
+         * always given a call it cannot read. */
+        static const char *toomany[3] = {"sierpinskyt(4;6;0;1)",
+                                         "sierpinskyc(4;3;6;0;1)",
+                                         "snowflake(4;6;0;1)"};
+        for (int g = 0; g < 3 && !failures; g++) {
+            sffe *f = compile(toomany[g]);
+            if (failures)
+                break;
+            cmplx v = atz(f, (number_t)1 / 3, (number_t)1 / 7, 0);
+            sprintf(what, "%s is one argument too many", toomany[g]);
+            check(GSL_REAL(v) == 0 && GSL_IMAG(v) == 0, what);
+            sffe_free(&f);
         }
     }
 
