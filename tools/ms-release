@@ -1,0 +1,163 @@
+#!/bin/bash
+#
+# Builds the Windows bundle for a release of MS XaoS and, if asked, publishes
+# it on GitHub.
+#
+# The scripts beside this one are upstream's and are built around MSYS2 and the
+# Qt Installer Framework. This one is built around what this fork actually uses
+# to compile: cmake, MinGW and the "deploy" target, which fills bin/ with the Qt
+# and compiler runtime through windeployqt.
+#
+# Usage, from the tools/ folder:
+#
+#   ./ms-release              build the zip and say what to do with it
+#   ./ms-release --tag        also make the tag and push it
+#   ./ms-release --publish    also create the release on GitHub (needs gh)
+#
+# The version is never given on the command line. It is read from config.h, so
+# that the tag, the name of the zip and the About box cannot disagree.
+
+set -e
+
+here=$(cd "$(dirname "$0")" && pwd)
+root=$(cd "$here/.." && pwd)
+
+tag_it=0
+publish=0
+for arg in "$@"; do
+    case "$arg" in
+        --tag) tag_it=1 ;;
+        --publish) tag_it=1; publish=1 ;;
+        *) echo "unknown option: $arg"; exit 64 ;;
+    esac
+done
+
+# --- what is being released ------------------------------------------------
+
+test -r "$root/src/include/config.h" || {
+    echo "config.h is not where it should be; run this from tools/."
+    exit 1
+}
+
+# The line that sets it, not the two below that build XaoS_VERSION out of it.
+version=$(grep '^#define XaoS_VERSION_BASE' "$root/src/include/config.h" |
+          awk '{print $3}' | tr -d '"')
+test -n "$version" || { echo "no version in config.h"; exit 1; }
+tag="v$version"
+name="ms-xaos-$version-windows-x64"
+
+echo "MS XaoS $version, tag $tag"
+
+# --- the tree has to be clean ----------------------------------------------
+#
+# A release built from a tree with uncommitted work in it is a build nobody can
+# make again, which is the one thing a release must not be.
+
+cd "$root"
+# CMakeLists.txt.user is Qt Creator's own state -- tracked by this repo, and
+# different on every machine that opens it. It says nothing about what will be
+# built, so it is not a reason to stop.
+dirty=$(git status --porcelain --untracked-files=no | grep -v 'CMakeLists.txt.user' || true)
+if [ -n "$dirty" ]; then
+    echo
+    echo "The working tree has changes that are not committed:"
+    echo "$dirty"
+    echo
+    echo "Commit them or put them aside first."
+    exit 2
+fi
+
+# --- the build --------------------------------------------------------------
+#
+# A configured build folder under build/. A release one is preferred over a
+# debug one, which is what an alphabetical walk would otherwise hand over --
+# Qt Creator names them ...-Debug and ...-Release, and Debug sorts first.
+
+pick_build() {
+    local d
+    for d in "$root"/build/*Release*/ "$root"/build/*/; do
+        if [ -r "$d/CMakeCache.txt" ]; then
+            echo "$d"
+            return
+        fi
+    done
+}
+build=$(pick_build)
+test -n "$build" || {
+    echo "No configured build folder under build/. Configure one with cmake first."
+    exit 3
+}
+echo "building in $build"
+
+cmake --build "$build" -j8
+ctest --test-dir "$build" -j4 || {
+    echo
+    echo "Tests failed. That is not something to release."
+    exit 4
+}
+
+# windeployqt: Qt, the compiler runtime, and libquadmath for the quad binary
+cmake --build "$build" --target deploy
+
+# --- the bundle -------------------------------------------------------------
+#
+# bin/ is what the deploy target filled. The three data folders are what the
+# program looks for at run time: catalogs for the menus, tutorial for the
+# tutorials, examples for File -> Load position.
+
+stage="$here/$name"
+rm -rf "$stage"
+mkdir -p "$stage"
+cp -a "$root/bin" "$stage/"
+cp -a "$root/catalogs" "$stage/"
+cp -a "$root/tutorial" "$stage/"
+cp -a "$root/examples" "$stage/"
+cp -a "$root/COPYING" "$stage/"
+cp -a "$root/doc/ms-xaos-guide.md" "$stage/"
+cp -a "$root/doc/RELEASE-NOTES.md" "$stage/"
+
+rm -f "$here/$name.zip"
+if command -v zip >/dev/null; then
+    (cd "$here" && zip -9rq "$name.zip" "$name")
+else
+    powershell -NoProfile -Command \
+        "Compress-Archive -Path '$stage' -DestinationPath '$here/$name.zip'"
+fi
+rm -rf "$stage"
+
+size=$(du -h "$here/$name.zip" | awk '{print $1}')
+echo
+echo "built $here/$name.zip ($size)"
+
+# --- the tag ----------------------------------------------------------------
+
+if [ "$tag_it" = 1 ]; then
+    if git rev-parse "$tag" >/dev/null 2>&1; then
+        echo "tag $tag is already there"
+    else
+        git tag -a "$tag" -m "MS XaoS $version"
+        git push origin "$tag"
+        echo "tagged $tag and pushed it"
+    fi
+fi
+
+# --- the release ------------------------------------------------------------
+
+notes="$root/doc/RELEASE-NOTES.md"
+if [ "$publish" = 1 ]; then
+    command -v gh >/dev/null || {
+        echo "gh is not installed: winget install GitHub.cli, then gh auth login"
+        exit 5
+    }
+    gh release create "$tag" "$here/$name.zip" \
+        --title "MS XaoS $version" --notes-file "$notes"
+    echo "published"
+else
+    echo
+    echo "To publish it:"
+    echo "  gh release create $tag $here/$name.zip \\"
+    echo "      --title \"MS XaoS $version\" --notes-file $notes"
+    echo
+    echo "or on github.com: Releases -> Draft a new release -> tag $tag,"
+    echo "paste doc/RELEASE-NOTES.md, attach the zip."
+fi
