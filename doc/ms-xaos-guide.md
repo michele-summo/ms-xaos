@@ -347,6 +347,39 @@ a material rather than as a grid.
 triangular mosaic does have a grain, and that is what one asks for by choosing
 it.
 
+**`fbm(value, seed, [intensity=4], [frequency=8], [octaves=4],
+[roughness=0.5])`** — a fractional Brownian motion: the same noise the family
+above is built from, summed in octaves, each at twice the frequency of the one
+before and keeping `roughness` of its height. What it draws is **wear** rather
+than a pattern — stains and dents — because no octave is large enough to see on
+its own and none is small enough to disappear.
+
+Where `randsc` reads the position and can only read the position, **this reads
+whatever you write in front of it**. That is the whole point of having it as a
+function:
+
+    fbm(z,7)          moves with the orbit
+    fbm(x,7)          stands still on the plane
+    fbm(z*3+c,7)      whatever that is
+    z^2+c+fbm(z,7,0.1)*i    the set with a rough edge
+
+The value and the seed are required; the rest have defaults. The motion runs
+from **nought to `intensity` and never below**, so adding it to something cannot
+pull that under nought. The seed is read the way `randsc` reads one, so the same
+number means the same field in both. `octaves` is held between one and
+twenty-four, and it is worth raising only when `roughness` is: at the plain half
+the eighth octave carries a two hundred and fiftieth of the whole.
+
+**It has no kaleidoscope of its own**, where the `randsc` family does, because
+one is already there to compose with: `parchment(a,b)` folds the angle of `a`
+into `|b|` sectors and `parchmenta` mirrors the alternate halves, so
+`fbm(parchmenta(z,6),7)` says it, and says it where the reader of the formula
+can see it.
+
+The colouring modes under **Fractal → Outcoloring mode → Other coloring mode →
+Fractional Brownian Motion** apply the same motion to a colour. This one puts it
+where a formula can use it.
+
 | | |
 | --- | --- |
 | `randsc` | soft, curved |

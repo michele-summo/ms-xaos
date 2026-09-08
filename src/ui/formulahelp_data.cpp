@@ -123,6 +123,7 @@ const struct formula_help_row formula_help_functions[] = {
     {"randscp", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0]", "the same field cut into irregular flat polygons, with straight edges", NULL},
     {"randsch", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0]", "the same field cut into hexagons: a honeycomb of flat cells", NULL},
     {"randsct", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0]", "the same field cut into equilateral triangles, alternating in orientation", NULL},
+    {"fbm", "value, seed, [intensity=4], [frequency=8], [octaves=4], [roughness=0.5]", "a fractional Brownian motion over the value written in front of it: octaves of the randsc noise, each at twice the frequency of the one before and keeping roughness of its height. Runs from nought to intensity and never below. fbm(z,7) moves with the orbit, fbm(x,7) stands still on the plane; parchmenta(z,6) inside it folds the plane into sectors", NULL},
     {NULL, NULL, NULL, "watching the orbit: both hand back their argument until the last iteration, and what they gathered on it, which the inside colouring modes then draw"},
     {"trap", "a, [shape=0], [centre=0], [size=1]", "how near the orbit ever came to a shape; the shapes are in the Values tab", NULL},
     {"stripe", "a, [density=4]", "the average of (sin(density*arg a)+1)/2 along the orbit; density a whole number, how many stripes go round a turn", NULL},

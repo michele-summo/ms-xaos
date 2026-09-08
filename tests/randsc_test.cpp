@@ -40,9 +40,16 @@ static void check(int ok, const char *what)
         failures++;
 }
 
+/* Somewhere to put a point for the functions that take one rather than
+ * reading the position. Registered by compile below, and ignored by every
+ * expression that does not name it. */
+static cmplx testq;
+
 static sffe *compile(const char *expression)
 {
     sffe *parser = sffe_alloc();
+    if (parser)
+        sffe_regvar(&parser, &testq, "q");
     if (!parser || sffe_parse(&parser, expression)) {
         printf("FAIL   cannot parse %s\n", expression);
         failures++;
@@ -1508,6 +1515,140 @@ int main(void)
                 break;
             cmplx v = atz(f, (number_t)1 / 3, (number_t)1 / 7, 0);
             sprintf(what, "%s is one argument too many", toomany[g]);
+            check(GSL_REAL(v) == 0 && GSL_IMAG(v) == 0, what);
+            sffe_free(&f);
+        }
+    }
+
+    /* --- fbm, the motion as a function ------------------------------------
+     *
+     * The same noise the fields are built from, summed in octaves, but over a
+     * point the formula names rather than over the position. What has to hold
+     * is the shape of the answer: on the real axis, between nought and the
+     * intensity, the same every time, different for a different seed, and
+     * continuous, since a motion that jumped would be the grain it is not.
+     */
+    {
+        sffe *plain = compile("fbm(q,7)");
+        sffe *unit = compile("fbm(q,7,1)");
+        sffe *again = compile("fbm(q,7,1)");
+        sffe *other = compile("fbm(q,8,1)");
+        sffe *one = compile("fbm(q,7,1,8,1)");
+        if (!failures) {
+            number_t lo = 1000, hi = -1000, sum = 0;
+            int n = 0, offaxis = 0, unlike = 0, apart = 0;
+            number_t worst = 0;
+
+            for (int j = 0; j < 40; j++)
+                for (int i = 0; i < 40; i++) {
+                    number_t x = -(number_t)3 / 2 + 3 * (number_t)i / 39;
+                    number_t y = -(number_t)3 / 2 + 3 * (number_t)j / 39;
+
+                    GSL_SET_COMPLEX(&testq, x, y);
+                    cmplx v = atc(unit, 0, 0, 0);
+                    if (GSL_IMAG(v) != 0)
+                        offaxis++;
+                    if (GSL_REAL(v) < lo)
+                        lo = GSL_REAL(v);
+                    if (GSL_REAL(v) > hi)
+                        hi = GSL_REAL(v);
+                    sum += GSL_REAL(v);
+                    n++;
+
+                    /* the same call twice, and a different seed */
+                    GSL_SET_COMPLEX(&testq, x, y);
+                    cmplx w = atc(again, 0, 0, 0);
+                    if (GSL_REAL(v) != GSL_REAL(w))
+                        unlike++;
+                    GSL_SET_COMPLEX(&testq, x, y);
+                    cmplx u = atc(other, 0, 0, 0);
+                    if (GSL_REAL(v) != GSL_REAL(u))
+                        apart++;
+
+                    /* and a step of a ten-thousandth moves it by little */
+                    GSL_SET_COMPLEX(&testq, x + (number_t)1 / 10000, y);
+                    cmplx e = atc(unit, 0, 0, 0);
+                    number_t d = nfabs(GSL_REAL(v) - GSL_REAL(e));
+                    if (d > worst)
+                        worst = d;
+                }
+
+            sprintf(what, "fbm stays on the real axis (%d off it)", offaxis);
+            check(offaxis == 0, what);
+            sprintf(what, "and between nought and its intensity (%.3f to %.3f)",
+                    (double)lo, (double)hi);
+            check(lo >= 0 && hi <= 1, what);
+            sprintf(what, "and averages the half of it (%.3f)",
+                    (double)(sum / n));
+            check(nfabs(sum / n - (number_t)1 / 2) < (number_t)1 / 10, what);
+            sprintf(what, "and is the same number twice (%d unlike)", unlike);
+            check(unlike == 0, what);
+            sprintf(what, "and another field for another seed (%d of %d apart)",
+                    apart, n);
+            check(apart > n - n / 20, what);
+            /* Continuous, which is what makes it marks rather than grain: the
+             * lattice is eight cells to the unit and four octaves take the
+             * finest to sixty-four, so a ten-thousandth of the plane is a
+             * hundredth of the smallest cell there is. */
+            sprintf(what, "and moves smoothly (worst step %.2g)",
+                    (double)worst);
+            check(worst < (number_t)1 / 50, what);
+
+            /* The intensity is what it is multiplied by: the default four
+             * against the same field at one. */
+            {
+                int scaled = 1;
+                for (int i = 0; i < 40; i++) {
+                    number_t x = (number_t)i / 20 - 1, y = (number_t)i / 30;
+                    GSL_SET_COMPLEX(&testq, x, y);
+                    number_t a = GSL_REAL(atc(plain, 0, 0, 0));
+                    GSL_SET_COMPLEX(&testq, x, y);
+                    number_t b = GSL_REAL(atc(unit, 0, 0, 0));
+                    if (nfabs(a - 4 * b) > (number_t)1 / 1000000)
+                        scaled = 0;
+                }
+                check(scaled, "and the intensity multiplies it, four by "
+                              "default");
+            }
+
+            /* One octave is the plain noise and reaches further than four of
+             * them summed, which is what an octave sum does. */
+            {
+                number_t olo = 1000, ohi = -1000;
+                for (int j = 0; j < 40; j++)
+                    for (int i = 0; i < 40; i++) {
+                        GSL_SET_COMPLEX(&testq,
+                                        -(number_t)3 / 2 + 3 * (number_t)i / 39,
+                                        -(number_t)3 / 2 + 3 * (number_t)j / 39);
+                        number_t v = GSL_REAL(atc(one, 0, 0, 0));
+                        if (v < olo)
+                            olo = v;
+                        if (v > ohi)
+                            ohi = v;
+                    }
+                sprintf(what, "and one octave reaches further than four "
+                              "(%.3f..%.3f against %.3f..%.3f)",
+                        (double)olo, (double)ohi, (double)lo, (double)hi);
+                check(olo < lo && ohi > hi, what);
+            }
+        }
+        sffe_free(&plain);
+        sffe_free(&unit);
+        sffe_free(&again);
+        sffe_free(&other);
+        sffe_free(&one);
+
+        /* Two arguments at least and six at most; anything else is nought,
+         * which is the refusal the family has always given. */
+        static const char *wrong[3] = {"fbm(q)", "fbm(q,7,1,8,4,0.5,9)",
+                                       "fbm(q,7,1,8,4,0.5,9,2)"};
+        for (int g = 0; g < 3 && !failures; g++) {
+            sffe *f = compile(wrong[g]);
+            if (failures)
+                break;
+            GSL_SET_COMPLEX(&testq, (number_t)1 / 3, (number_t)1 / 7);
+            cmplx v = atc(f, 0, 0, 0);
+            sprintf(what, "%s is not a call it takes", wrong[g]);
             check(GSL_REAL(v) == 0 && GSL_IMAG(v) == 0, what);
             sffe_free(&f);
         }

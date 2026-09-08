@@ -198,6 +198,9 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sfrandscp, SFFE_VARIADIC, "randscp\0", NULL, false, 2},
     {sfrandsch, SFFE_VARIADIC, "randsch\0", NULL, false, 2},
     {sfrandsct, SFFE_VARIADIC, "randsct\0", NULL, false, 2},
+    /* fbm(value, seed, ...): octaves of the same noise summed over a point
+     * the caller names, rather than over the position. See sffbm. */
+    {sffbm, SFFE_VARIADIC, "fbm\0", NULL, false, 3},
 
     /* Watching the orbit rather than the point: one number about the whole of
      * it, handed back on the last pass. 1 to 4 arguments and so variadic. */
@@ -1984,6 +1987,104 @@ sfarg *sfrandscp(sfarg *const p)
     number_t pre_, pim_;
     randsc_skewed(randsc_remix(besth), pout, skew, &pre_, &pim_);
     GSL_SET_COMPLEX(&sfvalue(p), pre_, pim_);
+    return sfaram1(p);
+}
+
+
+/**
+ * @brief A fractional Brownian motion over a point the caller names.
+ * @details fbm(value, seed), and up to
+ * fbm(value, seed, intensity, frequency, octaves, roughness).
+ *
+ * The same noise the randsc family is built from, summed in octaves: each at
+ * twice the frequency of the one before and keeping a share of its height, so
+ * that no octave is large enough to see on its own and none is small enough to
+ * disappear. What that draws is wear rather than a pattern -- stains, dents,
+ * the surface of something that has been left out.
+ *
+ * Where randsc reads the position and can only read the position, this reads
+ * whatever is written in front of it: fbm(z, 7) moves with the orbit,
+ * fbm(x, 7) stands still on the plane, and fbm(z*3+c, 7) is whatever that is.
+ * That is the whole reason for it: the colouring modes of the same name apply
+ * a motion to a colour, and this puts one where a formula can use it.
+ *
+ * The two mandatory arguments are the point and the seed. The seed is read as
+ * randsc reads one, so the same number means the same field in both.
+ *
+ * intensity  what the motion is multiplied by. It runs from nought to this and
+ *            never below, so that adding it to something cannot pull that
+ *            under nought -- the colouring modes learned the same lesson the
+ *            long way round.
+ * frequency  cells of the lattice to a unit of the plane: the size of the
+ *            marks, and what to raise as one zooms in.
+ * octaves    how many are summed. Held between one and twenty-four.
+ * roughness  what each octave keeps of the height of the one before. A half is
+ *            the plain motion; higher is grittier, and only then do the later
+ *            octaves carry enough to be worth asking for.
+ *
+ * No kaleidoscope of its own, where the randsc family has one: parchment and
+ * parchmenta already fold the plane into sectors, so fbm(parchmenta(z, 6), 7)
+ * says it, and says it where anyone reading the formula can see it.
+ *
+ * Each octave is given a seed of its own. Sharing one would leave every octave
+ * agreeing wherever the lattices agree -- the origin, and every point that
+ * lands on a corner -- which shows as a knot in the field.
+ *
+ * @param p The call; the arguments are read right to left, see sfaramN.
+ * @return Pointer to the last argument, per the sffe convention.
+ */
+sfarg *sffbm(sfarg *const p)
+{
+    if (p->argc < 2 || p->argc > 6) {
+        GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
+        return sfaram1(p);
+    }
+
+    cmplx at = sfarg_or(p, 1, 0, 0);
+    uint64_t seed = randsc_seed(sfarg_or(p, 2, 0, 0));
+    number_t much = GSL_REAL(sfarg_or(p, 3, 4, 0));
+    number_t freq = GSL_REAL(sfarg_or(p, 4, 8, 0));
+    int octaves = (int)GSL_REAL(sfarg_or(p, 5, 4, 0));
+    number_t rough = GSL_REAL(sfarg_or(p, 6, (number_t)1 / 2, 0));
+
+    if (octaves < 1)
+        octaves = 1;
+    if (octaves > 24)
+        octaves = 24;
+    if (!(rough > 0))
+        rough = (number_t)1 / 2;
+
+    number_t x = GSL_REAL(at) * freq, y = GSL_IMAG(at) * freq;
+    number_t sum = 0, amp = 1, norm = 0;
+
+    for (int i = 0; i < octaves; i++) {
+        int64_t cx, cy;
+        number_t u, v;
+        /* Past the resolution of the lattice there is no cell to stand in, and
+         * every octave after this one is finer still: what has been summed so
+         * far is all there is to have. */
+        if (!randsc_cell(x, &cx, &u) || !randsc_cell(y, &cy, &v))
+            break;
+
+        number_t su = u * u * (3 - 2 * u); /* smoothstep: flat at both ends, */
+        number_t sv = v * v * (3 - 2 * v); /* so a cell meets its neighbour  */
+
+        uint64_t h = randsc_hash((int64_t)i, 0, seed);
+        number_t a = randsc_unit(randsc_hash(cx, cy, h));
+        number_t b = randsc_unit(randsc_hash(cx + 1, cy, h));
+        number_t c = randsc_unit(randsc_hash(cx, cy + 1, h));
+        number_t d = randsc_unit(randsc_hash(cx + 1, cy + 1, h));
+        number_t lo = a + (b - a) * su;
+        number_t hi = c + (d - c) * su;
+
+        sum += amp * (lo + (hi - lo) * sv);
+        norm += amp;
+        amp *= rough;
+        x *= 2;
+        y *= 2;
+    }
+
+    GSL_SET_COMPLEX(&sfvalue(p), norm > 0 ? sum / norm * much : 0, 0);
     return sfaram1(p);
 }
 
