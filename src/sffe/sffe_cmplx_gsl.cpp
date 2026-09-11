@@ -1473,10 +1473,58 @@ static number_t randsc_unit(uint64_t x)
  * What is left flat is zmag, which reads the modulus and so is the one thing a
  * turn cannot touch. Colour with the modes that read the two components
  * apart -- real, imag, angle, real over imag. */
-static inline void randsc_skewed(uint64_t k, number_t out, cmplx skew,
-                                 number_t *re, number_t *im)
+/* Which of the wedges the point came from, before the fold put it in the
+ * first one.
+ *
+ * The fold works this out and used to throw it away. Keeping it lets the skew
+ * vary from one wedge to the next, so that the copies a kaleidoscope makes
+ * stop being identical -- which is what a kaleidoscope with coloured glass
+ * does, and what this one could not do.
+ *
+ * Written only by randsc_kaleido, so a field that is not folded pays nothing for it. What
+ * is left behind from an earlier call is never read: the skew asks for it only
+ * when the call names two wedges or more, and then this has just run. */
+static thread_local number_t randsc_wedge = 0;
+
+/* What the skew is asked to do, which is a set rather than a choice: the bits
+ * are added together, so a call may have the shape and the rosette at once and
+ * get the spiral that is the two of them.
+ *
+ * A measure is always needed. A call that names neither of the two that give
+ * one gets the shape, which is what a call that says nothing has always got.
+ */
+#define RANDSC_SKEW_SHAPE 1   /* the cell's own outline, shrunk step by step */
+#define RANDSC_SKEW_ROSETTE 2 /* the angle round the middle, folded as the
+                                 kaleidoscope folds the plane */
+#define RANDSC_SKEW_WEDGE 4   /* a turn that differs from wedge to wedge */
+#define RANDSC_SKEW_RADIAL 8  /* the modulus as well as the angle */
+
+/* The angle round the middle of a cell, from nought to one, folded into as
+ * many turns as the kaleidoscope has wedges -- so each cell carries a rosette
+ * with the picture's own symmetry, and a call that folds nothing gets plain
+ * spokes.
+ *
+ * Taken in the cell's own coordinates rather than in the plane. For a square
+ * the two are the same; for the hexagon and the triangle they are sheared, so
+ * the rosette leans the way the cell leans. That is the principle the shape
+ * measure already follows -- a cell is measured in its own geometry -- and it
+ * costs one arc tangent instead of a change of basis.
+ */
+static number_t randsc_rosette(number_t dx, number_t dy, int wedges)
 {
-    number_t level = randsc_unit(k);
+    number_t a = natan2(dy, dx) * (number_t)N_1_2PI + (number_t)1 / 2;
+    if (wedges > 1)
+        a *= (number_t)wedges;
+    return a - nfloor(a);
+}
+
+/* The turn itself, given the level rather than the hash it comes from: randsc
+ * interpolates its level between four corners and has no single hash to hand
+ * over. */
+static inline void randsc_skew_apply(number_t level, number_t out, number_t ang,
+                                     cmplx skew, int mode, int wedges,
+                                     number_t *re, number_t *im)
+{
     number_t sr = GSL_REAL(skew), si = GSL_IMAG(skew);
     if (sr == 0 && si == 0) {
         /* the way out, and no arithmetic on the way: the same number as ever */
@@ -1484,10 +1532,59 @@ static inline void randsc_skewed(uint64_t k, number_t out, cmplx skew,
         *im = 0;
         return;
     }
-    number_t t = sr * out + si;
+
+    number_t m = 0;
+    if ((mode & RANDSC_SKEW_SHAPE) ||
+        !(mode & (RANDSC_SKEW_SHAPE | RANDSC_SKEW_ROSETTE)))
+        m += out;
+    if (mode & RANDSC_SKEW_ROSETTE)
+        m += ang;
+
+    /* The imaginary part is a turn the whole cell shares. Asked to vary from
+     * wedge to wedge it becomes a multiple of itself, so the copies are turned
+     * by evenly spaced amounts; an imaginary part that does not divide the
+     * round gives them no order anyone will notice. */
+    /* Only where there are wedges to tell apart. randsc_kaleido writes the
+     * one it folded and nothing clears it afterwards, so a call that folds
+     * nothing would otherwise read whatever the last call that did fold left
+     * behind -- and answer differently depending on the order the formula
+     * happened to be evaluated in. */
+    number_t flat = ((mode & RANDSC_SKEW_WEDGE) && wedges > 1)
+                        ? si * (randsc_wedge + 1)
+                        : si;
+
+    number_t t = sr * m + flat;
     number_t q = 1 + t * t;
-    *re = level * (1 - t * t) / q;
-    *im = level * 2 * t / q;
+    number_t vr = level * (1 - t * t) / q;
+    number_t vi = level * 2 * t / q;
+
+    if (mode & RANDSC_SKEW_RADIAL) {
+        /* The modulus as well as the angle, and the only one of the four that
+         * zmag and the bailout can see -- a turn leaves the modulus where it
+         * is, and those two read nothing else. What it costs is that the
+         * escape moves with it, so the figure is cut wherever the bailout
+         * falls inside a cell. That is the trade, and it is the reason this is
+         * a bit one asks for rather than what the skew does.
+         *
+         * The absolute value keeps the factor from turning the value inside
+         * out where t goes past minus one, which would put a seam along that
+         * contour. */
+        number_t f = 1 + t;
+        if (f < 0)
+            f = -f;
+        vr *= f;
+        vi *= f;
+    }
+
+    *re = vr;
+    *im = vi;
+}
+
+static inline void randsc_skewed(uint64_t k, number_t out, number_t ang,
+                                 cmplx skew, int mode, int wedges,
+                                 number_t *re, number_t *im)
+{
+    randsc_skew_apply(randsc_unit(k), out, ang, skew, mode, wedges, re, im);
 }
 
 /* A real seed has to survive being written once and read by two builds:
@@ -1620,6 +1717,10 @@ static void randsc_kaleido(number_t *px, number_t *py, int level, int mode)
     number_t sector = 2 * N_PI / (number_t)level;
     number_t turns = nfloor(angle / sector);
     number_t s = angle - sector * turns;
+
+    /* natan2 answers between minus pi and pi, so the count runs either side of
+     * nought; brought round to between nought and the number of wedges. */
+    randsc_wedge = turns - (number_t)level * nfloor(turns / (number_t)level);
     number_t half = sector / 2;
 
     if (mode == 1) {
@@ -1649,7 +1750,7 @@ static void randsc_kaleido(number_t *px, number_t *py, int level, int mode)
 static RANDSC_INLINE int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, number_t *u,
                         number_t *v, uint64_t *hash)
 {
-    if (p->argc < 1 || p->argc > 6)
+    if (p->argc < 1 || p->argc > 7)
         return RANDSC_STOP;
 
     /* Seed, cell size, degradation, kaleidoscope level and its mode, in the
@@ -1788,6 +1889,12 @@ sfarg *sfrandsc(sfarg *const p)
     /* how far the value is turned by where in the cell the point stands; nought
      * leaves it where it has always been. See randsc_skewed. */
     cmplx skew = sfarg_or(p, 6, 0, 0);
+    /* which of the four things the skew does; see randsc_skew_apply */
+    int skewmode = (int)GSL_REAL(sfarg_or(p, 7, 0, 0));
+    /* the rosette takes the picture's own symmetry, so it wants the count */
+    int wedges = (skewmode & (RANDSC_SKEW_ROSETTE | RANDSC_SKEW_WEDGE))
+                     ? (int)GSL_REAL(sfarg_or(p, 4, 1, 0))
+                     : 1;
 
     number_t su = u * u * (3 - 2 * u); /* smoothstep: flat at both ends, so */
     number_t sv = v * v * (3 - 2 * v); /* the value meets its neighbour flat */
@@ -1808,10 +1915,17 @@ sfarg *sfrandsc(sfarg *const p)
     /* This field has no cell edges to follow, and what it does have is its own
      * blobs: taking the level itself as the measure puts the turn's contours on
      * the field's contours, so the colour follows the shape that is there. It
-     * is continuous across a lattice line for the same reason the level is. */
-    number_t t = GSL_REAL(skew) * level + GSL_IMAG(skew);
-    number_t q = 1 + t * t;
-    GSL_SET_COMPLEX(&sfvalue(p), level * (1 - t * t) / q, level * 2 * t / q);
+     * is continuous across a lattice line for the same reason the level is.
+     *
+     * The rosette has no middle of its own here either, so it turns about the
+     * middle of the lattice square, which is the only thing with a middle. */
+    number_t ang = (skewmode & RANDSC_SKEW_ROSETTE)
+                       ? randsc_rosette(u - (number_t)1 / 2,
+                                        v - (number_t)1 / 2, wedges)
+                       : 0;
+    number_t sre, sim;
+    randsc_skew_apply(level, level, ang, skew, skewmode, wedges, &sre, &sim);
+    GSL_SET_COMPLEX(&sfvalue(p), sre, sim);
     return sfaram1(p);
 }
 
@@ -1889,6 +2003,12 @@ sfarg *sfrandscp(sfarg *const p)
     }
 
     cmplx skew = sfarg_or(p, 6, 0, 0);
+    /* which of the four things the skew does; see randsc_skew_apply */
+    int skewmode = (int)GSL_REAL(sfarg_or(p, 7, 0, 0));
+    /* the rosette takes the picture's own symmetry, so it wants the count */
+    int wedges = (skewmode & (RANDSC_SKEW_ROSETTE | RANDSC_SKEW_WEDGE))
+                     ? (int)GSL_REAL(sfarg_or(p, 4, 1, 0))
+                     : 1;
 
     /* Larger than any distance the nine cells can produce. */
     number_t bestd = 16;
@@ -1930,6 +2050,7 @@ sfarg *sfrandscp(sfarg *const p)
      * Nought at the edge on both sides of it, so the turn meets itself across
      * a boundary as the other four do. */
     number_t pout = 0;
+    number_t pbx = 0, pby = 0;
     if (GSL_REAL(skew) != 0 || GSL_IMAG(skew) != 0) {
         /* The nine seeds again, kept this time, so that the search above needs
          * to carry nothing for a skew that is usually not there: it runs for
@@ -1952,6 +2073,8 @@ sfarg *sfrandscp(sfarg *const p)
                     bidx = k;
             }
         number_t bx = dxs[bidx], by = dys[bidx];
+        pbx = bx;
+        pby = by;
         /* out of reach of any real candidate, so the first one always wins */
         number_t bestn = 256, bests = 1;
         /* and the closest other seed, which is what makes the cell its own
@@ -1985,7 +2108,12 @@ sfarg *sfrandscp(sfarg *const p)
     }
 
     number_t pre_, pim_;
-    randsc_skewed(randsc_remix(besth), pout, skew, &pre_, &pim_);
+    /* round the seed the cell was grown from, which is its middle */
+    number_t pang = (skewmode & RANDSC_SKEW_ROSETTE)
+                        ? randsc_rosette(-pbx, -pby, wedges)
+                        : 0;
+    randsc_skewed(randsc_remix(besth), pout, pang, skew, skewmode, wedges, &pre_,
+                  &pim_);
     GSL_SET_COMPLEX(&sfvalue(p), pre_, pim_);
     return sfaram1(p);
 }
@@ -3054,11 +3182,21 @@ sfarg *sfrandscq(sfarg *const p)
     /* how far the value is turned by where in the cell the point stands; nought
      * leaves it where it has always been. See randsc_skewed. */
     cmplx skew = sfarg_or(p, 6, 0, 0);
+    /* which of the four things the skew does; see randsc_skew_apply */
+    int skewmode = (int)GSL_REAL(sfarg_or(p, 7, 0, 0));
+    /* the rosette takes the picture's own symmetry, so it wants the count */
+    int wedges = (skewmode & (RANDSC_SKEW_ROSETTE | RANDSC_SKEW_WEDGE))
+                     ? (int)GSL_REAL(sfarg_or(p, 4, 1, 0))
+                     : 1;
     number_t qre, qim;
     /* the larger of the two distances from the middle, which draws squares */
     number_t qu = nfabs(u - (number_t)1 / 2), qv = nfabs(v - (number_t)1 / 2);
-    randsc_skewed(randsc_hash(cx, cy, h), 2 * (qu > qv ? qu : qv), skew, &qre,
-                  &qim);
+    number_t qang = (skewmode & RANDSC_SKEW_ROSETTE)
+                        ? randsc_rosette(u - (number_t)1 / 2,
+                                         v - (number_t)1 / 2, wedges)
+                        : 0;
+    randsc_skewed(randsc_hash(cx, cy, h), 2 * (qu > qv ? qu : qv), qang, skew,
+                  skewmode, wedges, &qre, &qim);
     GSL_SET_COMPLEX(&sfvalue(p), qre, qim);
     return sfaram1(p);
 }
@@ -3150,14 +3288,22 @@ sfarg *sfrandsch(sfarg *const p)
     /* how far the value is turned by where in the cell the point stands; nought
      * leaves it where it has always been. See randsc_skewed. */
     cmplx skew = sfarg_or(p, 6, 0, 0);
+    /* which of the four things the skew does; see randsc_skew_apply */
+    int skewmode = (int)GSL_REAL(sfarg_or(p, 7, 0, 0));
+    /* the rosette takes the picture's own symmetry, so it wants the count */
+    int wedges = (skewmode & (RANDSC_SKEW_ROSETTE | RANDSC_SKEW_WEDGE))
+                     ? (int)GSL_REAL(sfarg_or(p, 4, 1, 0))
+                     : 1;
     number_t hre, him;
     /* how far out of the hexagon's middle, in the hexagon's own reckoning:
      * half the sum of the three cube coordinates' absolute values, which is
      * one at an edge and draws hexagonal contours */
     number_t ha = q - rx, hb = r - rz;
     number_t hd = (nfabs(ha) + nfabs(hb) + nfabs(ha + hb));
+    number_t hang =
+        (skewmode & RANDSC_SKEW_ROSETTE) ? randsc_rosette(ha, hb, wedges) : 0;
     randsc_skewed(randsc_hash((int64_t)rx, (int64_t)rz, h ^ RANDSCH_SALT),
-                  hd > 1 ? 1 : hd, skew, &hre, &him);
+                  hd > 1 ? 1 : hd, hang, skew, skewmode, wedges, &hre, &him);
     GSL_SET_COMPLEX(&sfvalue(p), hre, him);
     return sfaram1(p);
 }
@@ -3215,6 +3361,12 @@ sfarg *sfrandsct(sfarg *const p)
     /* how far the value is turned by where in the cell the point stands; nought
      * leaves it where it has always been. See randsc_skewed. */
     cmplx skew = sfarg_or(p, 6, 0, 0);
+    /* which of the four things the skew does; see randsc_skew_apply */
+    int skewmode = (int)GSL_REAL(sfarg_or(p, 7, 0, 0));
+    /* the rosette takes the picture's own symmetry, so it wants the count */
+    int wedges = (skewmode & (RANDSC_SKEW_ROSETTE | RANDSC_SKEW_WEDGE))
+                     ? (int)GSL_REAL(sfarg_or(p, 4, 1, 0))
+                     : 1;
     number_t tre, tim;
     /* the three shares of the triangle the point stands in: the smallest of
      * them is nought on an edge and a third at the middle, so one less three
@@ -3227,10 +3379,17 @@ sfarg *sfrandsct(sfarg *const p)
     if (s3 < sm)
         sm = s3;
     number_t td = 1 - 3 * sm;
+    /* the middle of a triangle is where all three shares are a third, so the
+     * deviation of two of them says which way round the middle the point is */
+    number_t tang = (skewmode & RANDSC_SKEW_ROSETTE)
+                        ? randsc_rosette(s1 - (number_t)1 / 3,
+                                         s2 - (number_t)1 / 3, wedges)
+                        : 0;
     randsc_skewed(randsc_hash(ia, ib,
                               upper ? h ^ RANDSCT_SALT ^ RANDSCT_UPPER
                                     : h ^ RANDSCT_SALT),
-                  td < 0 ? 0 : (td > 1 ? 1 : td), skew, &tre, &tim);
+                  td < 0 ? 0 : (td > 1 ? 1 : td), tang, skew, skewmode, wedges, &tre,
+                  &tim);
     GSL_SET_COMPLEX(&sfvalue(p), tre, tim);
     return sfaram1(p);
 }

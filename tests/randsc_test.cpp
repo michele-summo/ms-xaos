@@ -1654,6 +1654,163 @@ int main(void)
         }
     }
 
+    /* --- what the skew draws: skew_mode ------------------------------------
+     *
+     * A set of bits rather than a choice, so what has to hold is that each one
+     * does its own thing, that they add up, and that the default is the number
+     * the field has always given.
+     */
+    {
+        static const char *fields[5] = {"randsc", "randscq", "randsch",
+                                        "randsct", "randscp"};
+        for (int g = 0; g < 5 && !failures; g++) {
+            char expr[128];
+            /* the default, written out, and the shape bit named on purpose:
+             * the same picture, since a call that names neither the shape nor
+             * the rosette is given the shape */
+            sprintf(expr, "%s(7,{0.4,0.4},{0.5,0.5},1,0,{1,1},0)", fields[g]);
+            sffe *none = compile(expr);
+            sprintf(expr, "%s(7,{0.4,0.4},{0.5,0.5},1,0,{1,1},1)", fields[g]);
+            sffe *shape = compile(expr);
+            sprintf(expr, "%s(7,{0.4,0.4},{0.5,0.5},1,0,{1,1},2)", fields[g]);
+            sffe *rose = compile(expr);
+            sprintf(expr, "%s(7,{0.4,0.4},{0.5,0.5},1,0,{1,1},8)", fields[g]);
+            sffe *radial = compile(expr);
+            sprintf(expr, "%s(7,{0.4,0.4},{0.5,0.5},1,0,0,14)", fields[g]);
+            sffe *noskew = compile(expr);
+            sprintf(expr, "%s(7,{0.4,0.4},{0.5,0.5})", fields[g]);
+            sffe *bare = compile(expr);
+            if (failures)
+                break;
+
+            int alike = 1, moved = 0, flat = 1;
+            number_t mnone = 0, mradial = 0;
+            for (int i = 0; i < 80; i++) {
+                number_t x = (number_t)(i % 13) / 5 - 1 + (number_t)137 / 10000;
+                number_t y = (number_t)(i % 17) / 7 - 1 + (number_t)71 / 10000;
+
+                cmplx a0 = atc(none, x, y, 0);
+                cmplx a1 = atc(shape, x, y, 0);
+                if (GSL_REAL(a0) != GSL_REAL(a1) || GSL_IMAG(a0) != GSL_IMAG(a1))
+                    alike = 0;
+
+                /* the rosette is another picture, and one that leaves the
+                 * modulus where the shape leaves it: both are turns */
+                cmplx a2 = atc(rose, x, y, 0);
+                if (GSL_REAL(a0) != GSL_REAL(a2) || GSL_IMAG(a0) != GSL_IMAG(a2))
+                    moved++;
+                number_t m0 = GSL_REAL(a0) * GSL_REAL(a0) +
+                              GSL_IMAG(a0) * GSL_IMAG(a0);
+                number_t m2 = GSL_REAL(a2) * GSL_REAL(a2) +
+                              GSL_IMAG(a2) * GSL_IMAG(a2);
+                if (nfabs(m0 - m2) > (number_t)1 / 1000000000)
+                    flat = 0;
+
+                /* and the radial one moves it, which is the whole of what it
+                 * is for */
+                cmplx a8 = atc(radial, x, y, 0);
+                number_t m8 = GSL_REAL(a8) * GSL_REAL(a8) +
+                              GSL_IMAG(a8) * GSL_IMAG(a8);
+                if (m0 > mnone)
+                    mnone = m0;
+                if (m8 > mradial)
+                    mradial = m8;
+
+                /* a skew of nought leaves every bit doing nothing */
+                cmplx a14 = atc(noskew, x, y, 0);
+                cmplx ab = atc(bare, x, y, 0);
+                if (GSL_REAL(a14) != GSL_REAL(ab) || GSL_IMAG(a14) != GSL_IMAG(ab))
+                    alike = 0;
+            }
+
+            sprintf(what, "skew_mode 0 and 1 are one mode, for %s", fields[g]);
+            check(alike, what);
+            sprintf(what, "and the rosette is another picture (%d of 80)",
+                    moved);
+            check(moved > 70, what);
+            sprintf(what, "and turns %s without moving its modulus", fields[g]);
+            check(flat, what);
+            sprintf(what, "and the radial bit moves it (%.3f against %.3f)",
+                    (double)mradial, (double)mnone);
+            check(mradial > mnone * 2, what);
+
+            sffe_free(&none);
+            sffe_free(&shape);
+            sffe_free(&rose);
+            sffe_free(&radial);
+            sffe_free(&noskew);
+            sffe_free(&bare);
+        }
+
+        /* Per wedge is the one that breaks the repetition a kaleidoscope
+         * makes, and the only one: the rest fold as they always did.
+         *
+         * The folded call is asked for first on purpose. The fold writes which
+         * wedge it took and nothing clears it, so a call that folds nothing
+         * would read what this one left behind if it were allowed to -- and
+         * answer differently depending on the order the formula was evaluated
+         * in, which is the one thing a field may never do. */
+        if (!failures) {
+            sffe *wedged = compile("randscq(7,{0.4,0.4},{0.5,0.5},6,0,{1,1},4)");
+            sffe *shaped = compile("randscq(7,{0.4,0.4},{0.5,0.5},6,0,{1,1},1)");
+            sffe *plain = compile("randscq(7,{0.4,0.4},{0.5,0.5},1,0,{1,1},1)");
+            sffe *stale = compile("randscq(7,{0.4,0.4},{0.5,0.5},1,0,{1,1},5)");
+            if (!failures) {
+                number_t ct = ncos((number_t)2 * (number_t)M_PI / 6);
+                number_t st = nsin((number_t)2 * (number_t)M_PI / 6);
+                int wapart = 0, sapart = 0, leaked = 0;
+                for (int i = 1; i < 120; i++) {
+                    number_t x = (number_t)(i % 13) / 5 - 1 + (number_t)137 / 10000;
+                    number_t y = (number_t)(i % 17) / 7 - 1 + (number_t)71 / 10000;
+                    if (x * x + y * y < (number_t)1 / 25)
+                        continue;
+                    number_t rx = x * ct - y * st, ry = x * st + y * ct;
+
+                    cmplx a = atc(wedged, x, y, 0);
+                    cmplx b = atc(wedged, rx, ry, 0);
+                    if (nfabs(GSL_REAL(a) - GSL_REAL(b)) > (number_t)1 / 1000000)
+                        wapart++;
+
+                    cmplx c = atc(shaped, x, y, 0);
+                    cmplx d = atc(shaped, rx, ry, 0);
+                    if (nfabs(GSL_REAL(c) - GSL_REAL(d)) > (number_t)1 / 1000000)
+                        sapart++;
+
+                    /* and now, with a wedge left over from those calls, the
+                     * unfolded one has to answer as though there were none */
+                    cmplx e = atc(plain, x, y, 0);
+                    cmplx f = atc(stale, x, y, 0);
+                    if (GSL_REAL(e) != GSL_REAL(f) || GSL_IMAG(e) != GSL_IMAG(f))
+                        leaked++;
+                }
+                sprintf(what, "the wedge bit breaks the repetition (%d apart)",
+                        wapart);
+                check(wapart > 50, what);
+                sprintf(what, "and no other bit does (%d apart)", sapart);
+                check(sapart == 0, what);
+                sprintf(what,
+                        "and an unfolded call reads no wedge left behind (%d)",
+                        leaked);
+                check(leaked == 0, what);
+            }
+            sffe_free(&wedged);
+            sffe_free(&shaped);
+            sffe_free(&plain);
+            sffe_free(&stale);
+        }
+
+        /* Eight arguments is one more than the family takes. */
+        if (!failures) {
+            sffe *toomany = compile("randscq(7,{0.4,0.4},{0.5,0.5},1,0,{1,1},1,9)");
+            if (!failures) {
+                cmplx v = atc(toomany, (number_t)1 / 3, (number_t)1 / 7, 0);
+                check(GSL_REAL(v) == 0 && GSL_IMAG(v) == 0,
+                      "and eight arguments is one too many");
+            }
+            sffe_free(&toomany);
+        }
+    }
+
     if (failures)
         printf("\n%d check(s) failed\n", failures);
     return failures != 0;

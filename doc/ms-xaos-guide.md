@@ -263,6 +263,40 @@ part** is a flat turn the whole cell shares: it shifts a cell's colour without
 drawing anything inside it, so `0.4+0.2i` gives the shape's contours and a
 per-cell shift together.
 
+### What the skew draws: `skew_mode`
+
+The seventh argument says **what varies inside the cell**. The numbers **add
+together** rather than choosing one another out, so a call may ask for two of
+them and get both.
+
+| | |
+| --- | --- |
+| **1** (and `0`) | **the shape** — the cell's own outline, shrunk step by step. What a call that names no mode gets, and what is used when neither 1 nor 2 is named |
+| **2** | **the rosette** — the angle round the middle of the cell, folded into as many turns as the kaleidoscope has wedges, so each cell carries the picture's own symmetry. Plain spokes when nothing is folded |
+| **4** | **per wedge** — the turn differs from one wedge to the next |
+| **8** | **radial** — the modulus moves as well as the angle |
+
+`3` is the shape and the rosette at once, which spirals. `11` is those two with
+the modulus moving as well.
+
+**`4` is the one worth knowing about.** A kaleidoscope makes *n* copies and they
+are identical — that is what folding means, and past a point it is the thing
+that makes the picture look mechanical. The fold already works out which wedge
+each point came from and used to throw that away; keeping it lets the skew turn
+each wedge by a different amount, so the copies become variations. Coloured
+glass rather than one pattern printed *n* times. It costs nothing, and it does
+nothing when there is no fold to speak of.
+
+**`8` is the one that answers `zmag`.** A turn leaves the modulus where it is,
+and `zmag` and the bailout read the modulus and nothing else — so no other mode
+can reach them. The price is the one the skew was designed to avoid: the escape
+moves with the modulus, so the figure is cut wherever the bailout falls inside a
+cell. Pair it with a circular bailout and a colouring that reads the components
+apart, or accept the cutting on purpose.
+
+A skew of nought leaves every mode doing nothing, so `skew_mode` alone changes
+no picture.
+
 A straight ramp was written first — `skew_re*du + skew_im*dv` across the cell —
 and it is what this replaces. It coloured, but it drew the same diagonal,
 vertical or horizontal bands across every cell alike whatever the field was cut

@@ -118,11 +118,11 @@ const struct formula_help_row formula_help_functions[] = {
     {"ifiterr", "a, b, n", "a while the iteration is below n, b from n on; only the chosen one runs", NULL}, /* 3 */
     {NULL, NULL, NULL, "randomness: all but the seed optional, and a new field every iteration; what the kaleidoscope and its mode do is in the Values tab"},
     {"rand", "a", "real(a) times a random number in [0, 1); depends on call order, so a redraw differs", NULL},
-    {"randsc", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0]", "coherent noise over the point: soft blobs, size wide and size high", NULL},
-    {"randscq", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0]", "the same field with no interpolation: a mosaic of flat square cells", NULL},
-    {"randscp", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0]", "the same field cut into irregular flat polygons, with straight edges", NULL},
-    {"randsch", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0]", "the same field cut into hexagons: a honeycomb of flat cells", NULL},
-    {"randsct", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0]", "the same field cut into equilateral triangles, alternating in orientation", NULL},
+    {"randsc", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0], [skew_mode=0]", "coherent noise over the point: soft blobs, size wide and size high", NULL},
+    {"randscq", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0], [skew_mode=0]", "the same field with no interpolation: a mosaic of flat square cells", NULL},
+    {"randscp", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0], [skew_mode=0]", "the same field cut into irregular flat polygons, with straight edges", NULL},
+    {"randsch", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0], [skew_mode=0]", "the same field cut into hexagons: a honeycomb of flat cells", NULL},
+    {"randsct", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0], [skew_mode=0]", "the same field cut into equilateral triangles, alternating in orientation", NULL},
     {"fbm", "value, seed, [intensity=4], [frequency=8], [octaves=4], [roughness=0.5]", "a fractional Brownian motion over the value written in front of it: octaves of the randsc noise, each at twice the frequency of the one before and keeping roughness of its height. Runs from nought to intensity and never below. fbm(z,7) moves with the orbit, fbm(x,7) stands still on the plane; parchmenta(z,6) inside it folds the plane into sectors", NULL},
     {NULL, NULL, NULL, "watching the orbit: both hand back their argument until the last iteration, and what they gathered on it, which the inside colouring modes then draw"},
     {"trap", "a, [shape=0], [centre=0], [size=1]", "how near the orbit ever came to a shape; the shapes are in the Values tab", NULL},
@@ -164,6 +164,11 @@ const struct formula_help_row formula_help_values[] = {
     {"0.05", "", "a seventh of a colour band across a cell: shows at a colour speed of about 8, and costs nothing under a circular, square or hexagonal bailout", NULL},
     {"0.3 to 0.6", "", "about one band across a cell, which is what shows at a colour speed of 1. Free under a circular bailout; one to three per cent of the picture changes which cells leave under a polygon", NULL},
     {"larger", "", "no more colour to speak of past 1, and more of the picture moving under a polygonal bailout. Pair a large skew with a circular bailout", NULL},
+    {NULL, NULL, NULL, "randsc family: what the skew does. The numbers add together rather than choosing one another out, so 3 is the shape and the rosette at once and 11 is those two with the modulus moving as well. A skew of nought leaves every one of them doing nothing"},
+    {"0 or 1", "", "the shape: the cell's own outline, shrunk step by step -- squares in randscq, hexagons in randsch, triangles in randsct, its polygon in randscp, its blobs in randsc. What a call that names no mode gets, and what is used when neither 1 nor 2 is named", NULL},
+    {"2", "", "the rosette: the angle round the middle of the cell, folded into as many turns as the kaleidoscope has wedges, so each cell carries the picture's own symmetry. Plain spokes when nothing is folded, and a spiral when added to 1", NULL},
+    {"4", "", "per wedge: the turn differs from one wedge of the kaleidoscope to the next, so the copies it makes stop being identical -- coloured glass rather than one pattern repeated. Does nothing when nothing is folded", NULL},
+    {"8", "", "radial: the modulus moves as well as the angle. The only one zmag and the bailout can see, since those read the modulus and nothing else -- and for that reason the only one that cuts the figure where the bailout falls inside a cell", NULL},
     {NULL, NULL, NULL, NULL}};
 
 /* The variables the engine registers before parsing a user formula; see the
