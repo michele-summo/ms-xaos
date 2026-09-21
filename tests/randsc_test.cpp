@@ -1799,13 +1799,306 @@ int main(void)
             sffe_free(&stale);
         }
 
-        /* Eight arguments is one more than the family takes. */
+    }
+
+    /* --- every pass so far: selfsim ----------------------------------------
+     *
+     * The eighth argument averages the passes up to the one asked for, weighing
+     * pass n by d^(nH). What has to hold: nought is the one pass to the bit;
+     * the average is the one the definition writes out, whichever way the
+     * passes were reached; and a new pixel does not inherit the last one's.
+     */
+    {
+        static const char *fields[5] = {"randsc", "randscq", "randsch",
+                                        "randsct", "randscp"};
+        const unsigned int passes = 12;
+
+        /* nought is off: the same call with seven arguments, to the bit, at
+         * every pass and with the skew on so both parts are watched */
+        for (int g = 0; g < 5 && !failures; g++) {
+            char expr[128];
+            sprintf(expr, "%s(7,{0.4,0.4},{0.75,0.75},1,0,{1,1},2)", fields[g]);
+            sffe *seven = compile(expr);
+            sprintf(expr, "%s(7,{0.4,0.4},{0.75,0.75},1,0,{1,1},2,0)", fields[g]);
+            sffe *off = compile(expr);
+            if (failures)
+                break;
+            int same = 1;
+            for (int i = 0; i < 40; i++) {
+                number_t x = (number_t)(i % 13) / 5 - 1 + (number_t)137 / 10000;
+                number_t y = (number_t)(i % 17) / 7 - 1 + (number_t)71 / 10000;
+                for (unsigned int n = 0; n < passes; n++) {
+                    cmplx a = atc(seven, x, y, n);
+                    cmplx b = atc(off, x, y, n);
+                    if (GSL_REAL(a) != GSL_REAL(b) || GSL_IMAG(a) != GSL_IMAG(b))
+                        same = 0;
+                }
+            }
+            sprintf(what, "selfsim 0 is the one pass, to the bit, for %s",
+                    fields[g]);
+            check(same, what);
+            sffe_free(&seven);
+            sffe_free(&off);
+        }
+
+        /* On, it is the weighted average written out: the plain field asked
+         * pass by pass, weighed by 0.75^(nH), divided by the total. The skew
+         * is on, so it is the skewed value that is averaged, both parts. */
+        for (int g = 0; g < 5 && !failures; g++) {
+            static const number_t hs[2] = {1, (number_t)1 / 2};
+            for (int k = 0; k < 2; k++) {
+                char expr[128];
+                sprintf(expr, "%s(7,{0.4,0.4},{0.75,0.75},1,0,{1,1},2)",
+                        fields[g]);
+                sffe *plain = compile(expr);
+                sprintf(expr, "%s(7,{0.4,0.4},{0.75,0.75},1,0,{1,1},2,%s)",
+                        fields[g], k ? "0.5" : "1");
+                sffe *self = compile(expr);
+                if (failures)
+                    break;
+                number_t worst = 0;
+                for (int i = 0; i < 30; i++) {
+                    number_t x = (number_t)(i % 13) / 5 - 1 + (number_t)137 / 10000;
+                    number_t y = (number_t)(i % 17) / 7 - 1 + (number_t)71 / 10000;
+                    number_t sr = 0, si = 0, total = 0;
+                    for (unsigned int n = 0; n < passes; n++) {
+                        cmplx v = atc(plain, x, y, n);
+                        number_t w = npow((number_t)3 / 4, (number_t)n * hs[k]);
+                        sr += w * GSL_REAL(v);
+                        si += w * GSL_IMAG(v);
+                        total += w;
+                        cmplx got = atc(self, x, y, n);
+                        number_t e = nfabs(GSL_REAL(got) - sr / total) +
+                                     nfabs(GSL_IMAG(got) - si / total);
+                        if (!(e <= worst))
+                            worst = e;
+                    }
+                }
+                sprintf(what,
+                        "selfsim %s on %s is the weighted average (off by %.1e)",
+                        k ? "0.5" : "1", fields[g], (double)worst);
+                check(worst < (number_t)1e-15, what);
+                sffe_free(&plain);
+                sffe_free(&self);
+            }
+        }
+
+        /* The route does not matter. A call asked first at the tenth pass
+         * works out the nine before it, and gets what a call asked at every
+         * pass got; a new pixel starts again even when the first pass it is
+         * asked for is later than the last one the pixel before reached. */
         if (!failures) {
-            sffe *toomany = compile("randscq(7,{0.4,0.4},{0.5,0.5},1,0,{1,1},1,9)");
+            sffe *every = compile("randsct(7,{0.4,0.4},{0.75,0.75},6,0,{2,2},4,1)");
+            sffe *late = compile("randsct(7,{0.4,0.4},{0.75,0.75},6,0,{2,2},4,1)");
+            sffe *fresh = compile("randsct(7,{0.4,0.4},{0.75,0.75},6,0,{2,2},4,1)");
+            if (!failures) {
+                int skipped = 0, carried = 0;
+                for (int i = 0; i < 40; i++) {
+                    number_t x = (number_t)(i % 13) / 5 - 1 + (number_t)137 / 10000;
+                    number_t y = (number_t)(i % 17) / 7 - 1 + (number_t)71 / 10000;
+                    cmplx a = {{0, 0}};
+                    for (unsigned int n = 0; n <= 9; n++)
+                        a = atc(every, x, y, n);
+                    cmplx b = atc(late, x, y, 9);
+                    if (GSL_REAL(a) != GSL_REAL(b) || GSL_IMAG(a) != GSL_IMAG(b))
+                        skipped++;
+
+                    /* the pixel before stopped at the fifth pass; this one is
+                     * first asked at the seventh */
+                    for (unsigned int n = 0; n <= 5; n++)
+                        atc(fresh, y, x, n);
+                    cmplx c = atc(fresh, x, y, 7);
+                    cmplx d = {{0, 0}};
+                    for (unsigned int n = 0; n <= 7; n++)
+                        d = atc(every, x, y, n);
+                    if (GSL_REAL(c) != GSL_REAL(d) || GSL_IMAG(c) != GSL_IMAG(d))
+                        carried++;
+                }
+                sprintf(what, "passes skipped are worked out, to the bit (%d)",
+                        skipped);
+                check(skipped == 0, what);
+                sprintf(what, "and a new pixel does not carry the last one on (%d)",
+                        carried);
+                check(carried == 0, what);
+            }
+            sffe_free(&every);
+            sffe_free(&late);
+            sffe_free(&fresh);
+        }
+
+        /* A degradation of one weighs every pass alike: the plain average,
+         * which is what was asked for even though it heads for a flat grey. */
+        if (!failures) {
+            sffe *plain = compile("randscq(7,{0.4,0.4},{1,1})");
+            sffe *self = compile("randscq(7,{0.4,0.4},{1,1},1,0,0,0,1)");
+            if (!failures) {
+                number_t worst = 0;
+                for (int i = 0; i < 30; i++) {
+                    number_t x = (number_t)(i % 13) / 5 - 1 + (number_t)137 / 10000;
+                    number_t y = (number_t)(i % 17) / 7 - 1 + (number_t)71 / 10000;
+                    number_t sum = 0;
+                    for (unsigned int n = 0; n < 40; n++) {
+                        sum += at(plain, x, y, n);
+                        number_t e = nfabs(at(self, x, y, n) - sum / (n + 1));
+                        if (!(e <= worst))
+                            worst = e;
+                    }
+                }
+                sprintf(what, "and a degradation of one is the plain average "
+                              "(off by %.1e)",
+                        (double)worst);
+                check(worst < (number_t)1e-15, what);
+            }
+            sffe_free(&plain);
+            sffe_free(&self);
+        }
+
+        /* A complex H: d^(nH) is d^(n Hr) in size and a turn of n Hi ln d, so
+         * every pass is turned that much further than the one before, and the
+         * weights are divided by the sum of their sizes. Written out here as
+         * the definition says it, against the call. */
+        for (int g = 0; g < 5 && !failures; g += 3) {
+            static const char *hs[2] = {"{1,2}", "{0.5,-3}"};
+            static const number_t hr[2] = {1, (number_t)1 / 2};
+            static const number_t hi[2] = {2, -3};
+            for (int k = 0; k < 2; k++) {
+                char expr[128];
+                sprintf(expr, "%s(7,{0.4,0.4},{0.75,0.75},1,0,{1,1},2)",
+                        fields[g]);
+                sffe *plain = compile(expr);
+                sprintf(expr, "%s(7,{0.4,0.4},{0.75,0.75},1,0,{1,1},2,%s)",
+                        fields[g], hs[k]);
+                sffe *self = compile(expr);
+                if (failures)
+                    break;
+                number_t lnd = nlog((number_t)3 / 4), worst = 0;
+                for (int i = 0; i < 30; i++) {
+                    number_t x = (number_t)(i % 13) / 5 - 1 + (number_t)137 / 10000;
+                    number_t y = (number_t)(i % 17) / 7 - 1 + (number_t)71 / 10000;
+                    number_t sr = 0, si = 0, total = 0;
+                    for (unsigned int n = 0; n < passes; n++) {
+                        cmplx v = atc(plain, x, y, n);
+                        number_t w = nexp((number_t)n * hr[k] * lnd);
+                        number_t a = (number_t)n * hi[k] * lnd;
+                        number_t wr = w * ncos(a), wi = w * nsin(a);
+                        sr += wr * GSL_REAL(v) - wi * GSL_IMAG(v);
+                        si += wr * GSL_IMAG(v) + wi * GSL_REAL(v);
+                        total += w;
+                        cmplx got = atc(self, x, y, n);
+                        number_t e = nfabs(GSL_REAL(got) - sr / total) +
+                                     nfabs(GSL_IMAG(got) - si / total);
+                        if (!(e <= worst))
+                            worst = e;
+                    }
+                }
+                sprintf(what,
+                        "selfsim %s on %s turns each pass and averages "
+                        "(off by %.1e)",
+                        hs[k], fields[g], (double)worst);
+                check(worst < (number_t)1e-15, what);
+                sffe_free(&plain);
+                sffe_free(&self);
+            }
+        }
+
+        /* A nought imaginary part is the real H to the bit; a nought real part
+         * with an imaginary one is on, not off, and stays within the values
+         * it averages; a degradation of one turns nothing, its logarithm being
+         * nought; and the route does not matter any more than it did. */
+        if (!failures) {
+            sffe *real = compile("randsch(7,{0.4,0.4},{0.75,0.75},1,0,{1,1},2,1)");
+            sffe *zero = compile("randsch(7,{0.4,0.4},{0.75,0.75},1,0,{1,1},2,{1,0})");
+            sffe *off = compile("randsch(7,{0.4,0.4},{0.75,0.75})");
+            sffe *turn = compile("randsch(7,{0.4,0.4},{0.75,0.75},1,0,0,0,{0,5})");
+            sffe *one = compile("randsch(7,{0.4,0.4},{1,1},1,0,0,0,{1,3})");
+            sffe *oner = compile("randsch(7,{0.4,0.4},{1,1},1,0,0,0,1)");
+            sffe *every = compile("randsct(672,,{0.75,0.75},6,,{2,2},6,{1,2})");
+            sffe *late = compile("randsct(672,,{0.75,0.75},6,,{2,2},6,{1,2})");
+            if (!failures) {
+                int same = 1, on = 0, inside = 1, flat = 1, route = 0;
+                for (int i = 0; i < 40; i++) {
+                    number_t x = (number_t)(i % 13) / 5 - 1 + (number_t)137 / 10000;
+                    number_t y = (number_t)(i % 17) / 7 - 1 + (number_t)71 / 10000;
+                    cmplx last = {{0, 0}};
+                    for (unsigned int n = 0; n < passes; n++) {
+                        cmplx a = atc(real, x, y, n), b = atc(zero, x, y, n);
+                        if (GSL_REAL(a) != GSL_REAL(b) || GSL_IMAG(a) != GSL_IMAG(b))
+                            same = 0;
+                        cmplx t = atc(turn, x, y, n), o = atc(off, x, y, n);
+                        if (n > 0 && (GSL_REAL(t) != GSL_REAL(o) ||
+                                      GSL_IMAG(t) != GSL_IMAG(o)))
+                            on++;
+                        if (!(GSL_REAL(t) * GSL_REAL(t) +
+                                  GSL_IMAG(t) * GSL_IMAG(t) <=
+                              1))
+                            inside = 0;
+                        cmplx u = atc(one, x, y, n), w = atc(oner, x, y, n);
+                        if (GSL_REAL(u) != GSL_REAL(w) || GSL_IMAG(u) != GSL_IMAG(w))
+                            flat = 0;
+                        if (n <= 9)
+                            last = atc(every, x, y, n);
+                    }
+                    cmplx d = atc(late, x, y, 9);
+                    if (GSL_REAL(d) != GSL_REAL(last) || GSL_IMAG(d) != GSL_IMAG(last))
+                        route++;
+                }
+                check(same, "a nought imaginary part is the real H, to the bit");
+                sprintf(what, "a nought real part is on, not off (%d changed)", on);
+                check(on > 100, what);
+                check(inside, "and stays within the values it averages");
+                check(flat, "a degradation of one turns nothing");
+                sprintf(what, "and a complex H does not care about the route (%d)",
+                        route);
+                check(route == 0, what);
+            }
+            sffe_free(&real);
+            sffe_free(&zero);
+            sffe_free(&off);
+            sffe_free(&turn);
+            sffe_free(&one);
+            sffe_free(&oner);
+            sffe_free(&every);
+            sffe_free(&late);
+        }
+
+        /* Weights that run away either way have nowhere to go wrong: a large
+         * H leaves the first pass holding everything, and a negative one past
+         * what the type holds hands the whole to the latest. Neither may come
+         * out as anything but a number in [0, 1]. */
+        if (!failures) {
+            sffe *plain = compile("randsc(7,{0.4,0.4},{0.5,0.5})");
+            sffe *heavy = compile("randsc(7,{0.4,0.4},{0.5,0.5},1,0,0,0,1000000)");
+            sffe *light = compile("randsc(7,{0.4,0.4},{0.5,0.5},1,0,0,0,-100000)");
+            if (!failures) {
+                int first = 1, sane = 1;
+                for (int i = 0; i < 20; i++) {
+                    number_t x = (number_t)(i % 13) / 5 - 1 + (number_t)137 / 10000;
+                    number_t y = (number_t)(i % 17) / 7 - 1 + (number_t)71 / 10000;
+                    number_t v0 = at(plain, x, y, 0);
+                    for (unsigned int n = 0; n < 600; n++) {
+                        if (at(heavy, x, y, n) != v0)
+                            first = 0;
+                        number_t l = at(light, x, y, n);
+                        if (!(l >= 0 && l <= 1))
+                            sane = 0;
+                    }
+                }
+                check(first, "a weight run down to nothing leaves the first pass");
+                check(sane, "and one run past the type is still a value");
+            }
+            sffe_free(&plain);
+            sffe_free(&heavy);
+            sffe_free(&light);
+        }
+
+        /* Nine arguments is one more than the family takes. */
+        if (!failures) {
+            sffe *toomany =
+                compile("randscq(7,{0.4,0.4},{0.5,0.5},1,0,{1,1},1,1,9)");
             if (!failures) {
                 cmplx v = atc(toomany, (number_t)1 / 3, (number_t)1 / 7, 0);
                 check(GSL_REAL(v) == 0 && GSL_IMAG(v) == 0,
-                      "and eight arguments is one too many");
+                      "and nine arguments is one too many");
             }
             sffe_free(&toomany);
         }

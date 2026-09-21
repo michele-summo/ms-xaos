@@ -1747,10 +1747,19 @@ static void randsc_kaleido(number_t *px, number_t *py, int level, int mode)
 #define RANDSC_INLINE inline
 #endif
 
-static RANDSC_INLINE int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, number_t *u,
-                        number_t *v, uint64_t *hash)
+/* pass is the iteration to answer for: the one the formula is on, or an
+ * earlier one when the self-similar average is catching up (see randsc_sum),
+ * and here is the position. Nothing in here reads sffe_iteration or
+ * sffe_position itself; randsc_run reads each once, which matters because a
+ * thread-local is a call apiece under MinGW -- some twenty nanoseconds, a
+ * tenth of what the whole call costs -- and the sum would otherwise read them
+ * again at every pass it works out. */
+static RANDSC_INLINE int randsc_setup(sfarg *const p, unsigned int pass,
+                                      const cmplx *here, int64_t *cx,
+                                      int64_t *cy, number_t *u, number_t *v,
+                                      uint64_t *hash)
 {
-    if (p->argc < 1 || p->argc > 7)
+    if (p->argc < 1 || p->argc > 8)
         return RANDSC_STOP;
 
     /* Seed, cell size, degradation, kaleidoscope level and its mode, in the
@@ -1790,16 +1799,16 @@ static RANDSC_INLINE int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, 
      * the order the pixels were computed in. It is not the same answer that
      * squaring gives -- the two associate the multiplications differently, and
      * differ by some three parts in 10^18. */
-    if (p->carried == 0 || p->carried > sffe_iteration) {
+    if (p->carried == 0 || p->carried > pass) {
         GSL_SET_COMPLEX(&p->carry, 1, 1);
         p->carried = 0;
     }
     if (GSL_REAL(degradation) == 1 && GSL_IMAG(degradation) == 1) {
         /* The default, and multiplying by one leaves the product where it is,
          * so the passes can be counted off without doing any of them. */
-        p->carried = sffe_iteration;
+        p->carried = pass;
     } else {
-        while (p->carried < sffe_iteration) {
+        while (p->carried < pass) {
             GSL_SET_COMPLEX(&p->carry,
                             GSL_REAL(p->carry) * GSL_REAL(degradation),
                             GSL_IMAG(p->carry) * GSL_IMAG(degradation));
@@ -1820,8 +1829,8 @@ static RANDSC_INLINE int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, 
      * when it calls this once per iteration. Space is untouched by it: for
      * a fixed pass the hash is a constant, so the noise is as coherent from
      * point to point as it ever was. */
-    *hash = randsc_hash((int64_t)sffe_iteration, 0, randsc_seed(seed));
-    number_t px = GSL_REAL(sffe_position), py = GSL_IMAG(sffe_position);
+    *hash = randsc_hash((int64_t)pass, 0, randsc_seed(seed));
+    number_t px = GSL_REAL(*here), py = GSL_IMAG(*here);
     if (level >= 2)
         randsc_kaleido(&px, &py, level, mode);
 
@@ -1835,6 +1844,147 @@ static RANDSC_INLINE int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, 
         return RANDSC_BEYOND;
     }
     return RANDSC_OK;
+}
+
+/* selfsim, the eighth argument: every pass so far instead of this one alone.
+ *
+ * Each pass of these functions is a field of its own -- the iteration goes
+ * into the hash -- with cells the degradation times the size of the pass
+ * before. A formula calling one on every pass therefore sees a new and finer
+ * field each time, and what a colouring mode reads off the last pass is that
+ * last field alone: once its cells are smaller than a pixel, snow.
+ *
+ * Asked for, the call hands back instead the weighted average of the passes
+ * so far, standing to one another as the octaves of a fractional Brownian
+ * motion do. The weight of pass n is d^(nH): d is the degradation, taken as
+ * the geometric mean of the absolute values of its two components so that it
+ * is one number, and H is the argument. One is the plain motion and a half is
+ * rougher; either way the fine passes weigh little, so the snow they make lies
+ * under the coarse ones rather than over them. The weights are divided by
+ * their total, so the answer stays among the values it averages -- in [0, 1]
+ * without a skew. With one it is the skewed value that is averaged, so the
+ * skew and its modes go on meaning what they meant.
+ *
+ * A degradation of one gives every pass the same weight and the answer is
+ * their plain average, which settles toward a flat middle as the passes add
+ * up. That is what the definition says, and it is done as said.
+ *
+ * H may be complex, and d^(nH) is then complex too: d^(n Hr) as before for
+ * its size, and a turn of n Hi ln d. So every pass is turned that much further
+ * than the one before and then averaged as a real H averages it, the weights
+ * divided by the sum of their sizes -- which keeps the answer within the
+ * largest of the values averaged, however the turns fall. Divided by their
+ * complex sum instead, the answer would run off wherever that sum came near
+ * nought, and it would come near nought at the same pass for every pixel,
+ * the weights being the pixel's own business not at all. The turns make the
+ * value complex even without a skew, so imag and angle have something to read.
+ * A degradation of one has a logarithm of nought and turns nothing.
+ *
+ * Nought is off, and costs one comparison: the answer is then the one pass, to
+ * the bit. So is a real H averaged exactly as it was before H could be
+ * complex: no turn is worked out or applied when there is none to apply.
+ *
+ * The average is kept on the call site, as the degradation's product is, and
+ * kept as an average rather than as a sum and a total. Each pass takes a share
+ * of it, and the share of the next follows from the share of this one --
+ * a' = s a / (1 + s a), s being d^Hr -- so nothing grows with the passes. A
+ * weight that would overflow, which a degradation above one or a negative H
+ * ask for, has nowhere to do it. d^Hr and the turn a pass takes are worked out
+ * once a pixel; the turn of each pass is the one before times that.
+ *
+ * The passes a call did not see are worked out when it is asked. A call on a
+ * branch taken only from the seventh pass on still gets the first seven, at
+ * the price of doing them then; one asked for a pass it has already gone past
+ * starts again from nought. Either way the answer at a pass is the same
+ * whatever route reached it, a pass depending on nothing but the point and
+ * the pass. (And on the arguments, which are taken as they stand when asked;
+ * for the constants they nearly always are that is no difference at all.)
+ *
+ * A new pixel is known by its position as well as by its pass. The pass alone,
+ * which is what the trap goes by, would let a call that first runs on the
+ * seventh pass of one pixel carry on the average the pixel before it left.
+ */
+typedef sfarg *(*randsc_pass_fn)(sfarg *const, unsigned int, const cmplx *);
+
+static sfarg *randsc_sum(sfarg *const p, cmplx h, unsigned int now,
+                         const cmplx *here, randsc_pass_fn at)
+{
+    unsigned int from = p->summed;
+
+    if (from == 0 || from > now ||
+        GSL_REAL(p->gathered) != GSL_REAL(*here) ||
+        GSL_IMAG(p->gathered) != GSL_IMAG(*here)) {
+        /* d^Hr as |dr di|^(Hr/2), which is the same with one root fewer */
+        cmplx degradation = sfarg_or(p, 3, (number_t)1 / 2, (number_t)1 / 2);
+        number_t dd = nfabs(GSL_REAL(degradation) * GSL_IMAG(degradation));
+        GSL_SET_COMPLEX(&p->share, 1, npow(dd, GSL_REAL(h) / 2));
+        /* and Hi ln d, the turn from one pass to the next. None at all for a
+         * real H, nor for a degradation of one; and none for a degradation of
+         * nought, whose passes are all nought and whose logarithm is not a
+         * number. */
+        number_t psi = 0;
+        if (GSL_IMAG(h) != 0 && dd > 0)
+            psi = GSL_IMAG(h) * nlog(dd) / 2;
+        if (psi != 0 && psi - psi == 0) /* neither NaN nor infinite */
+            GSL_SET_COMPLEX(&p->turn, ncos(psi), nsin(psi));
+        else
+            GSL_SET_COMPLEX(&p->turn, 1, 0);
+        GSL_SET_COMPLEX(&p->phase, 1, 0);
+        from = 0;
+    }
+
+    number_t mr = GSL_REAL(p->mean), mi = GSL_IMAG(p->mean);
+    number_t a = GSL_REAL(p->share), s = GSL_IMAG(p->share);
+    number_t cr = GSL_REAL(p->phase), ci = GSL_IMAG(p->phase);
+    number_t ur = GSL_REAL(p->turn), ui = GSL_IMAG(p->turn);
+    int turning = ui != 0 || ur != 1;
+    sfarg *last = sfaram1(p);
+    for (unsigned int k = from; k <= now; k++) {
+        last = at(p, k, here);
+        number_t vr = GSL_REAL(sfvalue(p)), vi = GSL_IMAG(sfvalue(p));
+        if (k == 0) {
+            /* the first pass is all there is so far, and is not turned */
+            mr = vr;
+            mi = vi;
+            continue;
+        }
+        if (turning) {
+            /* this pass's turn is the last one's and one step more */
+            number_t x = cr * ur - ci * ui;
+            ci = cr * ui + ci * ur;
+            cr = x;
+            x = vr * cr - vi * ci;
+            vi = vr * ci + vi * cr;
+            vr = x;
+        }
+        /* written two ways so that neither end divides nought by nought: a
+         * share that has run down to nothing stays nothing, and one whose
+         * weight has overflowed takes the whole */
+        number_t x = s * a;
+        a = x < 1 ? x / (1 + x) : 1 / (1 + 1 / x);
+        mr += a * (vr - mr);
+        mi += a * (vi - mi);
+    }
+
+    GSL_SET_COMPLEX(&p->mean, mr, mi);
+    GSL_SET_COMPLEX(&p->share, a, s);
+    GSL_SET_COMPLEX(&p->phase, cr, ci);
+    p->gathered = *here;
+    p->summed = now + 1;
+    GSL_SET_COMPLEX(&sfvalue(p), mr, mi);
+    return last;
+}
+
+/* Each of the five as the formula calls it: the pass it is on, alone, or with
+ * a selfsim every pass up to it. The one pass is a direct call. */
+static RANDSC_INLINE sfarg *randsc_run(sfarg *const p, randsc_pass_fn at)
+{
+    cmplx h = sfarg_or(p, 8, 0, 0);
+    unsigned int now = sffe_iteration;
+    cmplx here = sffe_position;
+    if (GSL_REAL(h) == 0 && GSL_IMAG(h) == 0)
+        return at(p, now, &here);
+    return randsc_sum(p, h, now, &here, at);
 }
 
 /**
@@ -1869,13 +2019,14 @@ static RANDSC_INLINE int randsc_setup(sfarg *const p, int64_t *cx, int64_t *cy, 
  * @param p The call; the arguments are read right to left, see sfaramN.
  * @return Pointer to the last argument, per the sffe convention.
  */
-sfarg *sfrandsc(sfarg *const p)
+static sfarg *randsc_at(sfarg *const p, unsigned int pass,
+                        const cmplx *here)
 {
     int64_t cx, cy;
     number_t u, v;
     uint64_t h;
 
-    int state = randsc_setup(p, &cx, &cy, &u, &v, &h);
+    int state = randsc_setup(p, pass, here, &cx, &cy, &u, &v, &h);
     if (state == RANDSC_STOP) {
         GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
         return sfaram1(p);
@@ -1927,6 +2078,11 @@ sfarg *sfrandsc(sfarg *const p)
     randsc_skew_apply(level, level, ang, skew, skewmode, wedges, &sre, &sim);
     GSL_SET_COMPLEX(&sfvalue(p), sre, sim);
     return sfaram1(p);
+}
+
+sfarg *sfrandsc(sfarg *const p)
+{
+    return randsc_run(p, randsc_at);
 }
 
 /* Where the seed of a cell may sit, as a fraction of the cell: the middle
@@ -1984,13 +2140,14 @@ static uint64_t randsc_remix(uint64_t x)
  * @param p The call; the arguments are read right to left, see sfaramN.
  * @return Pointer to the last argument, per the sffe convention.
  */
-sfarg *sfrandscp(sfarg *const p)
+static sfarg *randscp_at(sfarg *const p, unsigned int pass,
+                         const cmplx *here)
 {
     int64_t cx, cy;
     number_t u, v;
     uint64_t h;
 
-    int state = randsc_setup(p, &cx, &cy, &u, &v, &h);
+    int state = randsc_setup(p, pass, here, &cx, &cy, &u, &v, &h);
     if (state == RANDSC_STOP) {
         GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
         return sfaram1(p);
@@ -2116,6 +2273,11 @@ sfarg *sfrandscp(sfarg *const p)
                   &pim_);
     GSL_SET_COMPLEX(&sfvalue(p), pre_, pim_);
     return sfaram1(p);
+}
+
+sfarg *sfrandscp(sfarg *const p)
+{
+    return randsc_run(p, randscp_at);
 }
 
 
@@ -3162,13 +3324,14 @@ int sffe_uses_noise(sffe *const parser)
     return 0;
 }
 
-sfarg *sfrandscq(sfarg *const p)
+static sfarg *randscq_at(sfarg *const p, unsigned int pass,
+                         const cmplx *here)
 {
     int64_t cx, cy;
     number_t u, v;
     uint64_t h;
 
-    int state = randsc_setup(p, &cx, &cy, &u, &v, &h);
+    int state = randsc_setup(p, pass, here, &cx, &cy, &u, &v, &h);
     if (state == RANDSC_STOP) {
         GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
         return sfaram1(p);
@@ -3199,6 +3362,11 @@ sfarg *sfrandscq(sfarg *const p)
                   skewmode, wedges, &qre, &qim);
     GSL_SET_COMPLEX(&sfvalue(p), qre, qim);
     return sfaram1(p);
+}
+
+sfarg *sfrandscq(sfarg *const p)
+{
+    return randsc_run(p, randscq_at);
 }
 
 /* sqrt(3), for the two tilings whose cells are not axis-aligned. Worked out
@@ -3247,13 +3415,14 @@ static const number_t RANDSCT_PITCH = nsqrt(nsqrt((number_t)3) / 4);
  * @param p The call; the arguments are read right to left, see sfaramN.
  * @return Pointer to the last argument, per the sffe convention.
  */
-sfarg *sfrandsch(sfarg *const p)
+static sfarg *randsch_at(sfarg *const p, unsigned int pass,
+                         const cmplx *here)
 {
     int64_t cx, cy;
     number_t u, v;
     uint64_t h;
 
-    int state = randsc_setup(p, &cx, &cy, &u, &v, &h);
+    int state = randsc_setup(p, pass, here, &cx, &cy, &u, &v, &h);
     if (state == RANDSC_STOP) {
         GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
         return sfaram1(p);
@@ -3308,6 +3477,11 @@ sfarg *sfrandsch(sfarg *const p)
     return sfaram1(p);
 }
 
+sfarg *sfrandsch(sfarg *const p)
+{
+    return randsc_run(p, randsch_at);
+}
+
 /**
  * @brief The same mosaic on a triangular grid: flat equilateral triangles.
  * @details randsct takes the arguments randsc takes and means the same by
@@ -3327,13 +3501,14 @@ sfarg *sfrandsch(sfarg *const p)
  * @param p The call; the arguments are read right to left, see sfaramN.
  * @return Pointer to the last argument, per the sffe convention.
  */
-sfarg *sfrandsct(sfarg *const p)
+static sfarg *randsct_at(sfarg *const p, unsigned int pass,
+                         const cmplx *here)
 {
     int64_t cx, cy;
     number_t u, v;
     uint64_t h;
 
-    int state = randsc_setup(p, &cx, &cy, &u, &v, &h);
+    int state = randsc_setup(p, pass, here, &cx, &cy, &u, &v, &h);
     if (state == RANDSC_STOP) {
         GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
         return sfaram1(p);
@@ -3392,6 +3567,11 @@ sfarg *sfrandsct(sfarg *const p)
                   &tim);
     GSL_SET_COMPLEX(&sfvalue(p), tre, tim);
     return sfaram1(p);
+}
+
+sfarg *sfrandsct(sfarg *const p)
+{
+    return randsc_run(p, randsct_at);
 }
 
 sfarg *sfgamma(sfarg *const p)

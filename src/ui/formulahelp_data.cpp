@@ -118,11 +118,11 @@ const struct formula_help_row formula_help_functions[] = {
     {"ifiterr", "a, b, n", "a while the iteration is below n, b from n on; only the chosen one runs", NULL}, /* 3 */
     {NULL, NULL, NULL, "randomness: all but the seed optional, and a new field every iteration; what the kaleidoscope and its mode do is in the Values tab"},
     {"rand", "a", "real(a) times a random number in [0, 1); depends on call order, so a redraw differs", NULL},
-    {"randsc", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0], [skew_mode=0]", "coherent noise over the point: soft blobs, size wide and size high", NULL},
-    {"randscq", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0], [skew_mode=0]", "the same field with no interpolation: a mosaic of flat square cells", NULL},
-    {"randscp", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0], [skew_mode=0]", "the same field cut into irregular flat polygons, with straight edges", NULL},
-    {"randsch", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0], [skew_mode=0]", "the same field cut into hexagons: a honeycomb of flat cells", NULL},
-    {"randsct", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0], [skew_mode=0]", "the same field cut into equilateral triangles, alternating in orientation", NULL},
+    {"randsc", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0], [skew_mode=0], [selfsim=0]", "coherent noise over the point: soft blobs, size wide and size high", NULL},
+    {"randscq", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0], [skew_mode=0], [selfsim=0]", "the same field with no interpolation: a mosaic of flat square cells", NULL},
+    {"randscp", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0], [skew_mode=0], [selfsim=0]", "the same field cut into irregular flat polygons, with straight edges", NULL},
+    {"randsch", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0], [skew_mode=0], [selfsim=0]", "the same field cut into hexagons: a honeycomb of flat cells", NULL},
+    {"randsct", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0], [skew_mode=0], [selfsim=0]", "the same field cut into equilateral triangles, alternating in orientation", NULL},
     {"fbm", "value, seed, [intensity=4], [frequency=8], [octaves=4], [roughness=0.5]", "a fractional Brownian motion over the value written in front of it: octaves of the randsc noise, each at twice the frequency of the one before and keeping roughness of its height. Runs from nought to intensity and never below. fbm(z,7) moves with the orbit, fbm(x,7) stands still on the plane; parchmenta(z,6) inside it folds the plane into sectors", NULL},
     {NULL, NULL, NULL, "watching the orbit: both hand back their argument until the last iteration, and what they gathered on it, which the inside colouring modes then draw"},
     {"trap", "a, [shape=0], [centre=0], [size=1]", "how near the orbit ever came to a shape; the shapes are in the Values tab", NULL},
@@ -169,6 +169,13 @@ const struct formula_help_row formula_help_values[] = {
     {"2", "", "the rosette: the angle round the middle of the cell, folded into as many turns as the kaleidoscope has wedges, so each cell carries the picture's own symmetry. Plain spokes when nothing is folded, and a spiral when added to 1", NULL},
     {"4", "", "per wedge: the turn differs from one wedge of the kaleidoscope to the next, so the copies it makes stop being identical -- coloured glass rather than one pattern repeated. Does nothing when nothing is folded", NULL},
     {"8", "", "radial: the modulus moves as well as the angle. The only one zmag and the bailout can see, since those read the modulus and nothing else -- and for that reason the only one that cuts the figure where the bailout falls inside a cell", NULL},
+    {NULL, NULL, NULL, "randsc family: selfsim, every pass so far rather than this one alone. Each pass is a field of its own, its cells the degradation times those of the pass before, so a formula calling one on every pass reads a finer field each time -- and once the cells are smaller than a pixel, snow. With selfsim the call hands back the passes so far averaged, pass n weighed by d^(nH): d is the degradation, the geometric mean of its two components taken without their signs, and H is this number. The fine passes weigh little, so their snow lies under the coarse ones rather than over them. It is the skewed value that is averaged, so the skew and its modes go on doing what they do. An average draws the values together, so a higher colour speed brings back the contrast. With a degradation of one every pass weighs the same, and the answer is their plain average, which settles toward a flat middle"},
+    {"0", "", "off: the one pass, to the bit, which is what a call that says nothing gets", NULL},
+    {"1", "", "the plain motion: each pass weighs d times the one before", NULL},
+    {"0.5", "", "rougher: the fine passes keep more of their weight, so more of the detail shows", NULL},
+    {"larger", "", "smoother: the first few passes take nearly all of it", NULL},
+    {"negative", "", "the fine passes outweigh the coarse ones, which is the snow back again", NULL},
+    {"complex, as {1,2}", "", "the real part weighs the passes as above; the imaginary part turns each pass by that times the logarithm of d further than the one before, before they are averaged -- a spiral of octaves, and a value with an imaginary part even without a skew. The weights are divided by the sum of their sizes, so the answer stays within the values averaged. Turns nothing at a degradation of one. Off only when both parts are nought", NULL},
     {NULL, NULL, NULL, NULL}};
 
 /* The variables the engine registers before parsing a user formula; see the

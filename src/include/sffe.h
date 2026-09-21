@@ -94,6 +94,20 @@ typedef struct sfargument__ {
     sfNumber carry;
     unsigned int carried;
 
+    /* The same for the self-similar average of the noise functions (see
+     * randsc_sum): the average of the passes so far; the share the last of
+     * them took of it, with what each pass keeps of the weight of the one
+     * before in the imaginary part; the turn one pass takes past the one
+     * before and the turn the last of them took, both as a cosine and a sine;
+     * and the position they were taken at. summed is how many passes it
+     * holds, zero for none. */
+    sfNumber mean;
+    sfNumber share;
+    sfNumber turn;
+    sfNumber phase;
+    sfNumber gathered;
+    unsigned int summed;
+
     /* Set on an argument the call left empty -- the nothing between two
      * separators in "f(z, ,5)". What it means is the callee's business: the
      * value it would have defaulted to, a zero, or the argument before it.

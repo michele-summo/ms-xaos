@@ -213,7 +213,7 @@ the bargain.
     poly(z,1,0,0)+c            the Mandelbrot, written out
     poly(z,1,0,0,{0.7,0.2})    z^3 + 0.7+0.2i
 
-**`randsc(seed, size, degradation, kaleidoscope, mode, skew)`** — coherent
+**`randsc(seed, size, degradation, kaleidoscope, mode, skew, skew_mode, selfsim)`** — coherent
 noise over the point, giving blobs rather than per-pixel snow. `size`
 (default `1+i`) is the average width of a blob along the real axis and its
 height along the imaginary one.
@@ -222,8 +222,8 @@ the iteration proceeds: the
 size is multiplied by it at every pass, component by component, so `0.5+0.2i`
 over `1+i` gives `1+i` on the first pass, then `0.5+0.2i`, then `0.25+0.04i`.
 A zero in either component of either argument returns zero rather than dividing
-by zero. Then come the two kaleidoscope arguments, below, and last `skew`
-(default `0`). Only the seed is required.
+by zero. Then come the two kaleidoscope arguments, `skew` (default `0`),
+`skew_mode` and `selfsim`, each described below. Only the seed is required.
 
 ### The skew, and why these fields are hard to colour
 
@@ -500,6 +500,75 @@ long run, use something near 1 — `0.97^60` is still 0.16.
 
 An integer seed is exact in both builds; a fractional one is quantised to its
 leading bits, which agree except for about one seed in fifty million.
+
+### Every pass so far: `selfsim`
+
+Each pass of these functions is a field of its own — the iteration goes into
+the hash — with cells the degradation times those of the pass before. A formula
+that calls one on every pass therefore reads a new and finer field each time,
+and a colouring mode that reads the last pass reads the last field alone. At a
+degradation of 0.75 the cells of a view five wide are below a pixel by the
+sixteenth pass, and past that the inside is snow: a hundred passes of
+`randsct(672,,{0.75,0.75},,,{2,2},6)+c` in julia mode put 70% of neighbouring
+inside pixels a sixteenth of the palette or more apart.
+
+The eighth argument hands back instead **the passes so far, averaged**, standing
+to one another as the octaves of a fractional Brownian motion do: pass *n*
+weighs d^(nH), where *d* is the degradation — the geometric mean of its two
+components taken without their signs, so `0.75+0.75i` is 0.75 — and *H* is the
+argument. The weights are divided by their total, so the answer stays among the
+values averaged: in [0, 1] without a skew.
+
+| selfsim | |
+| --- | --- |
+| `0` | off — the one pass, to the bit. What a call that names nothing gets |
+| `1` | the plain motion: each pass weighs *d* times the one before |
+| `0.5` | rougher: the fine passes keep more of their weight, so more detail shows |
+| larger | smoother: the first few passes take nearly all of it |
+| negative | the fine passes outweigh the coarse ones, which is the snow back again |
+| complex, `{1,2}` | the real part weighs as above, the imaginary part turns the passes — see below |
+
+    randsct(672,,{0.75,0.75},,,{2,2},6,1)+c     the same, self-similar
+
+On that formula the snow goes: neighbouring inside pixels come out 1.8 palette
+cells apart on average rather than 35, and 0.6% of them more than sixteen apart
+rather than 70%. What is left is the triangles at every scale at once, the large
+ones carrying the small.
+
+* **`selfsim` may be complex.** Then d^(nH) is complex too: d^(n·Hr) in size
+  and a turn of n·Hi·ln d, so every pass is turned that much further than the
+  one before and then averaged as a real *H* averages it — a spiral of
+  octaves. At 0.75 an imaginary part of one is some sixteen degrees a pass.
+  The weights are divided by **the sum of their sizes**, not by their complex
+  sum: that keeps the answer within the largest of the values averaged. The
+  complex sum would come near nought at some pass and blow every value up at
+  that pass for every pixel at once, the weights having nothing to do with the
+  pixel. The turns give the value an imaginary part even without a skew, so
+  `imag` and `angle` have something to read. A degradation of one has a
+  logarithm of nought and turns nothing; `{1,0}` is `1` to the bit; and it is
+  off only when both parts are nought, so `{0,2}` is on — every pass weighed
+  alike, and turned.
+* **It is the skewed value that is averaged**, so the skew and every bit of
+  `skew_mode` go on doing what they did, and the answer is complex when the
+  skew makes it so.
+* **An average draws the values together.** At 0.75 and *H* of one the spread
+  is about two fifths of what one pass has, so raise the colour speed to get the
+  contrast back.
+* **A degradation of one** weighs every pass alike and gives their plain
+  average, which settles toward a flat middle as the passes add up. That is
+  what the definition says, and it is done as said.
+* **Passes a call did not see are worked out when it is asked.** A call on a
+  branch the formula takes only from the seventh pass still gets the first
+  seven, and the answer at a pass is the same whichever route reached it. A new
+  pixel is told by its position as well as by its pass: the pass alone, which is
+  what `trap` goes by, would let such a call carry on the average the pixel
+  before it left.
+* **Nothing overflows.** The average is kept as one, each pass taking a share
+  of it that follows from the share of the pass before, rather than as a sum and
+  a total — so a negative *H*, or a degradation above one, whose weights would
+  run past what the type holds, has nowhere to do it.
+* **It costs** about a tenth more per call at 64 bits of mantissa and a seventh
+  at 113. Off, nothing that can be measured.
 
 ### Figures instead of noise
 
