@@ -1742,8 +1742,9 @@ int main(void)
             sffe_free(&bare);
         }
 
-        /* Per wedge is the one that breaks the repetition a kaleidoscope
-         * makes, and the only one: the rest fold as they always did.
+        /* Every bit keeps the repetition a kaleidoscope makes, the per-wedge
+         * one included: it varies with where the point stands in its wedge,
+         * which is the same in every wedge, and not with which wedge it is.
          *
          * The folded call is asked for first on purpose. The fold writes which
          * wedge it took and nothing clears it, so a call that folds nothing
@@ -1783,10 +1784,10 @@ int main(void)
                     if (GSL_REAL(e) != GSL_REAL(f) || GSL_IMAG(e) != GSL_IMAG(f))
                         leaked++;
                 }
-                sprintf(what, "the wedge bit breaks the repetition (%d apart)",
+                sprintf(what, "the wedge bit keeps the repetition (%d apart)",
                         wapart);
-                check(wapart > 50, what);
-                sprintf(what, "and no other bit does (%d apart)", sapart);
+                check(wapart == 0, what);
+                sprintf(what, "and so does every other bit (%d apart)", sapart);
                 check(sapart == 0, what);
                 sprintf(what,
                         "and an unfolded call reads no wedge left behind (%d)",
@@ -1797,6 +1798,90 @@ int main(void)
             sffe_free(&shaped);
             sffe_free(&plain);
             sffe_free(&stale);
+        }
+
+        /* And the kaleidoscope stays one: the mirror in the real axis holds
+         * as the turn by a sixth does, and the value is continuous where the
+         * fold mirrors -- on every edge and down every middle. On an edge the
+         * bit changes nothing; down a middle it is the whole turn of the
+         * skew's imaginary part, twice the arc tangent of 2. It was first a
+         * turn that differed from wedge to wedge, which made six unrelated
+         * slices with a cut at every join. */
+        if (!failures) {
+            sffe *wedged = compile("randscq(7,{0.4,0.4},{0.5,0.5},6,0,{1,2},5)");
+            sffe *shaped = compile("randscq(7,{0.4,0.4},{0.5,0.5},6,0,{1,2},1)");
+            if (!failures) {
+                number_t sector = (number_t)2 * (number_t)M_PI / 6;
+                number_t seam = 0;
+                for (int r = 1; r <= 40; r++) {
+                    number_t rad = (number_t)r / 20;
+                    for (int j = 0; j < 12; j++) {
+                        number_t a = sector / 2 * j, e = (number_t)1 / 1000000000;
+                        cmplx u = atc(wedged, rad * ncos(a - e), rad * nsin(a - e), 0);
+                        cmplx v = atc(wedged, rad * ncos(a + e), rad * nsin(a + e), 0);
+                        number_t d = nfabs(GSL_REAL(u) - GSL_REAL(v)) +
+                                     nfabs(GSL_IMAG(u) - GSL_IMAG(v));
+                        if (!(d <= seam))
+                            seam = d;
+                    }
+                }
+                sprintf(what,
+                        "the wedge bit meets itself on every edge and every "
+                        "middle (%.1e)",
+                        (double)seam);
+                check(seam < (number_t)1e-6, what);
+
+                /* the turn 2 gives, as a cosine and a sine */
+                number_t pr = (number_t)-3 / 5, pim = (number_t)4 / 5;
+                number_t cm = ncos(sector / 2), sm = nsin(sector / 2);
+                number_t worst = 0;
+                int mirrored = 0, edge = 1, differs = 0;
+                for (int i = 1; i < 200; i++) {
+                    number_t x = (number_t)(i % 13) / 5 - 1 + (number_t)137 / 10000;
+                    number_t y = (number_t)(i % 17) / 7 - 1 + (number_t)71 / 10000;
+                    if (x * x + y * y < (number_t)1 / 25)
+                        continue;
+                    cmplx a = atc(wedged, x, y, 0);
+                    cmplx b = atc(wedged, x, -y, 0);
+                    if (nfabs(GSL_REAL(a) - GSL_REAL(b)) +
+                            nfabs(GSL_IMAG(a) - GSL_IMAG(b)) >
+                        (number_t)1 / 1000000)
+                        mirrored++;
+                    cmplx n = atc(shaped, x, y, 0);
+                    if (GSL_REAL(a) != GSL_REAL(n) || GSL_IMAG(a) != GSL_IMAG(n))
+                        differs++;
+
+                    /* on the edge that is the positive real axis */
+                    number_t r = nsqrt(x * x + y * y);
+                    cmplx e = atc(wedged, r, 0, 0);
+                    cmplx f = atc(shaped, r, 0, 0);
+                    if (GSL_REAL(e) != GSL_REAL(f) || GSL_IMAG(e) != GSL_IMAG(f))
+                        edge = 0;
+
+                    /* down the middle of the first wedge */
+                    cmplx u = atc(wedged, r * cm, r * sm, 0);
+                    cmplx v = atc(shaped, r * cm, r * sm, 0);
+                    number_t er = GSL_REAL(v) * pr - GSL_IMAG(v) * pim;
+                    number_t ei = GSL_REAL(v) * pim + GSL_IMAG(v) * pr;
+                    number_t d = nfabs(GSL_REAL(u) - er) + nfabs(GSL_IMAG(u) - ei);
+                    if (!(d <= worst))
+                        worst = d;
+                }
+                sprintf(what, "and the mirror in the real axis holds (%d apart)",
+                        mirrored);
+                check(mirrored == 0, what);
+                check(edge, "and on an edge the bit changes nothing");
+                sprintf(what,
+                        "and down a middle it is the whole turn of the skew "
+                        "(off by %.1e)",
+                        (double)worst);
+                check(worst < (number_t)1e-12, what);
+                sprintf(what, "and in between it turns the value (%d changed)",
+                        differs);
+                check(differs > 100, what);
+            }
+            sffe_free(&wedged);
+            sffe_free(&shaped);
         }
 
     }

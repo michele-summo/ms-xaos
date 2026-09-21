@@ -1473,18 +1473,16 @@ static number_t randsc_unit(uint64_t x)
  * What is left flat is zmag, which reads the modulus and so is the one thing a
  * turn cannot touch. Colour with the modes that read the two components
  * apart -- real, imag, angle, real over imag. */
-/* Which of the wedges the point came from, before the fold put it in the
- * first one.
+/* Where in its wedge the point stands: nought on either edge of the wedge, one
+ * on the line down its middle, and the same in every wedge -- which is what
+ * lets the skew vary with it and leave the picture a kaleidoscope.
  *
- * The fold works this out and used to throw it away. Keeping it lets the skew
- * vary from one wedge to the next, so that the copies a kaleidoscope makes
- * stop being identical -- which is what a kaleidoscope with coloured glass
- * does, and what this one could not do.
- *
- * Written only by randsc_kaleido, so a field that is not folded pays nothing for it. What
- * is left behind from an earlier call is never read: the skew asks for it only
- * when the call names two wedges or more, and then this has just run. */
-static thread_local number_t randsc_wedge = 0;
+ * The fold works the angle out anyway, so this costs one division. Written
+ * only by randsc_kaleido, so a field that is not folded pays nothing for it.
+ * What is left behind from an earlier call is never read: the skew asks for
+ * it only when the call names two wedges or more, and then this has just
+ * run. */
+static thread_local number_t randsc_inwedge = 0;
 
 /* What the skew is asked to do, which is a set rather than a choice: the bits
  * are added together, so a call may have the shape and the rosette at once and
@@ -1540,23 +1538,47 @@ static inline void randsc_skew_apply(number_t level, number_t out, number_t ang,
     if (mode & RANDSC_SKEW_ROSETTE)
         m += ang;
 
-    /* The imaginary part is a turn the whole cell shares. Asked to vary from
-     * wedge to wedge it becomes a multiple of itself, so the copies are turned
-     * by evenly spaced amounts; an imaginary part that does not divide the
-     * round gives them no order anyone will notice. */
-    /* Only where there are wedges to tell apart. randsc_kaleido writes the
-     * one it folded and nothing clears it afterwards, so a call that folds
-     * nothing would otherwise read whatever the last call that did fold left
-     * behind -- and answer differently depending on the order the formula
-     * happened to be evaluated in. */
-    number_t flat = ((mode & RANDSC_SKEW_WEDGE) && wedges > 1)
-                        ? si * (randsc_wedge + 1)
-                        : si;
-
-    number_t t = sr * m + flat;
+    /* The imaginary part is a turn the whole cell shares. */
+    number_t t = sr * m + si;
     number_t q = 1 + t * t;
     number_t vr = level * (1 - t * t) / q;
     number_t vi = level * 2 * t / q;
+
+    /* Asked to vary with the wedge, the value is turned once more, by nothing
+     * on the edges of the wedge and by the whole of the turn the imaginary
+     * part gives on its own -- twice its arc tangent, 127 degrees for 2 -- on
+     * the line down its middle, and by the turn of the imaginary part times
+     * how far across between. Every wedge the same, so a kaleidoscope of six
+     * is still one: each copy the turn of the one beside it and the mirror of
+     * the other, and continuous across both the edges and the middles, which
+     * are where the fold mirrors.
+     *
+     * It was first a turn that differed from one wedge to the next, the
+     * imaginary part times the wedge's number plus one. That made the copies
+     * different from one another, which is the one thing a kaleidoscope's
+     * copies cannot be -- a six-fold picture came out as six unrelated slices
+     * with a straight cut at every join. And the multiple ran up against half
+     * a turn, so four slices of six sat nearly on the real axis, where the
+     * imaginary part of z hovers about nought and real/imag, which divides by
+     * it, drew them as snow. Turning continuously round the whole circle
+     * instead mended the cuts but still left one mirror of the six.
+     *
+     * The Cayley pair again, so no trigonometry: no turn at nought, the whole
+     * turn at one.
+     *
+     * Only where there are wedges to tell apart: randsc_kaleido writes where
+     * the point stood and nothing clears it afterwards, so a call that folds
+     * nothing would otherwise read whatever the last call that did fold left
+     * behind -- and answer differently depending on the order the formula
+     * happened to be evaluated in. */
+    if ((mode & RANDSC_SKEW_WEDGE) && wedges > 1) {
+        number_t tp = si * randsc_inwedge;
+        number_t inv = 1 / (1 + tp * tp);
+        number_t tr = (1 - tp * tp) * inv, ti = 2 * tp * inv;
+        number_t x = vr * tr - vi * ti;
+        vi = vr * ti + vi * tr;
+        vr = x;
+    }
 
     if (mode & RANDSC_SKEW_RADIAL) {
         /* The modulus as well as the angle, and the only one of the four that
@@ -1718,10 +1740,11 @@ static void randsc_kaleido(number_t *px, number_t *py, int level, int mode)
     number_t turns = nfloor(angle / sector);
     number_t s = angle - sector * turns;
 
-    /* natan2 answers between minus pi and pi, so the count runs either side of
-     * nought; brought round to between nought and the number of wedges. */
-    randsc_wedge = turns - (number_t)level * nfloor(turns / (number_t)level);
     number_t half = sector / 2;
+
+    /* the nearer edge of the wedge, measured in half wedges, before either
+     * mirror decides which half the point is brought into */
+    randsc_inwedge = (s < half ? s : sector - s) / half;
 
     if (mode == 1) {
         if (s < half)

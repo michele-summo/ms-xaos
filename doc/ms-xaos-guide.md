@@ -273,19 +273,38 @@ them and get both.
 | --- | --- |
 | **1** (and `0`) | **the shape** — the cell's own outline, shrunk step by step. What a call that names no mode gets, and what is used when neither 1 nor 2 is named |
 | **2** | **the rosette** — the angle round the middle of the cell, folded into as many turns as the kaleidoscope has wedges, so each cell carries the picture's own symmetry. Plain spokes when nothing is folded |
-| **4** | **per wedge** — the turn differs from one wedge to the next |
+| **4** | **across the wedge** — a turn that follows where the point stands in its wedge of the kaleidoscope, the same in every wedge |
 | **8** | **radial** — the modulus moves as well as the angle |
 
 `3` is the shape and the rosette at once, which spirals. `11` is those two with
 the modulus moving as well.
 
-**`4` is the one worth knowing about.** A kaleidoscope makes *n* copies and they
-are identical — that is what folding means, and past a point it is the thing
-that makes the picture look mechanical. The fold already works out which wedge
-each point came from and used to throw that away; keeping it lets the skew turn
-each wedge by a different amount, so the copies become variations. Coloured
-glass rather than one pattern printed *n* times. It costs nothing, and it does
-nothing when there is no fold to speak of.
+**`4` follows the kaleidoscope's own geometry.** It turns the value by
+nothing on the edges of each wedge and by the whole of the turn the imaginary
+part gives on its own — twice its arc tangent, 127 degrees for `2` — down the
+line through its middle, and by the turn of the imaginary part times how far
+across in between. Every wedge gets the same, so a kaleidoscope of six is still
+a kaleidoscope of six, mirrors and all, and the turn is continuous across the
+edges and the middles, which are where the fold mirrors. It does nothing when
+nothing is folded, or when the imaginary part of the skew is nought. No
+trigonometry, and it costs nothing at 64 bits of mantissa and a tenth of a call
+at 113.
+
+It was first **a different turn in each wedge** — the imaginary part times the
+wedge's number plus one — meant to make the copies stop being identical. That
+is the one thing a kaleidoscope's copies cannot be: a six-fold picture came out
+as six unrelated slices with a straight cut at every join. The multiple also
+ran up against half a turn, so four slices of six sat nearly on the real axis,
+and there `real / imag` drew them as snow however `selfsim` averaged the noise.
+
+What is left of that is a property of `real / imag`, which divides by the
+imaginary part of *z*: wherever a turn carries it across nought the colouring
+jumps from one end of the palette to the other, and the last scraps of the fine
+passes decide the side pixel by pixel. A turn that sweeps across the wedge
+crosses there for most settings. On a six-fold `randsct` coloured by
+`real / imag`, with `selfsim` at one, an imaginary part of `0.25` left no grain
+at all and `2` left bands of it beside the edges; a colouring that does not
+divide by one component has none.
 
 **`8` is the one that answers `zmag`.** A turn leaves the modulus where it is,
 and `zmag` and the bailout read the modulus and nothing else — so no other mode
