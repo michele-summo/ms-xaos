@@ -109,6 +109,19 @@ stage="$here/$name"
 rm -rf "$stage"
 mkdir -p "$stage"
 cp -a "$root/bin" "$stage/"
+# bin/ is also where a diagnostic build (cmake -DDIAG=ON) leaves its binary and
+# the reports it writes, XaoS-diag.exe and xaos-diag*.txt, and they stay there
+# long after the build is switched off. Copying bin/ whole shipped them in 1.6.
+# A release carries the two programs and what windeployqt put beside them.
+for f in "$stage"/bin/*.exe; do
+    case "$(basename "$f")" in
+        XaoS.exe | XaoS-quad.exe) ;;
+        *) echo "leaving out bin/$(basename "$f")"; rm -f "$f" ;;
+    esac
+done
+for f in "$stage"/bin/*.txt; do
+    [ -e "$f" ] && echo "leaving out bin/$(basename "$f")" && rm -f "$f"
+done
 cp -a "$root/catalogs" "$stage/"
 cp -a "$root/tutorial" "$stage/"
 cp -a "$root/examples" "$stage/"
