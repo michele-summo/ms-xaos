@@ -1903,8 +1903,14 @@ static RANDSC_INLINE int randsc_setup(sfarg *const p, unsigned int pass,
  * value complex even without a skew, so imag and angle have something to read.
  * A degradation of one has a logarithm of nought and turns nothing.
  *
- * Nought is off, and costs one comparison: the answer is then the one pass, to
- * the bit. So is a real H averaged exactly as it was before H could be
+ * Left out, or its place left empty, it is off and costs one comparison: the
+ * answer is then the one pass, to the bit. Nought is not off. d^(n 0) is one
+ * for every pass, so nought is the plain average -- and so is every H near it,
+ * from either side and complex too. Nought was the switch at first, which
+ * made it the one value the curve does not pass through: 0.000001 was the
+ * plain average and 0 the last pass alone, a quarter of the range apart. The
+ * last pass alone is the far end of the curve instead, H running to minus
+ * infinity. And a real H is averaged exactly as it was before H could be
  * complex: no turn is worked out or applied when there is none to apply.
  *
  * The average is kept on the call site, as the degradation's product is, and
@@ -1999,15 +2005,16 @@ static sfarg *randsc_sum(sfarg *const p, cmplx h, unsigned int now,
 }
 
 /* Each of the five as the formula calls it: the pass it is on, alone, or with
- * a selfsim every pass up to it. The one pass is a direct call. */
+ * a selfsim every pass up to it. The one pass is a direct call. Whether there
+ * is a selfsim is whether its place holds anything, not what it holds: nought
+ * is a value like any other (see randsc_sum). */
 static RANDSC_INLINE sfarg *randsc_run(sfarg *const p, randsc_pass_fn at)
 {
-    cmplx h = sfarg_or(p, 8, 0, 0);
     unsigned int now = sffe_iteration;
     cmplx here = sffe_position;
-    if (GSL_REAL(h) == 0 && GSL_IMAG(h) == 0)
+    if (p->argc < 8 || p->args[p->argc - 8]->omitted)
         return at(p, now, &here);
-    return randsc_sum(p, h, now, &here, at);
+    return randsc_sum(p, sfvalue(p->args[p->argc - 8]), now, &here, at);
 }
 
 /**

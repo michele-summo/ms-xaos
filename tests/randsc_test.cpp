@@ -1889,22 +1889,23 @@ int main(void)
     /* --- every pass so far: selfsim ----------------------------------------
      *
      * The eighth argument averages the passes up to the one asked for, weighing
-     * pass n by d^(nH). What has to hold: nought is the one pass to the bit;
-     * the average is the one the definition writes out, whichever way the
-     * passes were reached; and a new pixel does not inherit the last one's.
+     * pass n by d^(nH). What has to hold: left out it is the one pass to the
+     * bit; the average is the one the definition writes out, whichever way the
+     * passes were reached; nought is where the curve goes through nought and
+     * not a switch; and a new pixel does not inherit the last one's.
      */
     {
         static const char *fields[5] = {"randsc", "randscq", "randsch",
                                         "randsct", "randscp"};
         const unsigned int passes = 12;
 
-        /* nought is off: the same call with seven arguments, to the bit, at
-         * every pass and with the skew on so both parts are watched */
+        /* an empty place is off: the same call with seven arguments, to the
+         * bit, at every pass and with the skew on so both parts are watched */
         for (int g = 0; g < 5 && !failures; g++) {
             char expr[128];
             sprintf(expr, "%s(7,{0.4,0.4},{0.75,0.75},1,0,{1,1},2)", fields[g]);
             sffe *seven = compile(expr);
-            sprintf(expr, "%s(7,{0.4,0.4},{0.75,0.75},1,0,{1,1},2,0)", fields[g]);
+            sprintf(expr, "%s(7,{0.4,0.4},{0.75,0.75},1,0,{1,1},2,)", fields[g]);
             sffe *off = compile(expr);
             if (failures)
                 break;
@@ -1919,7 +1920,7 @@ int main(void)
                         same = 0;
                 }
             }
-            sprintf(what, "selfsim 0 is the one pass, to the bit, for %s",
+            sprintf(what, "an empty selfsim is the one pass, to the bit, for %s",
                     fields[g]);
             check(same, what);
             sffe_free(&seven);
@@ -2144,6 +2145,57 @@ int main(void)
             sffe_free(&oner);
             sffe_free(&every);
             sffe_free(&late);
+        }
+
+        /* Nought is not off: d^(n 0) is one for every pass, so it is the plain
+         * average, and it is what every H near nought tends to from either
+         * side and from the imaginary axis. It was the switch at first, and
+         * 0.000001 then stood a quarter of the range away from 0. */
+        if (!failures) {
+            sffe *plain = compile("randsct(672,{0.4,0.4},{0.75,0.75},1,0,{1,1},2)");
+            sffe *zero = compile("randsct(672,{0.4,0.4},{0.75,0.75},1,0,{1,1},2,0)");
+            sffe *above = compile("randsct(672,{0.4,0.4},{0.75,0.75},1,0,{1,1},2,1e-9)");
+            sffe *below = compile("randsct(672,{0.4,0.4},{0.75,0.75},1,0,{1,1},2,-1e-9)");
+            sffe *aside = compile("randsct(672,{0.4,0.4},{0.75,0.75},1,0,{1,1},2,{0,1e-9})");
+            if (!failures) {
+                number_t avg = 0, near = 0;
+                for (int i = 0; i < 30; i++) {
+                    number_t x = (number_t)(i % 13) / 5 - 1 + (number_t)137 / 10000;
+                    number_t y = (number_t)(i % 17) / 7 - 1 + (number_t)71 / 10000;
+                    number_t sr = 0, si = 0;
+                    for (unsigned int n = 0; n < 30; n++) {
+                        cmplx v = atc(plain, x, y, n);
+                        sr += GSL_REAL(v);
+                        si += GSL_IMAG(v);
+                        cmplx z = atc(zero, x, y, n);
+                        number_t e = nfabs(GSL_REAL(z) - sr / (n + 1)) +
+                                     nfabs(GSL_IMAG(z) - si / (n + 1));
+                        if (!(e <= avg))
+                            avg = e;
+                        sffe *nb[3] = {above, below, aside};
+                        for (int k = 0; k < 3; k++) {
+                            cmplx u = atc(nb[k], x, y, n);
+                            number_t d = nfabs(GSL_REAL(u) - GSL_REAL(z)) +
+                                         nfabs(GSL_IMAG(u) - GSL_IMAG(z));
+                            if (!(d <= near))
+                                near = d;
+                        }
+                    }
+                }
+                sprintf(what, "selfsim 0 is the plain average (off by %.1e)",
+                        (double)avg);
+                check(avg < (number_t)1e-15, what);
+                sprintf(what,
+                        "and selfsim near nought is selfsim 0, from every side "
+                        "(off by %.1e)",
+                        (double)near);
+                check(near < (number_t)1e-7, what);
+            }
+            sffe_free(&plain);
+            sffe_free(&zero);
+            sffe_free(&above);
+            sffe_free(&below);
+            sffe_free(&aside);
         }
 
         /* Weights that run away either way have nowhere to go wrong: a large

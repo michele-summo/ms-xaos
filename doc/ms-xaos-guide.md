@@ -540,7 +540,8 @@ values averaged: in [0, 1] without a skew.
 
 | selfsim | |
 | --- | --- |
-| `0` | off — the one pass, to the bit. What a call that names nothing gets |
+| left out | off — the one pass, to the bit. What a call that names nothing gets, and a place left empty |
+| `0` | the plain average: every pass weighed alike, and what every *H* near nought gives — not off |
 | `1` | the plain motion: each pass weighs *d* times the one before |
 | `0.5` | rougher: the fine passes keep more of their weight, so more detail shows |
 | larger | smoother: the first few passes take nearly all of it |
@@ -564,9 +565,15 @@ ones carrying the small.
   that pass for every pixel at once, the weights having nothing to do with the
   pixel. The turns give the value an imaginary part even without a skew, so
   `imag` and `angle` have something to read. A degradation of one has a
-  logarithm of nought and turns nothing; `{1,0}` is `1` to the bit; and it is
-  off only when both parts are nought, so `{0,2}` is on — every pass weighed
-  alike, and turned.
+  logarithm of nought and turns nothing; `{1,0}` is `1` to the bit; and
+  `{0,2}` is every pass weighed alike, and turned.
+* **Nought is not off.** d^(n·0) is one for every pass, so `0` is the plain
+  average, and so is every *H* near it — from either side, and complex too.
+  Nought was the switch at first, which made it the one value the curve does
+  not pass through: `0.000001` was the plain average and `0` the last pass
+  alone, a quarter of the range apart. The last pass alone is the far end of
+  the curve, *H* running to minus infinity. To have no average, leave the
+  argument out, or its place empty.
 * **It is the skewed value that is averaged**, so the skew and every bit of
   `skew_mode` go on doing what they did, and the answer is complex when the
   skew makes it so.
