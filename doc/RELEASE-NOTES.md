@@ -1,112 +1,93 @@
-# MS XaoS 1.6
+# MS XaoS 1.7
 
-A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3, by Michele Summo.
-This is its first release, so what follows is everything it adds over 4.3.3
-rather than the changes of one version.
+What has changed since 1.6. Version 1.6.1 was never released on its own, so
+what it brought is here too. Everything MS XaoS adds over
+[XaoS](https://github.com/xaos-project/XaoS) 4.3.3 is in the
+[notes of 1.6](https://github.com/michele-summo/ms-xaos/releases/tag/v1.6), and
+the [guide](https://github.com/michele-summo/ms-xaos/blob/v1.7/doc/ms-xaos-guide.md)
+says what each thing does and why it was made that way.
 
-The guide is [doc/ms-xaos-guide.md](ms-xaos-guide.md); it says what each of
-these does and, where a choice was not obvious, why it was made that way.
+## The noise functions
 
-## Two binaries
+**`selfsim`, the eighth argument of `randsc`, `randscq`, `randscp`, `randsch`
+and `randsct`.** Each pass of these functions is a field of its own with cells
+smaller than the pass before, so a formula that calls one on every pass reads a
+finer field each time, and once the cells are smaller than a pixel the inside of
+the picture is snow. With `selfsim` the call hands back instead the average of
+all the passes so far, weighed as the octaves of a fractional Brownian motion:
+pass *n* weighs d^(nH), where *d* is the degradation and *H* the argument. On a
+hundred passes of `randsct(672,,{0.75,0.75},,,{2,2},6)+c`, the share of
+neighbouring inside pixels a sixteenth of the palette or more apart goes from
+70% to 0.6%.
 
-`XaoS.exe` is built at `long double`, `XaoS-quad.exe` at 128 bits. The second
-zooms about four decades further before the picture goes to blocks and is some
-twenty times slower, so it is there for when the first has run out rather than
-for every day.
+* `1` is the plain motion, `0.5` rougher, larger smoother.
+* It may be **complex**: the imaginary part turns every pass a little further
+  than the one before, a spiral of octaves.
+* It is off when the argument is **left out** or its place left empty; `0` is
+  the plain average of the passes, which is what every value near nought gives.
+* Passes a call did not see are worked out when it is asked, so the answer does
+  not depend on the order the pixels are computed in.
+
+**`skew_mode`, the seventh argument**, says what the skew draws inside a cell,
+as numbers that add together: `1` the cell's own shape, `2` a rosette with the
+kaleidoscope's symmetry, `4` a turn that follows where the point stands in its
+wedge of the kaleidoscope, the same in every wedge so the kaleidoscope stays
+one, and `8` the modulus as well as the angle — the only one `zmag` and the
+bailout can see.
 
 ## Writing formulas
 
-**Help → User formula reference** lists every function a user formula may call,
-what it takes, and what it does, with a tab of its own for the numbers that
-appear as arguments and mean something particular. It is checked against the
-parser's own table by a test, so a function that gains or loses an argument
-cannot go on being described with the one it used to have.
+**Suffixes on a variable.** `z`, `c`, `x`, `p` and `p1` to `p9999` take
+suffixes that stand for the calls made on them most often:
 
-**Under the formula bar there is a line** saying what the call the cursor is in
-takes, with the argument being written in bold. It needs no more of the formula
-than an open bracket with a name in front of it, so it is there while the
-formula is half written, which is when it is wanted.
-
-**Arguments are separated by a comma, and by nothing else.** A semicolon used
-to serve as well; it is now refused where it stands. Six of the shipped
-positions were written the old way and have been rewritten — a position of your
-own that has a semicolon in its formula will not load until the formula is
-written with commas.
-
-**An argument may be left out**, in the middle of a call as well as at the end,
-by writing nothing between the two separators: `julian(z, ,3)`. What an empty
-place means is the function's own business — most take the default they
-declare, a coefficient of `poly` left empty is a term that is not there, and an
-empty branch of `ifiter` repeats the one before it.
-
-**`p1` to `p9999`** reach back into the orbit as far as you like, and an
-initialization can say where `z` starts.
-
-## New formula functions
-
-| | |
+| suffix | stands for |
 | --- | --- |
-| `randsc`, `randscq`, `randscp`, `randsch`, `randsct` | coherent noise over the point: soft blobs, square cells, irregular polygons, hexagons, triangles. Each takes a size, a degradation that shrinks the cells as the iteration proceeds, a kaleidoscope, and a skew that gives the colouring modes something to read inside a cell |
-| `fbm` | a fractional Brownian motion over a point the formula names: octaves of the same noise, each at twice the frequency of the one before |
-| `sierpinskyt`, `sierpinskyc`, `snowflake` | the gasket, the carpet and the Koch snowflake as fractals of their own, banded by generation, each inscribed in the bailout shape of the same number |
-| `trap`, `stripe` | how near the orbit ever came to a shape, and the average of a sine along it |
-| `poly` | a polynomial in `z`, written out by its coefficients |
-| `ifiterf`, `ifiterr` | one branch on the last iteration and another on the rest; one below a threshold and another above it. Only the chosen branch runs |
+| `_b` `_bi` `_br` | `bship(…)` `bshipi(…)` `bshipr(…)` |
+| `_pM` | `parchment(…, M)` |
+| `_paM` | `parchmenta(…, M)` |
 
-## Colouring
-
-**Eighteen more colouring modes**, inside and out, in a submenu of their own
-above the true-colour submenus.
-
-**Fractional Brownian Motion**, at the foot of Other coloring mode on each
-side: three modes a side and the five numbers they are drawn from — intensity,
-frequency, octaves, roughness and seed, kept apart for the inside and the
-outside and saved with the position. What it does is make a clean colouring
-look used: the bands keep their shape and their order and stop being perfect.
-
-**The colouring speed and the shift now reach smooth**, which they never did:
-that mode returns a pixel of its own and skipped them.
-
-## Bailout shapes
-
-Fractal → Bailout shape offers the circle and five polygons — square, triangle,
-hexagon and the rest — measured by the apothem, so a polygon of a given bailout
-stands its sides where the circle of that bailout would be. User formulas
-honour the shape too, and smooth colouring follows it.
+read from left to right: `c_b_p2` is `parchment(bship(c),2)`. They draw exactly
+what the calls written out draw, and the formula is saved as it was written.
 
 ## Palettes
 
-Four more palettes, and a **palette probe** under View: click a point and the
-message line says where in the palette that point was drawn from, as a number
-rather than as a colour. What it is most useful for is seeing **which part of
-the palette a picture actually uses** — with the plain count colouring at sixty
-iterations the answer is the first eight of the editor's thirty-one colours,
-and editing the others changes nothing.
+**Palettes 4 to 7 are new.** The four that had those numbers — a spectrum, a
+duotone, a triad and a complementary pair — came out one colour each on the
+screen: they spread their hues along the whole palette, which in the program
+is some three thousand stops long, and a picture only ever sees the first few.
+What replaced them was made after measuring what 1 to 3 are made of, twenty
+thousand palettes of each, and each new one was measured against 1 to 3 in turn:
 
-## Getting about
+| | |
+| --- | --- |
+| 4 | **Smog** — dark and melancholy: greys, ochre, slate and dusty violet, with oxblood and scarlet among them |
+| 5 | **Warm over night** — rose, red, brown, orange and yellow over teal, petrol, blue and indigo |
+| 6 | **Favoured pairs** — the pairs of colours 1 to 3 put side by side most often, set down whole between black and white |
+| 7 | **Random colours** — every stop a colour at random, and nothing else |
 
-**Selection zoom**: drag a rectangle. And four fixed steps, in and out by two
-and by ten.
+The palette dialog now says what each algorithm is called after its number.
 
-The **A** key no longer starts the autopilot.
-
-## Elsewhere
-
-Antialiasing can average its samples in **linear light**. Numbers in the
-dialogs are shown and read at the precision the build has, and the notation is
-chosen by the size of the number rather than by the count of its digits.
+One finding along the way, left as it is since saved positions depend on it:
+palettes 1 and 2 hold only 256 colours, and every one of them is always
+followed by the same one. That is where their familiar pairs of colours come
+from.
 
 ## Tests
 
-343 of them, run at both precisions: the iteration loops against golden
-checksums, the noise fields and the figures, the parser against a corpus that
-includes every formula XaoS ships, the reference against the parser's own
-table, and the line under the formula bar.
+The same 343 test programs, with new checks for `selfsim` — against the
+weighted average written out by hand, at both precisions — for the suffixes,
+drawn through the engine's own loop, and for the palettes, now also made as the
+program makes them. The suffixes were also fuzzed, while they were written, with
+four million random formulas.
 
 ## Compatibility
 
-* Positions saved by XaoS 4.3.3 load unchanged, **except** one whose user
-  formula separates arguments with a semicolon.
-* The colouring mode is saved as a number. The modes added here are written
-  after true colour rather than before it, so every number an existing position
-  holds still means what it meant.
+* Positions saved by 1.6 load unchanged, **except** that one using palette 4 to
+  7 comes back in the new colours: the number and the seed are all a position
+  records of its palette, and what the number means has changed. Palettes 1 to
+  3 are unchanged to the bit.
+* A `randsc` call that names no `selfsim` and no `skew_mode` draws what it drew
+  in 1.6.
+* From the repository's 1.6.1, which was never released: a written
+  `selfsim` of `0` now gives the plain average instead of switching it off, and
+  `skew_mode` 4 draws differently.
