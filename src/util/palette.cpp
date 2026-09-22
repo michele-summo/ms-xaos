@@ -743,192 +743,299 @@ static void randomize_segments(int whitemode, int nsegments)
 }
 
 
-/* --- palettes that are a colour scheme rather than a scatter ---------------
+/* --- four more, taken from what the first three are made of ---------------
  *
- * One rule runs through all four and is worth stating before them: every
- * segment keeps its colour. The three above get their character by pinning
- * segments to black and white, and a segment pinned to either has no hue at
- * all; do the same in a palette whose whole point is which hues it holds and
- * the hues stop being visible. Two of these four went that way -- alternating
- * near-black with a washed-out near-white -- and came out grey with a tint,
- * which is what "monochrome" means when it is a complaint. So contrast here is
- * between a deep colour and a bright one, never between nothing and nothing.
+ * These four were made after measuring the first three rather than by reasoning
+ * about colour: twenty thousand palettes of each, made as the program makes
+ * them, every colour named by the nearest of three dozen reference colours in
+ * CIELAB, and the colours and the pairs of colours counted.
  *
- * The three above all work the same way: every second or third segment is
- * pinned to black or white and the rest are picked at random, which is what
- * gives XaoS its banded, high-contrast look. It is a good look and it is the
- * only one it had. These four choose their colours in relation to each other
- * instead, so that a palette holds together as one thing.
+ * What that found is what they are built on. The first three get their look
+ * from anchors -- black and white, a third to a half of all their stops -- with
+ * colours between them, a period of two or three stops so that the pattern
+ * shows in the first few bands, which are all most pictures use. And 1 and 2
+ * turn out to hold only 256 colours: they take the low byte of the generator,
+ * which is a generator of period 256 on its own, so red decides green and blue
+ * and every colour is always followed by the same one. That is where their
+ * recurring pairs come from, pink beside yellow twenty-four times as often as
+ * chance, burgundy beside olive six. 3 draws from two windows instead, warm
+ * bright colours over dark greens and teals.
  *
- * They cost what the others cost. A palette is made once, when it is asked
- * for, and is only some four to nine segments long -- the two hundred odd
- * entries it ends up with are interpolated between those -- so nothing here is
- * per pixel and none of it does more per segment than one conversion out of
- * hue, saturation and value. That shortness is also why none of them tries to
- * lay a pattern along the palette: there is no length to lay one along.
+ * The four before these were a spectrum, a duotone, a triad and a
+ * complementary pair, reasoned out from the colour circle, and they read as
+ * one colour: they spread their hues over the whole length of the palette,
+ * which is some three thousand stops in the program and four to nine in the
+ * test that was meant to catch it, so a picture saw the first hue alone; and
+ * they kept every stop a colour, deep or pale, with no anchor, so nothing in
+ * them was dark or light enough to give the colours an edge.
  *
- * Each is driven by XaoS_random from the seed the caller set, so the same
- * algorithm and seed give the same palette, which is what lets a saved
- * position bring its colours back with it.
- */
+ * So each of these decides everything stop by stop, and each was measured
+ * against the first three before it stayed: the Jensen-Shannon divergence
+ * between the colours two algorithms show, by name, and between the pairs of
+ * neighbours they show, over five thousand palettes. Two of them took a
+ * skeleton of the older ones and changed only the colours between its anchors,
+ * and measured all but the same as the one they took it from, 0.05 and 0.00;
+ * those two have no black and white skeleton now. The other two keep one and
+ * differ enough in their colours.
+ *
+ * Everything random here is drawn from the top of the generator's word rather
+ * than its bottom byte. Each is driven from the seed the caller set, so an
+ * algorithm and a seed give the same palette every time -- which is all a
+ * saved position records of its colours. */
 
-/* A cycle right round the hue circle, at full strength: the smooth spectrum a
- * fractal is usually shown in elsewhere and could not be shown in here. One
- * turn, or two or three, so that a palette of the same length can band the
- * iterations coarsely or finely. */
-static void spectrum_segments(int whitemode, int nsegments)
+/* A number from nought to n - 1 out of the top sixteen bits of the generator,
+ * which have a period of their own of millions where the bottom eight have one
+ * of 256. */
+static int prand(int n)
 {
-    int start = (int)XaoS_random() % 256;
-    /* Round it one way or the other: warm to cool reads differently from cool
-     * to warm, and with four to nine stops a single turn is all a cycle can
-     * be -- two turns across five stops is not a spectrum, it is two hues
-     * alternating, which is what algorithm 7 is for. */
-    int direction = ((int)XaoS_random() & 1) ? 1 : -1;
-    int bright = whitemode ? 255 : 220 + (int)XaoS_random() % 36;
-    /* deep rather than dark: at a fifth of full value a hue is already too
-     * near black to read, and half the circle went missing from the picture */
-    int dark = 90 + (int)XaoS_random() % 35;
-    /* Saturation runs the other way from brightness, which is how a gradient
-     * gets its range without either end going colourless: deep and rich at one
-     * end, light and tinted at the other. Holding it steady instead, the
-     * channel sum could not span more than twice the value and the palette was
-     * a fifth of what it can be. */
-    int deepsat = 215 + (int)XaoS_random() % 41;
-    int palesat = 70 + (int)XaoS_random() % 45;
-    int span = nsegments > 1 ? nsegments - 1 : 1;
-    int i;
+    return (int)(((long)(XaoS_random() >> 8) * n) >> 16);
+}
 
+/* 4: smog -- dark, melancholy, and grey the way a city's air is grey.
+ *
+ * The first attempt here was 1's mechanism on another ring of 256 colours,
+ * and however far the ring was chosen from the classic one it looked like 1:
+ * measured as the Jensen-Shannon divergence between the colours the two show,
+ * by name, it was nearer 1 than 1 is to 2 (0.05 against 0.11). The mechanism
+ * was the likeness -- black half the time, a colour from anywhere in the cube
+ * the other half.
+ *
+ * So the colours carry the contrast themselves, and they are the other end of
+ * 1's: where 1 puts vivid colours on black, this is dark and spent. Deep stops
+ * are a colour barely above black; light ones an overcast grey with a tint,
+ * never white; every fourth stop a plain grey. The hues are walked from a ring
+ * of 256 as 1 and 2 walk theirs, so neighbouring hues recur the way theirs do,
+ * over the hues of smog -- ochre and olive, 30 to 100 degrees, and steel, slate
+ * and a dusty violet, 190 to 290 -- and, for a quarter of the ring, the reds
+ * that go with it, crimson to scarlet: oxblood when deep and a dimmed scarlet
+ * when light, both saturated, since a dark red that is not is read as brown.
+ * One stop in five reads as red, against one in thirty in 1. Grey, a tinted
+ * near-black, dark grey, burgundy, red, slate and dark brown are its commonest
+ * colours by name, and against 1, 2 and 3 it stands 0.43 to 0.56 off. */
+#define RING4_A 209
+#define RING4_C 111
+static int ring4(int x)
+{
+    return (RING4_A * x + RING4_C) & 255;
+}
+
+/* how many of the ring's 256 bytes go to crimson and scarlet */
+#define SMOG_RED 64
+
+static void smog_segments(int whitemode, int nsegments)
+{
+    int x = prand(256);
+    int i;
     for (i = 0; i < nsegments; i++) {
-        int h = start + direction * 256 * i / span;
-        /* Round the circle in hue, and light and deep by turns in brightness.
-         *
-         * Swelling once across the whole palette instead put every band a
-         * quarter of the way from its neighbour, and the colour then changes
-         * over sixty entries where the three older ways change over thirty:
-         * the gradient reads as slow. Alternating gives every band an edge
-         * against both its neighbours, which is what makes a fractal's rings
-         * visible, and costs the spectrum nothing -- the hue goes round all
-         * the same. */
-        int deep = !(i & 1);
-        int val = deep ? dark : bright;
-        int sat = deep ? deepsat : palesat;
-        /* the first and last segment are one segment, so an odd count would
-         * put two deep ones side by side at the seam */
-        if ((nsegments & 1) && i == nsegments - 2) {
-            val = (dark + bright) / 2;
-            sat = (deepsat + palesat) / 2;
+        if (i % 4 == 3) {
+            /* the plain grey of the air */
+            int v = 77 + prand(64);
+            int s = prand(8);
+            hsv_to_rgb(0, s, v, colors[i], colors[i] + 1, colors[i] + 2);
+            continue;
         }
-        hsv_to_rgb(h, sat, val, colors[i], colors[i] + 1, colors[i] + 2);
-    }
-    colors[i - 1][0] = colors[0][0];
-    colors[i - 1][1] = colors[0][1];
-    colors[i - 1][2] = colors[0][2];
-}
-
-/* Two hues far enough apart to be told apart, one owning the shadows and the
- * other the highlights, with the palette running from the first through the
- * second: a duotone, as a press does it with two inks.
- *
- * It was one hue with a few degrees of drift, and one hue is one colour: a
- * quarter of the ways to make a palette came out monochrome, which is a thing
- * to have one of and not two. Seventy degrees or more between the ends is what
- * makes the two ends read as two colours. */
-static void duotone_segments(int whitemode, int nsegments)
-{
-    int shadow = (int)XaoS_random() % 256;
-    /* between a fifth and two fifths of the way round, either way about */
-    int apart = 50 + (int)XaoS_random() % 55;
-    if ((int)XaoS_random() & 1)
-        apart = -apart;
-    int span = nsegments > 1 ? nsegments - 1 : 1;
-    int i;
-
-    for (i = 0; i < nsegments; i++) {
-        /* The hue walks from the first ink to the second and back, so the
-         * palette is still the two of them mixing; the weight alternates band
-         * by band, so the picture has an edge every band instead of one long
-         * fade from end to end. */
-        int rise = i * 2 <= span ? i * 2 : (span - i) * 2;
-        int top = (span / 2) * 2;
-        int t = rise * 255 / (top ? top : 1);
-        int deep = !(i & 1);
-        int val = deep ? (whitemode ? 75 : 60) + t * 30 / 255
-                       : 215 + t * 40 / 255;
-        int sat = deep ? 210 + t * 45 / 255 : 95 + t * 45 / 255;
-        if ((nsegments & 1) && i == nsegments - 2) {
-            val = (val + 255) / 2;
-            sat = sat * 2 / 3;
-        }
-        hsv_to_rgb(shadow + apart * t / 255, sat, val, colors[i],
-                   colors[i] + 1, colors[i] + 2);
-    }
-    colors[i - 1][0] = colors[0][0];
-    colors[i - 1][1] = colors[0][1];
-    colors[i - 1][2] = colors[0][2];
-}
-
-/* Three hues spread round the circle, taken in turn, dark and light
- * alternating: a scheme rather than a scatter, and one that has three colours
- * in it however few segments there are to hold them.
- *
- * This was hues from one narrow arc, which is a thing a painter would call
- * analogous and anybody else would call one colour. A narrow arc and four
- * segments is four shades of the same thing; a wide one is three colours that
- * still agree, which is what was wanted. */
-static void triad_segments(int whitemode, int nsegments)
-{
-    int first = (int)XaoS_random() % 256;
-    /* a third of the circle apart, give or take, so the three are spread but
-     * not evenly enough to look mechanical */
-    int step = 70 + (int)XaoS_random() % 32;
-    int i;
-
-    for (i = 0; i < nsegments; i++) {
-        int h = first + step * (i % 3) + (int)XaoS_random() % 13 - 6;
-        /* the bright turn is also the tinted one, for the same reason the
-         * spectrum's is: two ends that differ only in value cannot span much */
-        int s = (i & 1) ? 80 + (int)XaoS_random() % 55
-                        : 200 + (int)XaoS_random() % 56;
-        /* Deep and bright take turns by position, not by the dice: left to the
-         * dice a short palette comes out all one weight. Deep, not black, and
-         * bright, not white -- pinning the turns to those left thirty entries
-         * of two hundred and fifty with any hue in them at all. */
-        int v = (i & 1) ? 215 + (int)XaoS_random() % 41
-                        : 85 + (int)XaoS_random() % 45;
-        if (whitemode && (i & 1))
-            s = s * 2 / 3;
-        hsv_to_rgb(h, s, v, colors[i], colors[i] + 1, colors[i] + 2);
-    }
-    colors[i - 1][0] = colors[0][0];
-    colors[i - 1][1] = colors[0][1];
-    colors[i - 1][2] = colors[0][2];
-}
-
-/* Two hues from opposite sides of the circle, taking turns: the loudest
- * agreement two colours can make, and the one that shows a boundary between
- * two bands most plainly. */
-static void complementary_segments(int whitemode, int nsegments)
-{
-    int hue = (int)XaoS_random() % 256;
-    int spread = (int)XaoS_random() % 24 - 12; /* not exactly opposite */
-    int i;
-
-    for (i = 0; i < nsegments; i++) {
-        int h = (i & 1) ? hue + 128 + spread : hue;
-        int s = 170 + (int)XaoS_random() % 86;
-        int v = 110 + (int)XaoS_random() % 146;
-        /* one segment in four goes to an extreme, which gives the pair
-         * somewhere to come from and somewhere to go */
-        if (i % 4 == 2) {
-            s = 60 + (int)XaoS_random() % 60;
-            v = whitemode ? 225 + (int)XaoS_random() % 31
-                          : 45 + (int)XaoS_random() % 35;
+        int u = x, h, s, v;
+        int deep = (i & 1) == whitemode;
+        x = ring4(ring4(ring4(x)));
+        if (u < SMOG_RED) {
+            /* 350 to 372 degrees, in hsv_to_rgb's 256ths of a turn */
+            h = (350 + 22 * u / SMOG_RED) * 256 / 360;
+            s = deep ? 191 + prand(65) : 178 + prand(65);
+            v = deep ? 71 + prand(44) : 153 + prand(65);
+        } else {
+            int deg = (u - SMOG_RED) * 170 / (256 - SMOG_RED);
+            deg = deg < 70 ? 30 + deg : 120 + deg;
+            h = deg * 256 / 360;
+            s = deep ? 89 + prand(77) : 15 + prand(62);
+            v = deep ? 18 + prand(39) : 140 + prand(65);
         }
         hsv_to_rgb(h, s, v, colors[i], colors[i] + 1, colors[i] + 2);
     }
     colors[i - 1][0] = colors[0][0];
     colors[i - 1][1] = colors[0][1];
     colors[i - 1][2] = colors[0][2];
+}
+
+/* 5: the two windows of 3, with other colours in them.
+ *
+ * 3 puts warm bright colours -- violet through red to orange -- over dark
+ * greens and teals, and a bright colour on a dark green is what its commonest
+ * pairs are. This turns it round: warm colours of every brightness, from rose
+ * through red, burgundy, brown and orange to ochre and yellow, over night
+ * colours kept dark, from teal through petrol and blue to indigo. Both windows
+ * are 125 degrees wide, near the 135 of 3's, in the skeleton 3 has: a black or
+ * a white stop every third, the two between taken from the two windows in 3's
+ * order. They were a third as wide at first and read as two colours. Navy is
+ * its commonest colour, and navy with olive, burgundy or brown -- brown against
+ * blue was asked for by name -- its commonest pairs. */
+static void earth_segments(int /*whitemode*/, int nsegments)
+{
+    int i;
+    for (i = 0; i < nsegments; i++) {
+        if (!(i % 3)) {
+            int v = (i % 6) ? 255 : 0;
+            colors[i][0] = colors[i][1] = colors[i][2] = v;
+        } else if (((i) % 6 > 3) ^ ((i) % 3 == 1)) {
+            /* night: 160 to 285 degrees, dark */
+            int h = 114 + prand(89);
+            int s = 128 + prand(128);
+            int v = 51 + prand(103);
+            hsv_to_rgb(h, s, v, colors[i], colors[i] + 1, colors[i] + 2);
+        } else {
+            /* warm: 320 round to 85 degrees, any brightness */
+            int h = 228 + prand(89);
+            int s = 89 + prand(154);
+            int v = 89 + prand(167);
+            hsv_to_rgb(h, s, v, colors[i], colors[i] + 1, colors[i] + 2);
+        }
+    }
+    colors[i - 1][0] = colors[0][0];
+    colors[i - 1][1] = colors[0][1];
+    colors[i - 1][2] = colors[0][2];
+}
+
+/* 6: the pairs the first three favour, side by side.
+ *
+ * Every pair of colours that one of the first three puts one after the other at
+ * least three times as often as chance would, measured over twenty thousand
+ * palettes each, with the two colours as they actually came out on average.
+ * There they are one pair in a hundred or so and always an anchor apart; here
+ * each pair is set down whole between a black stop and a white one, the two
+ * colours touching, so what makes the pair is what the picture shows. Which
+ * way round, and a nudge of up to ten in each channel so that one pair is not
+ * always one colour, are left to the dice. */
+static const unsigned char favoured_pairs[][2][3] = {
+    {{205, 130, 147}, {243, 249, 113}}, /* pink + yellow, x23.8 in 2 */
+    {{82, 35, 32}, {217, 158, 127}}, /* dark brown + salmon, x10.7 in 2 */
+    {{87, 68, 45}, {152, 241, 214}}, /* dark brown + mint, x10.7 in 2 */
+    {{228, 77, 2}, {18, 99, 96}}, /* red + petrol, x8.0 in 2 */
+    {{205, 130, 147}, {27, 184, 145}}, /* pink + turquoise, x7.8 in 1 */
+    {{91, 120, 81}, {227, 224, 153}}, /* grey-green + sand, x6.7 in 1 */
+    {{145, 41, 68}, {160, 144, 35}}, /* burgundy + olive, x6.5 in 2 */
+    {{12, 85, 106}, {153, 94, 63}}, /* petrol + brown, x6.4 in 2 */
+    {{135, 180, 221}, {82, 35, 32}}, /* sky blue + dark brown, x6.4 in 2 */
+    {{149, 170, 155}, {158, 127, 76}}, /* grey-green + taupe, x6.1 in 2 */
+    {{203, 22, 188}, {210, 90, 86}}, /* magenta + salmon, x5.4 in 1 */
+    {{216, 49, 22}, {151, 132, 109}}, /* red + taupe, x5.3 in 2 */
+    {{129, 231, 42}, {159, 219, 163}}, /* lime + mint, x5.2 in 2 */
+    {{126, 223, 44}, {152, 113, 86}}, /* lime + taupe, x5.2 in 1 */
+    {{58, 200, 217}, {91, 128, 91}}, /* cyan + grey-green, x5.1 in 1 */
+    {{31, 87, 29}, {169, 155, 56}}, /* dark green + olive, x5.0 in 1 */
+    {{56, 17, 118}, {158, 127, 76}}, /* navy + taupe, x4.9 in 1 */
+    {{155, 56, 17}, {217, 158, 127}}, /* brown + salmon, x4.9 in 1 */
+    {{77, 2, 19}, {155, 56, 17}}, /* burgundy + brown, x4.7 in 1 */
+    {{203, 34, 57}, {78, 62, 244}}, /* red + blue, x4.4 in 2 */
+    {{127, 76, 149}, {17, 118, 119}}, /* plum + petrol, x4.4 in 1 */
+    {{215, 68, 45}, {95, 44, 117}}, /* red + plum, x4.4 in 1 */
+    {{5, 90, 139}, {19, 80, 73}}, /* slate + petrol, x4.3 in 1 */
+    {{24, 113, 86}, {215, 196, 173}}, /* dark green + sand, x4.3 in 2 */
+    {{139, 104, 129}, {38, 103, 20}}, /* mauve + dark green, x4.3 in 2 */
+    {{202, 59, 88}, {31, 108, 53}}, /* burgundy + dark green, x4.3 in 2 */
+    {{227, 224, 153}, {94, 63, 12}}, /* sand + brown, x4.3 in 2 */
+    {{123, 24, 113}, {3, 128, 185}}, /* plum + slate, x4.3 in 1 */
+    {{226, 220, 55}, {157, 224, 176}}, /* yellow + mint, x4.1 in 1 */
+    {{163, 26, 71}, {29, 146, 213}}, /* burgundy + sky blue, x4.1 in 1 */
+    {{115, 14, 120}, {78, 62, 39}}, /* plum + dark brown, x4.0 in 1 */
+    {{206, 42, 159}, {141, 139, 53}}, /* fuchsia + olive, x4.0 in 1 */
+    {{118, 249, 245}, {150, 206, 186}}, /* cyan + mint, x3.9 in 1 */
+    {{35, 32, 217}, {158, 127, 76}}, /* blue + taupe, x3.9 in 2 */
+    {{108, 126, 22}, {224, 208, 146}}, /* olive + sand, x3.9 in 2 */
+    {{97, 24, 76}, {6, 16, 62}}, /* plum + navy, x3.9 in 1 */
+    {{143, 28, 37}, {161, 198, 135}}, /* burgundy + mint, x3.9 in 1 */
+    {{141, 66, 83}, {219, 120, 81}}, /* burgundy + salmon, x3.8 in 1 */
+    {{98, 243, 176}, {87, 68, 45}}, /* turquoise + dark brown, x3.8 in 2 */
+    {{11, 104, 129}, {93, 210, 163}}, /* petrol + turquoise, x3.8 in 2 */
+    {{208, 67, 156}, {69, 118, 168}}, /* fuchsia + slate, x3.7 in 2 */
+    {{85, 106, 91}, {94, 63, 12}}, /* grey-green + brown, x3.7 in 2 */
+    {{140, 213, 234}, {146, 99, 96}}, /* cyan + taupe, x3.6 in 1 */
+    {{26, 75, 40}, {212, 125, 114}}, /* dark green + salmon, x3.6 in 1 */
+    {{166, 103, 148}, {46, 207, 220}}, /* mauve + cyan, x3.6 in 1 */
+    {{10, 123, 152}, {241, 214, 87}}, /* petrol + yellow, x3.6 in 2 */
+    {{39, 30, 73}, {218, 213, 52}}, /* navy + yellow, x3.6 in 2 */
+    {{200, 97, 134}, {229, 186, 107}}, /* mauve + sand, x3.6 in 2 */
+    {{193, 102, 167}, {154, 203, 168}}, /* mauve + mint, x3.6 in 2 */
+    {{71, 116, 157}, {153, 94, 63}}, /* slate + brown, x3.6 in 1 */
+    {{68, 45, 98}, {10, 123, 152}}, /* navy + petrol, x3.5 in 1 */
+    {{127, 114, 196}, {30, 105, 51}}, /* lilac + dark green, x3.5 in 1 */
+    {{229, 186, 107}, {243, 176, 41}}, /* sand + orange, x3.4 in 1 */
+    {{93, 137, 88}, {113, 140, 11}}, /* grey-green + olive, x3.3 in 2 */
+    {{75, 143, 167}, {72, 34, 27}}, /* slate + dark brown, x3.3 in 1 */
+    {{60, 64, 221}, {35, 205, 227}}, /* blue + cyan, x3.3 in 1 */
+    {{134, 71, 116}, {224, 153, 94}}, /* mauve + salmon, x3.3 in 1 */
+    {{43, 65, 146}, {87, 222, 18}}, /* navy + lime, x3.3 in 1 */
+    {{118, 119, 228}, {155, 56, 17}}, /* lilac + brown, x3.2 in 2 */
+    {{122, 43, 136}, {33, 70, 7}}, /* plum + dark green, x3.2 in 2 */
+    {{23, 111, 84}, {226, 116, 48}}, /* dark green + orange, x3.2 in 1 */
+    {{143, 28, 37}, {250, 171, 8}}, /* burgundy + orange, x3.1 in 2 */
+    {{250, 171, 8}, {161, 198, 135}}, /* orange + mint, x3.1 in 2 */
+    {{245, 138, 251}, {215, 196, 173}}, /* lilac + sand, x3.0 in 1 */
+    {{139, 104, 129}, {73, 78, 111}}, /* mauve + slate, x3.0 in 1 */
+    {{131, 0, 57}, {245, 138, 251}}, /* burgundy + lilac, x3.0 in 1 */
+};
+#define NFAVOURED ((int)(sizeof(favoured_pairs) / sizeof(favoured_pairs[0])))
+
+static int nudge(int c)
+{
+    c += prand(21) - 10;
+    return c < 0 ? 0 : (c > 255 ? 255 : c);
+}
+
+static void pair_segments(int whitemode, int nsegments)
+{
+    int i, p = 0, flip = 0;
+    for (i = 0; i < nsegments; i++) {
+        int slot = i % 4;
+        if (slot == 0 || slot == 3) {
+            int v = (slot == 0) != !!whitemode ? 0 : 255;
+            colors[i][0] = colors[i][1] = colors[i][2] = v;
+            continue;
+        }
+        if (slot == 1) {
+            p = prand(NFAVOURED);
+            flip = prand(2);
+        }
+        const unsigned char *c = favoured_pairs[p][(slot == 2) ^ flip];
+        colors[i][0] = nudge(c[0]);
+        colors[i][1] = nudge(c[1]);
+        colors[i][2] = nudge(c[2]);
+    }
+    colors[i - 1][0] = colors[0][0];
+    colors[i - 1][1] = colors[0][1];
+    colors[i - 1][2] = colors[0][2];
+}
+
+/* 7: every stop a colour at random, and nothing else.
+ *
+ * It was 2 with the colours made truly random, black, a colour, white, and it
+ * showed as 2 does: the black and the white every third stop are what the eye
+ * reads, and against 2 it measured 0.00 -- the same palette as far as the
+ * colours it shows go. So there is no skeleton at all: every channel of every
+ * stop is drawn on its own from the top of the generator, any of sixteen million
+ * colours, the light and the dark wherever the dice put them. It has less range
+ * from dark to light than the anchored ones, which is what random means. */
+static void random_segments(int /*whitemode*/, int nsegments)
+{
+    int i;
+    for (i = 0; i < nsegments; i++) {
+        colors[i][0] = prand(256);
+        colors[i][1] = prand(256);
+        colors[i][2] = prand(256);
+    }
+    colors[i - 1][0] = colors[0][0];
+    colors[i - 1][1] = colors[0][1];
+    colors[i - 1][2] = colors[0][2];
+}
+
+/* What each is called in the palette dialog, counting from one as the dialog
+ * does. */
+const char *palette_algorithm_name(int algorithm)
+{
+    static const char *const names[PALGORITHMS] = {
+        "Dark and colour", "Black, colour, white", "Warm over dark green",
+        "Smog", "Warm over night", "Favoured pairs", "Random colours"};
+    if (algorithm < 1 || algorithm > PALGORITHMS)
+        return "";
+    return names[algorithm - 1];
 }
 
 #define MYLONG_MAX 0xffffff
@@ -992,16 +1099,16 @@ int mkpalette(struct palette *c, int seed, int algorithm)
 
     switch (algorithm) {
         case 6:
-            complementary_segments(whitemode, i1);
+            random_segments(whitemode, i1);
             break;
         case 5:
-            triad_segments(whitemode, i1);
+            pair_segments(whitemode, i1);
             break;
         case 4:
-            duotone_segments(whitemode, i1);
+            earth_segments(whitemode, i1);
             break;
         case 3:
-            spectrum_segments(whitemode, i1);
+            smog_segments(whitemode, i1);
             break;
         case 2:
             randomize_segments3(whitemode, i1);

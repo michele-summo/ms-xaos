@@ -8,6 +8,7 @@
 #include "ui.h"
 #include "misc-f.h"
 #include "filter.h"
+#include "i18n.h"
 #include "ui_helper.h"
 
 #ifdef USE_FLOAT128
@@ -192,6 +193,15 @@ CustomDialog::CustomDialog(struct uih_context *uih, const menuitem *item,
             algono->setObjectName(label + "algono");
             algono->setValue(palcontext->palettetype);
             algono->setRange(1, PALGORITHMS);
+            /* The number alone says nothing once there are more than the three
+             * XaoS always had, so the name goes after it -- as the box's own
+             * suffix, since the preview below takes its width from the box. */
+            algono->setSuffix(QString("   ") +
+                              TR("Palette", palette_algorithm_name(algono->value())));
+            connect(algono, &QSpinBox::valueChanged, algono, [this](int n) {
+                algono->setSuffix(QString("   ") +
+                                  TR("Palette", palette_algorithm_name(n)));
+            });
 
             // Algo Slider
             algoslider = new QSlider(Qt::Horizontal, this);

@@ -872,58 +872,94 @@ loses them says so.
 
 ## Palettes
 
-Fractal → Palette asks for an algorithm number. There were three, and all three
-work the same way: some four to nine colours are chosen, every second or third
-of them pinned to black or white, and the palette is interpolated between them.
-That is what gives XaoS its banded, high-contrast look, and it was the only look
-it had.
-
-Four more choose their colours in relation to each other:
+Fractal → Palette asks for an algorithm number, and says what each one is
+called after the number. 1 to 3 are XaoS's own; 4 to 7 were rebuilt after
+measuring what the first three are made of.
 
 | | |
 | --- | --- |
-| 1–3 | colours scattered between black and white anchors — as before |
-| 4 | **spectrum** — right round the hue circle, one turn, darkening at both ends |
-| 5 | **duotone** — two hues, one owning the shadows and the other the highlights, as a press does it with two inks, banded |
-| 6 | **triad** — three hues spread round the circle, taken in turn, deep and bright alternating |
-| 7 | **complementary** — two hues from opposite sides of the circle, alternating |
+| 1 | **dark and colour** — a near-black with a tint of its own and a colour, by turns |
+| 2 | **black, colour, white** |
+| 3 | **warm over dark green** — bright violets, reds and oranges over dark greens and teals, black or white every third |
+| 4 | **smog** — dark and melancholy: greys, ochre, slate and dusty violet, with oxblood and scarlet among them |
+| 5 | **warm over night** — rose, red, burgundy, brown, orange, ochre and yellow over teal, petrol, blue and indigo, in 3's skeleton |
+| 6 | **favoured pairs** — the pairs of colours the first three put side by side most, set down whole between black and white |
+| 7 | **random colours** — every stop a colour truly at random, and nothing else |
 
-They cost what the others cost: a palette is made once, when it is asked for,
-and none of these does more per colour than one conversion out of hue,
-saturation and value. Each is driven from the seed the dialog holds, so an
-algorithm and a seed give the same palette every time — which is all a saved
-position records of its colours.
+### What the first three are made of
 
-Three things had to be settled by hand, and a test now keeps them settled.
+Twenty thousand palettes of each, made as the program makes them, every colour
+named by the nearest of three dozen reference colours in CIELAB, the colours
+and the pairs of colours counted:
 
-A hue cycle at one brightness has no dark anywhere in it, and a fractal shown
-in it has hue where it should have shape — so the spectrum swells from deep to
-bright and back, with saturation running the other way. Holding saturation
-steady instead, the channel sum could not span more than twice the value, and
-the palette was a fifth of what it can be.
+* **Anchors.** Black and white are a third to a half of every stop, and the
+  colours sit between them with a period of two or three stops, so the pattern
+  shows in the first few bands — which, in a palette some three thousand stops
+  long, are all most pictures ever use.
+* **1 and 2 hold 256 colours and no more.** They take the bottom byte of the
+  generator, and the bottom byte of that generator is a generator of period 256
+  on its own: red decides green and blue, and every colour is always followed by
+  the same one. Out of twenty thousand palettes of 2, no colour was once
+  followed by a different one. That is where their recurring pairs come from —
+  pink beside yellow twenty-four times as often as chance, burgundy beside olive
+  six, red beside petrol eight.
+* **3 draws from two windows**: bright colours from violet round through red to
+  orange, and dark ones from green round to teal. Its commonest pairs are a
+  bright warm colour on a dark green.
 
-Every segment keeps its colour. The three older ways get their character by
-pinning segments to black and white, and a segment pinned to either has no hue
-at all; done in a palette whose whole point is which hues it holds, it leaves
-the hues invisible. Two of these four went that way — alternating near-black
-with a washed-out near-white — and came out grey with a tint, which is what
-"monochrome" means when it is a complaint. Contrast here is between a deep
-colour and a bright one, never between nothing and nothing.
+### The four after them
 
-And which segment is deep and which is bright is settled by where the segment
-sits, not by the dice: left to the dice, a palette four segments long comes out
-all one weight more often than not.
+Each was measured against the first three before it stayed: the Jensen-Shannon
+divergence between the colours two algorithms show, by name, and between the
+pairs of neighbours they show, over five thousand palettes — 0 for the same
+palette, 1 for nothing in common. 1 and 2 stand 0.11 apart by that measure, 1
+and 3 0.16.
 
-Deep and bright alternate **band by band**, as they do in the three older ways,
-rather than swelling once from one end of the palette to the other. A palette
-that swells once changes colour over a hundred entries where a banded one
-changes over thirty, and a fractal drawn in the first has no edges to its
-rings — the gradient reads as slow. The test measures how far a palette travels
-in brightness against how far it reaches, and asks that the new four travel as
-far as the old three do, seed for seed.
+* **4, smog**, is dark and spent where 1 is vivid on black. Deep stops are a
+  colour barely above black, light ones an overcast grey with a tint and never
+  white, and every fourth stop a plain grey. Its hues are walked from a ring of
+  256 as 1 and 2 walk theirs, so neighbours recur as theirs do, but only over
+  the hues of smog — ochre and olive, and steel, slate and a dusty violet — and,
+  for a quarter of the ring, crimson to scarlet: oxblood when deep and a dimmed
+  scarlet when light, kept saturated, since a dark red that is not reads as
+  brown. One stop in five reads as red, against one in thirty in 1. It stands
+  0.43 to 0.56 from the first three. It was first 1's mechanism on another ring
+  of 256 colours, chosen as far from the classic ring as a ring can be, and
+  measured 0.05 from 1 — nearer than 2 is: the likeness was the mechanism,
+  black half the time and a colour from anywhere the other half, not the colours.
+* **5, warm over night**, is 3's skeleton with the temperature turned round:
+  warm colours of every brightness, from rose through red, burgundy, brown and
+  orange to ochre and yellow, over night colours kept dark, from teal through
+  petrol and blue to indigo. Both windows are 125 degrees wide, near 3's 135;
+  they were a third of that at first and read as two colours. Navy is its
+  commonest colour, and navy with olive, burgundy or brown its commonest pairs.
+* **6, favoured pairs**, takes every pair of colours one of the first three puts
+  one after the other at least three times as often as chance — sixty-six of
+  them, with the two colours as they actually came out — and sets each pair down
+  whole, the two colours touching, between a black stop and a white one.
+* **7, random colours**, is every stop a colour drawn at random from the top of
+  the generator, where 1 and 2 draw from the bottom: seventy-nine thousand
+  different colours in twenty thousand palettes where 2 has 256, and no pair of
+  them more than a fifth more common than chance. It had black and white every
+  third stop at first, and measured 0.00 from 2: the rhythm of very dark and
+  very light was all anyone could see. Without it, it has less range from dark
+  to light than the anchored ones, which is what random means.
 
-A position saved with one of the new four names an algorithm the original XaoS
-does not have and will refuse to load; one saved with 1 to 3 is unaffected.
+The four they replace were a spectrum, a duotone, a triad and a complementary
+pair, reasoned out from the colour circle, and on the screen each was one
+colour. They spread their hues along the whole palette, and the palette is some
+three thousand stops long in the program — four to nine in the test that was
+meant to catch it, which is why it did not — so a picture saw the first hue
+alone. And they kept every stop a colour, deep or pale, with no black and no
+white, so nothing in them had an edge. The test now makes its palettes as the
+program does, and asks of all seven that the part a picture sees go from dark
+to light and hold more than one colour.
+
+A position saved with 4 to 7 before this change comes back in different
+colours: the number and the seed are all a position records of its palette, and
+what the number means has changed. One saved with 1 to 3 is unaffected, to the
+bit, and one saved with 4 to 7 names an algorithm the original XaoS does not
+have and will refuse.
 
 ## Watching the orbit
 

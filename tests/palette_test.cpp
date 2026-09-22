@@ -1,19 +1,20 @@
 /* The ways a palette can be made.
  *
- * Three of them scatter colours between black and white anchors, which is the
- * look XaoS has always had; four more pick their colours in relation to each
- * other. What has to hold of all seven is the same:
+ * Three of them are XaoS's own, colours between black and white anchors; four
+ * more keep that skeleton and take their colours from elsewhere. What has to
+ * hold of all seven is the same:
  *
  *  - a palette is made from a seed, and the same algorithm and seed must give
  *    the same palette, because that pair is all a saved position records of
  *    its colours -- get it wrong and a position comes back in the wrong ones;
  *  - a palette must actually use its entries, and no two algorithms may be
  *    the same algorithm under two numbers;
- *  - and every one of them must have some dark and some light in it. A palette
- *    with no range shows a fractal as one flat wash, which is the failure the
- *    new four came closest to: colours drawn from one narrow arc of the hue
- *    circle came out four shades of the same thing until the light and the
- *    dark were settled by position rather than by the dice.
+ *  - and every one of them must have some dark and some light in it, and more
+ *    than one colour, in the part of it a picture actually shows. That last is
+ *    the one that was missed: the palettes were made here two hundred and
+ *    fifty-six entries long, where the program makes them sixty-five thousand
+ *    long, and four ways that spread their colours over the whole length came
+ *    out one colour each on the screen and several each here.
  */
 
 #include <cstdio>
@@ -72,58 +73,86 @@ static void make(struct made *out, int algorithm, int seed)
     out->size = pal.size;
 }
 
+/* Whether a colour is one of the 256 the classic ring holds: a byte and the
+ * two after it on the bottom byte of the generator, bright enough to be a
+ * colour stop rather than a blend towards black. */
+static int classic_ring(const unsigned char *c)
+{
+    int g = (109 * c[0] + 57) & 255;
+    int b = (109 * g + 57) & 255;
+    int mx = c[0] > c[1] ? (c[0] > c[2] ? c[0] : c[2]) : (c[1] > c[2] ? c[1] : c[2]);
+    return mx > 40 && c[1] == g && c[2] == b;
+}
+/* One palette as the program makes it: truecolor, sixty-five thousand entries,
+ * made after the default one -- which is what sets the length the next one is
+ * laid out over, some three thousand segments of it. Only the first 4096
+ * entries are kept, which is several times what a picture uses. */
+static void make_app(struct made *out, int algorithm, int seed)
+{
+    struct palette pal;
+    memset(&pal, 0, sizeof(pal));
+    pal.type = TRUECOLOR;
+    pal.maxentries = 65536;
+    pal.end = 65535;
+    pal.pixels = pixels;
+    pal.alloccolor = alloccolor;
+    memset(out, 0, sizeof(*out));
+    building = out;
+    mkdefaultpalette(&pal);
+    mkpalette(&pal, seed, algorithm);
+    out->size = pal.size < 4096 ? pal.size : 4096;
+}
+
+/* What the first n entries hold: the range of their brightness, as a sum of
+ * the three channels; how many twelfths of the hue circle hold a twentieth or
+ * more of the entries with a hue worth the name; and whether any of them is
+ * warm (red to yellow) and any cool (cyan to blue). */
+static void shown(const struct made *m, int n, int *range, int *families,
+                  int *warm, int *cool)
+{
+    int lo = 766, hi = -1, bins[12] = {0}, hued = 0;
+    *warm = *cool = 0;
+    if (n > m->size)
+        n = m->size;
+    for (int i = 0; i < n; i++) {
+        int r = m->rgb[i][0], g = m->rgb[i][1], b = m->rgb[i][2];
+        int v = r + g + b;
+        if (v < lo)
+            lo = v;
+        if (v > hi)
+            hi = v;
+        int mx = r > g ? (r > b ? r : b) : (g > b ? g : b);
+        int mn = r < g ? (r < b ? r : b) : (g < b ? g : b);
+        if (mx < 50 || mx - mn < mx / 4)
+            continue;
+        double d = mx - mn, h;
+        if (mx == r)
+            h = (g - b) / d;
+        else if (mx == g)
+            h = 2 + (b - r) / d;
+        else
+            h = 4 + (r - g) / d;
+        h *= 60;
+        if (h < 0)
+            h += 360;
+        bins[(int)(h / 30) % 12]++;
+        hued++;
+        if (h < 60 || h >= 330)
+            *warm = 1;
+        if (h >= 180 && h < 250)
+            *cool = 1;
+    }
+    *range = hi - lo;
+    *families = 0;
+    for (int k = 0; k < 12; k++)
+        if (hued && bins[k] * 20 >= hued)
+            (*families)++;
+}
+
 static int identical(const struct made *a, const struct made *b)
 {
     return a->size == b->size &&
            !memcmp(a->rgb, b->rgb, (size_t)a->size * 3);
-}
-
-/* How much of the hue circle a palette actually visits, as a fraction of it.
- *
- * Every entry with enough colour in it to have a hue is placed on the circle,
- * and what is measured is the circle less its largest empty arc. One hue gives
- * nearly nothing; two opposite ones give a half; a cycle gives one. The four
- * new ways to make a palette were meant to be schemes of several colours and
- * two of them were quietly one colour each, which this is here to notice. */
-static double hue_spread(const struct made *m)
-{
-    double hue[4096];
-    int n = 0;
-    for (int i = 0; i < m->size && n < 4096; i++) {
-        int r = m->rgb[i][0], g = m->rgb[i][1], b = m->rgb[i][2];
-        int hi = r > g ? (r > b ? r : b) : (g > b ? g : b);
-        int lo = r < g ? (r < b ? r : b) : (g < b ? g : b);
-        if (hi - lo < 40)
-            continue; /* too near grey to have a hue worth placing */
-        double d = hi - lo, h;
-        if (hi == r)
-            h = (g - b) / d;
-        else if (hi == g)
-            h = 2 + (b - r) / d;
-        else
-            h = 4 + (r - g) / d;
-        h /= 6;
-        if (h < 0)
-            h += 1;
-        hue[n++] = h;
-    }
-    if (n < 2)
-        return 0;
-    /* sort, then the widest gap between neighbours around the circle */
-    for (int i = 1; i < n; i++) {
-        double v = hue[i];
-        int j = i - 1;
-        while (j >= 0 && hue[j] > v) {
-            hue[j + 1] = hue[j];
-            j--;
-        }
-        hue[j + 1] = v;
-    }
-    double widest = hue[0] + 1 - hue[n - 1];
-    for (int i = 1; i < n; i++)
-        if (hue[i] - hue[i - 1] > widest)
-            widest = hue[i] - hue[i - 1];
-    return 1 - widest;
 }
 
 /* How far the palette travels in brightness against how far it reaches: two if
@@ -227,25 +256,56 @@ int main(void)
 
     /* --- every palette is a palette --------------------------------------- */
     for (int alg = 0; alg < PALGORITHMS; alg++) {
-        int filled = 1, ranged = 1, worst = 766;
+        int filled = 1;
         for (int s = 0; s < 6; s++) {
             make(&a, alg, seeds[s]);
             if (a.size < 64)
                 filled = 0;
-            int lo, hi;
-            range(&a, &lo, &hi);
-            if (hi - lo < worst)
-                worst = hi - lo;
-            /* a third of the way from black to white, which is far less than
-             * any of the seven actually manages and far more than a wash */
-            if (hi - lo < 255)
-                ranged = 0;
         }
         sprintf(what, "algorithm %d fills its entries", alg + 1);
         check(filled, what);
-        sprintf(what, "algorithm %d has dark and light in it (%d of 765)",
-                alg + 1, worst);
-        check(ranged, what);
+    }
+
+    /* --- short palettes, as short as the older ones make them -------------
+     *
+     * Made two hundred and fifty-six entries long, a palette is three stops or
+     * fewer a third of the time -- that is how mkpalette sizes its segments
+     * when it is first asked, and it always has -- and three stops, the last
+     * of them the first again, can miss a light or a dark whatever the
+     * algorithm. The three older ones do, one palette in fourteen for 1 and 2
+     * and one in three for 3. This used to ask all seven for a third of the
+     * way from black to white on six seeds, which the older three happened to
+     * pass; over a thousand seeds, what can fairly be asked of the newer ones
+     * is that none of them does worse than the worst of the older three, give
+     * or take five in a hundred.
+     *
+     * Not of 7, which is colours at random and nothing else, as it was asked
+     * to be: it used to hold black and white every third stop, and that rhythm
+     * of very dark and very light was exactly what made it not random. Random
+     * colours make no promise of a dark and a light in three stops. */
+    {
+        int good[PALGORITHMS];
+        for (int alg = 0; alg < PALGORITHMS; alg++) {
+            good[alg] = 0;
+            for (int sd = 0; sd < 1000; sd++) {
+                make(&a, alg, 1 + sd * 7919);
+                int lo, hi;
+                range(&a, &lo, &hi);
+                if (hi - lo >= 255)
+                    good[alg]++;
+            }
+        }
+        int floor = good[0];
+        for (int alg = 1; alg < 3; alg++)
+            if (good[alg] < floor)
+                floor = good[alg];
+        for (int alg = 3; alg < PALGORITHMS - 1; alg++) {
+            sprintf(what,
+                    "algorithm %d has dark and light as often as the older ones "
+                    "(%d of 1000, the worst of them %d)",
+                    alg + 1, good[alg], floor);
+            check(good[alg] >= floor - 50, what);
+        }
     }
 
     /* --- and none of them fades slowly from one end to the other -----------
@@ -253,8 +313,9 @@ int main(void)
      * The three that were always here alternate light and dark segment by
      * segment, and that is where their banding comes from. Two of the four new
      * ones swelled once across the whole palette instead and were told, in as
-     * many words, that the gradient was too slow. */
-    for (int alg = 3; alg < PALGORITHMS; alg++) {
+     * many words, that the gradient was too slow. 7 again excepted: random
+     * colours turn where the dice turn them. */
+    for (int alg = 3; alg < PALGORITHMS - 1; alg++) {
         double worst = 1e9;
         for (int s = 0; s < 6; s++) {
             /* what the three that were always here manage on this seed */
@@ -277,31 +338,63 @@ int main(void)
         check(worst >= 0.95, what);
     }
 
-    /* --- and the four that are schemes have more than one colour in them ---
+    /* --- and in what a picture shows, they are palettes ---------------------
      *
-     * A spectrum, two inks, three hues spread round the circle and two
-     * opposite ones: none of those is one colour, and two of them were. The
-     * first three of the seven are free to be whatever the dice say. */
+     * The first six hundred entries of a palette made as the program makes it,
+     * which is more than most pictures ever reach. Every one of the seven must
+     * go from dark to light there and hold more than one colour: the three
+     * that were always here do, on every seed tried, and the four that came
+     * after them were one colour each until they were rebuilt. Warm over night
+     * must have both of its windows showing. */
     {
-        static const struct {
-            int alg;
-            double least;
-            const char *what;
-        } scheme[4] = {{3, 0.55, "the spectrum goes most of the way round"},
-                       {4, 0.10, "the two inks are two colours and not one"},
-                       {5, 0.25, "the three spread hues are three"},
-                       {6, 0.20, "and the opposite pair are opposite"}};
-        for (int k = 0; k < 4; k++) {
-            double worst = 2;
-            for (int s = 0; s < 6; s++) {
-                make(&a, scheme[k].alg, seeds[s]);
-                double spread = hue_spread(&a);
-                if (spread < worst)
-                    worst = spread;
-            }
-            sprintf(what, "%s (%.2f of the circle)", scheme[k].what, worst);
-            check(worst >= scheme[k].least, what);
+        int worst_range[PALGORITHMS], fewest[PALGORITHMS], nightearth = 1;
+        for (int alg = 0; alg < PALGORITHMS; alg++) {
+            worst_range[alg] = 9999;
+            fewest[alg] = 99;
         }
+        for (int alg = 0; alg < PALGORITHMS; alg++)
+            for (int sd = 0; sd < 60; sd++) {
+                make_app(&a, alg, 1 + sd * 7919);
+                int r, f, warm, cool;
+                shown(&a, 600, &r, &f, &warm, &cool);
+                if (r < worst_range[alg])
+                    worst_range[alg] = r;
+                if (f < fewest[alg])
+                    fewest[alg] = f;
+                if (alg == 4 && !(warm && cool))
+                    nightearth = 0;
+            }
+        for (int alg = 0; alg < PALGORITHMS; alg++) {
+            sprintf(what,
+                    "algorithm %d shows dark and light where a picture looks "
+                    "(%d of 765) and more than one colour (%d families)",
+                    alg + 1, worst_range[alg], fewest[alg]);
+            check(worst_range[alg] >= 250 && fewest[alg] >= 2, what);
+        }
+        check(nightearth, "and warm over night shows both warm and night");
+    }
+
+    /* --- smog is not the classic ring -------------------------------------
+     *
+     * 1 and 2 hold 256 colours, a byte and the two after it on the generator's
+     * bottom byte. 4 walks a ring too, of hues, and must not come back to
+     * theirs. What is read here is the entries rather than the stops, and an
+     * entry between two stops is a blend that lands on one of those 256 now and
+     * then by chance, where 2 shows two thousand in thirty palettes -- so what is
+     * asked is that 4 shows a hundredth of what 2 does at most. */
+    {
+        int shared = 0, seen = 0;
+        for (int sd = 0; sd < 30; sd++) {
+            make_app(&a, 3, 1 + sd * 7919);
+            make_app(&b, 1, 1 + sd * 7919);
+            for (int i = 0; i < a.size; i++)
+                shared += classic_ring(a.rgb[i]);
+            for (int i = 0; i < b.size; i++)
+                seen += classic_ring(b.rgb[i]);
+        }
+        sprintf(what, "smog is not the classic ring (%d entries on it, "
+                      "against %d in 2)", shared, seen);
+        check(seen > 0 && shared * 100 <= seen, what);
     }
 
     if (failures)

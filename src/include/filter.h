@@ -157,11 +157,12 @@ struct image {
 #define ALLOCEDIMAGE 1 /*used by inherimage mechanizm */
 #define SHAREDDATA 2
 
-/* How many ways a palette can be made: 1 to 3 scatter colours between black
- * and white anchors, which is the look XaoS has always had; 4 to 7 pick their
- * colours in relation to each other -- a spectrum, two hues in tones, three
- * spread round the circle, two opposite. mkpalette takes them counting from
- * zero.
+/* How many ways a palette can be made: 1 to 3 are XaoS's own, colours between
+ * black and white anchors; 4 to 7 were made after measuring them --
+ * smog, warm over night blue, the pairs the first three favour, and
+ * colours truly at random. mkpalette takes them
+ * counting from zero; palette_algorithm_name gives each its name, counting
+ * from one.
  *
  * A position saved with one of the new ones names an algorithm the original
  * XaoS does not have and will refuse; one saved with 1 to 3 is unaffected. */
@@ -296,6 +297,7 @@ struct palette *createpalette(
     union paletteinfo *info);
 void destroypalette(struct palette *palette);
 int mkdefaultpalette(struct palette *palette);
+const char *palette_algorithm_name(int algorithm);
 int mkstereogrampalette(struct palette *palette);
 int mkstarfieldpalette(struct palette *palette);
 int mkblurpalette(struct palette *palette);

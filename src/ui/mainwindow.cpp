@@ -1237,6 +1237,15 @@ void MainWindow::showDialog(const char *name)
                  * it with the constant, so the two disagreed the moment a
                  * fourth was added and the box would not count past three. */
                 algono->setRange(1, PALGORITHMS);
+                /* and its name after it, as the box's own suffix: the preview
+                 * takes its width from the box, so a label beside it would
+                 * narrow the preview */
+                algono->setSuffix(QString("   ") +
+                                  TR("Palette", palette_algorithm_name(algono->value())));
+                connect(algono, &QSpinBox::valueChanged, algono, [](int n) {
+                    algono->setSuffix(QString("   ") +
+                                      TR("Palette", palette_algorithm_name(n)));
+                });
 
                 // Algo Slider
                 algoslider = new QSlider(Qt::Horizontal, qDialog);
