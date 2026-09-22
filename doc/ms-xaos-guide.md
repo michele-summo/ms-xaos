@@ -192,6 +192,29 @@ and only the places a formula actually names are read out of it, so `p9999`
 costs what `p1` costs and a formula that names none costs nothing at all.
 The reference window lists them among the variables.
 
+**Suffixes on a variable.** `z`, `c`, `x`, `p` and `p1` to `p9999` take
+suffixes that stand for the calls made on them most often:
+
+| suffix | stands for |
+| --- | --- |
+| `_b` | `bship(…)` |
+| `_bi` | `bshipi(…)` |
+| `_br` | `bshipr(…)` |
+| `_pM` | `parchment(…, M)` |
+| `_paM` | `parchmenta(…, M)` |
+
+They are read from left to right, each wrapping what the ones before it made:
+`z_p3` is `parchment(z,3)`, `c_b_p2` is `parchment(bship(c),2)` and `p12_p2_p3`
+is `parchment(parchment(p12,2),3)`. *M* is part of the name, so it is written in
+figures — a whole number, one or more; `z_p0` is refused with a message that
+says so. Not on `n`, which is a count and has no second component for any of
+them to work on.
+
+They are spelled out as the calls before the formula is read, so a suffixed
+variable draws exactly what the calls written out draw and costs what they
+cost; the formula is saved as it was written. Anything that is not one of the
+five is left alone and refused as the unknown name it is.
+
 **Removed.** `powi`, `powdc` and `logcn` were second names for `pow` and
 `logn`; `rad`, `deg` and `sign` were listed with no implementation behind them,
 and a second `trunc` was shadowed by the working one. A formula using a removed

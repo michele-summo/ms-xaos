@@ -101,6 +101,11 @@ void sffe_error_message(int errorcode, char *context, char *errormessage)
         snprintf(errormessage, SFFE_ERRORMSG_SIZE,
                  TR("Message", "Empty formula"), context);
         break;
+    case InvalidSuffix:
+        snprintf(errormessage, SFFE_ERRORMSG_SIZE,
+                 TR("Message", "A suffix needs a count of one or more: %s"),
+                 context);
+        break;
     }
 }
 
@@ -616,6 +621,229 @@ char sffe_doname(char **str)
     return 1;
 }
 
+/* Suffixes on a variable: a shorthand for the calls a formula makes most often
+ * on one.
+ *
+ *   _b   bship(.)          _pM   parchment(., M)
+ *   _bi  bshipi(.)         _paM  parchmenta(., M)
+ *   _br  bshipr(.)
+ *
+ * They go on z, c, x, p and p1 to p9999 -- not on n, which is a count and has
+ * no second component for any of these to work on -- and are read from left
+ * to right, each wrapping what the ones before it made: c_b_p2 is
+ * parchment(bship(c),2), and p12_p2_p3 is parchment(parchment(p12,2),3). M is
+ * part of the name, so it can only be written in figures: a whole number, one
+ * or more.
+ *
+ * Done on the working copy between phases 1 and 2, name by name, so that all
+ * that comes after -- the count of arguments, the multiplication left out
+ * between two factors, the messages -- sees the calls exactly as though they
+ * had been written out, and a suffixed variable costs what the calls it stands
+ * for cost, to the bit. A name that is not a variable with suffixes this knows
+ * is left as it was written, so the message that refuses it quotes it. The
+ * text the caller reads back is the one it gave, as it always was: this only
+ * ever touches the copy the parser cuts up. */
+
+/* what each suffix opens, in the order sffe_suffix numbers them */
+static const char *const sffe_suffix_call[5] = {
+    "bship(", "bshipi(", "bshipr(", "parchment(", "parchmenta("};
+
+/* The suffix starting at p, which is at an underscore, and where it ends; NULL
+ * if it is not one of the five. kind is its place in sffe_suffix_call, and
+ * the figures are the count the two that take one were given. */
+static const char *sffe_suffix(const char *p, const char *end, int *kind,
+                               const char **figures, size_t *nfigures)
+{
+    if (p >= end || *p != '_') {
+        return NULL;
+    }
+    p += 1;
+    const char *w = p;
+    while (p < end && isalpha((unsigned char)*p)) {
+        p += 1;
+    }
+    size_t nw = (size_t)(p - w);
+    const char *d = p;
+    while (p < end && isdigit((unsigned char)*p)) {
+        p += 1;
+    }
+    size_t nd = (size_t)(p - d);
+    if (p < end && *p != '_') {
+        return NULL; /* letters after the figures */
+    }
+
+    if (nw == 1 && w[0] == 'b' && !nd) {
+        *kind = 0;
+    } else if (nw == 2 && w[0] == 'b' && w[1] == 'i' && !nd) {
+        *kind = 1;
+    } else if (nw == 2 && w[0] == 'b' && w[1] == 'r' && !nd) {
+        *kind = 2;
+    } else if (nw == 1 && w[0] == 'p' && nd) {
+        *kind = 3;
+    } else if (nw == 2 && w[0] == 'p' && w[1] == 'a' && nd) {
+        *kind = 4;
+    } else {
+        return NULL;
+    }
+    *figures = d;
+    *nfigures = nd;
+    return p;
+}
+
+/* Whether the text from name to end is a variable a suffix may go on. */
+static int sffe_suffixed_base(const char *name, const char *end)
+{
+    if (end - name == 1) {
+        return *name == 'z' || *name == 'c' || *name == 'x' || *name == 'p';
+    }
+    if (*name != 'p') {
+        return 0;
+    }
+    for (const char *q = name + 1; q < end; q += 1) {
+        if (!isdigit((unsigned char)*q)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+/* A string that grows, and remembers running out of memory rather than
+ * making every caller check. */
+struct sffe_text {
+    char *s;
+    size_t len, cap;
+    int failed;
+};
+
+static void sffe_text_put(struct sffe_text *t, const char *s, size_t n)
+{
+    if (t->failed) {
+        return;
+    }
+    if (t->len + n + 1 > t->cap) {
+        size_t cap = t->cap ? t->cap : 64;
+        while (t->len + n + 1 > cap) {
+            cap *= 2;
+        }
+        char *grown = (char *)realloc(t->s, cap);
+        if (!grown) {
+            t->failed = 1;
+            return;
+        }
+        t->s = grown;
+        t->cap = cap;
+    }
+    memcpy(t->s + t->len, s, n);
+    t->len += n;
+    t->s[t->len] = '\0';
+}
+
+/* The working copy with every suffixed variable spelled out, in a buffer of
+ * its own; NULL when out of memory. A count of nought leaves *culprit at the
+ * name, cut off after it, for the message to quote. */
+static char *sffe_spell_suffixes(char *text, char **culprit)
+{
+    struct sffe_text out = {NULL, 0, 0, 0};
+    char *c = text;
+    *culprit = NULL;
+    sffe_text_put(&out, "", 0); /* an empty text still gets a buffer */
+
+    while (*c && !*culprit) {
+        if (isdigit((unsigned char)*c)) {
+            /* a number, read as phase 2 will read it, so that the e of an
+             * exponent is not taken for the start of a name */
+            char *end = c;
+            xstrtonum(c, &end);
+            if (end == c) {
+                end = c + 1;
+            }
+            sffe_text_put(&out, c, (size_t)(end - c));
+            c = end;
+            continue;
+        }
+        if (!isalpha((unsigned char)*c)) {
+            sffe_text_put(&out, c, 1);
+            c += 1;
+            continue;
+        }
+
+        /* a name, read as sffe_doname reads it */
+        char *name = c;
+        do {
+            c += 1;
+        } while (isalnum((unsigned char)*c) || *c == '_');
+        const char *under = (const char *)memchr(name, '_', (size_t)(c - name));
+
+        /* A call is left alone, suffix or not: z_p3(2) is an unknown function,
+         * as z(2) is. */
+        int k = 0, nought = 0;
+        const char *p = under;
+        if (under && *c != '(' && sffe_suffixed_base(name, under)) {
+            while (p < c) {
+                int kind;
+                const char *d;
+                size_t nd;
+                const char *next = sffe_suffix(p, c, &kind, &d, &nd);
+                if (!next) {
+                    break;
+                }
+                size_t z = 0;
+                while (z < nd && d[z] == '0') {
+                    z += 1;
+                }
+                if (nd && z == nd) {
+                    nought = 1;
+                }
+                k += 1;
+                p = next;
+            }
+        }
+        if (!under || !k || p < c || *c == '(') {
+            sffe_text_put(&out, name, (size_t)(c - name));
+            continue;
+        }
+        if (nought) {
+            *c = '\0';
+            *culprit = name;
+            break;
+        }
+
+        /* the calls, the last suffix outermost, round the variable */
+        for (int i = k - 1; i >= 0; i -= 1) {
+            const char *q = under, *d;
+            size_t nd;
+            int kind = 0;
+            for (int j = 0; j <= i; j += 1) {
+                q = sffe_suffix(q, c, &kind, &d, &nd);
+            }
+            const char *call = sffe_suffix_call[kind];
+            sffe_text_put(&out, call, strlen(call));
+        }
+        sffe_text_put(&out, name, (size_t)(under - name));
+        for (const char *q = under; q < c;) {
+            const char *d;
+            size_t nd;
+            int kind = 0;
+            q = sffe_suffix(q, c, &kind, &d, &nd);
+            if (nd) {
+                while (nd > 1 && *d == '0') { /* 03 is 3 */
+                    d += 1;
+                    nd -= 1;
+                }
+                sffe_text_put(&out, ",", 1);
+                sffe_text_put(&out, d, nd);
+            }
+            sffe_text_put(&out, ")", 1);
+        }
+    }
+
+    if (out.failed) {
+        free(out.s);
+        return NULL;
+    }
+    return out.s;
+}
+
 int sffe_parse(sffe **parser, const char *expression)
 {
     /**************variables */
@@ -931,6 +1159,23 @@ int sffe_parse(sffe **parser, const char *expression)
 
     if (strlen(_parser->expression) == 0)
         err = EmptyFormula;
+
+    /* z_p3 and the rest spelled out as the calls they stand for; see
+     * sffe_spell_suffixes */
+    if (!err) {
+        char *culprit = NULL;
+        char *spelled = sffe_spell_suffixes((char *)_parser->expression, &culprit);
+        if (!spelled) {
+            err = MemoryError;
+        } else if (culprit) {
+            free(spelled);
+            err = InvalidSuffix;
+            errctx = culprit;
+        } else {
+            free((char *)_parser->expression);
+            _parser->expression = spelled;
+        }
+    }
 
     /* Room for the places a call may have left empty -- the nothing between
      * two separators in "f(z, ,5)" -- each of which phase 3 gives a node of

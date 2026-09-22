@@ -193,6 +193,12 @@ const struct formula_help_row formula_help_variables[] = {
     {"p2", "", "the one before that, and so on", NULL},
     {"p9999", "", "as far back as one may look; any p up to this is a variable, whether or not the picture runs that many passes", NULL},
     {"p", "", "another name for p1", NULL},
+    {NULL, NULL, NULL, "suffixes on z, c, x and the p's, a shorthand for the calls made most often on one. Read from left to right, each wrapping what the ones before made: c_b_p2 is parchment(bship(c), 2), p12_p2_p3 is parchment(parchment(p12, 2), 3). M is a whole number of one or more, written in figures. Not on n, which is a count"},
+    {"_b", "", "bship(...)", NULL},
+    {"_bi", "", "bshipi(...)", NULL},
+    {"_br", "", "bshipr(...)", NULL},
+    {"_pM", "", "parchment(..., M)", NULL},
+    {"_paM", "", "parchmenta(..., M)", NULL},
     {NULL, NULL, NULL, NULL}};
 
 /* How values are written. These are properties of the parser rather than

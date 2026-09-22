@@ -196,6 +196,67 @@ int main(void)
     check(picture("z^2+c", "p1") == square,
           "an initialization may name p1, which before any pass is where z starts");
 
+    /* --- suffixes on a variable --------------------------------------------
+     *
+     * z_p3 is parchment(z,3), c_b is bship(c), and a chain is read from left to
+     * right, each suffix wrapping what the ones before it made. Spelled out
+     * before the formula is read, so each must draw exactly what the calls
+     * written out draw -- and the calls are chosen to draw something, so that
+     * a suffix quietly ignored would not pass. */
+    {
+        static const char *pairs[][2] = {
+            {"z_p3^2+c", "parchment(z,3)^2+c"},
+            {"z_pa5^2+c", "parchmenta(z,5)^2+c"},
+            {"z^2+c_b", "z^2+bship(c)"},
+            {"z^2+c_bi", "z^2+bshipi(c)"},
+            {"z^2+c_br", "z^2+bshipr(c)"},
+            {"z^2+c_b_p2", "z^2+parchment(bship(c),2)"},
+            {"z^2+c+x_pa4*0.1", "z^2+c+parchmenta(x,4)*0.1"},
+            {"z^2+c+p_b*0.1", "z^2+c+bship(p)*0.1"},
+            {"z^2+c+p12_p2_p3*0.1", "z^2+c+parchment(parchment(p12,2),3)*0.1"},
+            {"Z_P3^2+C", "parchment(z,3)^2+c"},
+            {"z_p03^2+c", "parchment(z,3)^2+c"},
+            {"z^2+c+2x_b*0.1", "z^2+c+2*bship(x)*0.1"},
+        };
+        for (size_t i = 0; i < sizeof pairs / sizeof pairs[0]; i++) {
+            unsigned long long a = picture(pairs[i][0], "");
+            unsigned long long b = picture(pairs[i][1], "");
+            char what[256];
+            sprintf(what, "%s draws what %s draws", pairs[i][0], pairs[i][1]);
+            check(a != 0 && a == b && a != square, what);
+        }
+        check(picture("z^2+c", "z_p3") == picture("z^2+c", "parchment(z,3)"),
+              "and an initialization may use them too");
+
+        /* The text read back is the one given, not the calls, since that is
+         * what a saved position writes out. */
+        sffe_parse(&cfractalc.userformula, "z_p3^2+c");
+        check(cfractalc.userformula->expression &&
+                  !strcmp(cfractalc.userformula->expression, "z_p3^2+c"),
+              "the formula reads back as it was written");
+
+        /* What is refused, and how. A count of nought has a message of its
+         * own; anything else that is not a suffix leaves the name as written,
+         * to be refused as the unknown name it is -- n included, which is a
+         * count and has no second component for these to work on. */
+        static const struct {
+            const char *text;
+            int error;
+        } refused[] = {
+            {"z_p0^2+c", InvalidSuffix},  {"z_pa00^2+c", InvalidSuffix},
+            {"z_q3^2+c", UnknownVariable}, {"z_b2^2+c", UnknownVariable},
+            {"z_p^2+c", UnknownVariable},  {"n_b+z^2+c", UnknownVariable},
+            {"z_^2+c", UnknownVariable},   {"z_p3(2)+c", UnknownFunction},
+        };
+        for (size_t i = 0; i < sizeof refused / sizeof refused[0]; i++) {
+            int got = sffe_parse(&cfractalc.userformula, refused[i].text);
+            char what[256];
+            sprintf(what, "%s is refused (%d, expected %d)", refused[i].text, got,
+                    refused[i].error);
+            check(got == refused[i].error, what);
+        }
+    }
+
 
     /* --- a figure written alone is the fractal -----------------------------
      *

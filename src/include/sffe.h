@@ -61,6 +61,7 @@ enum sffe_error {
     StackError,
     InvalidParameters,
     EmptyFormula,
+    InvalidSuffix, /* a suffix on a variable asking for no sectors: z_p0 */
 };
 
 typedef enum { sfvar_type_ptr, sfvar_type_managed_ptr } sfvartype;
