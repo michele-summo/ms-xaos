@@ -16,8 +16,10 @@
 #include <math.h>
 
 #include <cstdint>
+#include <cstring>
 
 #include "number_math.h"
+#include "randsctile_tables.h"
 
 /* Every entry is {implementation, argument count, name}, optionally followed by
  * a selector that marks the arguments as lazily evaluated.
@@ -198,6 +200,9 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sfrandscp, SFFE_VARIADIC, "randscp\0", NULL, false, 2},
     {sfrandsch, SFFE_VARIADIC, "randsch\0", NULL, false, 2},
     {sfrandsct, SFFE_VARIADIC, "randsct\0", NULL, false, 2},
+    /* The same field over a tiling its first argument chooses among
+     * forty-five, the seed second; so the first two are needed. */
+    {sfrandsctile, SFFE_VARIADIC, "randsctile\0", NULL, false, 3},
     /* fbm(value, seed, ...): octaves of the same noise summed over a point
      * the caller names, rather than over the position. See sffbm. */
     {sffbm, SFFE_VARIADIC, "fbm\0", NULL, false, 3},
@@ -1776,13 +1781,17 @@ static void randsc_kaleido(number_t *px, number_t *py, int level, int mode)
  * sffe_position itself; randsc_run reads each once, which matters because a
  * thread-local is a call apiece under MinGW -- some twenty nanoseconds, a
  * tenth of what the whole call costs -- and the sum would otherwise read them
- * again at every pass it works out. */
-static RANDSC_INLINE int randsc_setup(sfarg *const p, unsigned int pass,
-                                      const cmplx *here, int64_t *cx,
-                                      int64_t *cy, number_t *u, number_t *v,
-                                      uint64_t *hash)
+ * again at every pass it works out.
+ *
+ * lead is how many arguments come before the seed: none for the five, one for
+ * randsctile, whose first says which tiling. Everything after the seed means
+ * the same in all six, one place further along there. */
+static RANDSC_INLINE int randsc_setup(sfarg *const p, unsigned int lead,
+                                      unsigned int pass, const cmplx *here,
+                                      int64_t *cx, int64_t *cy, number_t *u,
+                                      number_t *v, uint64_t *hash)
 {
-    if (p->argc < 1 || p->argc > 8)
+    if (p->argc < 1 + lead || p->argc > 8 + lead)
         return RANDSC_STOP;
 
     /* Seed, cell size, degradation, kaleidoscope level and its mode, in the
@@ -1792,11 +1801,12 @@ static RANDSC_INLINE int randsc_setup(sfarg *const p, unsigned int pass,
      * Degradation halves the cells each pass. One, which was the default,
      * leaves them the size they started and so wastes the argument on a call
      * that says nothing; a half is the shrinking one asks for when one asks. */
-    cmplx seed = sfarg_or(p, 1, 0, 0);
-    cmplx size = sfarg_or(p, 2, 1, 1);
-    cmplx degradation = sfarg_or(p, 3, (number_t)1 / 2, (number_t)1 / 2);
-    int level = (int)GSL_REAL(sfarg_or(p, 4, 1, 0));
-    int mode = (int)GSL_REAL(sfarg_or(p, 5, 0, 0));
+    cmplx seed = sfarg_or(p, lead + 1, 0, 0);
+    cmplx size = sfarg_or(p, lead + 2, 1, 1);
+    cmplx degradation =
+        sfarg_or(p, lead + 3, (number_t)1 / 2, (number_t)1 / 2);
+    int level = (int)GSL_REAL(sfarg_or(p, lead + 4, 1, 0));
+    int mode = (int)GSL_REAL(sfarg_or(p, lead + 5, 0, 0));
 
     if (GSL_REAL(size) == 0 || GSL_IMAG(size) == 0 ||
         GSL_REAL(degradation) == 0 || GSL_IMAG(degradation) == 0)
@@ -1935,8 +1945,8 @@ static RANDSC_INLINE int randsc_setup(sfarg *const p, unsigned int pass,
  */
 typedef sfarg *(*randsc_pass_fn)(sfarg *const, unsigned int, const cmplx *);
 
-static sfarg *randsc_sum(sfarg *const p, cmplx h, unsigned int now,
-                         const cmplx *here, randsc_pass_fn at)
+static sfarg *randsc_sum(sfarg *const p, unsigned int lead, cmplx h,
+                         unsigned int now, const cmplx *here, randsc_pass_fn at)
 {
     unsigned int from = p->summed;
 
@@ -1944,7 +1954,8 @@ static sfarg *randsc_sum(sfarg *const p, cmplx h, unsigned int now,
         GSL_REAL(p->gathered) != GSL_REAL(*here) ||
         GSL_IMAG(p->gathered) != GSL_IMAG(*here)) {
         /* d^Hr as |dr di|^(Hr/2), which is the same with one root fewer */
-        cmplx degradation = sfarg_or(p, 3, (number_t)1 / 2, (number_t)1 / 2);
+        cmplx degradation =
+            sfarg_or(p, lead + 3, (number_t)1 / 2, (number_t)1 / 2);
         number_t dd = nfabs(GSL_REAL(degradation) * GSL_IMAG(degradation));
         GSL_SET_COMPLEX(&p->share, 1, npow(dd, GSL_REAL(h) / 2));
         /* and Hi ln d, the turn from one pass to the next. None at all for a
@@ -2004,17 +2015,19 @@ static sfarg *randsc_sum(sfarg *const p, cmplx h, unsigned int now,
     return last;
 }
 
-/* Each of the five as the formula calls it: the pass it is on, alone, or with
+/* Each of the six as the formula calls it: the pass it is on, alone, or with
  * a selfsim every pass up to it. The one pass is a direct call. Whether there
  * is a selfsim is whether its place holds anything, not what it holds: nought
- * is a value like any other (see randsc_sum). */
-static RANDSC_INLINE sfarg *randsc_run(sfarg *const p, randsc_pass_fn at)
+ * is a value like any other (see randsc_sum). lead as for randsc_setup. */
+static RANDSC_INLINE sfarg *randsc_run(sfarg *const p, unsigned int lead,
+                                       randsc_pass_fn at)
 {
     unsigned int now = sffe_iteration;
     cmplx here = sffe_position;
-    if (p->argc < 8 || p->args[p->argc - 8]->omitted)
+    if (p->argc < 8 + lead || p->args[p->argc - 8 - lead]->omitted)
         return at(p, now, &here);
-    return randsc_sum(p, sfvalue(p->args[p->argc - 8]), now, &here, at);
+    return randsc_sum(p, lead, sfvalue(p->args[p->argc - 8 - lead]), now,
+                      &here, at);
 }
 
 /**
@@ -2056,7 +2069,7 @@ static sfarg *randsc_at(sfarg *const p, unsigned int pass,
     number_t u, v;
     uint64_t h;
 
-    int state = randsc_setup(p, pass, here, &cx, &cy, &u, &v, &h);
+    int state = randsc_setup(p, 0, pass, here, &cx, &cy, &u, &v, &h);
     if (state == RANDSC_STOP) {
         GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
         return sfaram1(p);
@@ -2112,7 +2125,7 @@ static sfarg *randsc_at(sfarg *const p, unsigned int pass,
 
 sfarg *sfrandsc(sfarg *const p)
 {
-    return randsc_run(p, randsc_at);
+    return randsc_run(p, 0, randsc_at);
 }
 
 /* Where the seed of a cell may sit, as a fraction of the cell: the middle
@@ -2136,6 +2149,116 @@ static uint64_t randsc_remix(uint64_t x)
     x *= 0x94D049BB133111EBULL;
     x ^= x >> 31;
     return x;
+}
+
+/* The seed nearest the point among the nine cells round the one it falls in
+ * -- the Voronoi cell it stands in, named by that seed's hash -- and, when
+ * asked, how far out of that cell's middle it stands and where the seed is
+ * seen from it. Shared by randscp and the irregular tiling of randsctile. */
+static inline uint64_t randscp_nearest(int64_t cx, int64_t cy, number_t u,
+                                       number_t v, uint64_t h, int want,
+                                       number_t *pout, number_t *pbx,
+                                       number_t *pby)
+{
+    /* Larger than any distance the nine cells can produce. */
+    number_t bestd = 16;
+    uint64_t besth = 0;
+
+    for (int j = -1; j <= 1; j++)
+        for (int i = -1; i <= 1; i++) {
+            uint64_t hh = randsc_hash(cx + i, cy + j, h);
+            number_t fx = RANDSCP_JITTER_LOW +
+                          RANDSCP_JITTER_SPAN * randsc_unit32((uint32_t)hh);
+            number_t fy =
+                RANDSCP_JITTER_LOW +
+                RANDSCP_JITTER_SPAN * randsc_unit32((uint32_t)(hh >> 32));
+            number_t dx = (number_t)i + fx - u;
+            number_t dy = (number_t)j + fy - v;
+            number_t d = dx * dx + dy * dy;
+            if (d < bestd) {
+                bestd = d;
+                besth = hh;
+            }
+        }
+
+    /* How far the point stands from the edge of its cell, which is what puts
+     * the contours on the polygon.
+     *
+     * A cell here is a convex polygon, and the points a given distance inside
+     * its edge are that polygon shrunk, so a value that follows the distance
+     * to the edge draws the cell's own outline over and over -- polygons, and
+     * each cell its own. The distance to the boundary the winning seed shares
+     * with another is (|b|^2 - |a|^2) / (2|b - a|), a and b being the two seeds
+     * seen from the point, and the edge is the nearest of the eight.
+     *
+     * The comparison cross-multiplies the squares, so the candidates cost no
+     * division and no root and one of each is taken at the end. A distance is
+     * never negative here, the winner being the nearest seed there is, so
+     * squaring loses nothing. None of it is done at all when there is no skew
+     * to feed.
+     *
+     * Nought at the edge on both sides of it, so the turn meets itself across
+     * a boundary as the other four do. */
+    *pout = 0;
+    *pbx = 0;
+    *pby = 0;
+    if (want) {
+        /* The nine seeds again, kept this time, so that the search above needs
+         * to carry nothing for a skew that is usually not there: it runs for
+         * every point, and this runs only when there is one. The winner is the
+         * one whose hash is the winning hash. */
+        number_t dxs[9], dys[9];
+        int bidx = 0;
+        for (int j = -1, k = 0; j <= 1; j++)
+            for (int i = -1; i <= 1; i++, k++) {
+                uint64_t hh = randsc_hash(cx + i, cy + j, h);
+                number_t fx =
+                    RANDSCP_JITTER_LOW +
+                    RANDSCP_JITTER_SPAN * randsc_unit32((uint32_t)hh);
+                number_t fy =
+                    RANDSCP_JITTER_LOW +
+                    RANDSCP_JITTER_SPAN * randsc_unit32((uint32_t)(hh >> 32));
+                dxs[k] = (number_t)i + fx - u;
+                dys[k] = (number_t)j + fy - v;
+                if (hh == besth)
+                    bidx = k;
+            }
+        number_t bx = dxs[bidx], by = dys[bidx];
+        *pbx = bx;
+        *pby = by;
+        /* out of reach of any real candidate, so the first one always wins */
+        number_t bestn = 256, bests = 1;
+        /* and the closest other seed, which is what makes the cell its own
+         * measure: the seed's distance to the boundary it shares with another
+         * is exactly half their separation, so the smallest of those halves is
+         * the distance from the seed to its cell's edge */
+        number_t nearsep = 256;
+        for (int k = 0; k < 9; k++) {
+            if (k == bidx)
+                continue;
+            number_t dx = dxs[k], dy = dys[k];
+            number_t ex = dx - bx, ey = dy - by;
+            number_t sep = ex * ex + ey * ey;
+            if (sep <= 0)
+                continue;
+            if (sep < nearsep)
+                nearsep = sep;
+            number_t num = dx * dx + dy * dy - bestd;
+            number_t n2 = num * num;
+            if (n2 * bests < bestn * sep) {
+                bestn = n2;
+                bests = sep;
+            }
+        }
+        /* the distance to the edge over the seed's own distance to it, which
+         * is nought at the seed and one along the whole boundary however
+         * lopsided the cell. Both halves cancel, leaving one root and one
+         * division for the lot. */
+        number_t pin = 1 - nsqrt(bestn / (bests * nearsep));
+        *pout = pin < 0 ? 0 : (pin > 1 ? 1 : pin);
+    }
+
+    return besth;
 }
 
 /**
@@ -2177,7 +2300,7 @@ static sfarg *randscp_at(sfarg *const p, unsigned int pass,
     number_t u, v;
     uint64_t h;
 
-    int state = randsc_setup(p, pass, here, &cx, &cy, &u, &v, &h);
+    int state = randsc_setup(p, 0, pass, here, &cx, &cy, &u, &v, &h);
     if (state == RANDSC_STOP) {
         GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
         return sfaram1(p);
@@ -2197,102 +2320,10 @@ static sfarg *randscp_at(sfarg *const p, unsigned int pass,
                      ? (int)GSL_REAL(sfarg_or(p, 4, 1, 0))
                      : 1;
 
-    /* Larger than any distance the nine cells can produce. */
-    number_t bestd = 16;
-    uint64_t besth = 0;
-
-    for (int j = -1; j <= 1; j++)
-        for (int i = -1; i <= 1; i++) {
-            uint64_t hh = randsc_hash(cx + i, cy + j, h);
-            number_t fx = RANDSCP_JITTER_LOW +
-                          RANDSCP_JITTER_SPAN * randsc_unit32((uint32_t)hh);
-            number_t fy =
-                RANDSCP_JITTER_LOW +
-                RANDSCP_JITTER_SPAN * randsc_unit32((uint32_t)(hh >> 32));
-            number_t dx = (number_t)i + fx - u;
-            number_t dy = (number_t)j + fy - v;
-            number_t d = dx * dx + dy * dy;
-            if (d < bestd) {
-                bestd = d;
-                besth = hh;
-            }
-        }
-
-    /* How far the point stands from the edge of its cell, which is what puts
-     * the contours on the polygon.
-     *
-     * A cell here is a convex polygon, and the points a given distance inside
-     * its edge are that polygon shrunk, so a value that follows the distance
-     * to the edge draws the cell's own outline over and over -- polygons, and
-     * each cell its own. The distance to the boundary the winning seed shares
-     * with another is (|b|^2 - |a|^2) / (2|b - a|), a and b being the two seeds
-     * seen from the point, and the edge is the nearest of the eight.
-     *
-     * The comparison cross-multiplies the squares, so the candidates cost no
-     * division and no root and one of each is taken at the end. A distance is
-     * never negative here, the winner being the nearest seed there is, so
-     * squaring loses nothing. None of it is done at all when there is no skew
-     * to feed.
-     *
-     * Nought at the edge on both sides of it, so the turn meets itself across
-     * a boundary as the other four do. */
-    number_t pout = 0;
-    number_t pbx = 0, pby = 0;
-    if (GSL_REAL(skew) != 0 || GSL_IMAG(skew) != 0) {
-        /* The nine seeds again, kept this time, so that the search above needs
-         * to carry nothing for a skew that is usually not there: it runs for
-         * every point, and this runs only when there is one. The winner is the
-         * one whose hash is the winning hash. */
-        number_t dxs[9], dys[9];
-        int bidx = 0;
-        for (int j = -1, k = 0; j <= 1; j++)
-            for (int i = -1; i <= 1; i++, k++) {
-                uint64_t hh = randsc_hash(cx + i, cy + j, h);
-                number_t fx =
-                    RANDSCP_JITTER_LOW +
-                    RANDSCP_JITTER_SPAN * randsc_unit32((uint32_t)hh);
-                number_t fy =
-                    RANDSCP_JITTER_LOW +
-                    RANDSCP_JITTER_SPAN * randsc_unit32((uint32_t)(hh >> 32));
-                dxs[k] = (number_t)i + fx - u;
-                dys[k] = (number_t)j + fy - v;
-                if (hh == besth)
-                    bidx = k;
-            }
-        number_t bx = dxs[bidx], by = dys[bidx];
-        pbx = bx;
-        pby = by;
-        /* out of reach of any real candidate, so the first one always wins */
-        number_t bestn = 256, bests = 1;
-        /* and the closest other seed, which is what makes the cell its own
-         * measure: the seed's distance to the boundary it shares with another
-         * is exactly half their separation, so the smallest of those halves is
-         * the distance from the seed to its cell's edge */
-        number_t nearsep = 256;
-        for (int k = 0; k < 9; k++) {
-            if (k == bidx)
-                continue;
-            number_t dx = dxs[k], dy = dys[k];
-            number_t ex = dx - bx, ey = dy - by;
-            number_t sep = ex * ex + ey * ey;
-            if (sep <= 0)
-                continue;
-            if (sep < nearsep)
-                nearsep = sep;
-            number_t num = dx * dx + dy * dy - bestd;
-            number_t n2 = num * num;
-            if (n2 * bests < bestn * sep) {
-                bestn = n2;
-                bests = sep;
-            }
-        }
-        /* the distance to the edge over the seed's own distance to it, which
-         * is nought at the seed and one along the whole boundary however
-         * lopsided the cell. Both halves cancel, leaving one root and one
-         * division for the lot. */
-        number_t pin = 1 - nsqrt(bestn / (bests * nearsep));
-        pout = pin < 0 ? 0 : (pin > 1 ? 1 : pin);
-    }
+    number_t pout, pbx, pby;
+    uint64_t besth = randscp_nearest(cx, cy, u, v, h,
+                                     GSL_REAL(skew) != 0 || GSL_IMAG(skew) != 0,
+                                     &pout, &pbx, &pby);
 
     number_t pre_, pim_;
     /* round the seed the cell was grown from, which is its middle */
@@ -2307,7 +2338,7 @@ static sfarg *randscp_at(sfarg *const p, unsigned int pass,
 
 sfarg *sfrandscp(sfarg *const p)
 {
-    return randsc_run(p, randscp_at);
+    return randsc_run(p, 0, randscp_at);
 }
 
 
@@ -3348,6 +3379,7 @@ int sffe_uses_noise(sffe *const parser)
             parser->oprs[i].fnc == sfrandscp ||
             parser->oprs[i].fnc == sfrandsch ||
             parser->oprs[i].fnc == sfrandsct ||
+            parser->oprs[i].fnc == sfrandsctile ||
             parser->oprs[i].fnc == sftrap ||
             parser->oprs[i].fnc == sfstripe)
             return 1;
@@ -3361,7 +3393,7 @@ static sfarg *randscq_at(sfarg *const p, unsigned int pass,
     number_t u, v;
     uint64_t h;
 
-    int state = randsc_setup(p, pass, here, &cx, &cy, &u, &v, &h);
+    int state = randsc_setup(p, 0, pass, here, &cx, &cy, &u, &v, &h);
     if (state == RANDSC_STOP) {
         GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
         return sfaram1(p);
@@ -3396,7 +3428,7 @@ static sfarg *randscq_at(sfarg *const p, unsigned int pass,
 
 sfarg *sfrandscq(sfarg *const p)
 {
-    return randsc_run(p, randscq_at);
+    return randsc_run(p, 0, randscq_at);
 }
 
 /* sqrt(3), for the two tilings whose cells are not axis-aligned. Worked out
@@ -3452,7 +3484,7 @@ static sfarg *randsch_at(sfarg *const p, unsigned int pass,
     number_t u, v;
     uint64_t h;
 
-    int state = randsc_setup(p, pass, here, &cx, &cy, &u, &v, &h);
+    int state = randsc_setup(p, 0, pass, here, &cx, &cy, &u, &v, &h);
     if (state == RANDSC_STOP) {
         GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
         return sfaram1(p);
@@ -3509,7 +3541,7 @@ static sfarg *randsch_at(sfarg *const p, unsigned int pass,
 
 sfarg *sfrandsch(sfarg *const p)
 {
-    return randsc_run(p, randsch_at);
+    return randsc_run(p, 0, randsch_at);
 }
 
 /**
@@ -3538,7 +3570,7 @@ static sfarg *randsct_at(sfarg *const p, unsigned int pass,
     number_t u, v;
     uint64_t h;
 
-    int state = randsc_setup(p, pass, here, &cx, &cy, &u, &v, &h);
+    int state = randsc_setup(p, 0, pass, here, &cx, &cy, &u, &v, &h);
     if (state == RANDSC_STOP) {
         GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
         return sfaram1(p);
@@ -3601,7 +3633,717 @@ static sfarg *randsct_at(sfarg *const p, unsigned int pass,
 
 sfarg *sfrandsct(sfarg *const p)
 {
-    return randsc_run(p, randsct_at);
+    return randsc_run(p, 0, randsct_at);
+}
+
+/* --- randsctile: the same field over any of forty-five tilings -------------
+ *
+ * randsctile(tiling, seed, ...) is randscq with the squares replaced by the
+ * tiles of the tiling its first argument names, and everything after that
+ * argument is what randsc takes and means the same. The numbers:
+ *
+ *   1-3    the regular tilings: squares, triangles, hexagons;
+ *   4-11   the eight Archimedean ones, regular polygons with every corner
+ *          alike: 4.8.8, 3.6.3.6, 3.4.6.4, 3.12.12, 4.6.12, 3.3.3.4.4,
+ *          3.3.4.3.4, 3.3.3.3.6;
+ *   12-19  their duals, which are not regular: tetrakis square, rhombille,
+ *          deltoidal trihexagonal, triakis triangular, kisrhombille, and the
+ *          prismatic, Cairo and floret pentagons;
+ *   20-32  bricks, Flemish bond, herringbone, basketweave, Pythagorean,
+ *          chevrons, squares and rhombi, houses, rows of squares and triangles
+ *          in two rhythms, hexagons among triangles, Greek crosses, T
+ *          tetrominoes;
+ *   33-37  Islamic stars: of eight points with crosses, of six with hexagons,
+ *          of eight from 4.8.8, of twelve from 3.12.12 and from 4.6.12;
+ *   38     irregular: randscp's Voronoi cells;
+ *   39-43  quasiperiodic, from de Bruijn's multigrids: Penrose's rhombs,
+ *          Penrose's kites and darts, Ammann-Beenker, and rhombs of twelve and
+ *          of seven directions;
+ *   44-45  by substitution: the pinwheel and the chair.
+ *
+ * Every tiling is scaled to a tile of unit area on average, which is what the
+ * rest of the family lays over each unit of the degraded size, so changing
+ * the first argument changes the shape of the cells and not their scale. A
+ * number outside 1 to 45 draws nought, as a zero size does.
+ *
+ * The periodic ones are tables (randsctile_tables.h), built and checked by
+ * tools/randsctile-tables.py: the point is taken to the lattice of the
+ * tiling, split into a whole number of periods -- exact, as randscq's cell is
+ * -- and a place within one, and the tiles that can hold a place of one
+ * period are tried in turn. Tiles may be concave, the stars and the crosses,
+ * so the test is the crossing number rather than a side at a time.
+ *
+ * The ones that do not repeat have no table to look in and are located
+ * afresh at every point, which makes them the dearest of the family. They
+ * are worked in double, in both builds -- in long double they took three
+ * times as long, and in quad the forty-eight levels of a Penrose tile are
+ * software arithmetic -- and so is the place within a period of the ones
+ * that do. What a tile is does not need more: the two builds disagree about
+ * it only on a hairline along its edges, as they do about any of the
+ * mosaics. Past 2^32 cells from the origin, where double would start to lose
+ * the tiles that do not repeat, those go flat, as the rest of the family does
+ * past its grid.
+ *
+ * The skew measures a tile as randscp measures its polygon: how far the point
+ * is from the tile's edge against the most any point of the tile is -- the
+ * radius of the largest circle it holds -- nought there and one along the
+ * whole edge, so the contours are the tile shrunk. Against the distance of
+ * the tile's middle instead, as it was first written, a concave tile went
+ * flat: the middle of an L or a dart sits close to its notch, and the rest
+ * of the tile was further from the edge than that and read nought. The
+ * rosette turns about the tile's middle, in the tile's own frame.
+ */
+#define RANDSCTILE_KINDS 45
+#define RANDSCTILE_SALT 0x3C6EF372FE94F82BULL
+
+/* past this many cells from the origin a tiling that does not repeat is flat */
+#define RANDSCTILE_FAR 4294967296.0
+
+enum {
+    RANDSCTILE_TABLE,
+    RANDSCTILE_VORONOI,
+    RANDSCTILE_GRID_OF,
+    RANDSCTILE_KITES,
+    RANDSCTILE_PINWHEEL,
+    RANDSCTILE_CHAIR
+};
+
+/* How each number is drawn, and which of its kind it is: a row of the
+ * periodic table, or a multigrid. */
+static const struct {
+    unsigned char how, which;
+} RANDSCTILE_KIND[RANDSCTILE_KINDS] = {
+    {RANDSCTILE_TABLE, 0},    {RANDSCTILE_TABLE, 1},
+    {RANDSCTILE_TABLE, 2},    {RANDSCTILE_TABLE, 3},
+    {RANDSCTILE_TABLE, 4},    {RANDSCTILE_TABLE, 5},
+    {RANDSCTILE_TABLE, 6},    {RANDSCTILE_TABLE, 7},
+    {RANDSCTILE_TABLE, 8},    {RANDSCTILE_TABLE, 9},
+    {RANDSCTILE_TABLE, 10},   {RANDSCTILE_TABLE, 11},
+    {RANDSCTILE_TABLE, 12},   {RANDSCTILE_TABLE, 13},
+    {RANDSCTILE_TABLE, 14},   {RANDSCTILE_TABLE, 15},
+    {RANDSCTILE_TABLE, 16},   {RANDSCTILE_TABLE, 17},
+    {RANDSCTILE_TABLE, 18},   {RANDSCTILE_TABLE, 19},
+    {RANDSCTILE_TABLE, 20},   {RANDSCTILE_TABLE, 21},
+    {RANDSCTILE_TABLE, 22},   {RANDSCTILE_TABLE, 23},
+    {RANDSCTILE_TABLE, 24},   {RANDSCTILE_TABLE, 25},
+    {RANDSCTILE_TABLE, 26},   {RANDSCTILE_TABLE, 27},
+    {RANDSCTILE_TABLE, 28},   {RANDSCTILE_TABLE, 29},
+    {RANDSCTILE_TABLE, 30},   {RANDSCTILE_TABLE, 31},
+    {RANDSCTILE_TABLE, 32},   {RANDSCTILE_TABLE, 33},
+    {RANDSCTILE_TABLE, 34},   {RANDSCTILE_TABLE, 35},
+    {RANDSCTILE_TABLE, 36},   {RANDSCTILE_VORONOI, 0},
+    {RANDSCTILE_GRID_OF, 0},  {RANDSCTILE_KITES, 0},
+    {RANDSCTILE_GRID_OF, 1},  {RANDSCTILE_GRID_OF, 2},
+    {RANDSCTILE_GRID_OF, 3},  {RANDSCTILE_PINWHEEL, 0},
+    {RANDSCTILE_CHAIR, 0}};
+
+/* What locating a point in a tiling hands back: the hash that names the tile,
+ * and, when the skew is asked for, how far out of the tile's middle the point
+ * stands and where it stands seen from that middle. */
+struct randsctile_hit {
+    uint64_t name;
+    double out;
+    double rx, ry;
+};
+
+/* floor without the library call, for the numbers this works in: well inside
+ * what an int64 holds, which RANDSCTILE_FAR sees to */
+static inline double randsctile_floor(double x)
+{
+    double t = (double)(int64_t)x;
+    return t > x ? t - 1 : t;
+}
+
+/* nought where the tile is deepest, one at its edge: the distance to the edge
+ * against the most there is */
+static double randsctile_out(double edge, double reach)
+{
+    double o = 1 - edge / reach;
+    return o < 0 ? 0 : (o > 1 ? 1 : o);
+}
+
+/* The distance from a point to the nearest side of a polygon, the squares
+ * compared and one root taken. */
+static double randsctile_edge(const double *x, const double *y, int n,
+                              double px, double py)
+{
+    double best = -1;
+    for (int i = 0; i < n; i++) {
+        int k = i + 1 == n ? 0 : i + 1;
+        double dx = x[k] - x[i], dy = y[k] - y[i];
+        double t = ((px - x[i]) * dx + (py - y[i]) * dy) / (dx * dx + dy * dy);
+        t = t < 0 ? 0 : (t > 1 ? 1 : t);
+        double ex = x[i] + t * dx - px, ey = y[i] + t * dy - py;
+        double d = ex * ex + ey * ey;
+        if (best < 0 || d < best)
+            best = d;
+    }
+    return sqrt(best);
+}
+
+/* Which side of the line through a and b the point is on: positive to the
+ * left. */
+static inline double randsctile_side(double px, double py, double ax,
+                                     double ay, double bx, double by)
+{
+    return (bx - ax) * (py - ay) - (by - ay) * (px - ax);
+}
+
+/* Whether p is on the same side of the line through a and b as q is -- the
+ * one test the substitutions below need, a child being cut from the rest of
+ * its parent by one line at a time. */
+static inline int randsctile_with(double px, double py, double qx, double qy,
+                                  double ax, double ay, double bx, double by)
+{
+    double s = randsctile_side(px, py, ax, ay, bx, by);
+    double t = randsctile_side(qx, qy, ax, ay, bx, by);
+    return (s >= 0) == (t >= 0);
+}
+
+/* The periodic tilings. The point goes to lattice coordinates in number_t and
+ * is split there, so the whole number of periods is exact however far out it
+ * is; only the place within one period, a number of order one, is worked in
+ * double. */
+static int randsctile_table(int which, number_t X, number_t Y, uint64_t h,
+                            int want, struct randsctile_hit *hit)
+{
+    const auto &t = RANDSCTILE_PERIODIC[which];
+    int64_t ia, ib;
+    number_t fa, fb;
+    if (!randsc_cell(X * (number_t)t.ia + Y * (number_t)t.ib, &ia, &fa) ||
+        !randsc_cell(X * (number_t)t.ja + Y * (number_t)t.jb, &ib, &fb)) {
+        /* past what a lattice index holds, a little before randsc_setup's own
+         * guard where a period is wider than a cell: flat, as there */
+        hit->name = randsc_hash(INT64_MIN, INT64_MIN, h);
+        return 1;
+    }
+    double la = (double)fa, lb = (double)fb;
+    double px = la * t.ax + lb * t.bx, py = la * t.ay + lb * t.by;
+
+    /* Two passes. The first asks each tile whether it holds the point. Two
+     * tiles that share a side hold it as their own vertices say, and those
+     * are the same side only to the last bit or so -- the one tile's corners
+     * were written out moved by a period, the other's are moved by it here --
+     * so a point exactly on a side can find neither. The second pass, which
+     * nothing but such a point ever reaches, gives it to the first tile it is
+     * within a billionth of a cell of. A hole wider than that is a hole, and
+     * finds nothing. */
+    const double wide = 1e-9;
+    for (int pass = 0; pass < 2; pass++)
+        for (int c = t.first; c < t.first + t.count; c++) {
+            const auto &cand = RANDSCTILE_CAND[c];
+            const auto &f = RANDSCTILE_FACE[cand.face];
+            /* the place, moved back by the periods the tile was moved by */
+            double qx = px - cand.i * t.ax - cand.j * t.bx;
+            double qy = py - cand.i * t.ay - cand.j * t.by;
+            /* the box is only there to save the test below, so it may be a
+             * little wide and must not be a little narrow */
+            if (qx < f.x0 - wide || qx > f.x1 + wide || qy < f.y0 - wide ||
+                qy > f.y1 + wide)
+                continue;
+            const double(*v)[2] = RANDSCTILE_VERT + f.first;
+            int in = 0;
+            if (pass == 0) {
+                for (int i = 0; i < f.count; i++) {
+                    int k = i + 1 == f.count ? 0 : i + 1;
+                    if ((v[i][1] > qy) != (v[k][1] > qy) &&
+                        qx < v[i][0] + (qy - v[i][1]) * (v[k][0] - v[i][0]) /
+                                           (v[k][1] - v[i][1]))
+                        in = !in;
+                }
+            }
+            double vx[24], vy[24];
+            if (pass == 1 || want)
+                for (int i = 0; i < f.count; i++) {
+                    vx[i] = v[i][0];
+                    vy[i] = v[i][1];
+                }
+            if (pass == 1)
+                in = randsctile_edge(vx, vy, f.count, qx, qy) < wide;
+            if (!in)
+                continue;
+            hit->name = randsc_hash(ia + cand.i, ib + cand.j,
+                                    h ^ (uint64_t)(cand.face + 1) *
+                                            0xD6E8FEB86659FD93ULL);
+            if (want) {
+                hit->out = randsctile_out(
+                    randsctile_edge(vx, vy, f.count, qx, qy), f.reach);
+                hit->rx = qx - f.mx;
+                hit->ry = qy - f.my;
+            }
+            return 1;
+        }
+    return 0;
+}
+
+/* de Bruijn's multigrid. In grid space there are n families of parallel
+ * lines, x.e_m + g_m a whole number; where a line a of family j crosses a
+ * line b of family k there is a tile, the rhombus with sides e_j and e_k
+ * whose first corner is a e_j + b e_k plus, for every other family, the whole
+ * number above x.e_m + g_m at the crossing. Its name is the four numbers j,
+ * k, a, b -- exact, and the same whoever asks.
+ *
+ * Going the other way, from a point p of the tiling to its tile, uses that
+ * the corners sum n/2 times the grid point, give or take a line of every
+ * family: the crossing is one of the lines each side of that guess, in some
+ * pair of families. Measured over eighteen thousand points as far out as a
+ * million, it always was. Tried in order, that is half of up to eighty-four
+ * candidates on average; the families whose lines pass nearest the guess are
+ * tried first, and each family's nearer line first, which brings it to four
+ * to eight. Should the crossing ever not be among them, one line more each
+ * way is tried, in plain order, before giving up. */
+static int randsctile_grid_try(const double (*e)[2], const double *g, int n,
+                               int j, int k, int64_t a, int64_t b, double px,
+                               double py, uint64_t h, int want,
+                               struct randsctile_hit *hit)
+{
+    double ejx = e[j][0], ejy = e[j][1], ekx = e[k][0], eky = e[k][1];
+    double det = ejx * eky - ejy * ekx;
+    double ra = (double)a - g[j], rb = (double)b - g[k];
+    double xs = (ra * eky - rb * ejy) / det, ys = (rb * ejx - ra * ekx) / det;
+    double vx = (double)a * ejx + (double)b * ekx;
+    double vy = (double)a * ejy + (double)b * eky;
+    for (int m = 0; m < n; m++) {
+        if (m == j || m == k)
+            continue;
+        double K = -randsctile_floor(-(xs * e[m][0] + ys * e[m][1] + g[m]));
+        vx += K * e[m][0];
+        vy += K * e[m][1];
+    }
+    double dx = px - vx, dy = py - vy;
+    double s = (dx * eky - dy * ekx) / det, t = (ejx * dy - ejy * dx) / det;
+    if (!(s >= 0 && s < 1 && t >= 0 && t < 1))
+        return 0;
+    hit->name = randsc_hash(
+        a, b, h ^ (uint64_t)(j * RANDSCTILE_GRID_MAX + k + 1) * 0xD6E8FEB86659FD93ULL);
+    if (want) {
+        /* in the rhombus's own coordinates the edge is the nearest of s,
+         * 1 - s, t and 1 - t, and the middle is a half from all four */
+        double o = s < 1 - s ? s : 1 - s;
+        if (t < o)
+            o = t;
+        if (1 - t < o)
+            o = 1 - t;
+        hit->out = randsctile_out(o, 0.5);
+        hit->rx = s - 0.5;
+        hit->ry = t - 0.5;
+    }
+    return 1;
+}
+
+static int randsctile_grid(int which, double X, double Y, uint64_t h, int want,
+                           struct randsctile_hit *hit)
+{
+    const auto &G = RANDSCTILE_GRID[which];
+    int n = G.n;
+    double px = X / G.edge, py = Y / G.edge;
+    double gx = 0, gy = 0;
+    for (int m = 0; m < n; m++) {
+        gx += (G.g[m] + 0.5) * G.e[m][0];
+        gy += (G.g[m] + 0.5) * G.e[m][1];
+    }
+    double x0 = (px - gx) * 2 / n, y0 = (py - gy) * 2 / n;
+    int64_t fl[RANDSCTILE_GRID_MAX], near[RANDSCTILE_GRID_MAX];
+    double d[RANDSCTILE_GRID_MAX];
+    int order[RANDSCTILE_GRID_MAX];
+    for (int m = 0; m < n; m++) {
+        double t = x0 * G.e[m][0] + y0 * G.e[m][1] + G.g[m];
+        double f = randsctile_floor(t);
+        fl[m] = (int64_t)f;
+        near[m] = t - f > 0.5 ? fl[m] + 1 : fl[m];
+        d[m] = t - f < 0.5 ? t - f : 1 - (t - f);
+        /* by how near a line of the family passes, nearest first */
+        int i = m;
+        while (i > 0 && d[order[i - 1]] > d[m]) {
+            order[i] = order[i - 1];
+            i--;
+        }
+        order[i] = m;
+    }
+    for (int i1 = 1; i1 < n; i1++)
+        for (int i2 = 0; i2 < i1; i2++) {
+            int j = order[i1] < order[i2] ? order[i1] : order[i2];
+            int k = order[i1] < order[i2] ? order[i2] : order[i1];
+            int64_t aa[2] = {near[j], 2 * fl[j] + 1 - near[j]};
+            int64_t bb[2] = {near[k], 2 * fl[k] + 1 - near[k]};
+            for (int q = 0; q < 4; q++)
+                if (randsctile_grid_try(G.e, G.g, n, j, k, aa[q >> 1], bb[q & 1],
+                                        px, py, h, want, hit))
+                    return 1;
+        }
+    for (int j = 0; j < n; j++)
+        for (int k = j + 1; k < n; k++)
+            for (int64_t a = fl[j] - 1; a <= fl[j] + 2; a++)
+                for (int64_t b = fl[k] - 1; b <= fl[k] + 2; b++)
+                    if (randsctile_grid_try(G.e, G.g, n, j, k, a, b, px, py, h,
+                                            want, hit))
+                        return 1;
+    return 0;
+}
+
+/* Penrose's kites and darts, from Robinson's triangles: a wheel of ten round
+ * the origin, each triangle cut at every level into two or three a golden
+ * ratio smaller, and the point followed into the one it falls in. The half
+ * kite has its 36 degree corner second, as the cutting rules want it, and a
+ * kite or a dart is two halves mirrored across the side B C. The children of
+ * a half kite are cut from one another by the lines Q R and A R, those of a
+ * half dart by B P, so a level costs a line or two rather than a triangle
+ * apiece.
+ *
+ * A tile is named by the middle of that side, which both halves reach by
+ * different routes and so by different arithmetic: it is rounded to a
+ * sixty-fourth of a cell first, where the two routes differ by a few parts
+ * in a million at the farthest the tiling reaches. */
+#define RANDSCTILE_KITE_LEVELS 48
+static const double RANDSCTILE_PHI = (1 + sqrt(5.0)) / 2;
+/* the wheel, as far out as the tiling reaches after all its levels */
+static const double RANDSCTILE_WHEEL = pow(RANDSCTILE_PHI, RANDSCTILE_KITE_LEVELS);
+
+static int randsctile_kites(double X, double Y, uint64_t h, int want,
+                            struct randsctile_hit *hit)
+{
+    const double IPHI = RANDSCTILE_PHI - 1; /* its reciprocal */
+    const double R = RANDSCTILE_WHEEL;
+    double px = X / RANDSCTILE_KITES_EDGE, py = Y / RANDSCTILE_KITES_EDGE;
+
+    int i = (int)randsctile_floor((atan2(py, px) / M_PI * 10 + 1) / 2);
+    i = ((i % 10) + 10) % 10;
+    double ax = R * cos((2 * i - 1) * M_PI / 10), ay = R * sin((2 * i - 1) * M_PI / 10);
+    double cx = R * cos((2 * i + 1) * M_PI / 10), cy = R * sin((2 * i + 1) * M_PI / 10);
+    if (i % 2 == 0) {
+        double t = ax;
+        ax = cx;
+        cx = t;
+        t = ay;
+        ay = cy;
+        cy = t;
+    }
+    double bx = 0, by = 0;
+    int red = 1;
+
+    for (int level = 0; level < RANDSCTILE_KITE_LEVELS; level++) {
+        if (red) {
+            double qx = ax + (bx - ax) * IPHI, qy = ay + (by - ay) * IPHI;
+            double rx = bx + (cx - bx) * IPHI, ry = by + (cy - by) * IPHI;
+            if (randsctile_with(px, py, bx, by, qx, qy, rx, ry)) {
+                /* R Q B, a half dart */
+                ax = rx;
+                ay = ry;
+                cx = bx;
+                cy = by;
+                bx = qx;
+                by = qy;
+                red = 0;
+            } else if (randsctile_with(px, py, qx, qy, ax, ay, rx, ry)) {
+                /* Q A R */
+                cx = rx;
+                cy = ry;
+                bx = ax;
+                by = ay;
+                ax = qx;
+                ay = qy;
+            } else {
+                /* C A R */
+                double tx = cx, ty = cy;
+                bx = ax;
+                by = ay;
+                ax = tx;
+                ay = ty;
+                cx = rx;
+                cy = ry;
+            }
+        } else {
+            double qx = cx + (ax - cx) * IPHI, qy = cy + (ay - cy) * IPHI;
+            if (randsctile_with(px, py, ax, ay, bx, by, qx, qy)) {
+                /* B P A, a half dart */
+                double tx = ax, ty = ay;
+                ax = bx;
+                ay = by;
+                bx = qx;
+                by = qy;
+                cx = tx;
+                cy = ty;
+            } else {
+                /* P C B, a half kite */
+                double tx = bx, ty = by;
+                ax = qx;
+                ay = qy;
+                bx = cx;
+                by = cy;
+                cx = tx;
+                cy = ty;
+                red = 1;
+            }
+        }
+    }
+
+    double mx = (bx + cx) / 2, my = (by + cy) / 2;
+    hit->name = randsc_hash((int64_t)randsctile_floor(mx * 64 + 0.5),
+                            (int64_t)randsctile_floor(my * 64 + 0.5),
+                            h ^ (red ? 0 : 0xA5A5A5A5A5A5A5A5ULL));
+    if (want) {
+        /* the other half is this one mirrored across B C */
+        double ux = cx - bx, uy = cy - by;
+        double t = ((ax - bx) * ux + (ay - by) * uy) / (ux * ux + uy * uy);
+        double fx = 2 * (bx + t * ux) - ax, fy = 2 * (by + t * uy) - ay;
+        double vx[4] = {ax, bx, fx, cx}, vy[4] = {ay, by, fy, cy};
+        double gx = (ax + fx + 2 * bx + 2 * cx) / 6;
+        double gy = (ay + fy + 2 * by + 2 * cy) / 6;
+        hit->out = randsctile_out(randsctile_edge(vx, vy, 4, px, py),
+                                  red ? RANDSCTILE_KITE_REACH
+                                      : RANDSCTILE_DART_REACH);
+        hit->rx = px - gx;
+        hit->ry = py - gy;
+    }
+    return 1;
+}
+
+/* Conway and Radin's pinwheel: the right triangle with legs one and two cut
+ * into five like it, root five smaller -- the one the foot of the altitude
+ * cuts off, and the other part, which is the triangle half as large again,
+ * cut by its midpoints into four. The children turn by an angle that is no
+ * fraction of a turn, so the tiles face every way there is. The altitude
+ * parts the first child from the rest, and the lines between the midpoints
+ * part the three corners from the one in the middle.
+ *
+ * A triangle is A, B, C with the right angle at B and A at the end of the
+ * long leg. Every point of a tile reached it by the one route, so the tile's
+ * middle is the same number wherever it is asked from and names it. */
+#define RANDSCTILE_PINWHEEL_LEVELS 29
+static const double RANDSCTILE_PINWHEEL_SIZE =
+    pow(sqrt(5.0), RANDSCTILE_PINWHEEL_LEVELS);
+
+static int randsctile_pinwheel(double X, double Y, uint64_t h, int want,
+                               struct randsctile_hit *hit)
+{
+    const double L = RANDSCTILE_PINWHEEL_SIZE;
+    double px = X, py = Y;
+    /* the patch: two of them back to back, a rectangle two by one */
+    double ax = -L, ay = -L / 2, bx = L, by = -L / 2, cx = L, cy = L / 2;
+    if (!randsctile_with(px, py, bx, by, ax, ay, cx, cy)) {
+        ax = L;
+        ay = L / 2;
+        bx = -L;
+        by = L / 2;
+        cx = -L;
+        cy = -L / 2;
+    }
+    for (int level = 0; level < RANDSCTILE_PINWHEEL_LEVELS; level++) {
+        double hx = (ax + 4 * cx) / 5, hy = (ay + 4 * cy) / 5;
+        if (randsctile_with(px, py, cx, cy, bx, by, hx, hy)) {
+            /* B H C, the part the altitude cuts off */
+            ax = bx;
+            ay = by;
+            bx = hx;
+            by = hy;
+            continue;
+        }
+        double abx = (ax + bx) / 2, aby = (ay + by) / 2;
+        double bhx = (bx + hx) / 2, bhy = (by + hy) / 2;
+        double ahx = (ax + hx) / 2, ahy = (ay + hy) / 2;
+        if (randsctile_with(px, py, ax, ay, ahx, ahy, abx, aby)) {
+            /* A, the middle of A H, the middle of A B */
+            bx = ahx;
+            by = ahy;
+            cx = abx;
+            cy = aby;
+        } else if (randsctile_with(px, py, hx, hy, ahx, ahy, bhx, bhy)) {
+            ax = ahx;
+            ay = ahy;
+            bx = hx;
+            by = hy;
+            cx = bhx;
+            cy = bhy;
+        } else if (randsctile_with(px, py, bx, by, abx, aby, bhx, bhy)) {
+            cx = bx;
+            cy = by;
+            ax = abx;
+            ay = aby;
+            bx = bhx;
+            by = bhy;
+        } else {
+            /* the one in the middle */
+            ax = bhx;
+            ay = bhy;
+            bx = abx;
+            by = aby;
+            cx = ahx;
+            cy = ahy;
+        }
+    }
+    double gx = (ax + bx + cx) / 3, gy = (ay + by + cy) / 3;
+    hit->name = randsc_hash((int64_t)randsctile_floor(gx * 16),
+                            (int64_t)randsctile_floor(gy * 16), h);
+    if (want) {
+        double vx[3] = {ax, bx, cx}, vy[3] = {ay, by, cy};
+        /* the inradius of legs one and two: (1 + 2 - root 5) / 2 */
+        hit->out = randsctile_out(randsctile_edge(vx, vy, 3, px, py),
+                                  (3 - sqrt(5.0)) / 2);
+        hit->rx = px - gx;
+        hit->ry = py - gy;
+    }
+    return 1;
+}
+
+/* The chair: an L of three squares cut into four Ls half its size, one in each
+ * corner of it and one in the middle, the two at the ends of the arms turned
+ * a quarter each way. The point is carried down in the coordinates of the L
+ * it is in -- [0,2]^2 without its upper right quarter -- so the numbers stay
+ * of order one all the way down, and the route taken names the tile. */
+#define RANDSCTILE_CHAIR_LEVELS 34
+/* the side of the smallest L's box, three quarters of it squared being the
+ * unit area of a tile */
+static const double RANDSCTILE_CHAIR_SIDE = 2 / sqrt(3.0);
+
+static int randsctile_chair(double X, double Y, uint64_t h, int want,
+                            struct randsctile_hit *hit)
+{
+    const double S = ldexp(1, RANDSCTILE_CHAIR_LEVELS);
+    /* the lower left corner of each child's box, in halves of the parent's
+     * coordinates, and the quarter turns it is turned by */
+    static const int DX[4] = {0, 1, 2, 0}, DY[4] = {0, 1, 0, 2};
+    static const int TURN[4] = {0, 0, 1, 3};
+    /* the origin in the middle of the lower left square of the whole L */
+    double x = (X / RANDSCTILE_CHAIR_SIDE + S / 4) / (S / 2);
+    double y = (Y / RANDSCTILE_CHAIR_SIDE + S / 4) / (S / 2);
+    uint64_t lo = 0, hi = 0;
+    for (int level = 0; level < RANDSCTILE_CHAIR_LEVELS; level++) {
+        /* the last is taken when none of the first three holds the point,
+         * which is only ever a matter of the last bit on an edge */
+        int pick = 3;
+        double nx = x, ny = y;
+        for (int c = 0; c < 4; c++) {
+            double u = (x - (double)DX[c] / 2) * 2 - 1;
+            double v = (y - (double)DY[c] / 2) * 2 - 1;
+            for (int q = 0; q < TURN[c]; q++) {
+                double w = u;
+                u = v;
+                v = -w;
+            }
+            u += 1;
+            v += 1;
+            if (c == 3 ||
+                (u >= 0 && u < 2 && v >= 0 && v < 2 && !(u >= 1 && v >= 1))) {
+                pick = c;
+                nx = u;
+                ny = v;
+                break;
+            }
+        }
+        x = nx;
+        y = ny;
+        if (level < 32)
+            lo = lo << 2 | (uint64_t)pick;
+        else
+            hi = hi << 2 | (uint64_t)pick;
+    }
+    hit->name = randsc_hash((int64_t)lo, (int64_t)hi, h);
+    if (want) {
+        static const double LX[6] = {0, 2, 2, 1, 1, 0};
+        static const double LY[6] = {0, 0, 1, 1, 2, 2};
+        /* the deepest an L of side two goes is a half, in the middle of
+         * any of its three squares; its middle is (5/6, 5/6) */
+        hit->out = randsctile_out(randsctile_edge(LX, LY, 6, x, y), 0.5);
+        hit->rx = x - 5.0 / 6;
+        hit->ry = y - 5.0 / 6;
+    }
+    return 1;
+}
+
+static sfarg *randsctile_at(sfarg *const p, unsigned int pass,
+                            const cmplx *here)
+{
+    int64_t cx, cy;
+    number_t u, v;
+    uint64_t h;
+
+    int kind = p->argc >= 1 ? (int)GSL_REAL(sfarg_or(p, 1, 0, 0)) : 0;
+    int state = kind >= 1 && kind <= RANDSCTILE_KINDS
+                    ? randsc_setup(p, 1, pass, here, &cx, &cy, &u, &v, &h)
+                    : RANDSC_STOP;
+    if (state == RANDSC_STOP) {
+        GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
+        return sfaram1(p);
+    }
+    /* a salt apiece, so that two tilings -- and this and the five -- do not
+     * hand back the same value where their indices happen to meet */
+    uint64_t salt = h ^ RANDSCTILE_SALT ^ (uint64_t)kind * 0x9E3779B97F4A7C15ULL;
+    if (state == RANDSC_BEYOND) {
+        GSL_SET_COMPLEX(&sfvalue(p), randsc_unit(randsc_hash(cx, cy, salt)), 0);
+        return sfaram1(p);
+    }
+
+    /* everything after the tiling one place further along than in randsc */
+    cmplx skew = sfarg_or(p, 7, 0, 0);
+    int skewmode = (int)GSL_REAL(sfarg_or(p, 8, 0, 0));
+    int wedges = (skewmode & (RANDSC_SKEW_ROSETTE | RANDSC_SKEW_WEDGE))
+                     ? (int)GSL_REAL(sfarg_or(p, 5, 1, 0))
+                     : 1;
+    int want = GSL_REAL(skew) != 0 || GSL_IMAG(skew) != 0;
+
+    /* the position in cells of unit area, as randsch and randsct take it */
+    number_t X = (number_t)cx + u, Y = (number_t)cy + v;
+    double lx = (double)X, ly = (double)Y;
+    int how = RANDSCTILE_KIND[kind - 1].how, which = RANDSCTILE_KIND[kind - 1].which;
+    int far = how != RANDSCTILE_TABLE && how != RANDSCTILE_VORONOI &&
+              !(fabs(lx) < RANDSCTILE_FAR && fabs(ly) < RANDSCTILE_FAR);
+    struct randsctile_hit hit = {0, 0, 0, 0};
+    int found = 0;
+    if (far) {
+        /* past the reach of a tiling that does not repeat: flat, as the rest
+         * of the family is past its grid */
+        GSL_SET_COMPLEX(&sfvalue(p), randsc_unit(randsc_hash(0, 0, salt)), 0);
+        return sfaram1(p);
+    }
+    switch (how) {
+        case RANDSCTILE_TABLE:
+            found = randsctile_table(which, X, Y, salt, want, &hit);
+            break;
+        case RANDSCTILE_VORONOI: {
+            number_t pout, pbx, pby;
+            hit.name = randsc_remix(
+                randscp_nearest(cx, cy, u, v, salt, want, &pout, &pbx, &pby));
+            hit.out = (double)pout;
+            hit.rx = -(double)pbx;
+            hit.ry = -(double)pby;
+            found = 1;
+            break;
+        }
+        case RANDSCTILE_GRID_OF:
+            found = randsctile_grid(which, lx, ly, salt, want, &hit);
+            break;
+        case RANDSCTILE_KITES:
+            found = randsctile_kites(lx, ly, salt, want, &hit);
+            break;
+        case RANDSCTILE_PINWHEEL:
+            found = randsctile_pinwheel(lx, ly, salt, want, &hit);
+            break;
+        case RANDSCTILE_CHAIR:
+            found = randsctile_chair(lx, ly, salt, want, &hit);
+            break;
+    }
+    if (!found) {
+        /* No tile claims the point. The tables are checked never to leave
+         * one, and the multigrid never has, so this is a hole in one of them
+         * rather than something a picture should ever show: nought, which the
+         * tests look for. */
+        GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
+        return sfaram1(p);
+    }
+
+    number_t tre, tim;
+    number_t ang = (skewmode & RANDSC_SKEW_ROSETTE)
+                       ? randsc_rosette((number_t)hit.rx, (number_t)hit.ry, wedges)
+                       : 0;
+    randsc_skewed(hit.name, (number_t)hit.out, ang, skew, skewmode, wedges, &tre,
+                  &tim);
+    GSL_SET_COMPLEX(&sfvalue(p), tre, tim);
+    return sfaram1(p);
+}
+
+sfarg *sfrandsctile(sfarg *const p)
+{
+    return randsc_run(p, 1, randsctile_at);
 }
 
 sfarg *sfgamma(sfarg *const p)

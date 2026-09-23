@@ -2241,6 +2241,212 @@ int main(void)
         }
     }
 
+    /* --- randsctile: the same field over forty-five tilings --------------
+     *
+     * What has to hold of every one of them is what holds of the mosaics:
+     * a tile is flat, a point is always in one, the values are the family's,
+     * the scale is one tile to the unit of area, and no two tilings are the
+     * same field. Nought is what the function hands back for a point no tile
+     * claims, which the tables are built never to leave, so a nought where a
+     * tiling was asked for is a hole in it. */
+    {
+        const int kinds = 45;
+        sffe *tile[46] = {NULL};
+        for (int k = 1; k <= kinds; k++) {
+            char expr[64];
+            sprintf(expr, "randsctile(%d,{7,0})", k);
+            tile[k] = compile(expr);
+        }
+
+        for (int k = 1; !failures && k <= kinds; k++) {
+            /* no holes, near the origin and far out, where a periodic tiling
+             * is split into whole periods first */
+            int holes = 0, outside = 0;
+            for (int i = 0; i < 60; i++)
+                for (int j = 0; j < 60; j++) {
+                    number_t x = (number_t)i / 5 - 6, y = (number_t)j / 5 - 6;
+                    number_t a = at(tile[k], x + (number_t)1 / 7, y, 0);
+                    number_t f = at(tile[k], x + 1000003, y - 999983, 0);
+                    if (a == 0 || f == 0)
+                        holes++;
+                    if (!(a >= 0 && a < 1) || !(f >= 0 && f < 1))
+                        outside++;
+                }
+            sprintf(what, "randsctile %d leaves no point without a tile", k);
+            check(holes == 0, what);
+            sprintf(what, "randsctile %d gives values in [0, 1)", k);
+            check(outside == 0, what);
+
+            /* flat across a tile: of a thousand steps of a thousandth, only
+             * the few that cross an edge may change the value */
+            int changed = 0;
+            for (int i = 0; i < 1000; i++) {
+                number_t x = (number_t)i / 97, y = (number_t)i / 131;
+                if (at(tile[k], x, y, 0) !=
+                    at(tile[k], x + (number_t)1 / 1000, y, 0))
+                    changed++;
+            }
+            sprintf(what,
+                    "randsctile %d is flat across a tile (%d of 1000 steps "
+                    "change it)",
+                    k, changed);
+            check(changed < 40, what);
+
+            /* one tile to the unit of area, counted as the mosaics are */
+            number_t seen[400];
+            int nseen = 0;
+            for (int i = 0; i < 300 && nseen < 400; i++)
+                for (int j = 0; j < 300 && nseen < 400; j++) {
+                    number_t val =
+                        at(tile[k], (number_t)i / 25, (number_t)j / 25, 0);
+                    int q;
+                    for (q = 0; q < nseen; q++)
+                        if (seen[q] == val)
+                            break;
+                    if (q == nseen)
+                        seen[nseen++] = val;
+                }
+            sprintf(what,
+                    "randsctile %d gives one tile per unit square (%d over 144)",
+                    k, nseen);
+            check(nseen >= 144 && nseen <= 260, what);
+        }
+
+        /* forty-five tilings, forty-five fields */
+        if (!failures) {
+            int same = 0;
+            for (int m = 1; m <= kinds; m++)
+                for (int n = m + 1; n <= kinds; n++)
+                    for (int i = -4; i <= 4; i++)
+                        for (int j = -4; j <= 4; j++) {
+                            number_t x = (number_t)i / 3, y = (number_t)j / 3;
+                            if (at(tile[m], x, y, 0) == at(tile[n], x, y, 0))
+                                same++;
+                        }
+            check(same == 0, "no two tilings are the same field");
+        }
+
+        /* and none is one of the five over again: the squares are not
+         * randscq's, nor the hexagons randsch's, nor the Voronoi randscp's */
+        if (!failures) {
+            sffe *q = compile("randscq({7,0})"), *hx = compile("randsch({7,0})");
+            sffe *pv = compile("randscp({7,0})");
+            int same = 0;
+            for (int i = -4; i <= 4; i++)
+                for (int j = -4; j <= 4; j++) {
+                    number_t x = (number_t)i / 3, y = (number_t)j / 3;
+                    same += at(tile[1], x, y, 0) == at(q, x, y, 0);
+                    same += at(tile[3], x, y, 0) == at(hx, x, y, 0);
+                    same += at(tile[38], x, y, 0) == at(pv, x, y, 0);
+                }
+            check(same == 0, "and none is a field the rest of the family draws");
+            sffe_free(&q);
+            sffe_free(&hx);
+            sffe_free(&pv);
+        }
+
+        /* A number that names no tiling draws nought, as a zero size does. */
+        if (!failures) {
+            sffe *none[3] = {compile("randsctile(0,{7,0})"),
+                             compile("randsctile(46,{7,0})"),
+                             compile("randsctile(-3,{7,0})")};
+            int zero = 1;
+            for (int i = 0; i < 3; i++)
+                if (none[i] && at(none[i], 0.3, 0.7, 0) != 0)
+                    zero = 0;
+            check(zero, "a number that names no tiling draws nought");
+            for (int i = 0; i < 3; i++)
+                sffe_free(&none[i]);
+        }
+
+        /* The skew turns a tile's value and leaves its size alone, in every
+         * tiling, and puts something in the imaginary part. */
+        if (!failures) {
+            int kept = 1, turned = 0;
+            for (int k = 1; k <= kinds; k++) {
+                char expr[80];
+                sprintf(expr, "randsctile(%d,{7,0},,,,,{0.3,0.1},3)", k);
+                sffe *sk = compile(expr);
+                if (!sk)
+                    break;
+                for (int i = 0; i < 40; i++) {
+                    number_t x = (number_t)i / 11 - 2, y = (number_t)i / 17 - 1;
+                    number_t plain = at(tile[k], x, y, 0);
+                    cmplx v = atc(sk, x, y, 0);
+                    number_t size = nsqrt(GSL_REAL(v) * GSL_REAL(v) +
+                                          GSL_IMAG(v) * GSL_IMAG(v));
+                    if (nfabs(size - plain) > (number_t)1 / 1000000000)
+                        kept = 0;
+                    if (GSL_IMAG(v) != 0)
+                        turned++;
+                }
+                sffe_free(&sk);
+            }
+            check(kept, "the skew turns a tile's value and keeps its size");
+            check(turned > 45 * 30, "and turns it off the real axis");
+        }
+
+        /* The arguments after the tiling are the family's, one place along:
+         * a selfsim ninth, and a tenth one too many. */
+        if (!failures) {
+            sffe *self = compile("randsctile(39,{7,0},{1,1},{0.5,0.5},,,,,1)");
+            sffe *toomany = compile("randsctile(1,{7,0},,,,,,,1,2)");
+            if (!failures) {
+                int inside = 1, differs = 0;
+                for (unsigned int n = 0; n < 12; n++) {
+                    number_t v = at(self, 0.3, 0.7, n);
+                    if (!(v >= 0 && v <= 1))
+                        inside = 0;
+                    if (n && v != at(tile[39], 0.3, 0.7, n))
+                        differs++;
+                }
+                check(inside && differs > 0,
+                      "randsctile takes a selfsim ninth, as randsc takes it "
+                      "eighth");
+                check(at(toomany, 0.3, 0.7, 0) == 0,
+                      "and ten arguments is one too many");
+            }
+            sffe_free(&self);
+            sffe_free(&toomany);
+        }
+
+        /* A kaleidoscope of five over Penrose's rhombs: a fifth of a turn lands
+         * on itself, the fold being the family's own. */
+        if (!failures) {
+            sffe *five = compile("randsctile(39,{7,0},,,5)");
+            if (!failures) {
+                int turns = 1;
+                number_t c = ncos(2 * N_PI / 5), sn = nsin(2 * N_PI / 5);
+                for (int i = 0; i < 40; i++) {
+                    number_t x = (number_t)i / 13 + (number_t)1 / 3;
+                    number_t y = (number_t)i / 29 + (number_t)1 / 7;
+                    if (at(five, x, y, 0) !=
+                        at(five, x * c - y * sn, x * sn + y * c, 0))
+                        turns = 0;
+                }
+                check(turns, "five wedges over Penrose: a fifth of a turn lands "
+                             "on itself");
+            }
+            sffe_free(&five);
+        }
+
+        /* Far out, past where a tiling that does not repeat is located, the
+         * field is flat, and it still moves from pass to pass. */
+        if (!failures) {
+            sffe *far = compile("randsctile(40,{7,0},{1,1},{0.5,0.5})");
+            if (!failures) {
+                check(at(far, 0.7, 0.4, 40) == at(far, -1.3, 0.9, 40),
+                      "a tiling that does not repeat is flat past its reach");
+                check(at(far, 0.7, 0.4, 40) != at(far, 0.7, 0.4, 41),
+                      "and still moves from pass to pass there");
+            }
+            sffe_free(&far);
+        }
+
+        for (int k = 1; k <= kinds; k++)
+            sffe_free(&tile[k]);
+    }
+
     if (failures)
         printf("\n%d check(s) failed\n", failures);
     return failures != 0;

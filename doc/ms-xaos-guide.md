@@ -423,6 +423,65 @@ a material rather than as a grid.
 triangular mosaic does have a grain, and that is what one asks for by choosing
 it.
 
+**`randsctile(tiling, seed, ...)`** — the same field over any of **forty-five
+tilings**, which the first argument chooses; everything after it is what the
+family takes, one place further along, so `selfsim` is the ninth. Every tiling
+is scaled to a tile of unit area on average, so the first argument changes the
+shape of the cells and not their scale. A number outside 1 to 45 draws nought.
+
+| | |
+| --- | --- |
+| 1–3 | the regular tilings: squares, triangles, hexagons |
+| 4–11 | the eight Archimedean ones, regular polygons with every corner alike: 4.8.8 (octagons and squares), 3.6.3.6, 3.4.6.4, 3.12.12, 4.6.12, 3.3.3.4.4, 3.3.4.3.4 (snub square), 3.3.3.3.6 (snub hexagonal) |
+| 12–19 | their duals, which are not regular: tetrakis square, rhombille (the cubes), deltoidal trihexagonal (kites), triakis triangular, kisrhombille, and the prismatic, Cairo and floret pentagons |
+| 20–32 | bricks, Flemish bond, herringbone, basketweave, Pythagorean (squares of two sizes), chevrons, squares and rhombi, houses (a pentagon, up and hanging by turns), rows of squares and triangles in two rhythms, hexagons among triangles, Greek crosses, T tetrominoes |
+| 33–37 | Islamic stars: eight-pointed with crosses, six-pointed with hexagons, eight-pointed from 4.8.8, twelve-pointed from 3.12.12 and from 4.6.12 |
+| 38 | Voronoi cells, irregular — `randscp`'s, with a value of its own |
+| 39–43 | tilings that never repeat, from de Bruijn's multigrids: Penrose's rhombs, Penrose's kites and darts, Ammann–Beenker's squares and rhombi, and rhombi in twelve and in seven directions |
+| 44–45 | by substitution: the pinwheel, whose triangles face every way there is, and the chair, Ls cut into Ls |
+
+The periodic ones are **tables**, written by `tools/randsctile-tables.py`, which
+builds each tiling from its geometry and checks it — twenty thousand points at
+random, each of which must fall in exactly one tile — before writing it. The
+Islamic stars are made from the Archimedean tilings: every polygon of eight
+sides or more becomes a star with its points on the polygon's corners, and the
+thin triangle between each notch of the star and the side goes to the tile
+across that side, so two stars sharing a side make a rhombus between them and a
+small polygon takes a notch on each side it shares with a star. Tiles may be
+concave — stars, crosses, the T — so a point is placed in its tile by the
+crossing number rather than side by side. The point is split into whole periods
+in the working precision, as `randscq` splits it into cells, so a periodic
+tiling is exact however far out.
+
+The ones that never repeat have **no table** and are worked out afresh at every
+point. Penrose's rhombs, Ammann–Beenker and the twelve- and sevenfold rhombi
+come from **de Bruijn's multigrid**: families of parallel lines in a second
+plane, a tile wherever two cross, named by the two lines — four whole numbers,
+exact whoever asks. The point is placed by trying the crossings next to where
+it lands in that plane, the families whose lines pass nearest first, which
+finds it in four to eight tries on average. The kites and darts come from
+Robinson's triangles cut level by level out of a wheel of ten round the origin,
+the pinwheel from a right triangle cut into five, the chair from an L cut into
+four; at each level a line or two decides which child the point is in.
+
+**What it costs**, measured per call against `randscq`'s 220 ns on this
+machine: the periodic tilings 255 to 380 ns, the ones that never repeat 410 to
+680. They are worked in `double` in both builds, the place within a period
+included — in long double the ones that never repeat took three times as
+long — and at that the two builds drew all forty-five tilings alike to the
+pixel, forty thousand points of each. Past 2³² cells from the origin, where
+`double` would start to lose their tiles, the tilings that never repeat go flat
+as the family does past its grid; the periodic ones hold out as far as the rest
+of the family does.
+
+The skew measures a tile as `randscp` measures its polygon, against the radius
+of the largest circle the tile holds, so the contours are the tile shrunk,
+concave ones included; the rosette turns about the tile's middle.
+
+    z+randsctile(18,13,{0.3,0.3},{1,1})*0.25        Cairo pentagons
+    z+randsctile(36,13,{0.3,0.3},{1,1})*0.25        twelve-pointed stars
+    z+randsctile(39,13,{0.3,0.3},{1,1},5)*0.25      Penrose, folded five ways
+
 **`fbm(value, seed, [intensity=4], [frequency=8], [octaves=4],
 [roughness=0.5])`** — a fractional Brownian motion: the same noise the family
 above is built from, summed in octaves, each at twice the frequency of the one
@@ -463,8 +522,9 @@ where a formula can use it.
 | `randscp` | hard, irregular |
 | `randsch` | hard, regular, hexagonal |
 | `randsct` | hard, regular, triangular |
+| `randsctile` | hard, any of forty-five tilings |
 
-All five lay one cell over each unit square of the size in force, so `size`
+All six lay one cell over each unit square of the size in force, so `size`
 means the same thing throughout: changing one letter changes the shape of the
 cells and not the scale of the picture. A hexagon of circumradius one covers
 2.6 unit squares and a triangle of side one covers 0.43, so those two grids are
@@ -482,7 +542,7 @@ go below about the position over what an integer holds — a billionth of a
 billionth of it. A degradation of a half reaches that in some sixty passes.
 Past it there is no cell structure left to resolve and the field is one flat
 value over the whole plane; it still changes on every pass and still differs
-between the five functions, so a formula subtracting one from another does not
+between the six functions, so a formula subtracting one from another does not
 settle on zero and iterate to the limit for nothing. For a fade that stays a
 picture the whole way, use a degradation near one.
 
