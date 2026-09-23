@@ -160,13 +160,14 @@ struct image {
 /* How many ways a palette can be made: 1 to 3 are XaoS's own, colours between
  * black and white anchors; 4 to 7 were made after measuring them --
  * smog, warm over night blue, the pairs the first three favour, and
- * colours truly at random. mkpalette takes them
+ * colours truly at random; 8 the gradients of Kandinsky's paintings, from mat
+ * to vivid. mkpalette takes them
  * counting from zero; palette_algorithm_name gives each its name, counting
  * from one.
  *
  * A position saved with one of the new ones names an algorithm the original
  * XaoS does not have and will refuse; one saved with 1 to 3 is unaffected. */
-#define PALGORITHMS 7
+#define PALGORITHMS 8
 #include "pixel_t.h"
 #define imgetpixel(image, x, y)                                                \
     ((image)->bytesperpixel == 1                                               \

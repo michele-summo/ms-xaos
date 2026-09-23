@@ -874,7 +874,7 @@ loses them says so.
 
 Fractal → Palette asks for an algorithm number, and says what each one is
 called after the number. 1 to 3 are XaoS's own; 4 to 7 were rebuilt after
-measuring what the first three are made of.
+measuring what the first three are made of, and 8 after measuring paintings.
 
 | | |
 | --- | --- |
@@ -885,6 +885,7 @@ measuring what the first three are made of.
 | 5 | **warm over night** — rose, red, burgundy, brown, orange, ochre and yellow over teal, petrol, blue and indigo, in 3's skeleton |
 | 6 | **favoured pairs** — the pairs of colours the first three put side by side most, set down whole between black and white |
 | 7 | **random colours** — every stop a colour truly at random, and nothing else |
+| 8 | **Kandinsky** — the gradients of his paintings, from mat to vivid and now and then to all but grey |
 
 ### What the first three are made of
 
@@ -953,13 +954,61 @@ meant to catch it, which is why it did not — so a picture saw the first hue
 alone. And they kept every stop a colour, deep or pale, with no black and no
 white, so nothing in them had an edge. The test now makes its palettes as the
 program does, and asks of all seven that the part a picture sees go from dark
-to light and hold more than one colour.
+to light and hold more than one colour; 8, which came after, is asked a little
+less, and why is below.
 
 A position saved with 4 to 7 before this change comes back in different
 colours: the number and the seed are all a position records of its palette, and
 what the number means has changed. One saved with 1 to 3 is unaffected, to the
 bit, and one saved with 4 to 7 names an algorithm the original XaoS does not
 have and will refuse.
+
+### 8, Kandinsky
+
+Made from two sets of pictures in his manner: four vivid vignettes — black,
+vermilion, yellow, cerulean, violet and pink on cream paper — and one mat
+picture, burnt orange, ochre, brown, sage and petrol on the same paper. The
+vignettes give eighteen colours, by k-means in CIELAB, and each has a **mat
+form**: the colour of the mat picture nearest it in lightness and hue, chroma
+left out, since chroma is what the two differ in. Vermilion becomes burnt
+orange, yellow ochre, burgundy brown, black a dark brown, cerulean sage, blue
+petrol. The mat picture has no grey, so the grey stays grey. The aqua it seems
+to have is a sage, 128,146,121: it reads as aqua only beside the orange.
+
+Every palette draws a **mood**. Four in five fall evenly between the mat forms
+and the vivid ones; the fifth go past the mat forms towards grey, down to
+fifteen hundredths of their chroma, and one palette in twenty or so is all but
+grey.
+
+**Anchors come by accident.** One palette in ten may turn a stop here and there
+to plain black or plain white: each stop after the first on its own throw, at a
+rate the palette draws between one stop in twenty and one in ten, black or
+white as the throw falls — no rhythm and no taking turns, unlike the anchors of
+1 to 3. The other nine palettes in ten are exactly what they were before the
+anchors came in: the throw was already made for every stop, and left unused.
+
+What follows a colour is where **his gradients** take it. Wherever the paint
+of the vignettes changes softly — over eight pixels, with no step larger than a
+third of the change — the colours at the two ends were counted, and every stop
+draws the next from those counts: paper goes on into a wash of yellow and then
+yellow, black into vermilion (three times in ten) and vermilion into burgundy,
+blue into mauve and mauve into pink, cerulean into grey aqua. The hard edges
+were counted too and left out: most of them are paper beside paper of another
+shade, and palettes made from them came out paper and grey. A palette starts on
+the paper or on the black.
+
+Over twenty thousand palettes, those of the top tenth of moods stand 0.06 from
+the vignettes, by the same divergence as above, and those of the tenth above
+nought 0.07 from the mat picture; from the other seven palettes they stand 0.39
+to 0.67.
+
+Because a gradient stays a while in one part of the colour circle, and 8 has no
+black and white every few stops to fall back on, the tests ask less of it than
+of the others. Where the palette is laid out long, forty entries a stop and
+more, a picture sees ten stops or so, and one palette in a hundred is then a
+single field — ochre with sage in it, petrol with vermilion — short of a third
+of the way from black to white or of a second colour. And three stops, which is
+what a short palette of 256 entries often is, are a single gradient.
 
 ## Watching the orbit
 

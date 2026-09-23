@@ -1,8 +1,8 @@
 /* The ways a palette can be made.
  *
  * Three of them are XaoS's own, colours between black and white anchors; four
- * more keep that skeleton and take their colours from elsewhere. What has to
- * hold of all seven is the same:
+ * more were made after measuring them, and an eighth after measuring paintings.
+ * What has to hold of all eight is the same:
  *
  *  - a palette is made from a seed, and the same algorithm and seed must give
  *    the same palette, because that pair is all a saved position records of
@@ -58,6 +58,10 @@ static int alloccolor(struct palette *pal, int init, int r, int g, int b)
 }
 
 static unsigned int pixels[4096];
+
+/* the two that are asked less of, counting from zero as mkpalette does */
+#define RANDOM_COLOURS 6
+#define KANDINSKY 7
 
 static void make(struct made *out, int algorithm, int seed)
 {
@@ -166,7 +170,7 @@ static int identical(const struct made *a, const struct made *b)
  * told so in as many words.
  *
  * Absolute numbers are no use here: how many bands there are to turn at is
- * chosen before any of the seven is asked, and at four segments not one of them
+ * chosen before any of the eight is asked, and at four segments not one of them
  * can do better than two. What can be asked is that the new ways are no slower
  * than the three that were always here, seed for seed. */
 static double variation(const struct made *m)
@@ -207,7 +211,7 @@ int main(void)
     static const int seeds[6] = {1, 99, 777, 4242, 12345, 65535};
     char what[128];
 
-    check(PALGORITHMS == 7, "there are seven ways to make a palette");
+    check(PALGORITHMS == 8, "there are eight ways to make a palette");
 
     /* --- the same seed gives the same palette ----------------------------- */
     {
@@ -282,7 +286,14 @@ int main(void)
      * Not of 7, which is colours at random and nothing else, as it was asked
      * to be: it used to hold black and white every third stop, and that rhythm
      * of very dark and very light was exactly what made it not random. Random
-     * colours make no promise of a dark and a light in three stops. */
+     * colours make no promise of a dark and a light in three stops.
+     *
+     * Nor of 8, Kandinsky, whose stops follow the gradients of his paintings:
+     * three stops, the last the first again, are one of those gradients, paper
+     * into a wash of yellow or black into vermilion, and a third of the way from
+     * black to white is more than one gradient spans. Where a picture looks it
+     * has its dark and its light, all but one palette in a hundred, as the
+     * check further down asks. */
     {
         int good[PALGORITHMS];
         for (int alg = 0; alg < PALGORITHMS; alg++) {
@@ -299,7 +310,9 @@ int main(void)
         for (int alg = 1; alg < 3; alg++)
             if (good[alg] < floor)
                 floor = good[alg];
-        for (int alg = 3; alg < PALGORITHMS - 1; alg++) {
+        for (int alg = 3; alg < PALGORITHMS; alg++) {
+            if (alg == RANDOM_COLOURS || alg == KANDINSKY)
+                continue;
             sprintf(what,
                     "algorithm %d has dark and light as often as the older ones "
                     "(%d of 1000, the worst of them %d)",
@@ -315,7 +328,9 @@ int main(void)
      * ones swelled once across the whole palette instead and were told, in as
      * many words, that the gradient was too slow. 7 again excepted: random
      * colours turn where the dice turn them. */
-    for (int alg = 3; alg < PALGORITHMS - 1; alg++) {
+    for (int alg = 3; alg < PALGORITHMS; alg++) {
+        if (alg == RANDOM_COLOURS)
+            continue;
         double worst = 1e9;
         for (int s = 0; s < 6; s++) {
             /* what the three that were always here manage on this seed */
@@ -341,11 +356,12 @@ int main(void)
     /* --- and in what a picture shows, they are palettes ---------------------
      *
      * The first six hundred entries of a palette made as the program makes it,
-     * which is more than most pictures ever reach. Every one of the seven must
+     * which is more than most pictures ever reach. Every one of the eight must
      * go from dark to light there and hold more than one colour: the three
      * that were always here do, on every seed tried, and the four that came
      * after them were one colour each until they were rebuilt. Warm over night
-     * must have both of its windows showing. */
+     * must have both of its windows showing. Kandinsky is asked after, and
+     * asked less. */
     {
         int worst_range[PALGORITHMS], fewest[PALGORITHMS], nightearth = 1;
         for (int alg = 0; alg < PALGORITHMS; alg++) {
@@ -365,6 +381,8 @@ int main(void)
                     nightearth = 0;
             }
         for (int alg = 0; alg < PALGORITHMS; alg++) {
+            if (alg == KANDINSKY)
+                continue;
             sprintf(what,
                     "algorithm %d shows dark and light where a picture looks "
                     "(%d of 765) and more than one colour (%d families)",
@@ -372,6 +390,75 @@ int main(void)
             check(worst_range[alg] >= 250 && fewest[alg] >= 2, what);
         }
         check(nightearth, "and warm over night shows both warm and night");
+    }
+
+    /* --- and Kandinsky, which is not always a palette in that sense -------
+     *
+     * Its stops follow his gradients, and a gradient stays a while in one part
+     * of the colour circle: paper into a wash of yellow into yellow, black into
+     * vermilion into burgundy. Where a picture sees fifteen stops or more that
+     * makes no difference. Where the palette is laid out long, forty entries a
+     * stop and more, and a picture sees ten stops, one palette in a hundred is a
+     * single field -- ochre with sage in it, petrol with vermilion, yellow with
+     * pink -- that falls short of a third of the way from black to white, or of
+     * a second colour; the two hundred they were chosen from had those in them.
+     * And a fifth of its palettes go past the mat colours towards grey, and the
+     * greyest keep too little hue to show two colours: that was asked for, grey
+     * now and then.
+     *
+     * So of four hundred palettes, what is asked is that dark and light are
+     * missing in one in fifty at most; and that a palette showing fewer than
+     * two colours comes now and then -- the greyest have to be there -- and no
+     * more than one in twelve. Four hundred made on this generator give four and
+     * twenty-six. */
+    {
+        int flat = 0, one = 0;
+        for (int sd = 0; sd < 400; sd++) {
+            make_app(&a, KANDINSKY, 1 + sd * 7919);
+            int r, f, warm, cool;
+            shown(&a, 600, &r, &f, &warm, &cool);
+            if (r < 250)
+                flat++;
+            if (f < 2)
+                one++;
+        }
+        sprintf(what,
+                "Kandinsky shows dark and light where a picture looks, all "
+                "but %d palettes of 400",
+                flat);
+        check(flat * 50 <= 400, what);
+        sprintf(what,
+                "and one colour or none now and then (%d palettes of 400), "
+                "the greyest among them",
+                one);
+        check(one * 50 >= 400 && one * 12 <= 400, what);
+    }
+
+    /* --- and its anchors come by accident ---------------------------------
+     *
+     * One palette in ten may turn a stop here and there to plain black or
+     * plain white, each stop on its own throw; nothing else in Kandinsky is
+     * either. So what a picture sees should hold one of them in about as many
+     * palettes as that -- asked for as one in ten -- not in none of them, and
+     * not in all of them the way the anchors of the older ones are. */
+    {
+        int anchored = 0;
+        for (int sd = 0; sd < 400; sd++) {
+            make_app(&a, KANDINSKY, 1 + sd * 7919);
+            for (int i = 0; i < 600 && i < a.size; i++) {
+                const unsigned char *c = a.rgb[i];
+                if ((!c[0] && !c[1] && !c[2]) ||
+                    (c[0] == 255 && c[1] == 255 && c[2] == 255)) {
+                    anchored++;
+                    break;
+                }
+            }
+        }
+        sprintf(what,
+                "and a black or white anchor in some of what a picture sees "
+                "(%d palettes of 400)",
+                anchored);
+        check(anchored * 20 >= 400 && anchored * 8 <= 400, what);
     }
 
     /* --- smog is not the classic ring -------------------------------------
@@ -400,6 +487,6 @@ int main(void)
     if (failures)
         printf("\n%d problem(s)\n", failures);
     else
-        printf("\nok     seven ways to make a palette, and all of them do\n");
+        printf("\nok     eight ways to make a palette, and all of them do\n");
     return failures != 0;
 }

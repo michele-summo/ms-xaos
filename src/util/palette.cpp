@@ -1026,13 +1026,178 @@ static void random_segments(int /*whitemode*/, int nsegments)
     colors[i - 1][2] = colors[0][2];
 }
 
+/* 8: Kandinsky -- the gradients of his paintings, from mat to vivid.
+ *
+ * Measured from two sets of references: four vivid vignettes in his manner --
+ * black, vermilion, yellow, cerulean, violet and pink on cream paper -- and one
+ * mat picture, burnt orange, ochre, brown, sage and petrol on the same paper.
+ * The four vignettes give eighteen colours, by k-means in CIELAB; each has a mat
+ * form, the colour of the mat picture nearest it in lightness and hue (chroma
+ * left out, since chroma is what the two pictures differ in): vermilion becomes
+ * burnt orange, yellow ochre, black a dark brown, cerulean sage. The mat
+ * picture has no grey, so the grey stays grey.
+ *
+ * Every palette draws a mood: four in five fall evenly between the mat forms
+ * and the vivid ones, the fifth goes past the mat forms towards grey, down to
+ * fifteen hundredths of their chroma, and one palette in twenty or so is all
+ * but grey. One palette in ten has anchors besides, plain black or plain white
+ * here and there, where the dice put them.
+ *
+ * What comes after a colour is what his gradients lead it to. In the vignettes,
+ * wherever the paint changes softly -- over eight pixels a colour turns into
+ * another with no step in between larger than a third of the change -- the two
+ * ends were counted: paper goes on into a wash of yellow and then yellow,
+ * black into vermilion and vermilion into burgundy, blue into mauve and mauve
+ * into pink, cerulean into grey aqua. Those counts, as hundredths of each row,
+ * are the table below, and every stop draws the next colour from it. Hard
+ * edges were counted too and left out: they are mostly paper beside paper of
+ * another shade, and palettes made from them were paper and grey.
+ *
+ * By the Jensen-Shannon divergence between their colours by name, over twenty
+ * thousand palettes, those of the top tenth of moods stand 0.06 from the
+ * vignettes and those of the tenth above nought 0.07 from the mat picture;
+ * against the other seven palettes they stand 0.39 to 0.67. */
+static const short kandinsky_roles[][2][3] = {
+    /* vivid L, C, h      mat L, C, h */
+    {{88, 13, 84}, {81, 15, 82}}, /* paper -> paper */
+    {{6, 3, 6}, {19, 15, 62}}, /* black -> dark brown */
+    {{84, 27, 89}, {69, 36, 71}}, /* warm paper -> ochre */
+    {{78, 16, 139}, {57, 16, 148}}, /* pale green -> sage */
+    {{64, 22, 197}, {57, 16, 148}}, /* grey aqua -> sage */
+    {{56, 28, 242}, {57, 16, 148}}, /* cerulean -> sage */
+    {{44, 82, 39}, {48, 71, 51}}, /* vermilion -> burnt orange */
+    {{67, 1, 148}, {67, 1, 148}}, /* grey -> the same grey */
+    {{83, 76, 90}, {69, 36, 71}}, /* yellow -> ochre */
+    {{36, 34, 276}, {26, 19, 196}}, /* blue -> petrol */
+    {{82, 51, 93}, {69, 36, 71}}, /* yellow wash -> ochre */
+    {{32, 14, 233}, {26, 19, 196}}, /* slate -> petrol */
+    {{36, 51, 30}, {42, 46, 58}}, /* burgundy -> brown */
+    {{69, 25, 7}, {61, 56, 61}}, /* pink -> light orange */
+    {{67, 32, 55}, {69, 36, 71}}, /* salmon -> ochre */
+    {{39, 14, 66}, {42, 46, 58}}, /* taupe -> brown */
+    {{45, 30, 326}, {48, 71, 51}}, /* mauve -> burnt orange */
+    {{67, 75, 66}, {69, 36, 71}}, /* orange -> ochre */
+};
+#define NKANDINSKY ((int)(sizeof(kandinsky_roles) / sizeof(kandinsky_roles[0])))
+#define KANDINSKY_PAPER 0
+#define KANDINSKY_BLACK 1
+
+/* how often, in hundredths, each colour's gradients lead to each other one */
+static const unsigned char kandinsky_next[NKANDINSKY][NKANDINSKY] = {
+    {0, 4, 12, 5, 6, 3, 2, 12, 8, 1, 19, 1, 3, 9, 7, 3, 2, 4}, /* paper */
+    {6, 0, 3, 2, 4, 3, 30, 6, 2, 10, 2, 8, 12, 2, 2, 5, 1, 3}, /* black */
+    {15, 2, 0, 9, 3, 1, 1, 2, 26, 0, 28, 1, 1, 1, 4, 1, 0, 5}, /* warm paper */
+    {7, 2, 11, 0, 30, 8, 0, 2, 15, 1, 16, 2, 1, 1, 1, 1, 0, 1}, /* pale green */
+    {8, 3, 3, 26, 0, 16, 2, 4, 7, 3, 13, 4, 3, 1, 1, 1, 2, 2}, /* grey aqua */
+    {4, 4, 1, 9, 20, 0, 9, 6, 8, 15, 5, 5, 5, 1, 1, 0, 7, 1}, /* cerulean */
+    {3, 34, 1, 1, 3, 9, 0, 1, 0, 5, 1, 3, 18, 3, 2, 3, 7, 6}, /* vermilion */
+    {27, 9, 3, 3, 7, 9, 2, 0, 3, 3, 2, 2, 3, 10, 3, 4, 8, 3}, /* grey */
+    {9, 1, 24, 12, 7, 6, 0, 1, 0, 0, 28, 1, 1, 3, 1, 1, 1, 5}, /* yellow */
+    {2, 15, 0, 2, 5, 22, 7, 3, 1, 0, 1, 3, 6, 3, 1, 1, 24, 2}, /* blue */
+    {19, 2, 23, 11, 11, 3, 1, 1, 24, 0, 0, 1, 0, 1, 1, 1, 0, 2}, /* yellow wash */
+    {5, 20, 2, 4, 12, 11, 7, 3, 2, 6, 2, 0, 7, 2, 2, 3, 9, 2}, /* slate */
+    {6, 16, 2, 1, 4, 7, 21, 3, 2, 5, 1, 4, 0, 11, 4, 2, 8, 4}, /* burgundy */
+    {20, 2, 2, 2, 1, 2, 4, 10, 6, 3, 2, 1, 12, 0, 3, 1, 23, 5}, /* pink */
+    {24, 6, 11, 4, 4, 2, 4, 4, 4, 2, 4, 2, 7, 5, 0, 3, 1, 13}, /* salmon */
+    {18, 18, 6, 3, 3, 2, 10, 10, 4, 2, 4, 5, 6, 2, 5, 0, 1, 2}, /* taupe */
+    {4, 1, 0, 1, 4, 10, 9, 8, 1, 23, 1, 5, 9, 22, 1, 0, 0, 3}, /* mauve */
+    {11, 6, 11, 3, 4, 2, 11, 3, 12, 3, 7, 2, 5, 6, 10, 1, 4, 0}, /* orange */
+};
+
+/* A colour given as CIELAB lightness, chroma and hue in degrees, in sRGB. When
+ * it is more than the screen can show, chroma is given up a little at a time
+ * until it is not, so that the colour keeps its lightness and its hue rather
+ * than having a channel cut off. */
+static void lch_to_rgb(double L, double C, double h, unsigned char *rgb)
+{
+    static const double white[3] = {0.95047, 1.0, 1.08883};
+    double lin[3];
+    for (int tries = 0; tries < 40; tries++) {
+        double a = C * cos(h * (3.14159265358979 / 180));
+        double b = C * sin(h * (3.14159265358979 / 180));
+        double fy = (L + 16) / 116;
+        double f[3] = {fy + a / 500, fy, fy - b / 200}, xyz[3];
+        for (int k = 0; k < 3; k++) {
+            double cube = f[k] * f[k] * f[k];
+            xyz[k] = white[k] * (cube > 0.008856 ? cube : (f[k] - 16.0 / 116) / 7.787);
+        }
+        lin[0] = 3.2406 * xyz[0] - 1.5372 * xyz[1] - 0.4986 * xyz[2];
+        lin[1] = -0.9689 * xyz[0] + 1.8758 * xyz[1] + 0.0415 * xyz[2];
+        lin[2] = 0.0557 * xyz[0] - 0.2040 * xyz[1] + 1.0570 * xyz[2];
+        int fits = 1;
+        for (int k = 0; k < 3; k++)
+            if (lin[k] < -1e-4 || lin[k] > 1 + 1e-4)
+                fits = 0;
+        if (fits)
+            break;
+        C *= 0.93;
+    }
+    for (int k = 0; k < 3; k++) {
+        double v = lin[k] < 0 ? 0 : (lin[k] > 1 ? 1 : lin[k]);
+        v = v <= 0.0031308 ? 12.92 * v : 1.055 * pow(v, 1 / 2.4) - 0.055;
+        rgb[k] = (unsigned char)(v * 255 + 0.5);
+    }
+}
+
+static void kandinsky_segments(int whitemode, int nsegments)
+{
+    /* the mood, in thousandths: below nought towards grey, above towards vivid */
+    int mood = prand(1251) - 250;
+    double t = mood > 0 ? mood / 1000.0 : 0;
+    double chroma = mood < 0 ? 1 + mood * 3.4 / 1000 : 1;
+    int role = whitemode ? KANDINSKY_PAPER : KANDINSKY_BLACK;
+    int anchored = 0, rate = 0;
+    int i;
+    for (i = 0; i < nsegments; i++) {
+        const short *v = kandinsky_roles[role][0], *m = kandinsky_roles[role][1];
+        /* a hue is only worth following where there is chroma to carry it */
+        double hv = v[2], hm = m[2];
+        if (m[1] < 5)
+            hm = hv;
+        if (v[1] < 5)
+            hv = hm;
+        double turn = fmod(hv - hm + 540, 360) - 180;
+        double L = m[0] + t * (v[0] - m[0]) + prand(9) - 4;
+        double C = (m[1] + t * (v[1] - m[1])) * chroma *
+                   (0.85 + 0.3 * prand(256) / 255);
+        double h = hm + t * turn + prand(13) - 6;
+        lch_to_rgb(L < 0 ? 0 : (L > 100 ? 100 : L), C, h, colors[i]);
+        /* Anchors, by accident. One palette in ten has them: there, any stop
+         * after the first may turn to plain black or plain white, each on its
+         * own throw, at a rate the palette draws between one stop in twenty and
+         * one in ten -- no rhythm, no taking turns. The other nine in ten are
+         * as they were before anchors: this draw was made and left unused
+         * then, since the palettes had been chosen from two hundred seeds made
+         * with it, and reading it now changes nothing where it finds none. */
+        int u = prand(10000);
+        if (!i) {
+            anchored = u < 1000;
+            rate = 500 + u / 2;
+        } else if (anchored && u < rate) {
+            int level = u < rate / 2 ? 0 : 255;
+            colors[i][0] = colors[i][1] = colors[i][2] = (unsigned char)level;
+        }
+        int total = 0, r, next;
+        for (next = 0; next < NKANDINSKY; next++)
+            total += kandinsky_next[role][next];
+        r = prand(total);
+        for (next = 0; r >= kandinsky_next[role][next]; next++)
+            r -= kandinsky_next[role][next];
+        role = next;
+    }
+    colors[i - 1][0] = colors[0][0];
+    colors[i - 1][1] = colors[0][1];
+    colors[i - 1][2] = colors[0][2];
+}
+
 /* What each is called in the palette dialog, counting from one as the dialog
  * does. */
 const char *palette_algorithm_name(int algorithm)
 {
     static const char *const names[PALGORITHMS] = {
         "Dark and colour", "Black, colour, white", "Warm over dark green",
-        "Smog", "Warm over night", "Favoured pairs", "Random colours"};
+        "Smog", "Warm over night", "Favoured pairs", "Random colours",
+        "Kandinsky"};
     if (algorithm < 1 || algorithm > PALGORITHMS)
         return "";
     return names[algorithm - 1];
@@ -1098,6 +1263,9 @@ int mkpalette(struct palette *c, int seed, int algorithm)
     XaoS_srandom(seed);
 
     switch (algorithm) {
+        case 7:
+            kandinsky_segments(whitemode, i1);
+            break;
         case 6:
             random_segments(whitemode, i1);
             break;
