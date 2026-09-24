@@ -23,6 +23,7 @@
 #include "number_math.h"
 #include "sffe.h"
 #include "sffe_cmplx_gsl.h"
+#include "fbm_noise.h"
 #include "misc-f.h"
 #include <cmath>
 
@@ -352,6 +353,99 @@ int main(void)
             check(at(smooth, 0.3, 0.7, 0) !=
                       at(smooth, (number_t)0.3 + step, 0.7, 0),
                   "randsc is not flat across a cell");
+
+        /* And draws no grid. It was value noise, whose smoothstep has no
+         * slope at either end of a cell, so the field went flat along every
+         * line of the lattice and the blobs came out squared off; across a
+         * line the slope was nought. Gradient noise is as steep there as
+         * between the lines, or a fifth steeper: it passes its middle at
+         * every corner, which is where the contrast curve is steepest. The
+         * lattice lies at FBM_NOISE_SCALE of the size, so its lines are where
+         * a coordinate times that is whole. */
+        if (!failures) {
+            sffe *one = compile("randsc({7,0},{1,1},{1,1})");
+            if (one) {
+                number_t cell = 1 / FBM_NOISE_SCALE;
+                number_t h = cell / 64, on = 0, mid = 0;
+                for (int k = 0; k < 200; k++)
+                    for (int j = 0; j < 20; j++) {
+                        number_t x = k * cell - 100 * cell;
+                        number_t y = (number_t)j * 37 / 100 + (number_t)11 / 100;
+                        on += nfabs(at(one, x + h, y, 0) - at(one, x - h, y, 0));
+                        x += cell / 2;
+                        mid += nfabs(at(one, x + h, y, 0) - at(one, x - h, y, 0));
+                    }
+                sprintf(what,
+                        "randsc is as steep across its lattice lines as between "
+                        "them (%.2f of it)",
+                        (double)(on / mid));
+                check(on / mid > (number_t)4 / 5 && on / mid < (number_t)5 / 4,
+                      what);
+                sffe_free(&one);
+            }
+        }
+
+        /* Its blobs are the size they were: size is the width of a blob, and
+         * value noise drew one that stopped resembling itself half as much at
+         * eleven sixteenths of it, measured this way. FBM_NOISE_SCALE brings
+         * gradient noise to the same sixteenth. */
+        if (!failures) {
+            sffe *one = compile("randsc({7,0},{1,1},{1,1})");
+            if (one) {
+                const int rows = 48, cols = 1024, per = 16;
+                std::vector<double> v((size_t)rows * cols);
+                double mean = 0;
+                for (int j = 0; j < rows; j++)
+                    for (int i = 0; i < cols; i++) {
+                        v[(size_t)j * cols + i] = (double)at(
+                            one, (number_t)i / per, (number_t)j * 7 / 3, 0);
+                        mean += v[(size_t)j * cols + i];
+                    }
+                mean /= (double)v.size();
+                double var = 0;
+                for (double &x : v) {
+                    x -= mean;
+                    var += x * x;
+                }
+                int lag = 1;
+                for (; lag < 4 * per; lag++) {
+                    double r = 0;
+                    for (int j = 0; j < rows; j++)
+                        for (int i = 0; i + lag < cols; i++)
+                            r += v[(size_t)j * cols + i] *
+                                 v[(size_t)j * cols + i + lag];
+                    r /= var * (cols - lag) / cols;
+                    if (r < 0.5)
+                        break;
+                }
+                double blob = (double)lag / per;
+                sprintf(what, "and its blobs are the size they were (%.2f of "
+                              "the size, against 0.69)",
+                        blob);
+                check(blob > 0.55 && blob < 0.8, what);
+
+                /* And as far apart in value: gradient noise swings seven
+                 * tenths as far from its middle as value noise did, and the
+                 * contrast curve takes it back. Value noise stood 0.2145 from
+                 * the middle, root mean square; gradient noise alone 0.1525. */
+                double sq = 0;
+                int n = 0;
+                for (int j = 0; j < 200; j++)
+                    for (int i = 0; i < 200; i++) {
+                        double d = (double)at(one, (number_t)i * 37 / 100,
+                                              (number_t)j * 41 / 100 + 500, 0) -
+                                   0.5;
+                        sq += d * d;
+                        n++;
+                    }
+                double spread = sqrt(sq / n);
+                sprintf(what, "and its values spread as they did (%.4f from the "
+                              "middle, against 0.2145)",
+                        spread);
+                check(spread > 0.2 && spread < 0.23, what);
+                sffe_free(&one);
+            }
+        }
 
         /* One cell to the unit square, whatever its shape.
          *
@@ -1231,13 +1325,18 @@ int main(void)
      * keeps a saved picture drawing the same way. Per precision, since the
      * mosaics are step functions and the two builds are entitled to disagree
      * along a cell edge.
+     *
+     * randsc's were written again, on purpose, when it went from value noise
+     * to gradient noise with value noise's contrast (see fbm_noise.h): every
+     * value moved, which is what this is here to notice. Those were 0x82c777cee11cf0ac and
+     * 0x256878588c8eb491.
      */
     {
         static const struct {
             const char *name;
             unsigned long long expected[2]; /* 64 bits, 113 bits */
         } golden[] = {
-            {"randsc", {0x82c777cee11cf0acULL, 0x256878588c8eb491ULL}},
+            {"randsc", {0x2567969ab7119e90ULL, 0x71931df64ecf3220ULL}},
             {"randscq", {0x7b41886762e6b000ULL, 0x7b41886762e6b000ULL}},
             {"randscp", {0x7f716aced74a4000ULL, 0x7f716aced74a4000ULL}},
             {"randsch", {0x46b88bf1d206f000ULL, 0x46b88bf1d206f000ULL}},
@@ -1630,6 +1729,131 @@ int main(void)
                               "(%.3f..%.3f against %.3f..%.3f)",
                         (double)olo, (double)ohi, (double)lo, (double)hi);
                 check(olo < lo && ohi > hi, what);
+            }
+        }
+
+        /* The value at (x, y) of an fbm call. */
+        auto fbm_at = [](sffe *f, number_t x, number_t y) {
+            GSL_SET_COMPLEX(&testq, x, y);
+            return GSL_REAL(atc(f, 0, 0, 0));
+        };
+
+        /* No grid. It was value noise, blended by a smoothstep that has no
+         * slope at either end of a cell, so the field went flat along every
+         * line of the lattice -- all of it, since every octave's lattice held
+         * the first one's lines -- and the picture came out in squares, as
+         * though worked out at a lower resolution than it was shown at. Across
+         * a line that slope was nought exactly; gradient noise has the same
+         * slope on the lines as between them. Measured across the lines of
+         * the first octave against across the middles of its cells, at the
+         * default settings and at those of FBM_ERROR.xpf, where the squares
+         * were reported. */
+        if (!failures) {
+            static const char *calls[2] = {"fbm(q,7,1,8)",
+                                           "fbm(q,7,1,8,10,0.2)"};
+            for (int c = 0; c < 2; c++) {
+                sffe *f = compile(calls[c]);
+                if (!f)
+                    break;
+                number_t cell = 1 / (8 * FBM_NOISE_SCALE);
+                number_t step = cell / 64, on = 0, mid = 0;
+                for (int k = 0; k < 200; k++)
+                    for (int j = 0; j < 20; j++) {
+                        number_t x = k * cell - 100 * cell;
+                        number_t y = (number_t)j * 37 / 100 + (number_t)11 / 100;
+                        on += nfabs(fbm_at(f, x + step, y) - fbm_at(f, x - step, y));
+                        x += cell / 2;
+                        mid += nfabs(fbm_at(f, x + step, y) - fbm_at(f, x - step, y));
+                    }
+                sprintf(what,
+                        "%s is as steep across the lattice lines as between "
+                        "them (%.2f of it)",
+                        calls[c], (double)(on / mid));
+                check(on / mid > (number_t)4 / 5 && on / mid < (number_t)5 / 4,
+                      what);
+                sffe_free(&f);
+            }
+        }
+
+        /* Nought to one and never outside, which is what the callers add it
+         * on the strength of. One octave is where the extremes are -- summing
+         * more only pulls towards the middle -- so that is what is sampled,
+         * over five seeds. */
+        if (!failures) {
+            number_t lo1 = 1, hi1 = 0;
+            for (int s = 1; s <= 5; s++) {
+                char call[40];
+                sprintf(call, "fbm(q,%d,1,8,1)", s);
+                sffe *f = compile(call);
+                if (!f)
+                    break;
+                for (int j = 0; j < 200; j++)
+                    for (int i = 0; i < 200; i++) {
+                        number_t v = fbm_at(f, (number_t)i * 3 / 200 - 1,
+                                            (number_t)j * 3 / 200 - 2);
+                        if (v < lo1)
+                            lo1 = v;
+                        if (v > hi1)
+                            hi1 = v;
+                    }
+                sffe_free(&f);
+            }
+            sprintf(what, "one octave stays between nought and one "
+                          "(%.3f to %.3f over 200000 points)",
+                    (double)lo1, (double)hi1);
+            check(lo1 >= 0 && hi1 <= 1, what);
+        }
+
+        /* The marks are the size they were, so that a frequency saved with a
+         * picture draws marks as large as it did: measured by how far the
+         * field has to move before it resembles itself only half as much.
+         * Value noise at the default settings did that at 0.56 of a cell of
+         * the frequency, and FBM_NOISE_SCALE is what brings gradient noise to
+         * the same. */
+        if (!failures) {
+            sffe *f = compile("fbm(q,7,1,8)");
+            if (f) {
+                const int rows = 48, cols = 768, per = 16;
+                std::vector<double> v((size_t)rows * cols);
+                double mean = 0;
+                for (int j = 0; j < rows; j++)
+                    for (int i = 0; i < cols; i++) {
+                        v[(size_t)j * cols + i] = (double)fbm_at(
+                            f, (number_t)i / (8 * per), (number_t)j * 3 / 7);
+                        mean += v[(size_t)j * cols + i];
+                    }
+                mean /= (double)v.size();
+                double var = 0;
+                for (double &x : v) {
+                    x -= mean;
+                    var += x * x;
+                }
+                int lag = 1;
+                for (; lag < 4 * per; lag++) {
+                    double r = 0;
+                    for (int j = 0; j < rows; j++)
+                        for (int i = 0; i + lag < cols; i++)
+                            r += v[(size_t)j * cols + i] *
+                                 v[(size_t)j * cols + i + lag];
+                    r /= var * (cols - lag) / cols;
+                    if (r < 0.5)
+                        break;
+                }
+                double marks = (double)lag / per;
+                sprintf(what, "and its marks are the size they were (%.2f of a "
+                              "cell, against 0.56)",
+                        marks);
+                check(marks > 0.45 && marks < 0.7, what);
+
+                /* and swing as far: 0.132 from the middle, root mean square,
+                 * as value noise did at these settings, where gradient noise
+                 * without the contrast curve came to 0.093 */
+                double spread = sqrt(var / (double)v.size());
+                sprintf(what, "and they swing as far as they did (%.3f from "
+                              "the middle, against 0.132)",
+                        spread);
+                check(spread > 0.12 && spread < 0.145, what);
+                sffe_free(&f);
             }
         }
         sffe_free(&plain);

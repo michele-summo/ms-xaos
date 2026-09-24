@@ -41,6 +41,7 @@
 
 #include "config.h"
 #include "number_math.h"
+#include "fbm_noise.h"
 #include "phist.h"
 #include "cmplx.h"
 #include "filter.h"
@@ -365,63 +366,25 @@ thread_local number_t color_px = 0, color_py = 0;
 /* --- a fractional Brownian motion, for the colouring modes that want the
  * picture to look used rather than clean ----------------------------------
  *
- * Value noise: the plane is cut into a lattice, every corner is hashed to a
- * number, and a point takes the four corners of its square blended by a
- * smoothstep -- which is nought and one at the ends with no slope, so the
- * field crosses a lattice line without a crease. Octaves of it are summed,
- * each at twice the frequency and keeping a share of the height of the one
- * before, and that sum is the motion: no octave is large enough to see on its
- * own and none is small enough to disappear, which is what makes it read as
- * wear rather than as a pattern.
+ * The motion itself is fbm_noise, which fbm() in the parser draws as well;
+ * what it is and why it is gradient noise is written there.
  *
- * The share is the roughness. At a half -- the plain motion -- the eighth
- * octave carries a two hundred and fiftieth of the whole, so octaves past
- * four or five change nothing one can see; measured, four and eighteen came
- * out the same picture. Raising it gives the fine octaves something to spend
- * and the count begins to matter, which is why both are offered.
+ * The roughness is the share of height each octave keeps of the one before.
+ * At a half -- the plain motion -- the eighth octave carries a two hundred and
+ * fiftieth of the whole, so octaves past four or five change nothing one can
+ * see; measured, four and eighteen came out the same picture. Raising it gives
+ * the fine octaves something to spend and the count begins to matter, which is
+ * why both are offered.
  *
  * The seed is a number the user sets and nothing else: no clock, no pass, no
  * order the pixels happened to be computed in, so a picture comes back the
- * same tomorrow and at the other precision.
+ * same tomorrow.
  *
  * Read at the pixel and not at the escape point. The escape point is not a
  * continuous function of the pixel -- it jumps wherever the escape iteration
  * does -- so noise read there comes out as grain, which was tried and thrown
  * away.
  */
-static inline uint64_t fbm_hash(int64_t x, int64_t y, int seed)
-{
-    uint64_t h = (uint64_t)seed * 0x9e3779b97f4a7c15ULL ^
-                 ((uint64_t)x * 0xff51afd7ed558ccdULL) ^
-                 ((uint64_t)y * 0xc4ceb9fe1a85ec53ULL);
-    h ^= h >> 33;
-    h *= 0xff51afd7ed558ccdULL;
-    h ^= h >> 33;
-    h *= 0xc4ceb9fe1a85ec53ULL;
-    h ^= h >> 33;
-    return h;
-}
-
-/* nought to one, out of the top bits, which are the mixed ones */
-static inline number_t fbm_unit(uint64_t h)
-{
-    return (number_t)(h >> 11) / (number_t)9007199254740992.0;
-}
-
-static number_t fbm_octave(number_t x, number_t y, int seed)
-{
-    number_t fx = nfloor(x), fy = nfloor(y);
-    int64_t cx = (int64_t)fx, cy = (int64_t)fy;
-    number_t u = x - fx, v = y - fy;
-    number_t su = u * u * (3 - 2 * u), sv = v * v * (3 - 2 * v);
-    number_t a = fbm_unit(fbm_hash(cx, cy, seed));
-    number_t b = fbm_unit(fbm_hash(cx + 1, cy, seed));
-    number_t c = fbm_unit(fbm_hash(cx, cy + 1, seed));
-    number_t d = fbm_unit(fbm_hash(cx + 1, cy + 1, seed));
-    number_t top = a + (b - a) * su;
-    number_t bottom = c + (d - c) * su;
-    return top + (bottom - top) * sv;
-}
 
 /* The motion at the pixel, in bands of colour: nought to the intensity asked
  * for, and never below.
@@ -455,25 +418,9 @@ static number_t fbm_at_pixel(int inset)
     int octaves = inset ? cfractalc.infbmoctaves : cfractalc.outfbmoctaves;
     int seed = inset ? cfractalc.infbmseed : cfractalc.outfbmseed;
 
-    if (octaves < 1)
-        octaves = 1;
-    if (octaves > 24)
-        octaves = 24;
-    if (!(rough > 0))
-        rough = (number_t)1 / 2;
-
-    number_t x = color_px * freq, y = color_py * freq;
-    number_t sum = 0, amp = 1, norm = 0;
-    for (int i = 0; i < octaves; i++) {
-        sum += amp * fbm_octave(x, y, seed + i);
-        norm += amp;
-        amp *= rough;
-        x *= 2;
-        y *= 2;
-    }
-    if (!(norm > 0))
-        return 0;
-    return (sum / norm) * much;
+    return fbm_noise(color_px * freq, color_py * freq,
+                     (uint64_t)(int64_t)seed, octaves, rough) *
+           much;
 }
 
 /* 2021-02-09 MSUMMO calculate color functions */

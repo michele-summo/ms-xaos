@@ -242,6 +242,16 @@ the bargain.
 noise over the point, giving blobs rather than per-pixel snow. `size`
 (default `1+i`) is the average width of a blob along the real axis and its
 height along the imaginary one.
+It is **gradient noise**, one octave of the motion the
+[fbm modes](#fractional-brownian-motion) and `fbm()` sum. It was value noise,
+and for the same reason as theirs it drew its lattice: the blobs went flat along
+every line of it and came out squared off. The blobs are as wide as they were —
+the lattice lies at three fifths of the size, and the field stops resembling
+itself half as much at eleven sixteenths of the size, before and after — and
+the values spread as they did, 0.2145 from the middle, the contrast curve of the
+fbm taking gradient noise's narrower spread back onto value noise's. But every
+value is a different one, and it costs 167 ns a call against 147. The five
+mosaics are their lattice and are unchanged to the bit.
 `degradation` (default `0.5+0.5i`, halving them each pass) shrinks them as
 the iteration proceeds: the
 size is multiplied by it at every pass, component by component, so `0.5+0.2i`
@@ -496,11 +506,12 @@ concave ones included; the rosette turns about the tile's middle.
     z+randsctile(39,13,{0.3,0.3},{1,1},5)*0.25      Penrose, folded five ways
 
 **`fbm(value, seed, [intensity=4], [frequency=8], [octaves=4],
-[roughness=0.5])`** — a fractional Brownian motion: the same noise the family
-above is built from, summed in octaves, each at twice the frequency of the one
-before and keeping `roughness` of its height. What it draws is **wear** rather
-than a pattern — stains and dents — because no octave is large enough to see on
-its own and none is small enough to disappear.
+[roughness=0.5])`** — a fractional Brownian motion: gradient noise summed in
+octaves, each at twice the frequency of the one before and keeping `roughness`
+of its height — the same motion the colouring modes of that name draw, see
+[Fractional Brownian Motion](#fractional-brownian-motion). What it draws is
+**wear** rather than a pattern — stains and dents — because no octave is large
+enough to see on its own and none is small enough to disappear.
 
 Where `randsc` reads the position and can only read the position, **this reads
 whatever you write in front of it**. That is the whole point of having it as a
@@ -1190,6 +1201,35 @@ draws clouds around the set with no count in them at all.
 the interesting one: the inside is one flat tone by default, and this gives it a
 surface.
 
+### Gradient noise, and no grid
+
+The motion is **gradient noise**: every corner of a lattice gets a direction,
+and a point takes from each corner the slope that direction gives at its
+distance. It used to be value noise — a number at each corner, blended by a
+smoothstep — and that drew a grid. A smoothstep has no slope at either end, so
+the field went flat along every line of the lattice, and since every octave's
+lattice held the lines of the first, all of them went flat there together.
+Across a line the slope was nought; the picture came out in squares, eight
+pixels a side in `FBM_ERROR.xpf`, as though it had been worked out at a lower
+resolution than it was shown at. Gradient noise is as steep on the lines as
+between them — measured, 0.99 of it at the default settings and 1.08 at that
+position's — and each octave's lattice is shifted against the one before, by
+amounts no doubling ever makes whole, so no two share a line or a corner.
+`fbm()` in formulas draws the same motion, and `randsc` is one octave of it.
+
+What was kept: the value still runs from nought to the intensity and never
+outside it; the **marks are the size they were**, the lattice running at three
+fifths of the frequency so that gradient noise draws them as large as value
+noise did (measured by how far the field moves before it resembles itself only
+half as much: 0.56 of a cell at the default settings, before and after); the
+**contrast**, which gradient noise alone has only seven tenths of — each octave
+goes through a curve that takes its values onto the distribution value noise
+had, monotone so that it moves no outline, and measured over the motion at the
+default settings it swings 0.133 from its middle against 0.132 before; and the
+cost, near enough — the modes a little faster than before, `fbm()` about an
+eighth slower. What was not: a position saved with an fbm mode keeps its
+numbers, its scale and its strength and **draws different marks**.
+
 ### The five numbers
 
 One dialog a side, under **Settings** in the same menu. They are saved with the
@@ -1198,7 +1238,7 @@ position.
 | | |
 | --- | --- |
 | **intensity** | how many bands of colour the noise moves the value by. `4` is the default; below one it is a whisper, above ten the bands stop being bands |
-| **frequency** | cells of the lattice to a unit of the plane — the size of the marks. **This is the one to raise as you zoom in**: at the first view `8` reads well, at a span of `0.02` it takes about `200` |
+| **frequency** | the size of the marks, as large as a lattice of that many cells to a unit of the plane would draw them. **This is the one to raise as you zoom in**: at the first view `8` reads well, at a span of `0.02` it takes about `200` |
 | **octaves** | how many are summed, each at twice the frequency of the one before |
 | **roughness** | what each octave keeps of the height of the one before it. `0.5` is the plain motion; higher is grittier |
 | **seed** | the same picture every time. Change it for a different one of the same character |

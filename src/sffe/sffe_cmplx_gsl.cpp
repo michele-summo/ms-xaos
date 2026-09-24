@@ -19,6 +19,7 @@
 #include <cstring>
 
 #include "number_math.h"
+#include "fbm_noise.h"
 #include "randsctile_tables.h"
 
 /* Every entry is {implementation, argument count, name}, optionally followed by
@@ -1785,11 +1786,18 @@ static void randsc_kaleido(number_t *px, number_t *py, int level, int mode)
  *
  * lead is how many arguments come before the seed: none for the five, one for
  * randsctile, whose first says which tiling. Everything after the seed means
- * the same in all six, one place further along there. */
+ * the same in all six, one place further along there.
+ *
+ * gradient is set by randsc alone, whose field is gradient noise: that draws
+ * its blobs smaller than its lattice, so the lattice is laid at
+ * FBM_NOISE_SCALE of the size to bring them back to the size asked for (see
+ * fbm_noise.h). The mosaics are their lattice, and are left exactly as they
+ * were. */
 static RANDSC_INLINE int randsc_setup(sfarg *const p, unsigned int lead,
                                       unsigned int pass, const cmplx *here,
                                       int64_t *cx, int64_t *cy, number_t *u,
-                                      number_t *v, uint64_t *hash)
+                                      number_t *v, uint64_t *hash,
+                                      int gradient = 0)
 {
     if (p->argc < 1 + lead || p->argc > 8 + lead)
         return RANDSC_STOP;
@@ -1867,7 +1875,12 @@ static RANDSC_INLINE int randsc_setup(sfarg *const p, unsigned int lead,
     if (level >= 2)
         randsc_kaleido(&px, &py, level, mode);
 
-    if (!randsc_cell(px / wr, cx, u) || !randsc_cell(py / wi, cy, v)) {
+    number_t gx = px / wr, gy = py / wi;
+    if (gradient) {
+        gx *= FBM_NOISE_SCALE;
+        gy *= FBM_NOISE_SCALE;
+    }
+    if (!randsc_cell(gx, cx, u) || !randsc_cell(gy, cy, v)) {
         /* Past the resolution of the grid. Not an error and not a refusal:
          * the caller gets one flat cell over the whole plane, which is what
          * it got before by accident, and gets it for the price of a
@@ -2034,18 +2047,31 @@ static RANDSC_INLINE sfarg *randsc_run(sfarg *const p, unsigned int lead,
  * @brief Coherent noise over the position, seeded and reproducible.
  * @details randsc(seed), randsc(seed, size), randsc(seed, size, degradation).
  *
- * Value noise: the plane is cut into cells, each corner is hashed to a number,
- * and the value between them is interpolated with a smooth curve. Nearby
- * points therefore give nearby values -- blobs rather than the per-pixel snow
- * a plain hash gives -- and that continuity is also what makes the result
- * stable. A difference in the input produces a difference of the same order in
- * the output, so the two precisions agree to about 1e-19 where a raw hash
- * would agree not at all. It is also why the cell boundary is not visible:
- * leaving one cell with weight 1 gives the same corner value as entering the
- * next with weight 0.
+ * Gradient noise, one octave of the motion fbm_noise sums: the plane is cut
+ * into cells, each corner is hashed to a direction, and a point takes from
+ * each corner the slope that direction gives at its distance, blended by a
+ * quintic. Nearby points therefore give nearby values -- blobs rather than the
+ * per-pixel snow a plain hash gives -- and that continuity is also what makes
+ * the result stable. A difference in the input produces a difference of the
+ * same order in the output, so the two precisions agree to the precision of a
+ * double, which the inside of a cell is worked in, where a raw hash would
+ * agree not at all.
+ *
+ * It was value noise, a number at each corner blended by a smoothstep, and
+ * that drew the lattice: a smoothstep has no slope at either end, so the
+ * field went flat along every line of it and the blobs came out squared off.
+ * Gradient noise is as steep on the lines as between them; see fbm_noise.h,
+ * where the motion made the same change for the same reason.
  *
  * size, default 1+i, is the average width of a blob along the real axis and
- * its height along the imaginary one.
+ * its height along the imaginary one. Gradient noise draws its blobs smaller
+ * than its lattice, so the lattice is laid at FBM_NOISE_SCALE of the size, and
+ * the blobs come out as wide as value noise drew them: by where the field
+ * stops resembling itself half as much, eleven sixteenths of the size before
+ * and after. And the values spread as they did: gradient noise alone swings
+ * seven tenths as far from its middle, and the contrast curve of fbm_noise.h
+ * takes it back onto the distribution value noise had -- 0.2145 from the
+ * middle, root mean square, before and after.
  *
  * degradation, default 1+i, shrinks the blobs as the iteration proceeds: the
  * size in force is size * degradation^n, taken component by component, so
@@ -2069,7 +2095,7 @@ static sfarg *randsc_at(sfarg *const p, unsigned int pass,
     number_t u, v;
     uint64_t h;
 
-    int state = randsc_setup(p, 0, pass, here, &cx, &cy, &u, &v, &h);
+    int state = randsc_setup(p, 0, pass, here, &cx, &cy, &u, &v, &h, 1);
     if (state == RANDSC_STOP) {
         GSL_SET_COMPLEX(&sfvalue(p), 0, 0);
         return sfaram1(p);
@@ -2090,16 +2116,7 @@ static sfarg *randsc_at(sfarg *const p, unsigned int pass,
                      ? (int)GSL_REAL(sfarg_or(p, 4, 1, 0))
                      : 1;
 
-    number_t su = u * u * (3 - 2 * u); /* smoothstep: flat at both ends, so */
-    number_t sv = v * v * (3 - 2 * v); /* the value meets its neighbour flat */
-
-    number_t a = randsc_unit(randsc_hash(cx, cy, h));
-    number_t b = randsc_unit(randsc_hash(cx + 1, cy, h));
-    number_t c = randsc_unit(randsc_hash(cx, cy + 1, h));
-    number_t d = randsc_unit(randsc_hash(cx + 1, cy + 1, h));
-    number_t lo = a + (b - a) * su;
-    number_t hi = c + (d - c) * su;
-    number_t level = lo + (hi - lo) * sv;
+    number_t level = fbm_noise_octave(cx, cy, (double)u, (double)v, h);
 
     if (GSL_REAL(skew) == 0 && GSL_IMAG(skew) == 0) {
         GSL_SET_COMPLEX(&sfvalue(p), level, 0);
@@ -2347,11 +2364,13 @@ sfarg *sfrandscp(sfarg *const p)
  * @details fbm(value, seed), and up to
  * fbm(value, seed, intensity, frequency, octaves, roughness).
  *
- * The same noise the randsc family is built from, summed in octaves: each at
- * twice the frequency of the one before and keeping a share of its height, so
- * that no octave is large enough to see on its own and none is small enough to
- * disappear. What that draws is wear rather than a pattern -- stains, dents,
- * the surface of something that has been left out.
+ * The motion the colouring modes of the same name draw -- fbm_noise, gradient
+ * noise summed in octaves, each at twice the frequency of the one before and
+ * keeping a share of its height, so that no octave is large enough to see on
+ * its own and none is small enough to disappear. What that draws is wear
+ * rather than a pattern -- stains, dents, the surface of something that has
+ * been left out. See fbm_noise.h for why it is gradient noise and no longer
+ * value noise, which drew a grid.
  *
  * Where randsc reads the position and can only read the position, this reads
  * whatever is written in front of it: fbm(z, 7) moves with the orbit,
@@ -2366,8 +2385,9 @@ sfarg *sfrandscp(sfarg *const p)
  *            never below, so that adding it to something cannot pull that
  *            under nought -- the colouring modes learned the same lesson the
  *            long way round.
- * frequency  cells of the lattice to a unit of the plane: the size of the
- *            marks, and what to raise as one zooms in.
+ * frequency  the size of the marks, and what to raise as one zooms in: marks
+ *            as large as a lattice of that many cells to a unit of the plane
+ *            drew them when the noise was value noise.
  * octaves    how many are summed. Held between one and twenty-four.
  * roughness  what each octave keeps of the height of the one before. A half is
  *            the plain motion; higher is grittier, and only then do the later
@@ -2377,9 +2397,9 @@ sfarg *sfrandscp(sfarg *const p)
  * parchmenta already fold the plane into sectors, so fbm(parchmenta(z, 6), 7)
  * says it, and says it where anyone reading the formula can see it.
  *
- * Each octave is given a seed of its own. Sharing one would leave every octave
- * agreeing wherever the lattices agree -- the origin, and every point that
- * lands on a corner -- which shows as a knot in the field.
+ * Each octave is given a seed of its own, and a lattice shifted against the
+ * one before. Sharing either would leave every octave agreeing
+ * wherever the lattices agree, which shows as a knot or a line in the field.
  *
  * @param p The call; the arguments are read right to left, see sfaramN.
  * @return Pointer to the last argument, per the sffe convention.
@@ -2398,44 +2418,9 @@ sfarg *sffbm(sfarg *const p)
     int octaves = (int)GSL_REAL(sfarg_or(p, 5, 4, 0));
     number_t rough = GSL_REAL(sfarg_or(p, 6, (number_t)1 / 2, 0));
 
-    if (octaves < 1)
-        octaves = 1;
-    if (octaves > 24)
-        octaves = 24;
-    if (!(rough > 0))
-        rough = (number_t)1 / 2;
-
-    number_t x = GSL_REAL(at) * freq, y = GSL_IMAG(at) * freq;
-    number_t sum = 0, amp = 1, norm = 0;
-
-    for (int i = 0; i < octaves; i++) {
-        int64_t cx, cy;
-        number_t u, v;
-        /* Past the resolution of the lattice there is no cell to stand in, and
-         * every octave after this one is finer still: what has been summed so
-         * far is all there is to have. */
-        if (!randsc_cell(x, &cx, &u) || !randsc_cell(y, &cy, &v))
-            break;
-
-        number_t su = u * u * (3 - 2 * u); /* smoothstep: flat at both ends, */
-        number_t sv = v * v * (3 - 2 * v); /* so a cell meets its neighbour  */
-
-        uint64_t h = randsc_hash((int64_t)i, 0, seed);
-        number_t a = randsc_unit(randsc_hash(cx, cy, h));
-        number_t b = randsc_unit(randsc_hash(cx + 1, cy, h));
-        number_t c = randsc_unit(randsc_hash(cx, cy + 1, h));
-        number_t d = randsc_unit(randsc_hash(cx + 1, cy + 1, h));
-        number_t lo = a + (b - a) * su;
-        number_t hi = c + (d - c) * su;
-
-        sum += amp * (lo + (hi - lo) * sv);
-        norm += amp;
-        amp *= rough;
-        x *= 2;
-        y *= 2;
-    }
-
-    GSL_SET_COMPLEX(&sfvalue(p), norm > 0 ? sum / norm * much : 0, 0);
+    number_t motion = fbm_noise(GSL_REAL(at) * freq, GSL_IMAG(at) * freq,
+                                seed, octaves, rough);
+    GSL_SET_COMPLEX(&sfvalue(p), motion * much, 0);
     return sfaram1(p);
 }
 
