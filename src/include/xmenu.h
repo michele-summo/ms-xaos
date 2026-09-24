@@ -433,7 +433,9 @@ menu_genernumberedsplit(int n, const char *menuname, int split,
                         void (*function)(struct uih_context *context, int),
                         int (*control)(struct uih_context *context, int),
                         const char *prefix);
-void menu_delnumbered(int n, const char *name);
+/* Removes and frees the block menu_genernumbered made with this prefix; the
+ * block knows its own length. */
+void menu_delnumbered(const char *name);
 void menu_addqueue(const menuitem *item, dialogparam *d);
 const menuitem *menu_delqueue(dialogparam **d);
 void menu_destroydialog(const menuitem *item, dialogparam *d,

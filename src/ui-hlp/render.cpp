@@ -32,7 +32,8 @@ static void error(const char *str)
         return;
     if (!gc)
         x_error(TR("Error", "Error: %s"), str);
-    uih_error(gc, str);
+    else
+        uih_error(gc, str);
 }
 
 static void uiherror(struct uih_context *c)

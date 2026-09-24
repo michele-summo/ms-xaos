@@ -1855,6 +1855,10 @@ static void uih_filtersw(struct uih_context *c, int n)
 
 static menuitem *formulaitems;
 static menuitem *filteritems;
+/* The fbm submenus, one on each side; out here so that uih_unregistermenus can
+ * take them out again. */
+static menuitem fbmitems[10];
+static int nfbmitems;
 void uih_registermenus(void)
 {
     char keys[2];
@@ -1930,7 +1934,6 @@ void uih_registermenus(void)
      * uih_setoutcoloringmode build when they tell the menus which mode is
      * chosen -- "in23", "out18" -- so these tick and untick with the rest. */
     {
-        static menuitem fbmitems[10];
         int n = 0;
         static const struct {
             const char *menu;
@@ -1987,7 +1990,8 @@ void uih_registermenus(void)
                     side ? uih_getoutfbmdialog : uih_getinfbmdialog);
             n++;
         }
-        menu_add(fbmitems, n);
+        nfbmitems = n;
+        menu_add(fbmitems, nfbmitems);
     }
 
     menu_genernumbered(COLORFUN - 1, "mincolorfun", colorfun, NULL, MENU_INT,
@@ -2038,24 +2042,18 @@ void uih_unregistermenus(void)
     menu_delete(formulaitems, nformulas);
     free(formulaitems);
 
-    menu_delnumbered(INCOLORING - 1, "in");
+    /* By prefix alone: each block knows how many entries uih_registermenus
+     * put in it, so the counts are written only there. */
+    menu_delnumbered("in");
+    menu_delnumbered("int");
+    menu_delnumbered("out");
+    menu_delnumbered("outt");
 
-    menu_delnumbered(TCOLOR - 1, "int");
+    menu_delete(fbmitems, nfbmitems);
 
-    menu_delnumbered(OUTCOLORING - 1, "out");
-
-    menu_delnumbered(TCOLOR - 1, "outt");
-
-    menu_delnumbered(COLORFUN - 1, "infun");
-
-    menu_delnumbered(COLORFUN - 1, "outfun");
-
-    {
-        int i;
-        for (i = 0; planename[i] != NULL; i++)
-            ;
-        menu_delnumbered(i, "plane");
-    }
+    menu_delnumbered("infun");
+    menu_delnumbered("outfun");
+    menu_delnumbered("plane");
 
     menu_delete(filteritems, uih_nfilters);
     free(filteritems);

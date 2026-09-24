@@ -219,6 +219,9 @@ int ui_params_parser(int argc, char **argv)
 
 void params_register(const struct params *par) { params[nparams++] = par; }
 
+/* 0 when there is nothing to render, 1 when the render went through and 2 when
+ * it failed; main exits with one less, so that a script driving -render can
+ * tell a file that did not load from one that did. */
 int ui_render(void)
 {
     if (defrender != NULL) {
@@ -243,9 +246,11 @@ int ui_render(void)
         }
         if (framerate <= 0)
             framerate = 30;
-        uih_renderanimation(NULL, rbasename, defrender, width, height,
-                            pixelwidth, pixelheight, (int)(1000000 / framerate),
-                            imagetype, alias, slowmode, letterspersec, NULL);
+        if (!uih_renderanimation(NULL, rbasename, defrender, width, height,
+                                 pixelwidth, pixelheight,
+                                 (int)(1000000 / framerate), imagetype, alias,
+                                 slowmode, letterspersec, NULL))
+            return 2;
         return 1;
     }
     return 0;

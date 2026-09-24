@@ -439,13 +439,25 @@ int menu_enabled(const menuitem *item, struct uih_context *c)
     return 0;
 }
 
-void menu_delnumbered(int n, const char *name)
+/* Takes out the block menu_genernumbered made with this prefix and frees it.
+ *
+ * How long the block is comes from the block itself -- it ends with an entry
+ * that has no shortname -- and not from the caller. It used to be passed in,
+ * which meant writing every count twice, once to register and once here; when
+ * the fbm modes changed the first and not the second, this walked three
+ * entries past the end of the inside colouring block and XaoS crashed on every
+ * exit. A block that is not registered is left alone. */
+void menu_delnumbered(const char *name)
 {
     menuitem *items;
-    int i;
+    int i, n;
     char s[256];
-    sprintf(s, "%s%i", name, 0);
+    snprintf(s, sizeof(s), "%s%i", name, 0);
     items = (menuitem *)menu_findcommand(s);
+    if (items == NULL)
+        return;
+    for (n = 0; items[n].shortname != NULL; n++)
+        ;
     menu_delete(items, n);
     for (i = 0; i < n; i++) {
         if (items[i].key)
@@ -469,10 +481,12 @@ menu_genernumbered(int n, const char *menuname, const char *const *const names,
 /* The same, with the entries from split onwards going to a second menu.
  *
  * One allocation, not two, because menu_delnumbered finds the first entry by
- * name and then walks n of them expecting the block menu_genernumbered
- * malloc'd; two calls would leave it walking off the end of the first. Which
- * menu an entry belongs to is a field of the entry, so one block can feed
- * both. */
+ * name and then walks the block to its end; two calls would leave it walking
+ * off the end of the first. Which menu an entry belongs to is a field of the
+ * entry, so one block can feed both.
+ *
+ * The block holds one entry more than it registers, left zeroed: no shortname
+ * marks its end for menu_delnumbered. */
 const menuitem *
 menu_genernumberedsplit(int n, const char *menuname, int split,
                         const char *submenu, const char *const *const names,
@@ -483,7 +497,7 @@ menu_genernumberedsplit(int n, const char *menuname, int split,
 {
     int l = keys != NULL ? (int)strlen(keys) : -1;
     int i;
-    menuitem *item = (menuitem *)malloc(sizeof(menuitem) * n);
+    menuitem *item = (menuitem *)calloc(n + 1, sizeof(menuitem));
     if (item == NULL)
         return NULL;
     for (i = 0; i < n; i++) {
