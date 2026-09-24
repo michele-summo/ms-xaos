@@ -97,13 +97,17 @@ foreach(prec ${XAOS_TEST_PRECISIONS})
    add_test(NAME randsc_speed_${suffix} COMMAND randsc_speed_${suffix})
 
    # The help window's function list is a second copy of the parser's table,
-   # and a second copy drifts. This compares them.
+   # and a second copy drifts. This compares them -- and the pictures of the
+   # Tilings tab, kept in the source tree, with what randsctile draws now.
    xaos_add_test_binary(formula_help_${suffix} ${prec}
                         formula_help_test.cpp
                         ${CMAKE_SOURCE_DIR}/src/ui/formulahelp_data.cpp
                         ${SFFE_SOURCES})
    target_include_directories(formula_help_${suffix}
-                              PRIVATE ${CMAKE_SOURCE_DIR}/src/ui)
+                              PRIVATE ${CMAKE_SOURCE_DIR}/src/ui
+                                      ${CMAKE_SOURCE_DIR}/tools)
+   target_compile_definitions(formula_help_${suffix}
+                              PRIVATE XAOS_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
    add_test(NAME formula_help_${suffix} COMMAND formula_help_${suffix})
 
    # The line under the formula bar reads half-written text and says which

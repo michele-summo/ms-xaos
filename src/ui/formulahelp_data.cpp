@@ -6,6 +6,8 @@
  *
  * Rows with no name are section headings, shown across both columns. */
 
+#include <cstring>
+
 #include "formulahelp.h"
 
 const struct formula_help_row formula_help_functions[] = {
@@ -123,7 +125,7 @@ const struct formula_help_row formula_help_functions[] = {
     {"randscp", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0], [skew_mode=0], [selfsim=off]", "the same field cut into irregular flat polygons, with straight edges", NULL},
     {"randsch", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0], [skew_mode=0], [selfsim=off]", "the same field cut into hexagons: a honeycomb of flat cells", NULL},
     {"randsct", "seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0], [skew_mode=0], [selfsim=off]", "the same field cut into equilateral triangles, alternating in orientation", NULL},
-    {"randsctile", "tiling, seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0], [skew_mode=0], [selfsim=off]", "the same field over one of forty-five tilings, chosen by the first argument (see the values): regular, Archimedean and their duals, bricks and other patterns, Islamic stars, Voronoi, Penrose, Ammann-Beenker and more that never repeat. The rest as randsc", NULL},
+    {"randsctile", "tiling, seed, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1], [mode=0], [skew=0], [skew_mode=0], [selfsim=off]", "the same field over one of forty-five tilings, chosen by the first argument (see the values, and the Tilings tab for a picture of each): regular, Archimedean and their duals, bricks and other patterns, Islamic stars, Voronoi, Penrose, Ammann-Beenker and more that never repeat. The rest as randsc", NULL},
     {"fbm", "value, seed, [intensity=4], [frequency=8], [octaves=4], [roughness=0.5]", "a fractional Brownian motion over the value written in front of it: octaves of the randsc noise, each at twice the frequency of the one before and keeping roughness of its height. Runs from nought to intensity and never below. fbm(z,7) moves with the orbit, fbm(x,7) stands still on the plane; parchmenta(z,6) inside it folds the plane into sectors", NULL},
     {NULL, NULL, NULL, "watching the orbit: both hand back their argument until the last iteration, and what they gathered on it, which the inside colouring modes then draw"},
     {"trap", "a, [shape=0], [centre=0], [size=1]", "how near the orbit ever came to a shape; the shapes are in the Values tab", NULL},
@@ -153,7 +155,7 @@ const struct formula_help_row formula_help_values[] = {
     {"4", "", "a ring of radius size", NULL},
     {"5", "", "a square of half-side size", NULL},
     {"6", "", "a diamond of half-diagonal size", NULL},
-    {NULL, NULL, NULL, "randsctile: the tiling, its first argument. Every one scaled to a tile of unit area on average, so it changes the shape of the cells and not their scale. The ones that never repeat are worked out point by point and cost the most; they go flat past four thousand million cells from the origin"},
+    {NULL, NULL, NULL, "randsctile: the tiling, its first argument. Every one scaled to a tile of unit area on average, so it changes the shape of the cells and not their scale. The ones that never repeat are worked out point by point and cost the most; they go flat past four thousand million cells from the origin. The Tilings tab has a picture of each"},
     {"1", "", "squares", NULL},
     {"2", "", "equilateral triangles", NULL},
     {"3", "", "hexagons", NULL},
@@ -266,3 +268,37 @@ const struct formula_help_row formula_help_notation[] = {
     {"(a)(b)", "", "the same, between two bracketed groups", NULL},
     {"-z^2", "", "a leading minus binds looser than a power: it means -(z^2)", NULL},
     {NULL, NULL, NULL, NULL}};
+
+/* The numbered rows under the randsctile heading of the Values tab, which the
+ * Tilings tab captions its pictures with. Found here rather than written out a
+ * second time, so that the two tabs cannot come to say different things; a
+ * test checks that what is found is every tiling the parser draws. */
+static int whole_number(const char *text)
+{
+    if (!*text)
+        return -1;
+    int n = 0;
+    for (; *text; text++) {
+        if (*text < '0' || *text > '9')
+            return -1;
+        n = n * 10 + (*text - '0');
+    }
+    return n;
+}
+
+int formula_help_tilings(const struct formula_help_row **rows)
+{
+    static const char heading[] = "randsctile:";
+    const struct formula_help_row *r = formula_help_values;
+    for (; r->name || r->section; r++)
+        if (r->section && !strncmp(r->section, heading, sizeof heading - 1))
+            break;
+    *rows = NULL;
+    if (!r->section)
+        return 0;
+    *rows = ++r;
+    int count = 0;
+    while (r[count].name && whole_number(r[count].name) == count + 1)
+        count++;
+    return count;
+}

@@ -28,8 +28,13 @@ extern const struct formula_help_row formula_help_variables[];
 extern const struct formula_help_row formula_help_notation[];
 /* Not compared against the parser: these are argument values, not names. */
 extern const struct formula_help_row formula_help_values[];
-/* Not compared against the parser: these are argument values, not names. */
-extern const struct formula_help_row formula_help_values[];
+
+/* The tilings randsctile draws, as the Values tab lists them: the numbered
+ * rows under its heading that begins "randsctile:", tiling k at rows[k - 1].
+ * Returns how many, and points *rows at the first. The Tilings tab captions
+ * its pictures with these, and a test checks they are every tiling the
+ * parser has -- no more, no fewer. */
+int formula_help_tilings(const struct formula_help_row **rows);
 
 /* --- the line under the formula bar --------------------------------------
  *

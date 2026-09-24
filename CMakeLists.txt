@@ -218,6 +218,7 @@ if(EMSCRIPTEN)
        ${QM_FILES}
        ${XaoS_ICON}
        src/ui/XaoS.qrc
+       src/ui/images/tilings/tilings.qrc
        XaoS.qrc
     )
     target_link_libraries(xaos PUBLIC Qt6::Widgets)
@@ -233,6 +234,7 @@ else()
           ${QM_FILES}
           ${XaoS_ICON}
           src/ui/XaoS.qrc
+          src/ui/images/tilings/tilings.qrc
           XaoS.qrc
        )
        # A Windows executable is linked into the console subsystem unless it
@@ -325,6 +327,35 @@ else()
           message(STATUS "windeployqt not found; the 'deploy' target is unavailable")
        endif()
     endif(WIN32)
+
+    # 'randsctile-thumbnails' redraws the pictures in the Tilings tab of the
+    # formula reference, into src/ui/images/tilings, from randsctile itself.
+    # Not part of the build: the pictures are kept in the tree, and the
+    # formula_help test says when a tiling has changed and they are out of
+    # date. The Qt libraries are put on the path for the one run, as they are
+    # not next to a program that stays in the build directory.
+    add_executable(randsctile_thumbnails EXCLUDE_FROM_ALL
+       tools/randsctile-thumbnails.cpp
+       src/sffe/sffe.cpp
+       src/sffe/sffe_cmplx_gsl.cpp
+       src/sffe/gsl_complex_math.c
+       src/util/xstring.cpp
+    )
+    set_target_properties(randsctile_thumbnails PROPERTIES AUTOMOC OFF AUTORCC OFF)
+    target_compile_definitions(randsctile_thumbnails PRIVATE _USE_MATH_DEFINES
+                               ${XAOS_PRECISION})
+    target_link_libraries(randsctile_thumbnails Qt6::Gui)
+    if(XAOS_PRECISION STREQUAL "USE_FLOAT128")
+       target_link_libraries(randsctile_thumbnails quadmath)
+    endif()
+    add_custom_target(randsctile-thumbnails
+       COMMAND ${CMAKE_COMMAND} -E env
+               --modify PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>
+               $<TARGET_FILE:randsctile_thumbnails>
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/images/tilings
+       DEPENDS randsctile_thumbnails
+       COMMENT "Drawing the randsctile thumbnails into src/ui/images/tilings"
+       VERBATIM)
 endif(EMSCRIPTEN)
 
 if(EMSCRIPTEN)

@@ -172,6 +172,82 @@ static QWidget *buildTable(const struct formula_help_row *rows,
     return table;
 }
 
+/* The Tilings tab: a picture of every tiling randsctile takes, captioned as
+ * the Values tab lists it.
+ *
+ * Forty-five numbers with a line of words each say little about what the
+ * shapes are, and a picture says it at a glance. The pictures are drawn by
+ * randsctile itself, once, by tools/randsctile-thumbnails.cpp, and kept in
+ * the binary, since they never change between one opening and the next;
+ * formula_help_test checks they are still what it draws.
+ *
+ * A double click copies the start of the call, so that the tiling picked
+ * goes into the formula without its number being looked up again. */
+static QWidget *buildTilings()
+{
+    const struct formula_help_row *rows;
+    const int count = formula_help_tilings(&rows);
+    const int side = 128; /* the pictures are stored at twice this */
+
+    QLabel *hint = new QLabel(QObject::tr(
+        "Double-click a tiling to copy the start of its call to the "
+        "clipboard."));
+    hint->setTextFormat(Qt::PlainText);
+    hint->setWordWrap(true);
+    hint->setMargin(4);
+
+    QListWidget *list = new QListWidget;
+    list->setViewMode(QListView::IconMode);
+    list->setMovement(QListView::Static);
+    list->setResizeMode(QListView::Adjust);
+    list->setWrapping(true);
+    /* Not uniform sizes: those measure the first item for all of them, and
+     * "1  squares" is one line, so every longer caption was cut to one. */
+    list->setWordWrap(true);
+    list->setSelectionMode(QAbstractItemView::SingleSelection);
+    list->setIconSize(QSize(side, side));
+    /* A cell as wide as a picture and a margin, and as tall as one and four
+     * lines of caption: the longest takes three at this width. */
+    QFontMetrics metrics(list->font());
+    list->setGridSize(
+        QSize(side + 3 * metrics.horizontalAdvance(QChar('m')),
+              side + 4 * metrics.lineSpacing() + metrics.height() / 2));
+
+    for (int k = 1; k <= count; k++) {
+        QPixmap picture(
+            QString(":/images/tilings/tiling-%1.png").arg(k, 2, 10, QChar('0')));
+        picture.setDevicePixelRatio(2);
+        /* The same picture when selected: left to itself Qt tints a selected
+         * icon with the highlight, and the colours of the tiling with it. */
+        QIcon icon(picture);
+        icon.addPixmap(picture, QIcon::Selected);
+        const QString what = QObject::tr(rows[k - 1].summary);
+        QListWidgetItem *item = new QListWidgetItem(
+            icon, QString("%1  %2").arg(k).arg(what), list);
+        item->setData(Qt::UserRole, k);
+        item->setToolTip(QString("randsctile(%1, seed, ...)\n%2").arg(k).arg(what));
+    }
+
+    QObject::connect(
+        list, &QListWidget::itemDoubleClicked, hint,
+        [hint](QListWidgetItem *item) {
+            const QString call =
+                QString("randsctile(%1, ").arg(item->data(Qt::UserRole).toInt());
+            QGuiApplication::clipboard()->setText(call);
+            hint->setText(QObject::tr("Copied \"%1\" to the clipboard: paste "
+                                      "it into the formula and write the seed "
+                                      "after it.")
+                              .arg(call));
+        });
+
+    QWidget *page = new QWidget;
+    QVBoxLayout *layout = new QVBoxLayout(page);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(hint);
+    layout->addWidget(list);
+    return page;
+}
+
 void ui_formulahelp(struct uih_context * /*uih*/)
 {
     static QWidget *window = NULL;
@@ -193,6 +269,7 @@ void ui_formulahelp(struct uih_context * /*uih*/)
                      QObject::tr("Notation"));
         tabs->addTab(buildTable(formula_help_values, QObject::tr("Value")),
                      QObject::tr("Values"));
+        tabs->addTab(buildTilings(), QObject::tr("Tilings"));
 
         QVBoxLayout *layout = new QVBoxLayout(window);
         layout->addWidget(tabs);

@@ -1,0 +1,50 @@
+<!-- Written by tools/randsctile-thumbnails.cpp: do not edit. -->
+<RCC>
+    <qresource prefix="/images/tilings">
+        <file>tiling-01.png</file>
+        <file>tiling-02.png</file>
+        <file>tiling-03.png</file>
+        <file>tiling-04.png</file>
+        <file>tiling-05.png</file>
+        <file>tiling-06.png</file>
+        <file>tiling-07.png</file>
+        <file>tiling-08.png</file>
+        <file>tiling-09.png</file>
+        <file>tiling-10.png</file>
+        <file>tiling-11.png</file>
+        <file>tiling-12.png</file>
+        <file>tiling-13.png</file>
+        <file>tiling-14.png</file>
+        <file>tiling-15.png</file>
+        <file>tiling-16.png</file>
+        <file>tiling-17.png</file>
+        <file>tiling-18.png</file>
+        <file>tiling-19.png</file>
+        <file>tiling-20.png</file>
+        <file>tiling-21.png</file>
+        <file>tiling-22.png</file>
+        <file>tiling-23.png</file>
+        <file>tiling-24.png</file>
+        <file>tiling-25.png</file>
+        <file>tiling-26.png</file>
+        <file>tiling-27.png</file>
+        <file>tiling-28.png</file>
+        <file>tiling-29.png</file>
+        <file>tiling-30.png</file>
+        <file>tiling-31.png</file>
+        <file>tiling-32.png</file>
+        <file>tiling-33.png</file>
+        <file>tiling-34.png</file>
+        <file>tiling-35.png</file>
+        <file>tiling-36.png</file>
+        <file>tiling-37.png</file>
+        <file>tiling-38.png</file>
+        <file>tiling-39.png</file>
+        <file>tiling-40.png</file>
+        <file>tiling-41.png</file>
+        <file>tiling-42.png</file>
+        <file>tiling-43.png</file>
+        <file>tiling-44.png</file>
+        <file>tiling-45.png</file>
+    </qresource>
+</RCC>

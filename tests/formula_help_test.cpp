@@ -6,6 +6,10 @@
  *
  * So compare the two. Every name the parser accepts must be described, and
  * every name described must be one the parser accepts.
+ *
+ * The Tilings tab is a third copy, of randsctile this time, and is compared
+ * the same way: a caption for every tiling the parser draws, and a picture
+ * of each that is still what the parser draws.
  */
 
 #include <cstdio>
@@ -15,6 +19,7 @@
 #include "sffe.h"
 #include "sffe_cmplx_gsl.h"
 #include "formulahelp.h"
+#include "randsctile-thumbnails.h"
 
 const char *qt_gettext(const char * /*context*/, const char *text)
 {
@@ -39,6 +44,126 @@ static int described_arity(const char *args, int *open_ended)
         parts--; /* the "..." is not an argument of its own */
     }
     return parts;
+}
+
+static number_t tiling_at(sffe *p, double x, double y)
+{
+    GSL_SET_COMPLEX(&sffe_position, (number_t)x, (number_t)y);
+    sffe_iteration = 0;
+    return GSL_REAL(sffe_eval(p));
+}
+
+#define TILINGS_DIR XAOS_SOURCE_DIR "/src/ui/images/tilings/"
+#define REDRAW "run cmake --build <build directory> --target randsctile-thumbnails"
+
+/* The Tilings tab: its captions against the parser, its pictures against
+ * what the parser draws now. */
+static void check_tilings(void)
+{
+    /* The tilings the parser has are the numbers before the first that
+     * draws nothing, which is how the program that draws the pictures counts
+     * them too. */
+    enum { MOST = 256 };
+    uint64_t print[MOST + 1];
+    int drawn = 0;
+    for (int k = 1; k <= MOST; k++) {
+        char call[64];
+        snprintf(call, sizeof call, RANDSCTILE_THUMB_CALL, k);
+        sffe *p = sffe_alloc();
+        if (!p || sffe_parse(&p, call)) {
+            printf("FAIL   cannot parse %s\n", call);
+            failures++;
+            return;
+        }
+        if (tiling_at(p, 0.3, 0.7) == 0) {
+            sffe_free(&p);
+            break;
+        }
+        print[k] = randsctile_thumb_fingerprint(
+            [p](double x, double y) { return (double)tiling_at(p, x, y); });
+        sffe_free(&p);
+        drawn = k;
+    }
+
+    const struct formula_help_row *rows;
+    int listed = formula_help_tilings(&rows);
+    if (listed != drawn) {
+        printf("FAIL   the Values tab lists %d tilings under randsctile, and "
+               "the parser draws %d\n",
+               listed, drawn);
+        failures++;
+    }
+    for (int k = 1; k <= listed; k++)
+        if (rows[k - 1].summary == NULL || rows[k - 1].summary[0] == '\0') {
+            printf("FAIL   tiling %d is listed with no description\n", k);
+            failures++;
+        }
+
+    /* The fingerprints the pictures were drawn with, one line a tiling. */
+    FILE *f = fopen(TILINGS_DIR "fingerprints.txt", "r");
+    if (!f) {
+        printf("FAIL   no " TILINGS_DIR "fingerprints.txt: " REDRAW "\n");
+        failures++;
+        return;
+    }
+    int stored = 0, stale = 0;
+    char line[256];
+    while (fgets(line, sizeof line, f)) {
+        int k;
+        unsigned long long was;
+        if (line[0] == '#' || sscanf(line, "%d %llx", &k, &was) != 2)
+            continue;
+        if (k != stored + 1) {
+            printf("FAIL   fingerprints.txt has tiling %d after %d\n", k,
+                   stored);
+            failures++;
+            break;
+        }
+        stored = k;
+        if (k <= drawn && was != print[k]) {
+            printf("FAIL   the thumbnail of tiling %d is not what randsctile "
+                   "draws now\n",
+                   k);
+            stale++;
+        }
+    }
+    fclose(f);
+    if (stored != drawn) {
+        printf("FAIL   there are thumbnails of %d tilings, and the parser draws "
+               "%d\n",
+               stored, drawn);
+        failures++;
+    }
+    if (stale || stored != drawn) {
+        printf("       " REDRAW "\n");
+        failures += stale;
+    }
+
+    /* And each picture is there, and is in the resource file that puts it in
+     * the binary. */
+    f = fopen(TILINGS_DIR "tilings.qrc", "rb");
+    static char qrc[1 << 16];
+    size_t size = f ? fread(qrc, 1, sizeof qrc - 1, f) : 0;
+    if (f)
+        fclose(f);
+    qrc[size] = 0;
+    for (int k = 1; k <= drawn; k++) {
+        char name[64], path[512];
+        snprintf(name, sizeof name, "<file>tiling-%02d.png</file>", k);
+        snprintf(path, sizeof path, TILINGS_DIR "tiling-%02d.png", k);
+        FILE *png = fopen(path, "rb");
+        if (!png || !strstr(qrc, name)) {
+            printf("FAIL   the thumbnail of tiling %d is %s: " REDRAW "\n", k,
+                   png ? "not in tilings.qrc" : "missing");
+            failures++;
+        }
+        if (png)
+            fclose(png);
+    }
+    if (!failures)
+        printf("ok     %d tilings, each captioned and drawn as randsctile "
+               "draws it\n",
+               drawn);
 }
 
 int main(void)
@@ -120,6 +245,8 @@ int main(void)
             printf("FAIL   section \"%s\" has nothing under it\n", r->section);
             failures++;
         }
+
+    check_tilings();
 
     if (failures)
         printf("\n%d problem(s)\n", failures);

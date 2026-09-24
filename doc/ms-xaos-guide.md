@@ -66,7 +66,9 @@ since none of them is elementary and one does not reach for them by accident.
 A fourth tab lists the numbers that appear as arguments and mean something
 particular — which shape a trap measures against, which mirror the
 kaleidoscope folds with — rather than burying them in the description of the
-function that takes them.
+function that takes them. A fifth shows a picture of every tiling `randsctile`
+takes, since forty-five numbers with a line of words each say little about the
+shapes.
 
 Each row of the function list says what the call takes and in what order —
 "a, b", or "seed, size, degradation" where the position means something. The
@@ -439,6 +441,17 @@ shape of the cells and not their scale. A number outside 1 to 45 draws nought.
 | 38 | Voronoi cells, irregular — `randscp`'s, with a value of its own |
 | 39–43 | tilings that never repeat, from de Bruijn's multigrids: Penrose's rhombs, Penrose's kites and darts, Ammann–Beenker's squares and rhombi, and rhombi in twelve and in seven directions |
 | 44–45 | by substitution: the pinwheel, whose triangles face every way there is, and the chair, Ls cut into Ls |
+
+The **Tilings tab** of Help → User formula reference has a picture of each,
+captioned as the Values tab lists it, and a double click on one copies the
+start of its call — `randsctile(18, ` — to the clipboard, ready for the seed.
+The pictures are drawn by `randsctile` itself, eight units square round the
+origin, by `tools/randsctile-thumbnails.cpp`, and kept in the binary rather
+than drawn each time the tab is opened. Kept pictures can go stale, so each is
+stored with a fingerprint of what the function drew, and a test draws the same
+points again and fails, saying which tiling, until
+`cmake --build <build directory> --target randsctile-thumbnails` has drawn it
+anew.
 
 The periodic ones are **tables**, written by `tools/randsctile-tables.py`, which
 builds each tiling from its geometry and checks it — twenty thousand points at
