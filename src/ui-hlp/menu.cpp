@@ -84,6 +84,7 @@ static menudialog *uih_perturbationdialog, *uih_juliadialog,
     *uih_textposdialog, *uih_fastmodedialog, *uih_timedialog, *uih_numdialog,
     *uih_fpdialog, *palettedialog, *uih_cyclingdialog, *palettegradientdialog,
     *uih_infbmdialog, *uih_outfbmdialog,
+    *uih_incolorfundialog, *uih_outcolorfundialog,
     *uih_renderimgdialog, *palettepickerdialog, *loadgpldialog, *savegpldialog,
     *uih_palettecolorsdialog
 #ifdef USE_SFFE
@@ -297,6 +298,22 @@ void uih_registermenudialogs_i18n(void)
     DIALOGINT_I(TR("Dialog", "Octaves:"), 4);
     DIALOGFLOAT_I(TR("Dialog", "Roughness:"), 0.5);
     DIALOGINT_I(TR("Dialog", "Seed:"), 1);
+    NULL_I();
+
+    /* The speed change after ITER, one dialog a side: where the exponent
+     * begins to count, the exponent, and how the two are joined -- chosen
+     * from the four there are rather than typed as a number, and off unless
+     * turned on. */
+    Register(uih_incolorfundialog);
+    DIALOGFLOAT_I(TR("Dialog", "ITER (where the change starts):"), 100);
+    DIALOGFLOAT_I(TR("Dialog", "Exponent (above 1 faster, below slower):"), 2);
+    DIALOGCHOICE_I(TR("Dialog", "Mode:"), colorfun_after_modes, 0);
+    NULL_I();
+
+    Register(uih_outcolorfundialog);
+    DIALOGFLOAT_I(TR("Dialog", "ITER (where the change starts):"), 100);
+    DIALOGFLOAT_I(TR("Dialog", "Exponent (above 1 faster, below slower):"), 2);
+    DIALOGCHOICE_I(TR("Dialog", "Mode:"), colorfun_after_modes, 0);
     NULL_I();
 
     Register(palettedialog);
@@ -649,6 +666,26 @@ static menudialog *uih_getoutfbmdialog(struct uih_context *c)
     return (uih_outfbmdialog);
 }
 
+static menudialog *uih_getincolorfundialog(struct uih_context *c)
+{
+    if (c != NULL) {
+        uih_incolorfundialog[0].deffloat = c->fcontext->incolorfuniter;
+        uih_incolorfundialog[1].deffloat = c->fcontext->incolorfunexp;
+        uih_incolorfundialog[2].defint = c->fcontext->incolorfunmode;
+    }
+    return (uih_incolorfundialog);
+}
+
+static menudialog *uih_getoutcolorfundialog(struct uih_context *c)
+{
+    if (c != NULL) {
+        uih_outcolorfundialog[0].deffloat = c->fcontext->outcolorfuniter;
+        uih_outcolorfundialog[1].deffloat = c->fcontext->outcolorfunexp;
+        uih_outcolorfundialog[2].defint = c->fcontext->outcolorfunmode;
+    }
+    return (uih_outcolorfundialog);
+}
+
 static menudialog *uih_getincolorshiftdialog(struct uih_context *c)
 {
     if (c != NULL)
@@ -870,36 +907,25 @@ static void uih_palettecolors(struct uih_context *uih, dialogparam *p){
  */
 static void uih_setfbm(uih_context *c, dialogparam *p, int inset)
 {
-    number_t *intensity = inset ? &c->fcontext->infbmintensity
-                                : &c->fcontext->outfbmintensity;
-    number_t *frequency = inset ? &c->fcontext->infbmfrequency
-                                : &c->fcontext->outfbmfrequency;
-    number_t *roughness = inset ? &c->fcontext->infbmroughness
-                                : &c->fcontext->outfbmroughness;
-    int *octaves = inset ? &c->fcontext->infbmoctaves
-                         : &c->fcontext->outfbmoctaves;
-    int *seed = inset ? &c->fcontext->infbmseed : &c->fcontext->outfbmseed;
-    int moved = 0;
-
-    if (*intensity != (number_t)p[0].number)
-        *intensity = (number_t)p[0].number, moved = 1;
-    if (*frequency != (number_t)p[1].number)
-        *frequency = (number_t)p[1].number, moved = 1;
-    if (*octaves != p[2].dint)
-        *octaves = p[2].dint, moved = 1;
-    if (*roughness != (number_t)p[3].number)
-        *roughness = (number_t)p[3].number, moved = 1;
-    if (*seed != p[4].dint)
-        *seed = p[4].dint, moved = 1;
-
-    if (moved) {
-        c->fcontext->version++;
-        uih_newimage(c);
-    }
+    uih_setfbmparams(c, inset, (number_t)p[0].number, (number_t)p[1].number,
+                     p[2].dint, (number_t)p[3].number, p[4].dint);
 }
 
 static void uih_setinfbm(uih_context *c, dialogparam *p) { uih_setfbm(c, p, 1); }
 static void uih_setoutfbm(uih_context *c, dialogparam *p) { uih_setfbm(c, p, 0); }
+
+/* The speed change after ITER, from its dialog; the mode is the index of the
+ * choice. */
+static void uih_setincolorfunafter(uih_context *c, dialogparam *p)
+{
+    uih_setcolorfunafter(c, 1, (number_t)p[0].number, (number_t)p[1].number,
+                         p[2].dint);
+}
+static void uih_setoutcolorfunafter(uih_context *c, dialogparam *p)
+{
+    uih_setcolorfunafter(c, 0, (number_t)p[0].number, (number_t)p[1].number,
+                         p[2].dint);
+}
 
 static void uih_palettepicker(struct uih_context *uih, dialogparam *p)
 {
@@ -1356,20 +1382,25 @@ void uih_registermenus_i18n(void)
     SUBMENU_I("root", NULL, TR("Menu", "Action"), "action");
     SUBMENU_I("root", NULL, TR("Menu", "View"), "ui");
     MENUSEPARATOR_I("ui");
-    MENUNOPCB_I("ui", NULL, TR("Menu", "Selection zoom (drag a rectangle)"),
+    /* The zooms in a menu of their own: the rectangle, then the fixed steps.
+     * Their shortcuts are unaffected -- buildMenu registers them on the window
+     * at whatever depth the item sits. */
+    SUBMENU_I("ui", NULL, TR("Menu", "Zoom"), "zoommenu");
+    MENUNOPCB_I("zoommenu", NULL, TR("Menu", "Selection zoom (drag a rectangle)"),
                 "selectionzoom", MENUFLAG_INTERRUPT | MENUFLAG_NOPLAY,
                 uih_selectionzoom, uih_selectionzoomenabled);
+    MENUSEPARATOR_I("zoommenu");
+    MENUNOP_I("zoommenu", NULL, TR("Menu", "Zoom in 2x"), "zoomin2",
+              MENUFLAG_INTERRUPT, uih_zoomin2);
+    MENUNOP_I("zoommenu", NULL, TR("Menu", "Zoom in 10x"), "zoomin10",
+              MENUFLAG_INTERRUPT, uih_zoomin10);
+    MENUNOP_I("zoommenu", NULL, TR("Menu", "Zoom out 2x"), "zoomout2",
+              MENUFLAG_INTERRUPT, uih_zoomout2);
+    MENUNOP_I("zoommenu", NULL, TR("Menu", "Zoom out 10x"), "zoomout10",
+              MENUFLAG_INTERRUPT, uih_zoomout10);
     MENUNOPCB_I("ui", NULL, TR("Menu", "Palette probe (click a point)"),
                 "palettepick", MENUFLAG_INTERRUPT | MENUFLAG_NOPLAY,
                 uih_palettepick, uih_palettepickenabled);
-    MENUNOP_I("ui", NULL, TR("Menu", "Zoom in 2x"), "zoomin2",
-              MENUFLAG_INTERRUPT, uih_zoomin2);
-    MENUNOP_I("ui", NULL, TR("Menu", "Zoom in 10x"), "zoomin10",
-              MENUFLAG_INTERRUPT, uih_zoomin10);
-    MENUNOP_I("ui", NULL, TR("Menu", "Zoom out 2x"), "zoomout2",
-              MENUFLAG_INTERRUPT, uih_zoomout2);
-    MENUNOP_I("ui", NULL, TR("Menu", "Zoom out 10x"), "zoomout10",
-              MENUFLAG_INTERRUPT, uih_zoomout10);
     SUBMENU_I("root", NULL, TR("Menu", "Help"), "helpmenu");
     SUBMENU_I("helpmenu", NULL, TR("Menu", "Tutorials"), "tutor");
     SUBMENUNOOPT_I("animroot", "f", TR("Menu", "File"), "file");
@@ -1859,6 +1890,9 @@ static menuitem *filteritems;
  * take them out again. */
 static menuitem fbmitems[10];
 static int nfbmitems;
+/* The speed change after ITER, one entry in each speed function menu, after
+ * the functions themselves: it acts on whichever of them is chosen. */
+static menuitem colorfunitems[2];
 void uih_registermenus(void)
 {
     char keys[2];
@@ -2002,6 +2036,24 @@ void uih_registermenus(void)
                        UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
                        uih_setoutcolorfun, uih_selectedoutcolorfun, "outfun");
 
+    /* Registered after the functions, so that it comes after them in the
+     * menu. Its short name is also the command a position saves its three
+     * values with, as infbmset is for the fbm's. */
+    for (int side = 0; side < 2; side++) {
+        menuitem *m = &colorfunitems[side];
+        m->menuname = side ? "moutcolorfun" : "mincolorfun";
+        m->key = NULL;
+        m->name = TR("Menu", "Speed change after ITER");
+        m->shortname = side ? "outcolorfunafter" : "incolorfunafter";
+        m->type = MENU_CUSTOMDIALOG;
+        m->flags = MENUFLAG_INTERRUPT;
+        m->function = (void (*)(void))(side ? uih_setoutcolorfunafter
+                                            : uih_setincolorfunafter);
+        m->dialog = (const menudialog *(*)(struct uih_context *))(
+            side ? uih_getoutcolorfundialog : uih_getincolorfundialog);
+    }
+    menu_add(colorfunitems, 2);
+
     {
         int i;
         for (i = 0; planename[i] != NULL; i++)
@@ -2051,6 +2103,7 @@ void uih_unregistermenus(void)
 
     menu_delete(fbmitems, nfbmitems);
 
+    menu_delete(colorfunitems, 2);
     menu_delnumbered("infun");
     menu_delnumbered("outfun");
     menu_delnumbered("plane");
@@ -2062,15 +2115,14 @@ void uih_unregistermenus(void)
 }
 
 #ifdef USE_SFFE
+/* The formula history is not written here. This is the usrform command, which
+ * the dialog runs but so does every position that holds a user formula --
+ * loaded from the menu, replayed, or rendered with -render -- and each of those
+ * pushed a formula nobody had chosen into a history of ten, crowding out the
+ * ones that were. The dialog writes it instead, when it is accepted: see
+ * formula_history_add. */
 void uih_sffein(uih_context *c, const char *text)
 {
-    // Keep only top 10 entries
-    QSettings settings;
-    QStringList values = settings.value("Formulas/UserFormulas").toStringList();
-    values.push_front(text);
-    while (values.size() > 10) values.pop_back();
-    settings.setValue("Formulas/UserFormulas", values);
-
     uih_sffeset(c, c->fcontext->userformula, text);
 }
 

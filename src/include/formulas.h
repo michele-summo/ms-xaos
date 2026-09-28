@@ -34,6 +34,9 @@ extern const struct formula formulas[];
 extern const char *const outcolorname[];
 extern const char *const tcolorname[];
 extern const char *const colorfun[];
+/* The modes of the speed change after ITER, by the number fractal_context
+ * holds: the names the dialog offers and a position saves. */
+extern const char *const colorfun_after_modes[];
 extern const int nformulas;
 extern const int nmformulas;
 

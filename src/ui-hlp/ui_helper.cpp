@@ -27,6 +27,10 @@
 #include "autopilot.h"
 #include "grlib.h"
 #include "play.h"
+#include "formulahelp.h"
+
+#include <string>
+#include <vector>
 
 #ifdef HAVE_LIBGEN_H
 #include <libgen.h>
@@ -1073,7 +1077,7 @@ static void uih_diag_compare(uih_context *c)
             "the overlay was drawn: x %i..%i, y %i..%i (messages start at row "
             "%i, image is %ix%i)\n",
             uih_diag_calculations + 1, minx, maxx, miny, maxy,
-            c->messg.messagestart, img->width, img->height);
+            uih_messagestart(c), img->width, img->height);
     /* And what every overlay claimed to occupy, so that the difference can be
      * placed: inside a claimed rectangle means the restore is incomplete,
      * outside every one of them means something is drawing beyond the area it
@@ -2251,16 +2255,20 @@ void uih_setincolorspeed(uih_context *c, number_t speed) {
 }
 
 void uih_setincolorfun(uih_context *c, int func){
+    /* COLORFUN is one more than there are functions, so the last is two
+     * below it: this let one past the end through, which drew as ident. */
     if (func < 0)
-        func = rand() % COLORFUN;
-    if (func > COLORFUN)
-        func = COLORFUN;
+        func = rand() % (COLORFUN - 1);
+    if (func > COLORFUN - 2)
+        func = COLORFUN - 2;
     if (c->fcontext->incolorfun != func) {
-        char str[10];
+        char str[16];
         c->fcontext->incolorfun = func;
         c->fcontext->version++;
         uih_newimage(c);
-        sprintf(str, "in%i", func);
+        /* the entries of the speed function menu, which are what has to be
+         * ticked -- "in%i" named the inside colouring modes instead */
+        sprintf(str, "infun%i", func);
         uih_updatemenus(c, str);
     }
 }
@@ -2282,16 +2290,20 @@ void uih_setoutcolorspeed(uih_context *c, number_t speed){
 }
 
 void uih_setoutcolorfun(uih_context *c, int func){
+    /* COLORFUN is one more than there are functions, so the last is two
+     * below it: this let one past the end through, which drew as ident. */
     if (func < 0)
-        func = rand() % COLORFUN;
-    if (func > COLORFUN)
-        func = COLORFUN;
+        func = rand() % (COLORFUN - 1);
+    if (func > COLORFUN - 2)
+        func = COLORFUN - 2;
     if (c->fcontext->outcolorfun != func) {
-        char str[10];
+        char str[16];
         c->fcontext->outcolorfun = func;
         c->fcontext->version++;
         uih_newimage(c);
-        sprintf(str, "in%i", func);
+        /* the entries of the speed function menu, which are what has to be
+         * ticked -- "in%i" named the inside colouring modes instead */
+        sprintf(str, "outfun%i", func);
         uih_updatemenus(c, str);
     }
 }
@@ -2300,6 +2312,55 @@ void uih_setoutcolorshift(uih_context *c, int shift) {
     if (c->fcontext->outcolorshift != shift) {
         c->fcontext->outcolorshift = shift;
         c->fcontext->version++;
+        uih_newimage(c);
+    }
+}
+
+/* The speed change after ITER, a side at a time. The mode is held to the
+ * four there are, nought being off. The picture is redrawn only if something
+ * moved. */
+void uih_setcolorfunafter(uih_context *c, int inset, number_t iter,
+                          number_t exponent, int mode)
+{
+    number_t *i = inset ? &c->fcontext->incolorfuniter
+                        : &c->fcontext->outcolorfuniter;
+    number_t *e = inset ? &c->fcontext->incolorfunexp
+                        : &c->fcontext->outcolorfunexp;
+    int *m = inset ? &c->fcontext->incolorfunmode
+                   : &c->fcontext->outcolorfunmode;
+    if (mode < 0)
+        mode = 0;
+    if (mode > 3)
+        mode = 3;
+    if (*i != iter || *e != exponent || *m != mode) {
+        *i = iter;
+        *e = exponent;
+        *m = mode;
+        c->fcontext->version++;
+        uih_newimage(c);
+    }
+}
+
+/* The five numbers of the fractional Brownian motion, a side at a time, as
+ * the fbm dialog sets them. */
+void uih_setfbmparams(uih_context *c, int inset, number_t intensity,
+                      number_t frequency, int octaves, number_t roughness,
+                      int seed)
+{
+    fractal_context *f = c->fcontext;
+    number_t *in = inset ? &f->infbmintensity : &f->outfbmintensity;
+    number_t *fr = inset ? &f->infbmfrequency : &f->outfbmfrequency;
+    number_t *ro = inset ? &f->infbmroughness : &f->outfbmroughness;
+    int *oc = inset ? &f->infbmoctaves : &f->outfbmoctaves;
+    int *se = inset ? &f->infbmseed : &f->outfbmseed;
+    if (*in != intensity || *fr != frequency || *oc != octaves ||
+        *ro != roughness || *se != seed) {
+        *in = intensity;
+        *fr = frequency;
+        *oc = octaves;
+        *ro = roughness;
+        *se = seed;
+        f->version++;
         uih_newimage(c);
     }
 }
@@ -2745,6 +2806,14 @@ void uih_initstate(struct uih_context *uih)
     uih_setoutcolorspeed(uih, 1.0);
     uih_setoutcolorfun(uih, 0);
     uih_setoutcolorshift(uih, 0);
+    /* The speed change after ITER and the fbm's numbers, which a position
+     * saves only where they differ from these. Left as they were, a position
+     * loaded after one that had moved them drew with that one's values and
+     * not with its own -- the fbm's did so from the day they were added. */
+    for (int inset = 0; inset < 2; inset++) {
+        uih_setcolorfunafter(uih, inset, 100, 2, 0);
+        uih_setfbmparams(uih, inset, 4, 8, 4, (number_t)1 / 2, 1);
+    }
     uih_setpndefault(uih, 0);
     uih_setnewtonmodesffe(uih, 0);
     uih_setnewtonconvergence(uih, 1E-6);
@@ -2919,6 +2988,74 @@ void uih_updatestatus(uih_context *uih)
 #define STATUSLINES 12
 #endif
 
+/* The user formula the status shows in place of the fractal type, or NULL. */
+static const char *uih_statusexpression(uih_context *uih)
+{
+#ifdef USE_SFFE
+    if (uih->fcontext->currentformula->flags & SFFE_FRACTAL)
+        return uih->fcontext->userformula->expression;
+#endif
+    return NULL;
+}
+
+/* The formula as the status shows it: "Formula:" and then one line, or two
+ * one under the other when it does not fit on one; when two do not hold it
+ * either, the second ends in "..." and how many characters it has -- see
+ * formula_status_lines. It used to be one line, which a long formula ran off
+ * the edge of the image.
+ *
+ * Laid out again only when the formula, the image or the font changes: the
+ * status is drawn every frame, and measuring a formula of thousands of
+ * characters is more than a frame should spend. */
+struct statuslayout {
+    std::string expression;
+    const struct image *image = NULL;
+    int width = -1;
+    void *font = NULL;
+    int indent = 0; /* where the formula starts, after "Formula:" */
+    std::vector<std::string> lines;
+};
+
+static const statuslayout &uih_statusformula(uih_context *uih,
+                                             const char *expression)
+{
+    static statuslayout layout;
+    if (layout.image == uih->image && layout.width == uih->image->width &&
+        layout.font == uih->font && layout.expression == expression)
+        return layout;
+    layout.expression = expression;
+    layout.image = uih->image;
+    layout.width = uih->image->width;
+    layout.font = uih->font;
+    layout.indent =
+        xtextwidth(uih->image, uih->font, TR("Message", "Formula:"));
+
+    const QString formula = QString::fromUtf8(expression);
+    const QString suffix =
+        QString("... ") + QString::asprintf(TR("Message", "(%i characters)"),
+                                            (int)formula.size());
+    auto width = [uih](const std::u16string &text) {
+        return (double)xtextwidth(
+            uih->image, uih->font,
+            QString::fromStdU16String(text).toUtf8().constData());
+    };
+    layout.lines.clear();
+    for (const std::u16string &line : formula_status_lines(
+             formula.toStdU16String(), suffix.toStdU16String(),
+             uih->image->width - layout.indent, width))
+        layout.lines.push_back(
+            QString::fromStdU16String(line).toUtf8().toStdString());
+    return layout;
+}
+
+static int uih_statuslines(uih_context *uih)
+{
+    const char *expression = uih_statusexpression(uih);
+    if (expression == NULL)
+        return STATUSLINES;
+    return STATUSLINES - 1 + (int)uih_statusformula(uih, expression).lines.size();
+}
+
 void uih_updatestarts(uih_context *uih)
 {
     int y = 0;
@@ -2926,9 +3063,17 @@ void uih_updatestarts(uih_context *uih)
     if (ministatuswindow != NULL)
         y += xtextheight(uih->image, uih->font);
     statusstart = y;
+}
+
+/* Under the status, whose height follows the formula it shows. That changes
+ * with no switch being thrown -- a new formula, a narrower window -- so it is
+ * worked out when the messages are placed rather than kept. */
+int uih_messagestart(uih_context *uih)
+{
+    int y = statusstart;
     if (statuswindow != NULL)
-        y += xtextheight(uih->image, uih->font) * STATUSLINES;
-    uih->messg.messagestart = y;
+        y += xtextheight(uih->image, uih->font) * uih_statuslines(uih);
+    return y;
 }
 
 static void uih_statuspos(uih_context *uih, int *x, int *y, int *w, int *h,
@@ -2937,29 +3082,36 @@ static void uih_statuspos(uih_context *uih, int *x, int *y, int *w, int *h,
     *x = 0;
     *y = statusstart;
     *w = uih->image->width;
-    *h = xtextheight(uih->image, uih->font) * STATUSLINES;
+    *h = xtextheight(uih->image, uih->font) * uih_statuslines(uih);
 }
 
 static void uih_drawstatus(uih_context *uih, void * /*data*/)
 {
     char str[6000];
     int h = xtextheight(uih->image, uih->font);
+    int y = statusstart;
     sprintf(str, TR("Message", "Fractal name:%s"),
             uih->fcontext->currentformula->name[!uih->fcontext->mandelbrot]);
-    xprint(uih->image, uih->font, 0, statusstart, str, FGCOLOR(uih),
-           BGCOLOR(uih), 0);
-    sprintf(str, TR("Message", "Fractal type:%s"),
-            uih->fcontext->mandelbrot ? TR("Message", "Mandelbrot")
-                                      : TR("Message", "Julia"));
-#ifdef USE_SFFE
-    if (uih->fcontext->currentformula->flags & SFFE_FRACTAL &&
-        uih->fcontext->userformula->expression) {
-        sprintf(str, TR("Message", "Formula:%s"),
-                uih->fcontext->userformula->expression);
-    };
-#endif
-    xprint(uih->image, uih->font, 0, statusstart + h, str, FGCOLOR(uih),
-           BGCOLOR(uih), 0);
+    xprint(uih->image, uih->font, 0, y, str, FGCOLOR(uih), BGCOLOR(uih), 0);
+    y += h;
+    const char *expression = uih_statusexpression(uih);
+    if (expression != NULL) {
+        const statuslayout &layout = uih_statusformula(uih, expression);
+        xprint(uih->image, uih->font, 0, y, TR("Message", "Formula:"),
+               FGCOLOR(uih), BGCOLOR(uih), 0);
+        for (const std::string &line : layout.lines) {
+            xprint(uih->image, uih->font, layout.indent, y, line.c_str(),
+                   FGCOLOR(uih), BGCOLOR(uih), 0);
+            y += h;
+        }
+    } else {
+        sprintf(str, TR("Message", "Fractal type:%s"),
+                uih->fcontext->mandelbrot ? TR("Message", "Mandelbrot")
+                                          : TR("Message", "Julia"));
+        xprint(uih->image, uih->font, 0, y, str, FGCOLOR(uih), BGCOLOR(uih),
+               0);
+        y += h;
+    }
     /* Both lines used a fixed twelve decimal places, taken through a double.
      * That stops saying anything useful as soon as the view is zoomed past
      * 1e-12: the size reads as 0.000000000000 and the centre is truncated
@@ -2977,46 +3129,55 @@ static void uih_drawstatus(uih_context *uih, void * /*data*/)
     sprintf(str, TR("Message", "View:[%s,%s]"),
             xnumtostr(cbuf, sizeof(cbuf), uih->fcontext->s.cr, digits),
             xnumtostr(cbuf2, sizeof(cbuf2), uih->fcontext->s.ci, digits));
-    xprint(uih->image, uih->font, 0, statusstart + 2 * h, str, FGCOLOR(uih),
+    xprint(uih->image, uih->font, 0, y, str, FGCOLOR(uih),
            BGCOLOR(uih), 0);
+    y += h;
     sprintf(str, TR("Message", "size:[%s,%s]"),
             xnumtostr(cbuf, sizeof(cbuf), uih->fcontext->s.rr, 6),
             xnumtostr(cbuf2, sizeof(cbuf2), uih->fcontext->s.ri, 6));
-    xprint(uih->image, uih->font, 0, statusstart + 3 * h, str, FGCOLOR(uih),
+    xprint(uih->image, uih->font, 0, y, str, FGCOLOR(uih),
            BGCOLOR(uih), 0);
+    y += h;
     sprintf(str, TR("Message", "Rotation:%4.2f   Screen size:%i:%i"),
             (double)uih->fcontext->angle, uih->image->width,
             uih->image->height);
-    xprint(uih->image, uih->font, 0, statusstart + 4 * h, str, FGCOLOR(uih),
+    xprint(uih->image, uih->font, 0, y, str, FGCOLOR(uih),
            BGCOLOR(uih), 0);
+    y += h;
     sprintf(str, TR("Message", "Iterations:%-4u Palette size:%i"),
             uih->fcontext->maxiter, uih->image->palette->size);
-    xprint(uih->image, uih->font, 0, statusstart + 5 * h, str, FGCOLOR(uih),
+    xprint(uih->image, uih->font, 0, y, str, FGCOLOR(uih),
            BGCOLOR(uih), 0);
+    y += h;
     sprintf(str, TR("Message", "Bailout:%4.2f"),
             (double)uih->fcontext->bailout);
-    xprint(uih->image, uih->font, 0, statusstart + 6 * h, str, FGCOLOR(uih),
+    xprint(uih->image, uih->font, 0, y, str, FGCOLOR(uih),
            BGCOLOR(uih), 0);
+    y += h;
     sprintf(str, TR("Message", "Autopilot:%-4s  Plane:%s"),
             uih->autopilot ? TR("Message", "On") : TR("Message", "Off"),
             planename[uih->fcontext->plane]);
-    xprint(uih->image, uih->font, 0, statusstart + 7 * h, str, FGCOLOR(uih),
+    xprint(uih->image, uih->font, 0, y, str, FGCOLOR(uih),
            BGCOLOR(uih), 0);
+    y += h;
     sprintf(str, TR("Message", "incoloring:%s    outcoloring:%s"),
             incolorname[uih->fcontext->incoloringmode],
             outcolorname[uih->fcontext->coloringmode.AsInt()]);
-    xprint(uih->image, uih->font, 0, statusstart + 8 * h, str, FGCOLOR(uih),
+    xprint(uih->image, uih->font, 0, y, str, FGCOLOR(uih),
            BGCOLOR(uih), 0);
+    y += h;
     sprintf(str, TR("Message", "zoomspeed:%f"), (float)uih->maxstep * 1000);
-    xprint(uih->image, uih->font, 0, statusstart + 9 * h, str, FGCOLOR(uih),
+    xprint(uih->image, uih->font, 0, y, str, FGCOLOR(uih),
            BGCOLOR(uih), 0);
+    y += h;
     if (uih->fcontext->mandelbrot)
         strcpy(str, TR("Message", "Parameter:none"));
     else
         sprintf(str, TR("Message", "Parameter:[%f,%f]"),
                 (float)uih->fcontext->pre, (float)uih->fcontext->pim);
-    xprint(uih->image, uih->font, 0, statusstart + 10 * h, str, FGCOLOR(uih),
+    xprint(uih->image, uih->font, 0, y, str, FGCOLOR(uih),
            BGCOLOR(uih), 0);
+    y += h;
 
     /* Compute exact mouse position. */
     QPoint globalCursorPos = QCursor::pos();
@@ -3035,20 +3196,23 @@ static void uih_drawstatus(uih_context *uih, void * /*data*/)
     double cursorabsposy = windowtopabspos + realrelposy;
     sprintf(str, TR("Message", "Mouse:[%1.12f,%1.12f]"),
             (double)cursorabsposx, (double)cursorabsposy);
-    xprint(uih->image, uih->font, 0, statusstart + 11 * h, str, FGCOLOR(uih),
+    xprint(uih->image, uih->font, 0, y, str, FGCOLOR(uih),
            BGCOLOR(uih), 0);
+    y += h;
 
 #ifdef MEMCHECK
     {
         struct mallinfo i = mallinfo();
         sprintf(str, "Allocated arena:%i Wasted:%i %i", i.arena, i.ordblks,
                 i.fordblks);
-        xprint(uih->image, uih->font, 0, statusstart + 12 * h, str,
+        xprint(uih->image, uih->font, 0, y, str,
                FGCOLOR(uih), BGCOLOR(uih), 0);
+        y += h;
         sprintf(str, "Mmaped blocks%i Mmaped area:%i keep:%i", i.hblks,
                 i.hblkhd, i.keepcost);
-        xprint(uih->image, uih->font, 0, statusstart + 13 * h, str,
+        xprint(uih->image, uih->font, 0, y, str,
                FGCOLOR(uih), BGCOLOR(uih), 0);
+        y += h;
     }
 #endif
 }

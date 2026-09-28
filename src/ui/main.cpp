@@ -422,8 +422,31 @@ static int ui_fullscreenselected(struct uih_context *uih)
 }
 #endif
 
+#ifndef __wasm
+/* View -> Aspect ratio. A menu entry carries one int, so the shape is packed
+ * into it as a hundred times the width plus the height: 1609 is 16:9. */
+static void ui_aspectratio(struct uih_context *uih, int ratio)
+{
+    if (uih->data) {
+        MainWindow *window = reinterpret_cast<MainWindow *>(uih->data);
+        window->setImageAspect(ratio / 100, ratio % 100);
+    }
+}
+
+/* Ticked while the image has that shape, whether a click here gave it or the
+ * window was dragged to it; after a drag to any other shape, none is. */
+static int ui_aspectratioselected(struct uih_context *uih, int ratio)
+{
+    if (uih != NULL && uih->data) {
+        MainWindow *window = reinterpret_cast<MainWindow *>(uih->data);
+        return window->imageHasAspect(ratio / 100, ratio % 100);
+    }
+    return 0;
+}
+#endif
+
 /* WARNING: Increase this number in case there are new menu items added. */
-#define MAX_MENUITEMS_I18N 36
+#define MAX_MENUITEMS_I18N 48
 /* These variables must be global: */
 static menuitem *menuitems;
 static menuitem menuitems_i18n[MAX_MENUITEMS_I18N];
@@ -563,6 +586,29 @@ static void ui_registermenus_i18n(void)
                 ui_fullscreensw, ui_fullscreenselected);
     MENUNOPCB_I("uia", NULL, TR("Menu", "Fullscreen"), "fullscreena", UI,
                 ui_fullscreensw, ui_fullscreenselected);
+#endif
+#ifndef __wasm
+    /* Each resizes the window once, to give the image that shape; the window
+     * stays free to be resized after. Narrowest to widest, then the one
+     * standing up. */
+    SUBMENU_I("ui", NULL, TR("Menu", "Aspect ratio"), "aspectratio");
+    MENUINTRB_I("aspectratio", NULL, "1:1", "aspect1_1", UI, ui_aspectratio,
+                101, ui_aspectratioselected);
+    MENUINTRB_I("aspectratio", NULL, "4:3", "aspect4_3", UI, ui_aspectratio,
+                403, ui_aspectratioselected);
+    MENUINTRB_I("aspectratio", NULL, "3:2", "aspect3_2", UI, ui_aspectratio,
+                302, ui_aspectratioselected);
+    MENUINTRB_I("aspectratio", NULL, "16:10", "aspect16_10", UI,
+                ui_aspectratio, 1610, ui_aspectratioselected);
+    MENUINTRB_I("aspectratio", NULL, "16:9", "aspect16_9", UI, ui_aspectratio,
+                1609, ui_aspectratioselected);
+    MENUINTRB_I("aspectratio", NULL, "2:1", "aspect2_1", UI, ui_aspectratio,
+                201, ui_aspectratioselected);
+    MENUINTRB_I("aspectratio", NULL, "21:9", "aspect21_9", UI, ui_aspectratio,
+                2109, ui_aspectratioselected);
+    MENUSEPARATOR_I("aspectratio");
+    MENUINTRB_I("aspectratio", NULL, "9:16", "aspect9_16", UI, ui_aspectratio,
+                916, ui_aspectratioselected);
 #endif
 
     MENUNOP_I("helpmenu", "h", TR("Menu", "Help"), "help", MENUFLAG_INCALC,

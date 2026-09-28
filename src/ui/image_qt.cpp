@@ -29,13 +29,19 @@ static QFont getFont(void *font) {
         return QFont(QApplication::font().family(), 12);
 }
 
+/* The first line of text, up to a newline. Taken from text as it stands: it
+ * used to be copied into a BUFSIZ buffer on the stack, which is 512 bytes with
+ * MinGW, and a user formula shown as a message is as long as it was typed --
+ * a longer one overwrote the stack and crashed. */
+static QString firstLine(const char *text)
+{
+    return QString::fromUtf8(text, strcspn(text, "\n"));
+}
+
 int xprint(struct image *image, void *font, int x, int y,
            const char *text, int fgcolor, int bgcolor, int mode)
 {
-    char line[BUFSIZ];
-    int pos = strcspn(text, "\n");
-    strncpy(line, text, pos);
-    line[pos] = '\0';
+    const QString line = firstLine(text);
 
     QImage *qimage = reinterpret_cast<QImage **>(image->data)[image->currimage];
     QFontMetrics metrics(getFont(font), qimage);
@@ -52,7 +58,7 @@ int xprint(struct image *image, void *font, int x, int y,
         painter.drawText(x, y + metrics.ascent(), line);
     }
 
-    return strlen(line);
+    return strcspn(text, "\n");
 }
 
 /* Text metrics depend on the device they are taken for, so these have to be
@@ -80,10 +86,7 @@ static QFontMetrics imageMetrics(struct image *image, void *font)
 
 int xtextwidth(struct image *image, void *font, const char *text)
 {
-    char line[BUFSIZ];
-    int pos = strcspn(text, "\n");
-    strncpy(line, text, pos);
-    line[pos] = '\0';
+    const QString line = firstLine(text);
 
     QFontMetrics metrics = imageMetrics(image, font);
     /* Glyphs can reach past the pen advance, and xprint draws the string a

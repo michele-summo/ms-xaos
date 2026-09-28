@@ -18,7 +18,6 @@ struct uih_message {
     int messagetype[NMESSAGES];
     struct uih_window *w[NMESSAGES];
     int pid[NMESSAGES];
-    int messagestart;
 };
 struct uih_line {
     int key;
@@ -448,6 +447,12 @@ void uih_setincolorshift(uih_context *c, int shift);
 void uih_setoutcolorspeed(uih_context *c, number_t speed);
 void uih_setoutcolorfun(uih_context *c, int func);
 void uih_setoutcolorshift(uih_context *c, int shift);
+/* inset is 1 for the inside, 0 for the outside */
+void uih_setcolorfunafter(uih_context *c, int inset, number_t iter,
+                          number_t exponent, int mode);
+void uih_setfbmparams(uih_context *c, int inset, number_t intensity,
+                      number_t frequency, int octaves, number_t roughness,
+                      int seed);
 void uih_setpndefault(uih_context *c, int periodicity);
 void uih_setnewtonmodesffe(uih_context *c, int periodicity);
 void uih_setnewtonconvergence(uih_context *c, number_t periodicity);
@@ -595,6 +600,8 @@ int uih_inhibittextselected(uih_context *c);
 void uih_updatestatus(uih_context *uih);
 void uih_status(uih_context *uih);
 int uih_statusenabled(uih_context *uih);
+/* The row the messages start at, under the status and the ministatus. */
+int uih_messagestart(uih_context *uih);
 int uih_ministatusenabled(uih_context *uih);
 void uih_ministatus(uih_context *uih);
 int uih_cartesiangridenabled(uih_context *uih);

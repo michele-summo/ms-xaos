@@ -248,6 +248,162 @@ static QWidget *buildTilings()
     return page;
 }
 
+/* Why a field gives no number, worded for the line under the fields. Empty
+ * is not among them: an empty length is where the tab starts, answered by
+ * saying what to write, and an empty magnitude stands for its default. */
+static QString fieldProblem(int reading)
+{
+    switch (reading) {
+        case FORMULA_POLY_NOT_NUMBER:
+            return QObject::tr("not a number");
+        case FORMULA_POLY_NOT_WHOLE:
+            return QObject::tr("not a whole number");
+        case FORMULA_POLY_TOO_SHORT:
+            return QObject::tr("at least 1");
+        case FORMULA_POLY_TOO_LONG:
+            return QObject::tr("at most %1: poly takes %2 arguments, and z is "
+                               "one of them")
+                .arg(FORMULA_POLY_LONGEST)
+                .arg(FORMULA_POLY_LONGEST + 1);
+        case FORMULA_POLY_NEGATIVE:
+            return QObject::tr("a magnitude is not below 0");
+        case FORMULA_POLY_TOO_LARGE:
+            return QObject::tr("at most %1").arg(FORMULA_POLY_LARGEST);
+    }
+    return QString();
+}
+
+/* The Utilities tab: things that write a formula rather than describe one.
+ *
+ * For now a random poly: two lengths and two magnitudes, and a formula drawn
+ * from them whenever all four read -- drawn again on every change to any of
+ * them, and on the button. While a length is empty or anything is not a
+ * number there is no formula at all, not the last one left standing, so that
+ * what is shown always answers what is written. The drawing is
+ * formula_poly_random, without Qt and tested against the parser; this is only
+ * the fields around it. */
+static QWidget *buildUtilities()
+{
+    QFont fixed = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+
+    QGroupBox *box = new QGroupBox(QObject::tr("Random poly formula"));
+    QLabel *about = new QLabel(QObject::tr(
+        "A random polynomial in z, written as poly(z, k1, ..., km). Its length "
+        "is m, the number of coefficients, and its degree m - 1. Each "
+        "coefficient is a complex number with a magnitude drawn between the "
+        "minimum and the maximum -- 0 and 1 when left empty -- and an argument "
+        "drawn at random. There is no c in it: z starts at the pixel, so the "
+        "picture is the polynomial's own filled Julia set, the same in "
+        "mandelbrot and julia mode. Add c where you want it, as in "
+        "poly(...) + c."));
+    about->setTextFormat(Qt::PlainText);
+    about->setWordWrap(true);
+
+    QLineEdit *shortest = new QLineEdit;
+    QLineEdit *longest = new QLineEdit;
+    QLineEdit *smallest = new QLineEdit;
+    QLineEdit *largest = new QLineEdit;
+    shortest->setPlaceholderText(QObject::tr("e.g. %1").arg(3));
+    longest->setPlaceholderText(QObject::tr("e.g. %1").arg(6));
+    /* What an empty magnitude stands for, shown where it will be read. */
+    smallest->setPlaceholderText("0");
+    largest->setPlaceholderText("1");
+    QFormLayout *fields = new QFormLayout;
+    fields->addRow(QObject::tr("Minimum length:"), shortest);
+    fields->addRow(QObject::tr("Maximum length:"), longest);
+    fields->addRow(QObject::tr("Minimum magnitude:"), smallest);
+    fields->addRow(QObject::tr("Maximum magnitude:"), largest);
+
+    QLineEdit *formula = new QLineEdit;
+    formula->setReadOnly(true);
+    formula->setFont(fixed);
+    QLabel *status = new QLabel;
+    status->setTextFormat(Qt::PlainText);
+    status->setWordWrap(true);
+
+    QPushButton *again = new QPushButton(QObject::tr("Generate another"));
+    QPushButton *copy = new QPushButton(QObject::tr("Copy"));
+    QHBoxLayout *buttons = new QHBoxLayout;
+    buttons->addWidget(again);
+    buttons->addWidget(copy);
+    buttons->addStretch();
+
+    QVBoxLayout *inside = new QVBoxLayout(box);
+    inside->addWidget(about);
+    inside->addLayout(fields);
+    inside->addWidget(formula);
+    inside->addWidget(status);
+    inside->addLayout(buttons);
+
+    auto generate = [=]() {
+        int lo = 0, hi = 0;
+        double low = 0, high = 1;
+        const int a =
+            formula_poly_length(shortest->text().toUtf8().constData(), &lo);
+        const int b =
+            formula_poly_length(longest->text().toUtf8().constData(), &hi);
+        const int c = formula_poly_magnitude(
+            smallest->text().toUtf8().constData(), 0, &low);
+        const int d = formula_poly_magnitude(
+            largest->text().toUtf8().constData(), 1, &high);
+        QString why;
+        if (a == FORMULA_POLY_EMPTY || b == FORMULA_POLY_EMPTY)
+            why = QObject::tr("Write the minimum and the maximum length, as "
+                              "whole numbers from 1 to %1.")
+                      .arg(FORMULA_POLY_LONGEST);
+        else if (a != FORMULA_POLY_OK)
+            why = QObject::tr("Minimum length: %1.").arg(fieldProblem(a));
+        else if (b != FORMULA_POLY_OK)
+            why = QObject::tr("Maximum length: %1.").arg(fieldProblem(b));
+        else if (lo > hi)
+            why = QObject::tr("The minimum length is more than the maximum.");
+        else if (c != FORMULA_POLY_OK)
+            why = QObject::tr("Minimum magnitude: %1.").arg(fieldProblem(c));
+        else if (d != FORMULA_POLY_OK)
+            why = QObject::tr("Maximum magnitude: %1.").arg(fieldProblem(d));
+        else if (low > high)
+            why = largest->text().trimmed().isEmpty()
+                      ? QObject::tr("The minimum magnitude is more than the "
+                                    "maximum, which is 1 when left empty.")
+                      : QObject::tr("The minimum magnitude is more than the "
+                                    "maximum.");
+        else if (high == 0)
+            why = QObject::tr("The maximum magnitude is 0: every coefficient "
+                              "would be nought.");
+        const bool made = why.isEmpty();
+        if (made) {
+            int m = 0;
+            const std::string call = formula_poly_random(
+                lo, hi, low, high, QRandomGenerator::global()->generate64(),
+                &m);
+            formula->setText(QString::fromStdString(call));
+            formula->setCursorPosition(0);
+            status->setText(
+                QObject::tr("Length %1, degree %2.").arg(m).arg(m - 1));
+        } else {
+            formula->clear();
+            status->setText(why);
+        }
+        again->setEnabled(made);
+        copy->setEnabled(made);
+    };
+    for (QLineEdit *field : {shortest, longest, smallest, largest})
+        QObject::connect(field, &QLineEdit::textChanged, box, generate);
+    QObject::connect(again, &QPushButton::clicked, box, generate);
+    QObject::connect(copy, &QPushButton::clicked, box, [formula, status]() {
+        QGuiApplication::clipboard()->setText(formula->text());
+        status->setText(QObject::tr("Copied to the clipboard: paste it into "
+                                    "Fractal -> User formula."));
+    });
+    generate();
+
+    QWidget *page = new QWidget;
+    QVBoxLayout *layout = new QVBoxLayout(page);
+    layout->addWidget(box);
+    layout->addStretch();
+    return page;
+}
+
 void ui_formulahelp(struct uih_context * /*uih*/)
 {
     static QWidget *window = NULL;
@@ -270,6 +426,7 @@ void ui_formulahelp(struct uih_context * /*uih*/)
         tabs->addTab(buildTable(formula_help_values, QObject::tr("Value")),
                      QObject::tr("Values"));
         tabs->addTab(buildTilings(), QObject::tr("Tilings"));
+        tabs->addTab(buildUtilities(), QObject::tr("Utilities"));
 
         QVBoxLayout *layout = new QVBoxLayout(window);
         layout->addWidget(tabs);

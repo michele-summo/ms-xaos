@@ -27,7 +27,28 @@ const static char *errstring;
             errstring = str;                                                   \
     }
 #define FD uih->playc->file
-static char token[1024];
+/* The token being read, which grows with what it holds. A string parameter is
+ * as long as the file makes it, and a user formula runs to thousands of
+ * characters: the 1024 it used to be refused every position, and every undo,
+ * that held a longer one with "Token is too long". */
+static char *token;
+static int tokensize;
+
+/* Puts c at token[i], growing the token to take it; false if it cannot. i
+ * never runs more than one past the end, so doubling once is enough. */
+static bool tokenput(int i, int c)
+{
+    if (i >= tokensize) {
+        const int size = tokensize ? 2 * tokensize : 1024;
+        char *grown = (char *)realloc(token, size);
+        if (grown == NULL)
+            return false;
+        token = grown;
+        tokensize = size;
+    }
+    token[i] = c;
+    return true;
+}
 static int first;
 static int last;
 static int parsenext;
@@ -481,6 +502,10 @@ static int gettoken(struct uih_context *uih)
             seterr(TR("Error", "Unexpected end of file"));
         return 0;
     }
+    if (!tokenput(0, 0)) {
+        seterr(TR("Error", "Out of memory"));
+        return 0;
+    }
     if ((c = nextchar()) == '"') {
         while (c == '\r')
             c = nextchar();
@@ -499,13 +524,10 @@ static int gettoken(struct uih_context *uih)
             }
             if (c == '\n' && uih->playstring == NULL)
                 uih->playc->line++;
-            if (c == '\\')
-                token[i] = nextchar();
-            else
-                token[i] = c;
-            i++;
-            if (i >= 1024) {
-                seterr(TR("Error", "Token is too long"));
+            if (tokenput(i, c == '\\' ? nextchar() : c))
+                i++;
+            else {
+                seterr(TR("Error", "Out of memory"));
                 i = 0;
             }
         } while (c != '"');
@@ -520,14 +542,17 @@ static int gettoken(struct uih_context *uih)
                 seterr(TR("Error", "Unexpected end of file"));
             return 0;
         }
-        token[i] = c;
-        i++;
-        if (i >= 1024) {
-            seterr(TR("Error", "Token is too long"));
+        if (tokenput(i, c))
+            i++;
+        else {
+            seterr(TR("Error", "Out of memory"));
             i = 0;
         }
     } while (c != ' ' && c != '\t' && c != ')' && c != '\n' && c != '\r');
-    i--;
+    /* Less the delimiter that ended it -- unless that could not be put either,
+     * which left nothing to take back. */
+    if (i > 0)
+        i--;
     token[i] = 0;
     skipblank(uih);
     if (c == ')') {

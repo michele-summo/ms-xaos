@@ -136,8 +136,19 @@ const char *const colorfun[] = {
     "cube",
     "square root",
     "cube root",
+    /* on the end, so that every number a saved position holds still names
+     * what it named */
+    "log log",
+    "exp",
+    "triangle",
     NULL
 };
+
+/* The speed change after ITER, by the number fractal_context holds: off, and
+ * the three ways of joining the change to what comes before it. See
+ * color_power. */
+const char *const colorfun_after_modes[] = {"off", "jump", "continuous",
+                                            "smooth", NULL};
 
 #define SHIFT 8
 #define SMUL 256
@@ -314,7 +325,6 @@ static inline number_t bailout_threshold(void)
          * not the wrap that is wanted. */                                     \
         {                                                                      \
             number_t smoothed = (number_t)iter;                                \
-            int wrapped;                                                       \
             /* The smooth count worn.                                          \
              *                                                                 \
              * Here, and not in color_output: this macro works the count out    \
@@ -334,13 +344,7 @@ static inline number_t bailout_threshold(void)
                 smoothed = fbm_fold(smoothed + fbm_at_pixel(0) * 256);         \
             int cycle = (int)(((unsigned int)(cpalette.size - 1)) << 8);       \
             color_precalc(smoothed, 0);                                        \
-            wrapped = (int)smoothed;                                           \
-            if (wrapped < 0) {                                                 \
-                wrapped = cycle - ((-wrapped) % cycle) - 1;                    \
-                if (wrapped < 0)                                               \
-                    wrapped = 0;                                               \
-            }                                                                  \
-            iter = (unsigned int)wrapped;                                      \
+            iter = color_wrap(smoothed, (unsigned int)cycle);                  \
         }                                                                      \
         iter %= ((unsigned int)(cpalette.size - 1)) << 8;                      \
                                                                                \
@@ -433,8 +437,116 @@ static void color_f_normalize(number_t &v) {
     }
 }
 
-static float color_f_func(number_t v, const float speed, const int func, const int shift) {
+/* --- the speed change after ITER ------------------------------------------
+ *
+ * What the value handed to the speed function goes through first: left alone
+ * up to iter and raised to the exponent past it, so that the function chosen
+ * -- a square root, a log, anything -- goes on as it was up to iter and runs
+ * faster from there, or slower for an exponent below one. The three modes are
+ * three ways of joining the two, which is the whole difference between them
+ * (the guide draws them):
+ *
+ * 1  jump: iter (v/iter)^p past iter. The value is continuous and its slope
+ *    jumps from one to p, which shows as a ring where the bands change pace.
+ * 2  continuous: iter + (iter/p) ((v/iter)^p - 1) past iter, whose slope is
+ *    (v/iter)^(p-1) -- one at iter, then growing or falling as the exponent
+ *    says. The value is untouched below iter; at an exponent of nought the
+ *    formula's limit, a logarithm, is taken.
+ * 3  smooth: v (1 + (v/iter)^k)^((p-1)/k), mode 1 with its corner rounded. It
+ *    moves the value below iter a little -- as little as the sharpness k keeps
+ *    it; see color_power_sharpness.
+ *
+ * iter at nought or below makes it a plain power from the start, where the
+ * three are the same -- square and square root with any exponent at all. Odd, as the other functions are: a negative value is
+ * turned as its opposite is and keeps its sign. Worked in long double
+ * whatever the build, as they are, so that the two builds colour alike; mode
+ * 3 in the logarithm, so that a large value cannot overflow on the way to a
+ * finite answer.
+ */
+static long double color_power(long double v, long double iter, long double p,
+                               int mode, long double k)
+{
+    long double a = v < 0 ? -v : v, r;
+    if (!(a > 0))
+        return 0;
+    if (!(iter > 0)) {
+        r = expl(p * logl(a));
+    } else if (mode == 3) {
+        long double x = k * logl(a / iter);
+        /* ln(1 + e^x), written so that neither side overflows */
+        long double soft = x > 0 ? x + log1pl(expl(-x)) : log1pl(expl(x));
+        r = expl(logl(a) + (p - 1) / k * soft);
+    } else if (a <= iter) {
+        r = a;
+    } else if (mode == 2) {
+        long double x = logl(a / iter);
+        r = fabsl(p) < 1e-12L ? iter * (1 + x) : iter + iter / p * expm1l(p * x);
+    } else {
+        r = iter * expl(p * logl(a / iter));
+    }
+    return v < 0 ? -r : r;
+}
+
+/* How sharply the smooth mode turns: the k of (1 + (v/iter)^k)^((p-1)/k).
+ *
+ * At four, which it was drawn with first, it moves the value at half of iter
+ * by 1.5 per cent for an exponent of two -- and by 348 per cent for one of a
+ * hundred, since how far it moves it grows with p - 1: the rounding reached
+ * back far below iter and the colours changed long before they were asked to.
+ * So it is four, or as much sharper as keeps the value at half of iter within
+ * two per cent of where it was, whatever the exponent: the widest rounding
+ * that still leaves the value below iter as good as untouched.
+ *
+ * At half of iter the logarithm of the value is moved by
+ * (p - 1)/k ln(1 + 2^-k), which falls as k grows; bisected. Worked out once a
+ * picture, by set_fractalc, not once a pixel. */
+number_t color_power_sharpness(number_t exponent)
+{
+    const double limit = std::log(1.02);
+    const double d = std::fabs((double)exponent - 1);
+    if (!(d > 0) || !(d < 1e300))
+        return 4;
+    auto moved = [d](double k) { return d / k * std::log1p(std::exp2(-k)); };
+    if (moved(4) <= limit)
+        return 4;
+    double lo = 4, hi = 8;
+    while (moved(hi) > limit && hi < 4096)
+        hi *= 2;
+    for (int i = 0; i < 60; i++) {
+        double mid = (lo + hi) / 2;
+        if (moved(mid) > limit)
+            lo = mid;
+        else
+            hi = mid;
+    }
+    return hi;
+}
+
+static float color_f_func(number_t v, const float speed, const int func,
+                          const int shift, const int inset)
+{
     color_f_normalize(v);
+    /* The speed change after ITER, on the value before the function has it.
+     * Off -- the default -- or at an exponent of one, nothing at all is done
+     * to it, so that the value goes on to the function to the bit as it did
+     * before there was such a thing. */
+    const int after = inset ? cfractalc.incolorfunmode : cfractalc.outcolorfunmode;
+    if (after) {
+        number_t p = inset ? cfractalc.incolorfunexp : cfractalc.outcolorfunexp;
+        if (p != 1) {
+            number_t iter =
+                inset ? cfractalc.incolorfuniter : cfractalc.outcolorfuniter;
+            number_t k =
+                inset ? cfractalc.incolorfunsharp : cfractalc.outcolorfunsharp;
+            /* set_fractalc works it out; a caller that never went through it
+             * gets it here instead */
+            if (!(k >= 4))
+                k = color_power_sharpness(p);
+            v = color_power((long double)v, (long double)iter, (long double)p,
+                            after, (long double)k);
+            color_f_normalize(v);
+        }
+    }
     switch (func) {
     case 1:
         // LOG
@@ -482,28 +594,95 @@ static float color_f_func(number_t v, const float speed, const int func, const i
         else
             v = -cbrtl(-v);
         break;
+    case 9:
+        /* LOG LOG: log once more, for the deep zooms where the count runs to
+         * millions and log alone still packs the bands too close -- at a
+         * million it gives 13.8 bands and this 2.7 */
+        if (v > 0)
+            v = logl(1 + logl(v + 1));
+        else
+            v = -logl(1 + logl(-v + 1));
+        break;
+    case 10:
+        /* EXP: the other way from log, e^v - 1, which opens the small values
+         * out. For the quantities that stay small -- the components that true
+         * colour and the decompositions read; a count is past the largest
+         * number a float holds by ninety iterations. */
+        if (v > 0)
+            v = expm1l(v);
+        else
+            v = -expm1l(-v);
+        color_f_normalize(v);
+        break;
+    case 11: {
+        /* TRIANGLE: the sine with its curves straightened -- the same period
+         * and height, the palette walked forwards and back at a steady pace
+         * instead of lingering at the turns */
+        long double s =
+            (long double)v * 2 / 3.14159265358979323846264338327950288L;
+        long double t = s + 1 - 4 * floorl((s + 1) / 4);
+        v = 1 - fabsl(t - 2);
+        break;
+    }
     }
     v = v * speed;
     v += shift;
     color_f_normalize(v);
+    /* What is handed back is a float, which holds no more than FLT_MAX: past
+     * it the conversion gives an infinity, and an infinity reaches no colour.
+     * No function goes near it at the counts a picture has except exp and a
+     * large speed change, which reach it at once; held here, color_wrap takes
+     * it round the palette like any other large value. */
+    if (v > FLT_MAX)
+        v = FLT_MAX;
+    else if (v < -FLT_MAX)
+        v = -FLT_MAX;
     return v;
+}
+
+/* Where a colour value lands in a palette cycle of cycle entries -- in 256ths
+ * of an entry, as the colouring counts.
+ *
+ * It was converted to an int and wrapped, which is right as far as an int
+ * reaches and undefined past it: 2^31 256ths is 8.4 million bands, which cube
+ * reaches at 204 iterations, and every pixel past that took one and the same
+ * entry, a flat patch where the bands should have gone on. Inside an int this
+ * is that conversion and wrap exactly; outside it, the same wrap worked in
+ * number_t, which holds the whole value. */
+static unsigned int color_wrap(number_t v, unsigned int cycle)
+{
+    if (!(v == v) || cycle == 0)
+        return 0;
+    if (v > -(number_t)2147483647 && v < (number_t)2147483647) {
+        int i = (int)v;
+        if (i < 0) {
+            i = cycle - ((-i) % cycle) - 1;
+            if (i < 0)
+                i = 0;
+        }
+        return ((unsigned int)i) % cycle;
+    }
+    number_t r = nfmod(ntrunc(v < 0 ? -v : v), (number_t)cycle);
+    if (v >= 0)
+        return (unsigned int)r % cycle;
+    return (cycle - (unsigned int)r - 1) % cycle;
 }
 
 static void color_precalc(number_t &iter, int inset) {
     const float speed = inset ? cfractalc.incolorspeed : cfractalc.outcolorspeed;
     const int func = inset ? cfractalc.incolorfun : cfractalc.outcolorfun;
     const int shift = inset ? cfractalc.incolorshift : cfractalc.outcolorshift;
-    iter = (color_f_func(iter / SMUL, speed, func, shift) * SMUL);
+    iter = (color_f_func(iter / SMUL, speed, func, shift, inset) * SMUL);
 }
 static void color_precalc(number_t &zre, number_t &zim, number_t &pre,
                           number_t &pim, int inset) {
     const float speed = inset ? cfractalc.incolorspeed : cfractalc.outcolorspeed;
     const int func = inset ? cfractalc.incolorfun : cfractalc.outcolorfun;
     const int shift = inset ? cfractalc.incolorshift : cfractalc.outcolorshift;
-    zre = color_f_func(zre, speed, func, shift);
-    zim = color_f_func(zim, speed, func, shift);
-    pre = color_f_func(pre, speed, func, shift);
-    pim = color_f_func(pim, speed, func, shift);
+    zre = color_f_func(zre, speed, func, shift, inset);
+    zim = color_f_func(zim, speed, func, shift, inset);
+    pre = color_f_func(pre, speed, func, shift, inset);
+    pim = color_f_func(pim, speed, func, shift, inset);
 }
 
 
@@ -757,7 +936,6 @@ static unsigned int truecolor_output(number_t zre, number_t zim, number_t pre,
 static unsigned int color_output(number_t zre, number_t zim, unsigned int iter);
 static unsigned int color_output(number_t zre, number_t zim, unsigned int iter)
 {
-    int i;
     number_t i_f;
     iter <<= SHIFT;
     i_f = iter;
@@ -844,15 +1022,7 @@ static unsigned int color_output(number_t zre, number_t zim, unsigned int iter)
     }
 
     color_precalc(i_f, 0);
-    i = (int)i_f;
-
-    if (i < 0) {
-        i = (((unsigned int)(cpalette.size - 1)) << 8) -
-            ((-i) % (((unsigned int)(cpalette.size - 1) << 8))) - 1;
-        if (i < 0)
-            i = 0;
-    }
-    iter = ((unsigned int)i) % ((cpalette.size - 1) << 8);
+    iter = color_wrap(i_f, ((unsigned int)(cpalette.size - 1)) << 8);
     if ((cpalette.type & (C256 | SMALLITER)) || !(iter & 255))
         return (cpalette.pixels[1 + (iter >> 8)]);
     {
@@ -876,7 +1046,6 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
 static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
                                    number_t pim, unsigned int iter)
 {
-    int i = iter;
     number_t i_f = iter;
     if (cfractalc.coloringmode.ColorMode) {
         color_f_normalize(zre);
@@ -1012,15 +1181,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
         break;
     };
     color_precalc(i_f, 1);
-    i = (int) i_f;
-
-    if (i < 0) {
-        i = (((unsigned int)(cpalette.size - 1)) << 8) -
-            ((-i) % (((unsigned int)(cpalette.size - 1) << 8))) - 1;
-        if (i < 0)
-            i = 0;
-    }
-    iter = ((unsigned int)i) % ((cpalette.size - 1) << 8);
+    iter = color_wrap(i_f, ((unsigned int)(cpalette.size - 1)) << 8);
 
     if ((cpalette.type & (C256 | SMALLITER)) || !(iter & 255))
         return (cpalette.pixels[1 + ((unsigned int)iter >> 8)]);

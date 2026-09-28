@@ -1,5 +1,6 @@
 #include <QtWidgets>
 #include <cassert>
+#include <cmath>
 #include <QTimer>
 #include <iostream>
 
@@ -7,6 +8,7 @@
 #include "fractalwidget.h"
 #include "customdialog.h"
 #include "formulahelp.h"
+#include "formulaedit.h"
 
 #include "ui.h"
 #include "ui_helper.h"
@@ -425,6 +427,93 @@ void MainWindow::resizeImage(int width, int height)
     uih_restorepalette(uih);
     uih->display = 1;
     uih_cycling_continue(uih);
+}
+
+/* Within a device pixel either way: the image is a whole number of pixels, and
+ * most shapes cannot be met exactly at every size. */
+bool MainWindow::imageHasAspect(int num, int den) const
+{
+    const QSize s = widget->imageSize();
+    return qAbs((qint64)s.width() * den - (qint64)s.height() * num) <=
+           qMax(num, den);
+}
+
+void MainWindow::setImageAspect(int num, int den)
+{
+    if (num <= 0 || den <= 0)
+        return;
+    /* The image keeps the pixels it has and takes the new shape, so they are
+     * counted here, before anything moves. */
+    const QSize now = widget->imageSize();
+    const double pixels = (double)now.width() * now.height();
+    /* Neither full screen nor a maximised window can take a size of its own,
+     * so the window is brought back to its ordinary frame first, and measured
+     * once it has settled there -- but with the pixels it had, not the ones
+     * of the smaller frame it goes back to. */
+    if (isFullScreen() || isMaximized()) {
+        showNormal();
+        QTimer::singleShot(0, this,
+                           [=]() { resizeToAspect(num, den, pixels); });
+        return;
+    }
+    resizeToAspect(num, den, pixels);
+}
+
+void MainWindow::resizeToAspect(int num, int den, double pixels)
+{
+    const qreal dpr = widget->devicePixelRatioF();
+    /* What the window adds to the image: the menu bar inside, the title bar
+     * and borders outside. Logical pixels, like the screen's measurements. */
+    const QSize inside = size() - widget->size();
+    const QSize outside = frameGeometry().size() - size();
+    const QRect avail = screen()->availableGeometry();
+    const int maxw = avail.width() - inside.width() - outside.width();
+    const int maxh = avail.height() - inside.height() - outside.height();
+
+    /* The same number of pixels in the new shape -- the window changes shape
+     * rather than size -- unless that would not fit on the screen, when it is
+     * the largest that does. The image is num*n by den*n device pixels. */
+    double k = std::sqrt(pixels / ((double)num * den));
+    k = qMin(k, qMin(maxw * dpr / num, maxh * dpr / den));
+    int n = qMax(1, (int)k);
+
+    /* The widget is sized in logical pixels and the image is round(logical *
+     * dpr) device pixels, so on a scaled display some counts cannot be had at
+     * all: at 125% one in every five. The nearest n below whose two sides can
+     * both be had meets the shape to the pixel; if there were none, the
+     * nearest the rounding allows would do. */
+    auto logical = [dpr](int device) { return qMax(1, qRound(device / dpr)); };
+    auto reachable = [&](int device) {
+        return qRound(logical(device) * dpr) == device;
+    };
+    for (int m = n; m >= 1 && n - m < 64; m--)
+        if (reachable(num * m) && reachable(den * m)) {
+            n = m;
+            break;
+        }
+    const QSize target(logical(num * n), logical(den * n));
+
+    resize(target + inside);
+    /* Kept on the screen: a window that grew is moved back from the right and
+     * bottom edges, and never past the left and top ones. */
+    QRect frame(frameGeometry().topLeft(), target + inside + outside);
+    if (frame.right() > avail.right())
+        frame.moveRight(avail.right());
+    if (frame.bottom() > avail.bottom())
+        frame.moveBottom(avail.bottom());
+    if (frame.left() < avail.left())
+        frame.moveLeft(avail.left());
+    if (frame.top() < avail.top())
+        frame.moveTop(avail.top());
+    if (frame.topLeft() != frameGeometry().topLeft())
+        move(frame.topLeft());
+
+    /* The layout finishes after the resize, and whatever it gives the menu bar
+     * comes off the image. Checked once it has settled, and made up. */
+    QTimer::singleShot(0, this, [this, target]() {
+        if (widget->size() != target && !isFullScreen() && !isMaximized())
+            resize(size() + target - widget->size());
+    });
 }
 
 xio_pathdata configfile;
@@ -1390,32 +1479,18 @@ void MainWindow::showDialog(const char *name)
                 QDialog *qDialog = new QDialog(this);
                 qDialog->setWindowTitle(item->name);
                 QBoxLayout *dialogLayout = new QBoxLayout(QBoxLayout::TopToBottom, qDialog);
-
-                QComboBox *list = new QComboBox(this);
                 QString label(dialog->question);
-                list->setObjectName(label);
-                list->setEditable(true);
-                list->addItem(dialog->defstr);
-                list->setObjectName(label + "-data");
 
-                QSettings settings;
-                QStringList formulas = settings.value("Formulas/UserFormulas").toStringList();
-
-                for (int j = 0; j < formulas.count(); j++) {
-                    bool found = false;
-                    for (int i = 0; i < list->count(); i++) {
-                        if (QString::compare(list->itemText(i), formulas[j], Qt::CaseSensitive) == 0) {
-                            found = true;
-                        }
-                    }
-                    if (!found)
-                        list->addItem(formulas[j]);
-                }
-
-                // list->addItems(formulas);
+                /* The bar: as many lines as the formula takes, going on to
+                 * the next between names. It used to be an editable combo
+                 * box, one line wide however long the formula. */
+                FormulaEdit *edit = new FormulaEdit(qDialog);
+                edit->setObjectName(label + "-data");
+                edit->setPlainText(QString::fromUtf8(dialog->defstr));
+                edit->moveCursor(QTextCursor::End);
 
                 QFormLayout *formLayout = new QFormLayout();
-                formLayout->addRow(label, list);
+                formLayout->addRow(label, edit);
 
                 /* The line under the bar. It is there whether or not there is
                  * anything to say, and two lines high so that a long signature
@@ -1431,18 +1506,17 @@ void MainWindow::showDialog(const char *name)
                 formLayout->addRow(QString(), hint);
                 dialogLayout->addLayout(formLayout);
 
-                if (QLineEdit *edit = list->lineEdit()) {
+                {
                     auto showHint = [hint, edit]() {
-                        hint->setText(formula_hint_text(edit->text(),
-                                                      edit->cursorPosition()));
+                        hint->setText(formula_hint_text(
+                            edit->toPlainText(), edit->textCursor().position()));
                     };
                     /* Both, and neither implies the other: typing moves the
                      * cursor without the text having to change under it, and
                      * an arrow key changes where one is without typing. */
-                    connect(edit, &QLineEdit::textChanged, hint,
-                            [showHint](const QString &) { showHint(); });
-                    connect(edit, &QLineEdit::cursorPositionChanged, hint,
-                            [showHint](int, int) { showHint(); });
+                    connect(edit, &QTextEdit::textChanged, hint, showHint);
+                    connect(edit, &QTextEdit::cursorPositionChanged, hint,
+                            showHint);
                     showHint();
                 }
 
@@ -1450,19 +1524,71 @@ void MainWindow::showDialog(const char *name)
                     new QDialogButtonBox((QDialogButtonBox::Ok | QDialogButtonBox::Cancel),
                                          Qt::Horizontal, qDialog);
 
+                /* The formulas used before, which the combo box held in its
+                 * list, in a window of their own: a long formula is more than
+                 * a list line can show, and the window says how long. */
+                QPushButton *history = buttonBox->addButton(
+                    TR("Dialog", "History..."), QDialogButtonBox::ActionRole);
+                history->setAutoDefault(false);
+                history->setEnabled(!formula_history().isEmpty());
+                connect(history, &QPushButton::clicked, qDialog,
+                        [qDialog, edit]() {
+                            formula_history_open(
+                                qDialog, [edit](const QString &formula) {
+                                    edit->setPlainText(formula);
+                                    edit->moveCursor(QTextCursor::End);
+                                    edit->setFocus();
+                                });
+                        });
+
                 connect(buttonBox, SIGNAL(accepted()), qDialog, SLOT(accept()));
                 connect(buttonBox, SIGNAL(rejected()), qDialog, SLOT(reject()));
                 dialogLayout->addWidget(buttonBox);
                 qDialog->setLayout(dialogLayout);
+
+                /* Within a 720p screen: 1280 by 720, less the taskbar and the
+                 * dialog's own title bar and frame -- or the screen this is
+                 * on, if that is smaller still, as a 720p one scaled to 125%
+                 * is. About half of it wide: a long formula goes on to more
+                 * lines rather than across the screen, and the hint under the
+                 * bar still fits the longest signature, randsctile's, in its
+                 * two lines. The bar grows a line at a time with the formula
+                 * until the dialog would pass that height, and scrolls from
+                 * there. */
+                const QRect screenArea = screen()->availableGeometry();
+                const int widest = qMin(1280 - 80, screenArea.width() - 80);
+                const int tallest = qMin(720 - 40 - 80, screenArea.height() - 80);
+                edit->setPreferredWidth(qMin(560, widest - 140));
+                const int others =
+                    dialogLayout->sizeHint().height() - edit->sizeHint().height();
+                edit->setTallest(qMax(tallest - others,
+                                      3 * QFontMetrics(edit->font()).lineSpacing()));
+                qDialog->setMaximumWidth(widest);
                 qDialog->adjustSize(); // this is sometimes too high in WASM, FIXME, maybe Qt6 bug?
 
+                /* Shrinking as well as growing: the layout only ever raises a
+                 * window to its minimum, so a formula that loses a line would
+                 * leave the dialog a line too tall. */
+                connect(edit->document()->documentLayout(),
+                        &QAbstractTextDocumentLayout::documentSizeChanged,
+                        qDialog, [qDialog](const QSizeF &) {
+                            QTimer::singleShot(0, qDialog, [qDialog]() {
+                                qDialog->resize(qDialog->width(),
+                                                qDialog->sizeHint().height());
+                            });
+                        });
+
+                /* The history is written here, where a formula is chosen, and
+                 * not by the usrform command, which every position and every
+                 * render that holds a user formula runs as well. */
                 connect(qDialog, &QDialog::accepted, qDialog,
                         [=](void){
-                            QComboBox *selected = qDialog->findChild<QComboBox *>(label + "-data");
-                            param->dstring = strdup(selected->currentText().toUtf8());
+                            formula_history_add(edit->toPlainText());
+                            param->dstring = strdup(edit->toPlainText().toUtf8());
                             menuActivate(item, param);
                         });
                 qDialog->open();
+                edit->setFocus();
                 break;
             }
             case DIALOG_CHOICE:

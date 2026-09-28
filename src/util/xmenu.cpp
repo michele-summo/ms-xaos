@@ -677,7 +677,8 @@ const char *menu_processcommand(struct uih_context *uih, tokenfunc f,
     }
     item = menu_findcommand(c);
     if (item == NULL) {
-        sprintf(errorstr, "%s:unknown function", c);
+        /* c is whatever the file or the command line held, of any length. */
+        snprintf(errorstr, sizeof errorstr, "%s:unknown function", c);
         return errorstr;
     }
     if (item->flags & mask) {

@@ -13,7 +13,7 @@ static void getpos(uih_context *c, int *x, int *y, int *w, int *h, void *data)
     long n = (long)(size_t)data;
     if (c->messg.message[n] != NULL) {
         int he = xtextheight(c->image, c->font);
-        *y = c->messg.messagestart + he * n;
+        *y = uih_messagestart(c) + he * n;
         *h = he;
         *w = xtextwidth(c->image, c->font, c->messg.message[n]);
         *x = (c->image->width - *w) / 2;
@@ -28,7 +28,7 @@ static void draw(uih_context *c, void *data)
     long n = (long)(size_t)data;
     if (c->messg.message[n] != NULL) {
         int h = xtextheight(c->image, c->font);
-        y = c->messg.messagestart + h * n;
+        y = uih_messagestart(c) + h * n;
         w = xtextwidth(c->image, c->font, c->messg.message[n]);
         x = (c->image->width - w) / 2;
         if (c->messg.messagetype[n])
@@ -80,7 +80,6 @@ void uih_initmessages(uih_context *c)
         c->messg.message[i] = NULL;
         c->messg.w[i] = uih_registerw(c, getpos, draw, (void *)(size_t)i, 0);
     }
-    c->messg.messagestart = 0;
 }
 
 void uih_destroymessages(uih_context *c)

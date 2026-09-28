@@ -10,6 +10,8 @@
 
 #include <cstdio>
 #include <cstring>
+#include <string>
+#include <vector>
 
 #include "formulahelp.h"
 
@@ -132,6 +134,154 @@ int main(void)
         int got = formula_hint_arg_span("z, k1, k2, ...", 7, &start, &len);
         check(got && len == 3 && !strncmp("z, k1, k2, ..." + start, "...", 3),
               "the eighth coefficient of poly is the tail");
+    }
+
+    /* --- going on to a new line ------------------------------------------
+     *
+     * Every character one unit wide, so that a line of avail units holds
+     * avail characters and each case can be read off the text. */
+    {
+        struct {
+            const char *text;
+            double avail;
+            const char *lines; /* the lines, parted by | */
+            const char *what;
+        } wraps[] = {
+            {"z^2+c", 20, "z^2+c", "a formula that fits stays on one line"},
+            {"", 20, "", "an empty formula is one empty line"},
+            {"sin(z)*cos(z)+tan(z)", 8, "sin(z)*|cos(z)+|tan(z)",
+             "a line ends between names, as late as one fits"},
+            {"parchment(z,6)", 6, "parchm|ent(z,|6)",
+             "a name wider than the whole bar is cut, as late as it fits"},
+            {"randsc(13,{0.6,0.6},{1,1})", 11, "randsc(13,{|0.6,0.6},{1|,1})",
+             "a number is a name too: 0.6 is never cut at the point"},
+            {"poly(z, 1, 2, c)", 10, "poly(z, 1,| 2, c)",
+             "a space is between names like anything else that is not one"},
+            {"z_p3+p12", 4, "z_p3|+p12",
+             "a suffixed variable is one name: z_p3 is not cut at the "
+             "underscore"},
+            {"abc", 0.5, "a|b|c",
+             "a line narrower than any character still takes one"},
+        };
+        for (const auto &w : wraps) {
+            std::u16string text;
+            for (const char *c = w.text; *c; c++)
+                text += (char16_t)*c;
+            std::vector<int> ends = formula_wrap(
+                text.data(), (int)text.size(), w.avail,
+                [](int start, int end) { return (double)(end - start); });
+            std::string got;
+            int start = 0;
+            for (size_t k = 0; k < ends.size(); k++) {
+                if (k)
+                    got += '|';
+                got.append(w.text + start, ends[k] - start);
+                start = ends[k];
+            }
+            char what[256];
+            snprintf(what, sizeof what, "%s (\"%s\")", w.what, got.c_str());
+            check(got == w.lines, what);
+        }
+
+        /* The two halves of a character outside the basic plane stay
+         * together, whatever the width. */
+        std::u16string pair = u"a\U0001D49Eb";
+        std::vector<int> ends = formula_wrap(
+            pair.data(), (int)pair.size(), 1,
+            [](int start, int end) { return (double)(end - start); });
+        bool whole = true;
+        for (int e : ends)
+            if (e == 2)
+                whole = false;
+        check(whole, "a surrogate pair is never cut in two");
+    }
+
+    /* --- the history window ----------------------------------------------
+     *
+     * Again one unit a character. The suffix is what the window gives: the
+     * three dots and the length. */
+    {
+        auto units = [](const std::u16string &t) { return (double)t.size(); };
+        auto label = [&units](const char *text, double avail) {
+            std::u16string formula, suffix;
+            for (const char *c = text; *c; c++)
+                formula += (char16_t)*c;
+            std::string length = std::to_string(formula.size());
+            for (char c : "... (" + length + " characters)")
+                suffix += (char16_t)c;
+            std::u16string got =
+                formula_history_label(formula, suffix, avail, units);
+            return std::string(got.begin(), got.end());
+        };
+        check(label("z^2+c", 40) == "z^2+c", "a formula that fits is listed whole");
+        check(label("z^2+c", 5) == "z^2+c", "exactly as wide as the room still fits");
+        std::string got = label("randsc(13,{0.6,0.6},{1,1})+sin(z)*cos(z)+c", 30);
+        char what[256];
+        snprintf(what, sizeof what,
+                 "one too long is its start, three dots and its length, and "
+                 "no wider than the room (\"%s\")",
+                 got.c_str());
+        check(got == "randsc(13,{... (42 characters)", what);
+        check(label("randsc(13,{0.6,0.6},{1,1})+sin(z)*cos(z)+c", 10) ==
+                  "... (42 characters)",
+              "with room for less than the suffix, the suffix alone");
+
+        /* Between names: room for "poly(z, {0." ends before the number,
+         * rather than in "0...." */
+        check(label("poly(z, {0.5,0.25}, {0.125,0.0625})+c", 30) ==
+                  "poly(z, {... (37 characters)",
+              "the start ends before a number it would cut");
+        check(label("poly(z, {0.5,0.25}, {0.125,0.0625})+c", 27) ==
+                  "poly(z,... (37 characters)",
+              "and without the space before the cut");
+        check(label("randsctileabcdefghijklmnopqrstuv", 25) ==
+                  "randsc... (32 characters)",
+              "a name wider than the whole room is cut");
+
+        std::u16string pair = u"ab\U0001D49Ecde";
+        std::u16string cut = formula_history_label(pair, u"...", 6, units);
+        check(cut == u"ab...",
+              "the start is never cut between the halves of a surrogate pair");
+    }
+
+    /* --- the status ------------------------------------------------------
+     *
+     * One unit a character again, and "..." for the suffix: the length the
+     * status puts after it is the window's business, not the rule's. */
+    {
+        auto u16 = [](const char *text) {
+            std::u16string s;
+            for (const char *c = text; *c; c++)
+                s += (char16_t)*c;
+            return s;
+        };
+        auto units = [](const std::u16string &t) { return (double)t.size(); };
+        auto status = [&](const char *formula, double avail) {
+            std::vector<std::string> got;
+            for (const std::u16string &line :
+                 formula_status_lines(u16(formula), u"...", avail, units))
+                got.push_back(std::string(line.begin(), line.end()));
+            return got;
+        };
+
+        const std::u16string text = u16("sin(z)+cos(z)+tan(z)+c");
+        auto count = [](int start, int end) { return (double)(end - start); };
+        std::vector<int> all =
+            formula_wrap(text.data(), (int)text.size(), 8, count);
+        std::vector<int> two =
+            formula_wrap(text.data(), (int)text.size(), 8, count, 2);
+        check(all.size() == 3 && two.size() == 2 && two[0] == all[0] &&
+                  two[1] == all[1],
+              "most stops after that many lines, each ending where it would");
+
+        check(status("z^2+c", 10) == std::vector<std::string>{"z^2+c"},
+              "a formula that fits is one line");
+        check(status("sin(z)+cos(z)+c", 8) ==
+                  std::vector<std::string>{"sin(z)+", "cos(z)+c"},
+              "one too long for a line goes on to a second, between names");
+        check(status("sin(z)+cos(z)+tan(z)+c", 8) ==
+                  std::vector<std::string>{"sin(z)+", "cos(z..."},
+              "one too long for two ends the second with the suffix");
     }
 
     if (failures)

@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include "filter.h"
 #include "fractal.h"
+#include "formulas.h"
 #include "ui_helper.h"
 #include "config.h"
 #include "xmenu.h"
@@ -552,6 +553,38 @@ void uih_saveframe(struct uih_context *uih)
         if (s->fcontext->outcolorshift != uih->fcontext->outcolorshift)
             save_intc(uih, "outcolorshift", uih->fcontext->outcolorshift),
                 s->fcontext->outcolorshift = uih->fcontext->outcolorshift;
+        /* The speed change after ITER, a command a side, written as the
+         * fbm's numbers are: together, and only when one of them has moved --
+         * which, since it starts off, a picture that never used it never
+         * does. */
+        if (uih->save ||
+            s->fcontext->incolorfuniter != uih->fcontext->incolorfuniter ||
+            s->fcontext->incolorfunexp != uih->fcontext->incolorfunexp ||
+            s->fcontext->incolorfunmode != uih->fcontext->incolorfunmode) {
+            start_save(uih, "incolorfunafter");
+            save_float(uih, uih->fcontext->incolorfuniter);
+            save_float(uih, uih->fcontext->incolorfunexp);
+            save_nstring(uih, uih->fcontext->incolorfunmode,
+                         colorfun_after_modes);
+            stop_save(uih);
+            s->fcontext->incolorfuniter = uih->fcontext->incolorfuniter;
+            s->fcontext->incolorfunexp = uih->fcontext->incolorfunexp;
+            s->fcontext->incolorfunmode = uih->fcontext->incolorfunmode;
+        }
+        if (uih->save ||
+            s->fcontext->outcolorfuniter != uih->fcontext->outcolorfuniter ||
+            s->fcontext->outcolorfunexp != uih->fcontext->outcolorfunexp ||
+            s->fcontext->outcolorfunmode != uih->fcontext->outcolorfunmode) {
+            start_save(uih, "outcolorfunafter");
+            save_float(uih, uih->fcontext->outcolorfuniter);
+            save_float(uih, uih->fcontext->outcolorfunexp);
+            save_nstring(uih, uih->fcontext->outcolorfunmode,
+                         colorfun_after_modes);
+            stop_save(uih);
+            s->fcontext->outcolorfuniter = uih->fcontext->outcolorfuniter;
+            s->fcontext->outcolorfunexp = uih->fcontext->outcolorfunexp;
+            s->fcontext->outcolorfunmode = uih->fcontext->outcolorfunmode;
+        }
         if (s->fcontext->pndefault != uih->fcontext->pndefault)
             save_onoffc(uih, "pndefault", uih->fcontext->pndefault),
                 s->fcontext->pndefault = uih->fcontext->pndefault;
@@ -689,6 +722,9 @@ int uih_save_enable(struct uih_context *uih, xio_file f, int mode)
     s->fcontext->outcolorfun = 0;
     s->fcontext->outcolorspeed = 1.0f;
     s->fcontext->outcolorshift = 0;
+    s->fcontext->incolorfuniter = s->fcontext->outcolorfuniter = 100;
+    s->fcontext->incolorfunexp = s->fcontext->outcolorfunexp = 2;
+    s->fcontext->incolorfunmode = s->fcontext->outcolorfunmode = 0;
     s->fcontext->infbmintensity = s->fcontext->outfbmintensity = 4;
     s->fcontext->infbmfrequency = s->fcontext->outfbmfrequency = 8;
     s->fcontext->infbmroughness = s->fcontext->outfbmroughness = (number_t)1 / 2;

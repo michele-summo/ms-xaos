@@ -67,7 +67,9 @@
 #define OUTCOLORING_DESCRIBED 11
 
 #define TCOLOR 15
-#define COLORFUN 10
+/* One more than the speed functions colorfun[] names. New ones go on the end:
+ * the number is what a saved position carries. */
+#define COLORFUN 13
 
 class OutColormodeClass {
 public:
@@ -210,6 +212,26 @@ struct fractal_context {
     number_t incolorspeed, outcolorspeed;
     int incolorfun, outcolorfun;
     int incolorshift, outcolorshift;
+    /* The speed change after ITER, a set a side as the speed is: the value
+     * handed to the speed function is driven faster or slower past iter, so
+     * that whichever function is chosen goes on as it was up to there.
+     *
+     * iter       where the exponent begins to count, in the units the
+     *            function is handed -- iterations, for the modes that count
+     *            them. Nought or below counts it from the start: a plain
+     *            power.
+     * exponent   above one the colours speed up past iter, below one they
+     *            slow down
+     * mode       0 off, which is the default and leaves everything as it
+     *            was; 1 jump, the slope jumping at iter; 2 continuous, from
+     *            iter with the slope continuous; 3 smooth throughout. The
+     *            names are colorfun_after_modes[].
+     * sharpness  mode 3's, worked out from the exponent by set_fractalc and
+     *            not saved; see color_power_sharpness */
+    number_t incolorfuniter, outcolorfuniter;
+    number_t incolorfunexp, outcolorfunexp;
+    int incolorfunmode, outcolorfunmode;
+    number_t incolorfunsharp, outcolorfunsharp;
     /* The fractional Brownian motion the fbm colouring modes are drawn from,
      * kept apart for the two sides as the speed and the shift are.
      *
@@ -331,6 +353,10 @@ void set_formula(fractal_context *, int);
 extern thread_local number_t color_px, color_py;
 
 void set_fractalc(fractal_context *, struct image *img);
+
+/* How sharply the smooth speed change after ITER turns, for an exponent: see
+ * formulas.cpp. */
+number_t color_power_sharpness(number_t exponent);
 
 /* The cell of the palette one point of the plane is drawn from, or nought for
  * the inside colour, which is no cell. Returns 0 when it cannot be had. See

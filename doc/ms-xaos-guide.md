@@ -70,12 +70,37 @@ function that takes them. A fifth shows a picture of every tiling `randsctile`
 takes, since forty-five numbers with a line of words each say little about the
 shapes.
 
-Each row of the function list says what the call takes and in what order —
-"a, b", or "seed, size, degradation" where the position means something. The
+A sixth, **Utilities**, writes formulas instead of describing them. For now it
+holds a random `poly`, from four fields:
+
+| | |
+| --- | --- |
+| minimum and maximum length | m, the number of coefficients, drawn between the two; the degree is m − 1. Both are needed, as whole numbers from 1 to 254 — as long as `poly` goes, the parser taking 255 arguments to a call and `z` being one of them |
+| minimum and maximum magnitude | the size of every coefficient, drawn evenly between the two. 0 and 1 when left empty; at most 1000000 |
+
+Each coefficient is complex, `{re,im}`, with its argument drawn at random round
+the whole turn, and each part is written to four significant figures of its
+magnitude, so that a range of 0.001 to 0.002 is not rounded away. There is no
+`c` in the formula. A user formula starts `z` at the pixel in mandelbrot mode as
+well as in julia mode, so what it draws is the polynomial's own filled Julia
+set, the same in both; `c` goes wherever it is wanted, as in `poly(...) + c`.
+
+Every change to a field draws a new formula, as does **Generate another**, and
+**Copy** puts it on the clipboard for Fractal → User formula. While a length is
+empty, or a field is not a number, is out of its range, or has its minimum above
+its maximum, there is no formula, just a line saying why.
+
+Each row of the function list says what the call takes and in what order, by
+names that say what each place is for — "base, exponent", "z, low, high",
+"before, after, n" — rather than by letters, which said nothing about which
+place is which; the same names are what the line under the formula bar shows.
+One convention runs through them: `z` is the value a function works on,
+whatever is actually written there. The
 list and those counts are both checked against the parser’s own table by a
 test, so a function that gains or loses an argument cannot go on being
 described with the one it used to have. An argument that may be left out is
-shown in brackets with the value it takes when it is: `a, [b=1], [c=1]`.
+shown in brackets with the value it takes when it is:
+`z, [power=1], [angle_factor=1]`.
 
 **Arguments are separated by a comma, and by nothing else.** A semicolon used
 to serve as well: the parser turned it into a comma before reading anything, so
@@ -117,10 +142,43 @@ sit in two cells, and a truecolour picture blends two neighbouring cells
 together, so no colour names a cell of its own. Like the selection zoom, the
 probe hands the pointer back to fast julia mode while that is running.
 
+**The bar.** Fractal → User formula opens a dialog about half as wide as a
+1280×720 screen — some six hundred and fifty pixels, less on a smaller screen —
+whose bar goes on to a new line when the formula does not fit on one. It goes on
+**between names, never inside one**: a name or a number (`randsctile`, `z_p3`,
+`0.6`) is kept whole, and a line may end anywhere else — after a bracket, a
+comma, an operator. Qt's own word wrap was no use for this: it breaks where the
+rules for prose allow, which in a formula is after a few commas and little
+else, and then cuts a name wherever it has to. Only a name wider than the whole
+bar is ever cut. The bar grows a line at a time with the formula, and once the
+dialog would no longer fit a 720p screen it stops growing and scrolls instead.
+It is still one formula on one line as far as anything else is concerned:
+Return is OK rather than a new line, and a pasted formula has its line breaks
+and tabs made spaces, which the parser reads as nothing.
+
+**History...** under the bar opens the formulas used before — the ten most
+recent, newest first, each once — which the old one-line bar kept in its
+drop-down list. A formula too long for the window is listed as its start, three
+dots and how long it is, `poly(z, {0.01097,0.00699}, {-0.05... (157 characters)`,
+so that two that begin alike can still be told apart; the start ends between
+names, like a line of the bar, and there is more of it the wider the window.
+Double-click one, or pick it and press Use, and it goes into the bar whole. A
+formula is added when the dialog is accepted with it, and only then: loading a
+position that holds a user formula, replaying one, or rendering one with
+`-render` runs the same `usrform` command but no longer pushes it into the
+history, where each of those used to take the place of one you had typed.
+
+**View → Status** shows the formula the same way: on one line if it fits the
+window, on two if not — the second under the first, going on between names —
+and when two do not hold it either, the second ends in three dots and its
+length, `... (918 characters)`. The lines below it move down to make room, and
+it is laid out again when the window changes width. It used to be a single line
+that ran off the edge of the picture.
+
 **Under the bar there is a line saying what the call you are in takes**, with
 the argument you are writing in bold. Put the cursor inside `randsc(` and it
 reads *randsc(**seed**, [size=1+i], [degradation=0.5+0.5i], [kaleidoscope=1],
-[mode=0], [skew=0])*; move past a comma and the bold moves with you. It needs
+[kaled_mirror=0], [skew=0])*; move past a comma and the bold moves with you. It needs
 no more of the formula than an open bracket with a name in front of it, so it
 is there while the formula is half written, which is when it is wanted. Put the
 cursor outside every call and the line is empty.
@@ -151,13 +209,13 @@ A user formula that has not been written yet says `z^2+c`. It used to say the
 burning ship, which is a fractal of its own and a puzzle to meet as a starting
 point.
 
-**`ifiterf(a, b)`** — evaluates `a` on every pass but the final one and `b`
-on that. The final pass is the last the iteration limit allows: a formula has
+**`ifiterf(rest, last)`** — evaluates `rest` on every pass but the final one
+and `last` on that. The final pass is the last the iteration limit allows: a formula has
 no way of knowing which pass will be the one that escapes, that depending on
 the value it has not produced yet. Only the chosen one is evaluated.
 
-**`ifiterr(a, b, n)`** — evaluates `a` while the pass number is below `n`
-and `b` from `n` onwards. Only the chosen one is evaluated, as with the other
+**`ifiterr(before, after, n)`** — evaluates `before` while the pass number is
+below `n` and `after` from `n` onwards. Only the chosen one is evaluated, as with the other
 two, though the threshold had to be taught to the parser first: an argument
 may now be marked as read by the selector rather than chosen by it, and is
 then evaluated before the choice is made.
@@ -238,7 +296,7 @@ the bargain.
     poly(z,1,0,0)+c            the Mandelbrot, written out
     poly(z,1,0,0,{0.7,0.2})    z^3 + 0.7+0.2i
 
-**`randsc(seed, size, degradation, kaleidoscope, mode, skew, skew_mode, selfsim)`** — coherent
+**`randsc(seed, size, degradation, kaleidoscope, kaled_mirror, skew, skew_mode, selfsim)`** — coherent
 noise over the point, giving blobs rather than per-pixel snow. `size`
 (default `1+i`) is the average width of a blob along the real axis and its
 height along the imaginary one.
@@ -306,7 +364,7 @@ them and get both.
 
 | | |
 | --- | --- |
-| **1** (and `0`) | **the shape** — the cell's own outline, shrunk step by step. What a call that names no mode gets, and what is used when neither 1 nor 2 is named |
+| **1** (and `0`) | **the shape** — the cell's own outline, shrunk step by step. What a call that gives no `skew_mode` gets, and what is used when neither 1 nor 2 is named |
 | **2** | **the rosette** — the angle round the middle of the cell, folded into as many turns as the kaleidoscope has wedges, so each cell carries the picture's own symmetry. Plain spokes when nothing is folded |
 | **4** | **across the wedge** — a turn that follows where the point stands in its wedge of the kaleidoscope, the same in every wedge |
 | **8** | **radial** — the modulus moves as well as the angle |
@@ -530,8 +588,8 @@ twenty-four, and it is worth raising only when `roughness` is: at the plain half
 the eighth octave carries a two hundred and fiftieth of the whole.
 
 **It has no kaleidoscope of its own**, where the `randsc` family does, because
-one is already there to compose with: `parchment(a,b)` folds the angle of `a`
-into `|b|` sectors and `parchmenta` mirrors the alternate halves, so
+one is already there to compose with: `parchment(z, sectors)` folds the angle
+of `z` into `|sectors|` sectors and `parchmenta` mirrors the alternate halves, so
 `fbm(parchmenta(z,6),7)` says it, and says it where the reader of the formula
 can see it.
 
@@ -588,9 +646,10 @@ called, so the same position does not redraw the same way. Prefer `randsc`.
 
 The two arguments after the degradation fold the plane before the field is
 sampled from it. The first is how many wedges to fold it into, `1` — the
-default — leaving it alone; the second is which mirror does the folding:
+default — leaving it alone; the second, `kaled_mirror`, is which mirror does
+the folding:
 
-| mode | |
+| kaled_mirror | |
 | --- | --- |
 | `0` (and anything else) | the far half of each wedge mirrors the near half, so every wedge is symmetric about its own bisector |
 | `1` | the same the other way about, the near half mirroring the far one |
@@ -871,10 +930,10 @@ the other with nothing across it; the square has four-fold symmetry and so shoul
 what is drawn on it. A test asserts that each figure answers a turn of its own
 order with the same turn.
 
-**`sierpinskyt([radius=4], [kaleidoscope=1], [mode=0])`** — the Sierpinski
+**`sierpinskyt([radius=4], [kaleidoscope=1], [kaled_mirror=0])`** — the Sierpinski
 gasket, in that triangle.
 
-**`sierpinskyc([radius=4], [squares=3], [kaleidoscope=1], [mode=0])`** — the
+**`sierpinskyc([radius=4], [squares=3], [kaleidoscope=1], [kaled_mirror=0])`** — the
 Sierpinski carpet, in that square. The square is cut into `squares` by
 `squares`, the ring of cells along the border is kept, everything that ring
 encloses is thrown away, and the same is done to each cell that was kept. So
@@ -884,7 +943,7 @@ at five. Two is the one number with no ring to speak of, and there the far
 corner goes instead, which is a gasket again — a square cut in four with one
 corner taken away is what a gasket is.
 
-**`snowflake([radius=4], [kaleidoscope=1], [mode=0])`** — the Koch snowflake,
+**`snowflake([radius=4], [kaleidoscope=1], [kaled_mirror=0])`** — the Koch snowflake,
 its points on that hexagon's corners, banded by generation from its middle
 out: the hexagon on the first
 pass, the six triangles on its sides on the second, the twelve on their free
@@ -1112,7 +1171,7 @@ value becomes the trap, which the inside colouring modes then draw. A point
 that escapes never reaches that pass and keeps its ordinary outside colour, so
 what these draw is the inside.
 
-**`trap(a, shape, centre, size)`** — the nearest the orbit ever came to a
+**`trap(orbit, shape, centre, size)`** — the nearest the orbit ever came to a
 shape. `shape` defaults to 0, `centre` to the origin, `size` to 1.
 
 | shape | |
@@ -1125,8 +1184,8 @@ shape. `shape` defaults to 0, `centre` to the origin, `size` to 1.
 | `5` | a square of half-side `size` |
 | `6` | a diamond of half-diagonal `size` |
 
-**`stripe(a, density)`** — the average of `(sin(density * arg a) + 1) / 2`
-along the orbit. `density` defaults to 4 and is how many stripes go round a
+**`stripe(orbit, density)`** — the average of
+`(sin(density * arg orbit) + 1) / 2` along the orbit. `density` defaults to 4 and is how many stripes go round a
 turn; a whole number, or they do not meet where the turn closes. An average
 over the orbit changes smoothly with the point even where the iteration count
 jumps, which is what draws the fibres the method is known for.
@@ -1348,16 +1407,108 @@ estimation. Those need a value carried from one iteration to the next, which
 in this engine means a second compiled copy of every calculation loop. `trap`
 and `stripe` in a user formula do it instead.
 
+## Colouring speed functions
+
+**Fractal → Incoloring mode → Coloring speed functions**, and the same on the
+outside, bend the value a colouring mode hands over before the colouring speed
+and shift are applied: the palette is read at `f(v) × speed + shift`. For the
+modes that count — iter, smooth and the rest — `v` is the iteration count
+itself, so a function can be thought of in iterations. Every one is odd,
+`f(−v) = −f(v)`, so a quantity that changes sign keeps it.
+
+| | |
+| --- | --- |
+| `ident`, `log`, `atan`, `sin`, `cos`, `square`, `cube`, `square root`, `cube root` | what there always was, unchanged to the bit |
+| `log log` | `log(1 + log(1 + v))`, for the deep zooms where log alone still packs the bands too close: at a million iterations log gives 13.8 bands and this 2.7 |
+| `exp` | `e^v − 1`, the other way from log: it opens the small values out. For the quantities that stay small — the components true colour and the decompositions read; a count passes the largest number a float holds by ninety iterations |
+| `triangle` | the sine with its curves straightened: the same period and height, the palette walked forwards and back at a steady pace instead of lingering at the turns |
+
+The new ones come after the old, so every number a saved position holds still
+names what it named.
+
+### Speed change after ITER
+
+The last entry of the same menu is not a function but a change to whichever
+function is chosen: up to an iteration you name, the function goes on exactly as
+it was; past it, the count it is handed runs faster or slower, so the colours
+speed up or slow down from there and not before. With `square root` chosen and
+ITER at 40, the colours are the square root's up to 40 iterations and the square
+root of a count that is gathering pace after that. Three values a side, saved
+with the position as `(outcolorfunafter 40 1.5 'smooth)`:
+
+| | |
+| --- | --- |
+| **ITER** | where the change begins, in the units the function is handed. At nought or below the change runs from the start — which makes `ident` a power with any exponent at all |
+| **exponent** | above one the colours speed up past ITER, below one they slow down |
+| **mode** | chosen from four: **off**, and three ways of joining the change to what comes before it |
+
+It starts **off**, and off — or at an exponent of one, in any mode — nothing at
+all is done to the value, so every function gives to the bit what it gave before
+there was such a thing.
+
+The three modes, as they change the count handed to the function (written for
+`ident`, where the count is what the palette sees):
+
+| mode | past ITER | at ITER | below ITER |
+| --- | --- | --- | --- |
+| **jump** | `ITER·(v/ITER)^p` | the pace jumps from 1 to p: a ring where the bands change pace | untouched |
+| **continuous** | `ITER + (ITER/p)·((v/ITER)^p − 1)` | the pace stays 1 and grows — or falls — from there | untouched |
+| **smooth** | `v·(1 + (v/ITER)^k)^((p−1)/k)` | no corner of any kind; jump with its corner rounded, and coming to it well past ITER | within 2% at half of ITER |
+
+**Continuous** is the one that keeps both promises, the colours untouched until
+ITER and no ring where they change: its pace is 1 on reaching ITER and changes
+from there. It leaves the unchanged value more gently than jump — at the same
+exponent it comes to about 1/p of jump's value — and at an exponent of nought it
+goes on as a logarithm, which is the formula's limit there.
+
+**Smooth** rounds jump's corner, which cannot be done without moving the value
+a little before ITER. How far is set by `k`: four, which moves the value at half
+of ITER by 1.5% for an exponent of 2 — and by 348% for one of 100, because how
+far it moves grows with the exponent. So `k` is four or as much sharper as keeps
+the value at half of ITER within 2%, whatever the exponent. Measured on `ident`
+at an ITER of 50:
+
+| exponent | jump at 150 | continuous at 150 | smooth at 150 | smooth at half of ITER |
+| --- | --- | --- | --- | --- |
+| 0.01 | 50.5 | 105 | 50.4 | −1.5% |
+| 0.5 | 86.6 | 123 | 86.5 | −0.8% |
+| 1.5 | 260 | 190 | 260 | +0.8% |
+| 2 | 450 | 250 | 451 | +1.5% |
+| 100 | 10⁴⁹ | 10⁴⁷ | 10⁴⁹ | +2.0% |
+
+An exponent of 100 is legal and useless past ITER: a few iterations on, the
+bands are finer than the pixels and the colour is noise.
+
+### Past the end of an int
+
+The palette is reached in 256ths of an entry through an int, and a value past
+what an int holds — 8.4 million bands — was converted anyway, which is
+undefined: every such pixel took one and the same entry. `cube` reaches it at
+204 iterations, so a cube-coloured picture past that was a flat patch; `exp`
+and a large speed change reach it at once. It now lands where its value says, wrapped
+round the palette as any smaller value is, and a value past what a float holds
+is held at the largest one rather than becoming infinity. Inside an int nothing
+moves. Outside it, the one change to a picture saved before is in smooth
+colouring of Magnet and Magnet2 far from the set, which was one flat colour and
+now shows the bands the count describes there.
+
+Two smaller repairs came with it. Choosing a speed function moved the tick in
+the inside colouring menu rather than in its own. And **initstate**,
+which every position begins with, did not put the fbm's five numbers back to
+their defaults — a position saves them only where they differ from those, so one
+loaded after another that had moved them drew with the other's; it now resets
+them, and turns the speed change after ITER off with them.
+
 ## Zooming
 
-**Selection zoom** (View menu) replaces the continuous zoom with a rectangle:
+**Selection zoom** (View → Zoom) replaces the continuous zoom with a rectangle:
 drag with the left button and release to go there, as Ultra Fractal does. Zoom
 in only. The rectangle is forced to the aspect ratio of the window by growing
 its short side, never by cropping the long one, and it works correctly with the
 fractal rotated. Fast julia takes the drag while it is running, and gives it
 back on the way out.
 
-**Fixed steps**, also in the View menu:
+**Fixed steps**, in the same submenu:
 
 | | |
 | --- | --- |
@@ -1367,6 +1518,27 @@ back on the way out.
 | Zoom out 10× | `Ctrl` `Alt` `-` |
 
 They scale about the centre of the view, so they undo one another exactly.
+
+## Aspect ratio
+
+**View → Aspect ratio** resizes the window once, so that the image takes the
+shape chosen: 1:1, 4:3, 3:2, 16:10, 16:9, 2:1, 21:9, or 9:16 standing up. The
+window is not held to it: it can be dragged to any shape afterwards, and the
+tick in the menu is on whichever shape the image has at the moment, or on none.
+
+The image keeps the number of pixels it had and changes only its shape — or,
+when that would not fit on the screen, becomes the largest of that shape that
+does. From full screen or a maximised window it comes back to an ordinary
+window first, still with the pixels it had, so 16:9 there is the widest 16:9
+window the screen holds. The shape is met to the pixel, on a scaled display too:
+at 125% one pixel count in five cannot be had, and the size is chosen among
+those that can.
+
+What it is for is the render. A position is drawn so that the whole of the
+view it holds is in the picture, and a picture of another shape shows more of
+the plane on its longer side. So a view framed in the ordinary 4:3 window and
+rendered at 1920×1080 has a third more at the sides than was ever on screen;
+framed in a 16:9 window, the render is what was seen.
 
 ## Antialiasing in linear light
 
@@ -1397,10 +1569,13 @@ runtime so it runs on a machine without Qt.
 
     ctest --test-dir build
 
-293 tests: the formula parser at both precisions, the accuracy of `gamma`,
+347 tests: the formula parser at both precisions, the accuracy of `gamma`,
 `lambertw`, `erf` and `randsc` against exact references where any exist, the
-iteration loops against recorded checksums, saved positions round-tripping, the
-overlay save/restore, and the help reference against the parser's own table.
+iteration loops against recorded checksums, the colouring speed functions
+against what they gave before and what they are for, saved positions
+round-tripping and every render exiting cleanly, the overlay save/restore, the
+help reference against the parser's own table, and the random `poly` of its
+Utilities tab against the polynomial written out term by term.
 
 One of them measures speed rather than answers. Timing in nanoseconds would
 assert which machine the suite is running on, so it asserts a ratio instead:

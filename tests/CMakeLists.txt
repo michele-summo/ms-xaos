@@ -120,6 +120,16 @@ foreach(prec ${XAOS_TEST_PRECISIONS})
                               PRIVATE ${CMAKE_SOURCE_DIR}/src/ui)
    add_test(NAME formula_hint_${suffix} COMMAND formula_hint_${suffix})
 
+   # The Utilities tab writes formulas at random, and a formula it hands out
+   # has to be one the parser takes and the polynomial it looks like.
+   xaos_add_test_binary(formula_poly_${suffix} ${prec}
+                        formula_poly_test.cpp
+                        ${CMAKE_SOURCE_DIR}/src/ui/formulapoly.cpp
+                        ${SFFE_SOURCES})
+   target_include_directories(formula_poly_${suffix}
+                              PRIVATE ${CMAKE_SOURCE_DIR}/src/ui)
+   add_test(NAME formula_poly_${suffix} COMMAND formula_poly_${suffix})
+
    # --- overlays over the image --------------------------------------------
    # The status bar and the messages are drawn into the fractal image, so what
    # they cover has to be saved and put back. Where it is saved matters: the
@@ -179,6 +189,17 @@ foreach(prec ${XAOS_TEST_PRECISIONS})
    target_include_directories(userformula_${suffix}
                               PRIVATE ${CMAKE_SOURCE_DIR}/src/engine)
    add_test(NAME userformula_${suffix} COMMAND userformula_${suffix})
+
+   # --- the colour speed functions ----------------------------------------
+   # The nine there were, unchanged to the bit; the four added doing what they
+   # are for; and a value past an int landing in the palette cycle.
+   xaos_add_test_binary(colorfun_${suffix} ${prec}
+                        colorfun_test.cpp
+                        ${CMAKE_SOURCE_DIR}/src/engine/phist.cpp
+                        ${SFFE_SOURCES})
+   target_include_directories(colorfun_${suffix}
+                              PRIVATE ${CMAKE_SOURCE_DIR}/src/engine)
+   add_test(NAME colorfun_${suffix} COMMAND colorfun_${suffix})
 
    # --- the iteration loops ------------------------------------------------
    # The formula table exposes every loop as an iterationfunc, so they can be

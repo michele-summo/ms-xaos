@@ -48,6 +48,7 @@ class MainWindow : public QMainWindow
     void processEvents(bool wait);
     struct image *makeImage(int width, int height);
     void resizeImage(int width, int height);
+    void resizeToAspect(int num, int den, double pixels);
     void printSpeed();
 
   protected:
@@ -86,6 +87,10 @@ private slots:
     void init();
     void eventLoop();
     void chooseFont();
+    /* View -> Aspect ratio: resize the window once so that the image is
+     * num:den, and whether it is now. */
+    void setImageAspect(int num, int den);
+    bool imageHasAspect(int num, int den) const;
 };
 
 #endif // MAINWINDOW_H

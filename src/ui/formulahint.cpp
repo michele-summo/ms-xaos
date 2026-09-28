@@ -198,3 +198,108 @@ int formula_hint_arg_span(const char *args, int arg, int *start, int *len)
     }
     return 0;
 }
+
+/* --- going on to a new line ---------------------------------------------- */
+
+/* Part of a name or a number, which a line may not end inside. */
+static bool in_name(char16_t ch)
+{
+    return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+           (ch >= '0' && ch <= '9') || ch == '_' || ch == '.';
+}
+
+/* The second half of a surrogate pair, which cannot begin a line. */
+static bool low_surrogate(char16_t ch) { return ch >= 0xDC00 && ch <= 0xDFFF; }
+
+std::vector<int> formula_wrap(const char16_t *text, int length, double avail,
+                              const std::function<double(int, int)> &width,
+                              int most)
+{
+    std::vector<int> ends;
+    if (length <= 0) {
+        ends.push_back(0);
+        return ends;
+    }
+    int start = 0;
+    while (start < length && (int)ends.size() < most) {
+        /* The furthest end that fits at all, and the furthest that fits and
+         * falls between names. A line takes one character however wide, and
+         * then goes on while the next still fits. */
+        int fits = start, between = start;
+        for (int end = start + 1; end <= length; end++) {
+            if (end < length && low_surrogate(text[end]))
+                continue;
+            if (fits > start && width(start, end) > avail)
+                break;
+            fits = end;
+            if (end == length || !in_name(text[end - 1]) || !in_name(text[end]))
+                between = end;
+        }
+        const int end = between > start ? between : fits;
+        ends.push_back(end);
+        start = end;
+    }
+    return ends;
+}
+
+/* --- the history window -------------------------------------------------- */
+
+std::u16string formula_history_label(
+    const std::u16string &formula, const std::u16string &suffix, double avail,
+    const std::function<double(const std::u16string &)> &width)
+{
+    if (width(formula) <= avail)
+        return formula;
+    /* The longest start that fits with the suffix after it. A longer start is
+     * never narrower, so the answer is found by halving. */
+    size_t lo = 0, hi = formula.size();
+    while (lo < hi) {
+        const size_t mid = (lo + hi + 1) / 2;
+        if (width(formula.substr(0, mid) + suffix) <= avail)
+            lo = mid;
+        else
+            hi = mid - 1;
+    }
+    /* Cut between names, as the bar goes on to a new line: a number cut after
+     * its point would run into the dots ("0...."), and a cut name reads as
+     * another. Only a name wider than the whole room is cut, and never
+     * between the halves of a surrogate pair. */
+    size_t cut = lo;
+    while (cut > 0 && cut < formula.size() &&
+           ((in_name(formula[cut - 1]) && in_name(formula[cut])) ||
+            low_surrogate(formula[cut])))
+        cut--;
+    if (cut == 0) {
+        cut = lo;
+        if (cut > 0 && cut < formula.size() && low_surrogate(formula[cut]))
+            cut--;
+    }
+    while (cut > 0 && formula[cut - 1] == u' ')
+        cut--;
+    return formula.substr(0, cut) + suffix;
+}
+
+/* --- the status ----------------------------------------------------------- */
+
+std::vector<std::u16string> formula_status_lines(
+    const std::u16string &formula, const std::u16string &suffix, double avail,
+    const std::function<double(const std::u16string &)> &width)
+{
+    /* Two lines at most are laid out, so a formula of thousands of characters
+     * costs two lines' measuring rather than all of its own. */
+    const std::vector<int> ends = formula_wrap(
+        formula.data(), (int)formula.size(), avail,
+        [&](int start, int end) {
+            return width(formula.substr(start, end - start));
+        },
+        2);
+    std::vector<std::u16string> lines;
+    lines.push_back(formula.substr(0, ends[0]));
+    if (ends.size() > 1) {
+        const std::u16string rest = formula.substr(ends[0]);
+        lines.push_back(ends[1] == (int)formula.size()
+                            ? rest
+                            : formula_history_label(rest, suffix, avail, width));
+    }
+    return lines;
+}
