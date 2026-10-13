@@ -1,142 +1,147 @@
-# MS XaoS 1.8.0
+# MS XaoS 2.1
 
-What has changed since 1.7.4. Everything MS XaoS adds over
+What has changed since 1.8.0. Version 2.0 was never released on its own, so
+what it brought is here too. Everything MS XaoS adds over
 [XaoS](https://github.com/xaos-project/XaoS) 4.3.3 is in the notes of
 [1.6](https://github.com/michele-summo/ms-xaos/releases/tag/v1.6),
 [1.7](https://github.com/michele-summo/ms-xaos/releases/tag/v1.7),
-[1.7.2](https://github.com/michele-summo/ms-xaos/releases/tag/v1.7.2) and
-[1.7.4](https://github.com/michele-summo/ms-xaos/releases/tag/v1.7.4), and the
-[guide](https://github.com/michele-summo/ms-xaos/blob/v1.8.0/doc/ms-xaos-guide.md)
+[1.7.2](https://github.com/michele-summo/ms-xaos/releases/tag/v1.7.2),
+[1.7.4](https://github.com/michele-summo/ms-xaos/releases/tag/v1.7.4) and
+[1.8.0](https://github.com/michele-summo/ms-xaos/releases/tag/v1.8.0), and the
+[guide](https://github.com/michele-summo/ms-xaos/blob/v2.1/doc/ms-xaos-guide.md)
 says what each thing does and why it was made that way.
 
-## Long formulas
+The first number has moved because one thing saved by 1.8.0 no longer draws to
+the pixel what it drew: the speed change after ITER in **smooth** or
+**continuous**. Those two modes are gone, and such a position is read into the
+ones there are now, near enough to look alike.
 
-**A user formula of more than about five hundred characters crashed the
-program** the moment it was set, and `-render` of a position holding one
-crashed too. The formula is shown as a message once it is set, and the message
-was copied into a 512-byte buffer on the stack to be measured and drawn; a
-longer one wrote past it. The line now goes to Qt as it is, with no buffer and
-no limit.
+## The speed change after ITER
 
-Two more limits of the same kind went with it:
+Fractal → Incoloring and Outcoloring mode → Coloring speed functions → **Speed
+change after ITER** was an ITER, an exponent and one of four modes a side. It
+is now an **initial exponent** and an **initial speed**, and two groups, each
+an **ITER**, an **exponent**, a **speed** and a **mode** — off, jump or smooth
+— with the **radius** of smooth, which the dialog shows only when smooth is
+chosen.
 
-* **A position could not hold a formula of more than about a thousand
-  characters.** The reader stopped at 1024 characters a token with "Token is
-  too long", so such a position was written but could not be read back — and
-  undo and redo, which replay one, failed the same way. The token grows with
-  what it holds now: a `poly` of 254 coefficients, 4587 characters, saves,
-  loads and undoes.
-* The status line of the formula and the error for an unknown command were
-  written with an unbounded `sprintf`.
+**Each stretch runs at its own exponent.** The count is the plain power `v^p0`
+up to the first ITER of a group that is on; each stretch after it starts from
+the count the one before came to, `f(ITER)`, and adds
+`s·ITER·((v/ITER)^p − 1)`, whose pace at ITER is `s·p`. With `p0` = 2, `p1` =
+1 at 50 and `p2` = 2 at 100, the count on `ident` is `v²` up to 50, `v + 2450`
+up to 100, and `2550 + 100·((v/100)² − 1)` from there — never `p0·p1`. The
+lower ITER goes first whichever group holds it, and a group that is off is left
+out, its ITER with it.
 
-## The formula bar
+**The speeds are linear where the exponents are powers**: each multiplies the
+pace of its stretch, so at an exponent of one a stretch is the straight line
+`f(ITER) + s·(v − ITER)`, and a speed of 3 on the first group above makes the
+middle stretch `2500 + 3·(v − 50)`.
 
-Fractal → User formula has a bar that **goes on to a new line between names,
-never inside one**: `randsctile`, `z_p3` and `0.6` are kept whole, and a line
-may end after a bracket, a comma or an operator. It grows a line at a time,
-and once the dialog would no longer fit a 720p screen it scrolls instead. The
-dialog is about half as wide as such a screen. Return is still OK, and a pasted
-formula has its line breaks made spaces.
+It all starts off, with the exponent and every speed at one, where nothing at
+all is done to the value: every function gives to the bit what it gave before.
 
-**History...** opens the ten formulas used last, newest first and each once.
-One too long for the window is listed as its start, three dots and its length —
-`poly(z, {0.01097,0.00699}, {-0.05... (157 characters)` — and a double click or
-Use puts it in the bar whole.
+### Smooth, the same on both sides of ITER
 
-The history is written **when the dialog is accepted, and only then**. It was
-written by the `usrform` command, which every position and every `-render`
-holding a user formula runs as well, so loading or rendering a few pictures
-pushed out the formulas you had typed.
+**Jump** turns the pace at ITER at once, which shows as a ring where the bands
+change pace. **Smooth** turns it from `ITER − r` to `ITER + r`: the pace goes in
+a straight line from the one the count has at one end to the one it has at the
+other, with a parabola about ITER that gives back what the line cut off the
+jump's corner. It is symmetric about ITER, and it **changes the colours inside
+the radius and nowhere else** — before `ITER − r` and past `ITER + r` the
+picture is the jump's, to the digit. After `v²` up to 50 and an exponent of
+one, a radius of 20 takes the pace from 60 at 30 to 45.5 at ITER and 1 at 70,
+and goes on from 70 as `v + 2450`, as jump does.
 
-**View → Status** shows a long formula the same way: on two lines, the second
-under the first, and past two cut with its length, `... (918 characters)`. It
-was one line that ran off the edge of the picture.
+The parabola never takes the pace below the slower of the two ends. Where it
+would — a slow pace turned very fast over a short radius — it is held there,
+and the count past the rounding moves on by what that keeps back. A radius
+wider than the first ITER stops short of nought, and two that would overlap are
+cut down alike.
 
-## Utilities: a random poly
+**Continuous is gone.** It went on from ITER at the pace the count came with,
+to join the stretches without a ring, and smooth with a wide radius does that.
 
-The user formula reference has a sixth tab, **Utilities**, which writes a random
-`poly` from a shortest and a longest length (1 to 254 coefficients) and a
-smallest and a largest magnitude (0 and 1 when left empty). Each coefficient is
-complex, at an angle drawn round the whole turn, written to four significant
-figures of its size. There is no `c`: a user formula starts `z` at the pixel in
-either mode, so what it draws is the polynomial's own filled Julia set, and `c`
-goes wherever it is wanted. **Copy** puts it on the clipboard; while a field is
-empty or wrong there is no formula, just a line saying why.
+### Positions
 
-## Names that say what they are
+| saved as | read as |
+| --- | --- |
+| off, jump | the same |
+| 1.8.0's smooth | smooth at a radius of three quarters of ITER: within four hundredths of ITER of what it drew up to an exponent of one and a half, a tenth up to two |
+| continuous | smooth at three quarters of ITER, with the exponent `0.66 + p/4 + 0.09·p²`: within twelve hundredths of ITER of it up to a half |
 
-The reference and the hint under the bar named arguments `a, b, c`, which said
-nothing about which place is which. Every one is named for what it is for now —
-`base, exponent`, `z, low, high`, `before, after, n`. `randsc`'s `mode` is
-`kaled_mirror`, and the second argument of `min`, `max` and their variants is
-`threshold`. These are names in the reference only: every formula reads as it
-did.
+Found by setting the curves side by side over four ITERs: such a picture comes
+out alike, not to the pixel. A speed change that is no more than one group in
+jump, with the initial exponent and every speed at one, is saved as 1.8.0 saved
+it, `(outcolorfunafter 40 1.5 'jump)`, and draws the same there. Anything else
+is `(outcolorspeedchange 1 40 1.5 'smooth 10 50 2 'off 10)`, and the speeds,
+only where one of them is not one, `(outcolorspeedlinear 1 3 1)`. The dialog
+itself is the command `outcolorspeedgroups`, its twelve fields in their order.
 
-## Colouring speed functions
+A dialog field can now be shown for one choice of another and hidden for the
+rest, the dialog fitting itself to what it shows: that is how the radius is
+there in smooth alone.
 
-Fractal → Incoloring and Outcoloring mode → Coloring speed functions has three
-more, after the nine there were so that every number a saved position holds
-still names what it named:
+## The same picture with any number of threads
 
-* **log log**, for the deep zooms where log alone still packs the bands too
-  close — at a million iterations log gives 13.8 bands and this 2.7;
-* **exp**, the other way from log, for the quantities that stay small;
-* **triangle**, the sine with its curves straightened, the palette walked
-  forwards and back at a steady pace.
+A picture drawn with several threads came out a few pixels different now and
+then: `examples/Hubicka/julia3.xpf`, rendered with four threads on a busy
+machine, differed in 26 of 3000 renders by up to 37 pixels along its
+filaments, and never with one thread.
 
-The nine give what they gave, to the bit.
+It came from **solid guessing**, which fills a pixel from the rows and columns
+already calculated round it when they agree. Its passes ran in all the threads
+at once with nothing between them, so whether a neighbour counted as calculated
+depended on how far the other threads had got. Each pass is now two phases, its
+rows and then its columns, and every thread finishes one before any starts the
+next. The 3000 renders come out alike, and with one thread the order is the one
+it always was.
 
-### Speed change after ITER
+Three more things changed with the threads or with the machine:
 
-The last entry of the same menu changes whichever function is chosen: up to an
-iteration you name it goes on exactly as it was, and past it the count it is
-handed runs faster or slower, so the colours speed up or slow down from there
-and not before. An exponent, an ITER and one of three ways of joining the two —
-**jump**, **continuous** and **smooth** — a side, saved as
-`(outcolorfunafter 40 1.5 'smooth)`. It starts off, and off it does nothing at
-all. The guide draws the three and measures them.
+* **3D** draws a band of columns to a thread, and the last two columns of a
+  band read the first two of the band to its right — which each band used to
+  fill with copies of its own last column. A band now waits, row by row, for
+  what the band on its right has drawn there, and the bands still run side by
+  side.
+* **Starfield** drew its stars from one random generator that every thread
+  advanced at once. Each row now starts where one thread drawing the whole
+  picture would have been. The stars still change from one start of XaoS to
+  the next: the generator is seeded from the clock, as it always was.
+* **Messages in a render**, such as the formula's name, went after five
+  seconds of the wall's clock, so a render slowed by a busy machine drew them
+  in fewer frames, or in none — which looked like antialiasing changing the
+  picture. In a render they now last five seconds of the animation's own time;
+  in the window nothing changes.
 
-### Past the end of an int
-
-A colour value past what an int holds — 8.4 million bands — was converted
-anyway, which is undefined, and every such pixel took one and the same palette
-entry. `cube` gets there at 204 iterations, so a cube-coloured picture past that
-was a flat patch. It now lands where its value says, wrapped round the palette
-like any smaller value.
-
-Two smaller repairs came with it: choosing a speed function moved the tick in
-the inside colouring menu rather than its own, and **initstate** did not put the
-fbm's five numbers back to their defaults, so a position loaded after one that
-had moved them drew with the other's.
-
-## Aspect ratio
-
-**View → Aspect ratio** resizes the window once so that the image takes the
-shape chosen — 1:1, 4:3, 3:2, 16:10, 16:9, 2:1, 21:9 or 9:16 — keeping the
-pixels it had, and leaves it free to be dragged to any shape after. From full
-screen or maximised it comes back to a window first. It is for the render: a
-view framed in a 16:9 window renders at 1920×1080 as it was seen, where one
-framed at 4:3 shows a third more at the sides.
-
-The selection zoom and the fixed zoom steps moved into **View → Zoom**.
+Of the 169 examples rendered with one thread, 167 draw to the pixel as 1.8.0
+drew them: `galaxy` has its stars from the clock, and `heart` keeps a message
+that 1.8.0 had taken away before the picture was drawn. With four threads they
+all draw as with one, `galaxy` apart.
 
 ## Tests
 
-347 tests, four more than 1.7.4: the colouring speed functions against what
-the nine gave and what the new ones are for, the random `poly` against the
-polynomial written out term by term, the wrapping of the bar, the history and
-the status, and two more positions in the round trip — one using the speed
-change after ITER, one holding a formula of 4587 characters, which crashed on
-the render and could not be read back.
+347 tests, as many as 1.8.0, with more in them. The colouring speed test now
+checks each stretch at its own exponent and speed; smooth with no corner and
+never turning back, the jump's count past its radius, and at ITER the pace half
+way between two steady ones; groups that are off, and speeds at one, changing
+nothing to the bit; and 1.8.0's smooth and continuous against the curves they
+drew. The round
+trip has two more positions: one with both groups, a radius and the speeds, and
+one written as 1.8.0 and the groups without a radius saved it. The threads were
+checked by rendering, as above.
 
 ## Compatibility
 
-* Positions saved by 1.7.4 load as they did and draw as they did, except where
-  a colour value went past what an int holds: `cube` past 204 iterations, and
-  smooth colouring of Magnet and Magnet2 far from the set, show the bands
-  where they had one flat colour.
-* Positions saved by 1.8.0 carry the speed change after ITER — off, unless it
-  was used — and 1.7.4 does not know the command, so it cannot open them.
-* A formula history written by 1.7.4 can hold the same formula several times;
-  it is shown once, and cleared of the others the next time a formula is
-  accepted.
+* Positions saved by 1.8.0 load. A speed change after ITER that is off or in
+  jump draws as it did; in smooth or continuous it draws alike, not to the
+  pixel.
+* Positions saved by 2.1 open in 1.8.0 and draw the same there when their
+  speed change is off or one group in jump, with the initial exponent and the
+  speeds at one. Any other speed change is written with commands 1.8.0 does not
+  know, so it cannot open them.
+* Positions saved by 2.0 open; their smooth is drawn with the rounding of 2.1.
+* Pictures drawn with one thread are 1.8.0's to the pixel, but for a message a
+  render now times by its own clock; with several threads they are now the
+  same as with one.
