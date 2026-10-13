@@ -1429,6 +1429,9 @@ void uih_emulatetimers(uih_context *c)
         tl_emulate_timer(c->savec->timer, c->emulator);
         tl_emulate_timer(c->savec->synctimer, c->emulator);
     }
+    /* and the messages on the screen, which count down their time too */
+    for (int i = 0; i < NMESSAGES && c->messg.message[i] != NULL; i++)
+        tl_emulate_timer(c->messg.messagetimer[i], c->emulator);
 }
 
 static void uih_unemulatetimers(uih_context *c)
@@ -1446,6 +1449,8 @@ static void uih_unemulatetimers(uih_context *c)
         tl_unemulate_timer(c->savec->timer);
         tl_unemulate_timer(c->savec->synctimer);
     }
+    for (int i = 0; i < NMESSAGES && c->messg.message[i] != NULL; i++)
+        tl_unemulate_timer(c->messg.messagetimer[i]);
 }
 
 void uih_constantframetime(uih_context *c, int time)
@@ -2316,29 +2321,69 @@ void uih_setoutcolorshift(uih_context *c, int shift) {
     }
 }
 
-/* The speed change after ITER, a side at a time. The mode is held to the
- * four there are, nought being off. The picture is redrawn only if something
- * moved. */
+/* The speed change after ITER, a whole side at a time: the initial exponent
+ * and both groups. The modes are held to the three there are, nought being
+ * off, and a radius to nought or more. The picture is redrawn only if
+ * something moved. */
+void uih_setcolorfunchange(uih_context *c, int inset, number_t initial,
+                           number_t iter, number_t exponent, int mode,
+                           number_t radius, number_t iter2,
+                           number_t exponent2, int mode2, number_t radius2)
+{
+    fractal_context *f = c->fcontext;
+    number_t *values[7] = {
+        inset ? &f->incolorfuninitial : &f->outcolorfuninitial,
+        inset ? &f->incolorfuniter : &f->outcolorfuniter,
+        inset ? &f->incolorfunexp : &f->outcolorfunexp,
+        inset ? &f->incolorfunradius : &f->outcolorfunradius,
+        inset ? &f->incolorfun2iter : &f->outcolorfun2iter,
+        inset ? &f->incolorfun2exp : &f->outcolorfun2exp,
+        inset ? &f->incolorfun2radius : &f->outcolorfun2radius};
+    int *modes[2] = {inset ? &f->incolorfunmode : &f->outcolorfunmode,
+                     inset ? &f->incolorfun2mode : &f->outcolorfun2mode};
+    const number_t given[7] = {initial, iter,      exponent,     radius > 0 ? radius : 0,
+                               iter2,   exponent2, radius2 > 0 ? radius2 : 0};
+    int wanted[2] = {mode, mode2};
+    int moved = 0;
+    for (int i = 0; i < 2; i++) {
+        if (wanted[i] < 0)
+            wanted[i] = 0;
+        if (wanted[i] > 2)
+            wanted[i] = 2;
+        if (*modes[i] != wanted[i])
+            *modes[i] = wanted[i], moved = 1;
+    }
+    for (int i = 0; i < 7; i++)
+        if (*values[i] != given[i])
+            *values[i] = given[i], moved = 1;
+    if (moved) {
+        f->version++;
+        uih_newimage(c);
+    }
+}
+
+/* Both groups as a position from before the radius holds them, read into
+ * the modes there are by colorfun_from_legacy. */
+void uih_setcolorfunlegacy(uih_context *c, int inset, number_t initial,
+                           number_t iter, number_t exponent, int mode,
+                           number_t iter2, number_t exponent2, int mode2)
+{
+    number_t radius = COLORFUN_RADIUS, radius2 = COLORFUN2_RADIUS;
+    colorfun_from_legacy(iter, &exponent, &mode, &radius);
+    colorfun_from_legacy(iter2, &exponent2, &mode2, &radius2);
+    uih_setcolorfunchange(c, inset, initial, iter, exponent, mode, radius,
+                          iter2, exponent2, mode2, radius2);
+}
+
+/* The speed change after ITER as 1.8.0 had it, and as a position from then
+ * holds it: one group, with an initial exponent of one, and the rest put back
+ * to how it starts -- so that reading the old command leaves nothing of the
+ * new ones behind. */
 void uih_setcolorfunafter(uih_context *c, int inset, number_t iter,
                           number_t exponent, int mode)
 {
-    number_t *i = inset ? &c->fcontext->incolorfuniter
-                        : &c->fcontext->outcolorfuniter;
-    number_t *e = inset ? &c->fcontext->incolorfunexp
-                        : &c->fcontext->outcolorfunexp;
-    int *m = inset ? &c->fcontext->incolorfunmode
-                   : &c->fcontext->outcolorfunmode;
-    if (mode < 0)
-        mode = 0;
-    if (mode > 3)
-        mode = 3;
-    if (*i != iter || *e != exponent || *m != mode) {
-        *i = iter;
-        *e = exponent;
-        *m = mode;
-        c->fcontext->version++;
-        uih_newimage(c);
-    }
+    uih_setcolorfunlegacy(c, inset, 1, iter, exponent, mode, COLORFUN2_ITER,
+                          COLORFUN2_EXP, 0);
 }
 
 /* The five numbers of the fractional Brownian motion, a side at a time, as
@@ -2811,7 +2856,7 @@ void uih_initstate(struct uih_context *uih)
      * loaded after one that had moved them drew with that one's values and
      * not with its own -- the fbm's did so from the day they were added. */
     for (int inset = 0; inset < 2; inset++) {
-        uih_setcolorfunafter(uih, inset, 100, 2, 0);
+        uih_setcolorfunafter(uih, inset, COLORFUN_ITER, COLORFUN_EXP, 0);
         uih_setfbmparams(uih, inset, 4, 8, 4, (number_t)1 / 2, 1);
     }
     uih_setpndefault(uih, 0);

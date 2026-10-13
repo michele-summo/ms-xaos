@@ -299,6 +299,85 @@ static void savepos3(struct uih_context *uih)
     uih->savec->fcontext->s = uih->fcontext->s;
 }
 
+/* The speed change after ITER of one side, as pointers into a context, so
+ * that the side being saved and the side last saved read alike. */
+struct colorfun_fields {
+    number_t *initial, *iter, *exp, *radius, *iter2, *exp2, *radius2;
+    int *mode, *mode2;
+};
+
+static colorfun_fields colorfun_side(fractal_context *c, int inset)
+{
+    if (inset)
+        return {&c->incolorfuninitial, &c->incolorfuniter,
+                &c->incolorfunexp,     &c->incolorfunradius,
+                &c->incolorfun2iter,   &c->incolorfun2exp,
+                &c->incolorfun2radius, &c->incolorfunmode,
+                &c->incolorfun2mode};
+    return {&c->outcolorfuninitial, &c->outcolorfuniter,
+            &c->outcolorfunexp,     &c->outcolorfunradius,
+            &c->outcolorfun2iter,   &c->outcolorfun2exp,
+            &c->outcolorfun2radius, &c->outcolorfunmode,
+            &c->outcolorfun2mode};
+}
+
+/* The speed change after ITER of one side, inset 1 for the inside.
+ *
+ * Written as 1.8.0 wrote it, (incolorfunafter iter exponent 'jump) or 'off,
+ * while that is all there is -- one group, off or in jump, the initial
+ * exponent at one and the rest as it starts -- so that such a position opens
+ * in 1.8.0 and draws there as here. Otherwise as (incolorspeedchange initial
+ * iter exponent 'mode radius iter2 exponent2 'mode2 radius2), in the order of
+ * the dialog, which 1.8.0 does not know. Either only when something in it has
+ * moved, or for a whole position, as the fbm's numbers are; and the old one
+ * puts the rest back to how it starts when it is read, so that an animation
+ * that turns it off again replays as it was recorded. */
+static void save_colorfunchange(struct uih_context *uih, int inset)
+{
+    colorfun_fields now = colorfun_side(uih->fcontext, inset);
+    colorfun_fields was = colorfun_side(uih->savec->fcontext, inset);
+    const int moved = *now.initial != *was.initial ||
+                      *now.iter != *was.iter || *now.exp != *was.exp ||
+                      *now.mode != *was.mode || *now.radius != *was.radius ||
+                      *now.iter2 != *was.iter2 || *now.exp2 != *was.exp2 ||
+                      *now.mode2 != *was.mode2 || *now.radius2 != *was.radius2;
+    if (!uih->save && !moved)
+        return;
+    /* off and jump are 1.8.0's first two modes, by the same numbers */
+    const int plain = *now.initial == 1 && *now.mode != 2 &&
+                      *now.radius == COLORFUN_RADIUS &&
+                      *now.iter2 == COLORFUN2_ITER &&
+                      *now.exp2 == COLORFUN2_EXP && *now.mode2 == 0 &&
+                      *now.radius2 == COLORFUN2_RADIUS;
+    if (plain) {
+        start_save(uih, inset ? "incolorfunafter" : "outcolorfunafter");
+        save_float(uih, *now.iter);
+        save_float(uih, *now.exp);
+        save_nstring(uih, *now.mode, colorfun_after_modes);
+    } else {
+        start_save(uih, inset ? "incolorspeedchange" : "outcolorspeedchange");
+        save_float(uih, *now.initial);
+        save_float(uih, *now.iter);
+        save_float(uih, *now.exp);
+        save_nstring(uih, *now.mode, colorfun_modes);
+        save_float(uih, *now.radius);
+        save_float(uih, *now.iter2);
+        save_float(uih, *now.exp2);
+        save_nstring(uih, *now.mode2, colorfun_modes);
+        save_float(uih, *now.radius2);
+    }
+    stop_save(uih);
+    *was.initial = *now.initial;
+    *was.iter = *now.iter;
+    *was.exp = *now.exp;
+    *was.mode = *now.mode;
+    *was.radius = *now.radius;
+    *was.iter2 = *now.iter2;
+    *was.exp2 = *now.exp2;
+    *was.mode2 = *now.mode2;
+    *was.radius2 = *now.radius2;
+}
+
 void uih_saveframe(struct uih_context *uih)
 {
     struct uih_savedcontext *s = uih->savec;
@@ -553,38 +632,8 @@ void uih_saveframe(struct uih_context *uih)
         if (s->fcontext->outcolorshift != uih->fcontext->outcolorshift)
             save_intc(uih, "outcolorshift", uih->fcontext->outcolorshift),
                 s->fcontext->outcolorshift = uih->fcontext->outcolorshift;
-        /* The speed change after ITER, a command a side, written as the
-         * fbm's numbers are: together, and only when one of them has moved --
-         * which, since it starts off, a picture that never used it never
-         * does. */
-        if (uih->save ||
-            s->fcontext->incolorfuniter != uih->fcontext->incolorfuniter ||
-            s->fcontext->incolorfunexp != uih->fcontext->incolorfunexp ||
-            s->fcontext->incolorfunmode != uih->fcontext->incolorfunmode) {
-            start_save(uih, "incolorfunafter");
-            save_float(uih, uih->fcontext->incolorfuniter);
-            save_float(uih, uih->fcontext->incolorfunexp);
-            save_nstring(uih, uih->fcontext->incolorfunmode,
-                         colorfun_after_modes);
-            stop_save(uih);
-            s->fcontext->incolorfuniter = uih->fcontext->incolorfuniter;
-            s->fcontext->incolorfunexp = uih->fcontext->incolorfunexp;
-            s->fcontext->incolorfunmode = uih->fcontext->incolorfunmode;
-        }
-        if (uih->save ||
-            s->fcontext->outcolorfuniter != uih->fcontext->outcolorfuniter ||
-            s->fcontext->outcolorfunexp != uih->fcontext->outcolorfunexp ||
-            s->fcontext->outcolorfunmode != uih->fcontext->outcolorfunmode) {
-            start_save(uih, "outcolorfunafter");
-            save_float(uih, uih->fcontext->outcolorfuniter);
-            save_float(uih, uih->fcontext->outcolorfunexp);
-            save_nstring(uih, uih->fcontext->outcolorfunmode,
-                         colorfun_after_modes);
-            stop_save(uih);
-            s->fcontext->outcolorfuniter = uih->fcontext->outcolorfuniter;
-            s->fcontext->outcolorfunexp = uih->fcontext->outcolorfunexp;
-            s->fcontext->outcolorfunmode = uih->fcontext->outcolorfunmode;
-        }
+        save_colorfunchange(uih, 1);
+        save_colorfunchange(uih, 0);
         if (s->fcontext->pndefault != uih->fcontext->pndefault)
             save_onoffc(uih, "pndefault", uih->fcontext->pndefault),
                 s->fcontext->pndefault = uih->fcontext->pndefault;
@@ -722,9 +771,15 @@ int uih_save_enable(struct uih_context *uih, xio_file f, int mode)
     s->fcontext->outcolorfun = 0;
     s->fcontext->outcolorspeed = 1.0f;
     s->fcontext->outcolorshift = 0;
-    s->fcontext->incolorfuniter = s->fcontext->outcolorfuniter = 100;
-    s->fcontext->incolorfunexp = s->fcontext->outcolorfunexp = 2;
+    s->fcontext->incolorfuninitial = s->fcontext->outcolorfuninitial = 1;
+    s->fcontext->incolorfuniter = s->fcontext->outcolorfuniter = COLORFUN_ITER;
+    s->fcontext->incolorfunexp = s->fcontext->outcolorfunexp = COLORFUN_EXP;
     s->fcontext->incolorfunmode = s->fcontext->outcolorfunmode = 0;
+    s->fcontext->incolorfunradius = s->fcontext->outcolorfunradius = COLORFUN_RADIUS;
+    s->fcontext->incolorfun2iter = s->fcontext->outcolorfun2iter = COLORFUN2_ITER;
+    s->fcontext->incolorfun2exp = s->fcontext->outcolorfun2exp = COLORFUN2_EXP;
+    s->fcontext->incolorfun2mode = s->fcontext->outcolorfun2mode = 0;
+    s->fcontext->incolorfun2radius = s->fcontext->outcolorfun2radius = COLORFUN2_RADIUS;
     s->fcontext->infbmintensity = s->fcontext->outfbmintensity = 4;
     s->fcontext->infbmfrequency = s->fcontext->outfbmfrequency = 8;
     s->fcontext->infbmroughness = s->fcontext->outfbmroughness = (number_t)1 / 2;

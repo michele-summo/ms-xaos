@@ -181,6 +181,41 @@ struct formula {
 #define BAILOUTMODES 13
 #define BAILOUT_MAXSIDES 8
 
+/* The speed change after ITER of one side, as color_change works it: the
+ * stretches of the count and how each is joined to the one before. In long
+ * double whatever the build, as the speed functions are, so that the two
+ * builds colour alike.
+ *
+ * kind      0 nothing to do; 1 one group in jump and an initial exponent of
+ *           one, worked the way 1.8.0 worked it -- iter, exponent -- so that a
+ *           picture from then draws to the bit as it did; 2 the stretches
+ * corners   how many ITERs cut the count -- nought, one or two
+ * at        each corner's ITER
+ * lo, hi    where its rounding begins and ends: the ITER less and plus the
+ *           radius, or the ITER itself for a jump
+ * moved     what the rounding gained or lost by its end, which the next
+ *           stretch is moved on by
+ * C, K, J, e
+ *           the stretches, before the first corner, between, past the last:
+ *           C + K (v/J)^e */
+/* What the two groups start as -- the initial exponent at one, the modes off.
+ * The first group's ITER and exponent are the ones 1.8.0 had; the radius is
+ * how many iterations a smooth group rounds over on either side of its ITER. */
+#define COLORFUN_ITER 100
+#define COLORFUN_EXP 2
+#define COLORFUN_RADIUS 10
+#define COLORFUN2_ITER 50
+#define COLORFUN2_EXP 2
+#define COLORFUN2_RADIUS 10
+
+struct colorfun_plan {
+    int kind;
+    long double iter, exponent;
+    int corners;
+    long double at[2], lo[2], hi[2], moved[2];
+    long double C[3], K[3], J[3], e[3];
+};
+
 struct fractal_context {
     number_t pre, pim;
     number_t bre, bim;
@@ -212,26 +247,52 @@ struct fractal_context {
     number_t incolorspeed, outcolorspeed;
     int incolorfun, outcolorfun;
     int incolorshift, outcolorshift;
-    /* The speed change after ITER, a set a side as the speed is: the value
-     * handed to the speed function is driven faster or slower past iter, so
-     * that whichever function is chosen goes on as it was up to there.
+    /* The speed change after ITER, a side at a time as the speed is: the
+     * count handed to the speed function is cut at up to two ITERs and each
+     * stretch driven by an exponent of its own, so that the colours speed up
+     * or slow down from an ITER and not before.
      *
-     * iter       where the exponent begins to count, in the units the
-     *            function is handed -- iterations, for the modes that count
-     *            them. Nought or below counts it from the start: a plain
-     *            power.
-     * exponent   above one the colours speed up past iter, below one they
-     *            slow down
+     * initial    the exponent from the start to the first ITER of a group
+     *            that is on, or for every count with both off: the plain
+     *            power v^initial, the same whether the groups are on or off.
+     *            One, the default, leaves it as it was
+     *
+     * and two groups, fun and fun2, of
+     *
+     * iter       where the group's stretch begins, in the units the function
+     *            is handed -- iterations, for the modes that count them.
+     *            Nought or below puts it at the start: a plain power.
+     * exponent   the stretch's exponent, from iter to the next ITER or on.
+     *            The stretch starts from the count the one before it came to
+     *            and adds iter ((v/iter)^exponent - 1), whose pace is the
+     *            exponent at iter: above one the colours speed up from
+     *            there, below one they slow down, at one they go on at a
+     *            pace of one
      * mode       0 off, which is the default and leaves everything as it
-     *            was; 1 jump, the slope jumping at iter; 2 continuous, from
-     *            iter with the slope continuous; 3 smooth throughout. The
-     *            names are colorfun_after_modes[].
-     * sharpness  mode 3's, worked out from the exponent by set_fractalc and
-     *            not saved; see color_power_sharpness */
+     *            was; 1 jump, the pace turning at iter at once; 2 smooth, the
+     *            pace going over from the one stretch's to the other's
+     *            between iter - radius and iter + radius. The names are
+     *            colorfun_modes[]; 1.8.0's four are read into these
+     * radius     for smooth, how many iterations it rounds over on either
+     *            side of iter
+     *
+     * A group that is off is left out, its ITER and exponent with it. The
+     * stretches go in the order of their ITERs, whichever group holds the
+     * lower; at the same ITER the second group replaces the first. Each
+     * exponent is its stretch's own, never multiplied by the one before. See
+     * color_change in formulas.cpp. */
+    number_t incolorfuninitial, outcolorfuninitial;
     number_t incolorfuniter, outcolorfuniter;
     number_t incolorfunexp, outcolorfunexp;
     int incolorfunmode, outcolorfunmode;
-    number_t incolorfunsharp, outcolorfunsharp;
+    number_t incolorfunradius, outcolorfunradius;
+    number_t incolorfun2iter, outcolorfun2iter;
+    number_t incolorfun2exp, outcolorfun2exp;
+    int incolorfun2mode, outcolorfun2mode;
+    number_t incolorfun2radius, outcolorfun2radius;
+    /* What the two groups make of the count, worked out once a picture by
+     * color_change_prepare and not saved. */
+    struct colorfun_plan inplan, outplan;
     /* The fractional Brownian motion the fbm colouring modes are drawn from,
      * kept apart for the two sides as the speed and the shift are.
      *
@@ -354,9 +415,16 @@ extern thread_local number_t color_px, color_py;
 
 void set_fractalc(fractal_context *, struct image *img);
 
-/* How sharply the smooth speed change after ITER turns, for an exponent: see
- * formulas.cpp. */
-number_t color_power_sharpness(number_t exponent);
+/* Works out inplan and outplan from the two groups of each side. set_fractalc
+ * calls it once a picture; anything else that colours with a context it has
+ * filled in itself has to as well. */
+void color_change_prepare(fractal_context *c);
+
+/* A group in the four modes positions named before the radius -- off, jump,
+ * continuous, smooth -- turned into the three there are: mode, and exponent
+ * and radius where they have to change. See formulas.cpp. */
+void colorfun_from_legacy(number_t iter, number_t *exponent, int *mode,
+                          number_t *radius);
 
 /* The cell of the palette one point of the plane is drawn from, or nought for
  * the inside colour, which is no cell. Returns 0 when it cannot be had. See

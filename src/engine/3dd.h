@@ -64,7 +64,7 @@ static void convertup_3d(struct filter *f, int *x1, int *y1)
     *y1 = y - (inp / 16 > height ? height : inp / 16);
 }
 
-static void do_3d(void *dataptr, struct taskinfo */*task*/, int r1, int r2)
+static void do_3d(void *dataptr, struct taskinfo *task, int r1, int r2)
 {
     struct filter *f = (struct filter *)dataptr;
     unsigned int y;
@@ -86,20 +86,41 @@ static void do_3d(void *dataptr, struct taskinfo */*task*/, int r1, int r2)
     unsigned int darkcolor = data->darkcolor;
     const unsigned int *pixels = data->pixels;
     cpixel_t **currlines = (cpixel_t **)f->image->currlines;
-    struct inp {
-        int max;
-        unsigned int down;
-    } * inpdata;
+    struct threedinp *inpdata;
+
+    /* This band's place to leave its first two columns, and the band to its
+     * right's, unless it reaches the edge of the picture; see threededges. */
+    struct threededges *edges = data->edges;
+    const int band = xth_nthread(task);
+    struct threedinp *mine =
+        band > 0 ? edges->columns + (size_t)band * 2 * edges->rows : NULL;
+    /* split as xth_function splits it; a band to the right narrower than
+     * the two columns read from it -- a picture narrower than two a thread
+     * -- is no band to read them from, and the edge's copies are used */
+    const int rightend =
+        (int)(((long long)f->image->width * (band + 2)) / nthreads);
+    struct threedinp *right =
+        r2 < f->image->width && rightend - r2 >= 2
+            ? edges->columns + (size_t)(band + 1) * 2 * edges->rows
+            : NULL;
+    int row = 0;
+    if (r2 <= r1)
+        return;
 
     lengths = (unsigned int *)malloc(sizeof(unsigned int) * f->image->width);
-    inpdata = (struct inp *)malloc(sizeof(struct inp) * (f->image->width + 2));
+    inpdata = (struct threedinp *)malloc(sizeof(struct threedinp) *
+                                         (f->image->width + 2));
     sums = (unsigned int *)malloc(sizeof(unsigned int) * (f->image->width + 2) *
                                   2);
+    /* the height too, which the first row reads two columns on before
+     * anything has been put there */
     for (x = 0; x < (unsigned int)f->image->width; x++)
         lengths[x] = f->image->height - 1, sums[x * 2 + 0] = 0,
-        sums[x * 2 + 1] = 0, inpdata[x].max = 0;
+        sums[x * 2 + 1] = 0, inpdata[x].max = 0, inpdata[x].down = 0;
     sums[x * 2 + 0] = 0, sums[x * 2 + 1] = 0, inpdata[x].max = 0;
+    inpdata[x].down = 0;
     inpdata[x + 1].max = 0;
+    inpdata[x + 1].down = 0;
     end = r2;
     for (y = f->childimage->height - 2; y > 0;) {
         y--;
@@ -110,7 +131,21 @@ static void do_3d(void *dataptr, struct taskinfo */*task*/, int r1, int r2)
         /* Fix boundary cases.  */
         /*relsums[0] = relsums[1];
            relsums[end*2-1] = relsums[end*2-2]; */
-        inpdata[end + 1] = inpdata[end] = inpdata[end - 1];
+        if (right == NULL) {
+            /* the edge of the picture: the last column again */
+            inpdata[end + 1] = inpdata[end] = inpdata[end - 1];
+        } else if (row > 0) {
+            /* the band to the right's first two columns in the row below,
+             * once it has drawn it */
+            while (edges->done[band + 1].load(std::memory_order_acquire) < row)
+                std::this_thread::yield();
+            inpdata[end] = right[(row - 1) * 2];
+            inpdata[end + 1] = right[(row - 1) * 2 + 1];
+        } else {
+            /* below the first row there is nothing yet, as for every column */
+            inpdata[end].max = inpdata[end + 1].max = 0;
+            inpdata[end].down = inpdata[end + 1].down = 0;
+        }
         sum = input[x] + input[x + 1] + input[x + 2] + input[x + 3] +
               input[x + 4] + input[x + 5];
 
@@ -167,6 +202,12 @@ static void do_3d(void *dataptr, struct taskinfo */*task*/, int r1, int r2)
             }
             x++;
         }
+        if (mine) {
+            mine[row * 2] = inpdata[r1];
+            mine[row * 2 + 1] = inpdata[r1 + 1];
+            edges->done[band].store(row + 1, std::memory_order_release);
+        }
+        row++;
     }
     free(lengths);
     free(inpdata);

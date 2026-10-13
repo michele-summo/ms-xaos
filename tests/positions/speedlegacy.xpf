@@ -1,0 +1,15 @@
+; The speed change as positions saved it before the radius, in the four modes
+; of then: 1.8.0's continuous and smooth, and the two groups without a radius.
+; Read into jump and smooth, saved the way positions are saved now, and has to
+; come back the same.
+(initstate)
+(formula 'mandel)
+(maxiter 300)
+(outcoloring 9)
+(outcolorfun 7)
+(outcolorfunchange 0.8 120 1.5 'smooth 40 2 'jump)
+(incoloring 1)
+(incolorfun 11)
+(incolorspeed 20)
+(incolorfunafter 0.5 0.7 'continuous)
+(view -0.75 0.1 0.6 0.6)

@@ -43,18 +43,20 @@ static void calcline(realloc_t *ry)
     rend = ry - range - 1;
     if (czoomc.reallocy > rend)
         rend = czoomc.reallocy;
-    for (ryl = ry - 1; rend <= ryl && ryl->dirty; ryl--)
+    /* The rows to guess from: calculated, and not in the phase being run,
+     * which another thread may be half way through (see calculatenew). */
+    for (ryl = ry - 1; rend <= ryl && unready(ryl); ryl--)
         ;
     distl = (int)(ryl - ry);
     rend = ry + range;
     if (czoomc.reallocy + cimage.height < rend)
         rend = czoomc.reallocy + cimage.height;
-    for (ryr = ry + 1; rend > ryr && ryr->dirty; ryr++)
+    for (ryr = ry + 1; rend > ryr && unready(ryr); ryr++)
         ;
     distr = (int)(ryr - ry);
     rend = czoomc.reallocy + cimage.height;
     if (ryr == czoomc.reallocy + cimage.height || ryl < czoomc.reallocy ||
-        ryr->dirty || ryl->dirty) {
+        unready(ryr) || unready(ryl)) {
         for (rx = czoomc.reallocx, vbuff = *vbuff1,
             rend1 = czoomc.reallocx + cimage.width;
              rx < rend1; rx++) {
@@ -137,19 +139,20 @@ static void calccolumn(realloc_t *rx)
     rend = rx - range + 1;
     if (czoomc.reallocx > rend)
         rend = czoomc.reallocx;
-    for (rxl = rx - 1; rend <= rxl && rxl->dirty; rxl--)
+    /* The columns to guess from, as calcline's rows. */
+    for (rxl = rx - 1; rend <= rxl && unready(rxl); rxl--)
         ;
     distl = (int)(rx - rxl);
     rend = rx + range;
     if (czoomc.reallocx + cimage.width < rend)
         rend = czoomc.reallocx + cimage.width;
-    for (rxr = rx + 1; rxr < rend && rxr->dirty; rxr++)
+    for (rxr = rx + 1; rxr < rend && unready(rxr); rxr++)
         ;
     distr = (int)(rxr - rx);
     x = rx->position;
     rend = czoomc.reallocx + cimage.width;
     if (rxr >= czoomc.reallocx + cimage.width || rxl < czoomc.reallocx ||
-        rxr->dirty || rxl->dirty) {
+        unready(rxr) || unready(rxl)) {
         for (ry = czoomc.reallocy, vbuff = (cppixel_t *)cimage.currlines,
             rend1 = czoomc.reallocy + cimage.height;
              ry < rend1; ry++, vbuff++) {

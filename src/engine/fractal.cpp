@@ -208,11 +208,10 @@ void set_fractalc(fractal_context *context, struct image *img)
     if (cfractalc.bailout < 0)
         cfractalc.bailout = 0;
 
-    /* The smooth speed change turns as sharply as its exponent needs; worked
-     * out here, once a picture, rather than once a pixel. */
-    cfractalc.incolorfunsharp = color_power_sharpness(cfractalc.incolorfunexp);
-    cfractalc.outcolorfunsharp =
-        color_power_sharpness(cfractalc.outcolorfunexp);
+    /* What the speed change after ITER makes of the count -- its stretches,
+     * corners and how sharply the smooth ones turn -- worked out here, once a
+     * picture, rather than once a pixel. */
+    color_change_prepare(&cfractalc);
 
     /* The bailout polygon, worked out here so the inner loop does not have to.
      * The apothem is the square root of the bailout, which puts a polygon's
@@ -479,9 +478,17 @@ fractal_context *make_fractalc(const int formula, float wi, float he)
     new_ctxt->outcolorshift = 0;
     /* The speed change after ITER is off, so that a picture draws as it
      * always did; the numbers are what it offers when it is turned on. */
-    new_ctxt->incolorfuniter = new_ctxt->outcolorfuniter = 100;
-    new_ctxt->incolorfunexp = new_ctxt->outcolorfunexp = 2;
+    new_ctxt->incolorfuninitial = new_ctxt->outcolorfuninitial = 1;
+    new_ctxt->incolorfuniter = new_ctxt->outcolorfuniter = COLORFUN_ITER;
+    new_ctxt->incolorfunexp = new_ctxt->outcolorfunexp = COLORFUN_EXP;
     new_ctxt->incolorfunmode = new_ctxt->outcolorfunmode = 0;
+    new_ctxt->incolorfunradius = new_ctxt->outcolorfunradius = COLORFUN_RADIUS;
+    new_ctxt->incolorfun2iter = new_ctxt->outcolorfun2iter = COLORFUN2_ITER;
+    new_ctxt->incolorfun2exp = new_ctxt->outcolorfun2exp = COLORFUN2_EXP;
+    new_ctxt->incolorfun2mode = new_ctxt->outcolorfun2mode = 0;
+    new_ctxt->incolorfun2radius = new_ctxt->outcolorfun2radius =
+        COLORFUN2_RADIUS;
+    color_change_prepare(new_ctxt);
     /* What the fbm modes start from. Four bands of movement at eight cells to
      * a unit reads as marks over the first view; a half is the plain motion,
      * and four octaves are all it can spend there. */

@@ -1433,51 +1433,86 @@ function is chosen: up to an iteration you name, the function goes on exactly as
 it was; past it, the count it is handed runs faster or slower, so the colours
 speed up or slow down from there and not before. With `square root` chosen and
 ITER at 40, the colours are the square root's up to 40 iterations and the square
-root of a count that is gathering pace after that. Three values a side, saved
-with the position as `(outcolorfunafter 40 1.5 'smooth)`:
+root of a count that is gathering pace after that. The dialog holds, a side at
+a time, an initial exponent and then two groups, each set apart by a rule:
 
 | | |
 | --- | --- |
-| **ITER** | where the change begins, in the units the function is handed. At nought or below the change runs from the start — which makes `ident` a power with any exponent at all |
-| **exponent** | above one the colours speed up past ITER, below one they slow down |
-| **mode** | chosen from four: **off**, and three ways of joining the change to what comes before it |
+| **Initial exponent** | the exponent from the start to the first ITER of a group that is on: the count becomes the plain power `v^p0`, the same whether the groups are on or off, and with both off it runs on for every count. At one, where it starts, the count is untouched up to the first ITER |
+| **ITER** | where the group's stretch begins, in the units the function is handed. At nought or below it begins at the start — which makes `ident` a power with any exponent at all |
+| **Exponent** | the stretch's exponent, from its ITER to the next one or on. The stretch starts from the count the one before it came to, `f(ITER)`, and adds `ITER·((v/ITER)^p − 1)`, whose pace at ITER is `p`: above one the colours speed up from there, below one they slow down, at one they go on at a pace of one |
+| **Mode** | **off**, **jump** or **smooth**: whether the group is used, and how its stretch is joined to the one before |
+| **Radius** | in smooth alone, and shown only then: how many iterations the join takes on either side of ITER. Any number from nought, which is the jump |
 
-It starts **off**, and off — or at an exponent of one, in any mode — nothing at
-all is done to the value, so every function gives to the bit what it gave before
-there was such a thing.
+With both groups on and the first ITER below the second, the count is `v^p0`
+up to `i1`, goes on from there at the pace of `p1`, and from `i2` at the pace
+of `p2` — **each stretch at its own exponent**, never `p0·p1` or `p0·p1·p2`.
+With `p0` = 2, `p1` = 1 at 50 and `p2` = 2 at 100, all jump, the count on
+`ident` is `v²` up to 50; `v + 2450` from 50 to 100, an exponent of one going
+on at a pace of one from the 2500 the square came to; and from 100
+`2550 + 100·((v/100)² − 1)`, squared again from a pace of 2 there. The lower
+ITER goes first whichever group holds it, and **at the same ITER the second
+group replaces the first**, radius and all.
 
-The three modes, as they change the count handed to the function (written for
-`ident`, where the count is what the palette sees):
+**A group that is off is left out**, its ITER with it:
 
-| mode | past ITER | at ITER | below ITER |
-| --- | --- | --- | --- |
-| **jump** | `ITER·(v/ITER)^p` | the pace jumps from 1 to p: a ring where the bands change pace | untouched |
-| **continuous** | `ITER + (ITER/p)·((v/ITER)^p − 1)` | the pace stays 1 and grows — or falls — from there | untouched |
-| **smooth** | `v·(1 + (v/ITER)^k)^((p−1)/k)` | no corner of any kind; jump with its corner rounded, and coming to it well past ITER | within 2% at half of ITER |
+| first group | second group | the count runs at |
+| --- | --- | --- |
+| on | on | `p0` up to the lower ITER, then that group's exponent up to the other ITER, then the other's |
+| off | on | `p0` up to the second's ITER, then `p2` |
+| on | off | `p0` up to the first's ITER, then `p1` |
+| off | off | `p0` for every count, the plain power `v^p0` |
 
-**Continuous** is the one that keeps both promises, the colours untouched until
-ITER and no ring where they change: its pace is 1 on reaching ITER and changes
-from there. It leaves the unchanged value more gently than jump — at the same
-exponent it comes to about 1/p of jump's value — and at an exponent of nought it
-goes on as a logarithm, which is the formula's limit there.
+Both start off and the initial exponent at one, where nothing at all is done to
+the value, so every function gives to the bit what it gave before there was such
+a thing.
 
-**Smooth** rounds jump's corner, which cannot be done without moving the value
-a little before ITER. How far is set by `k`: four, which moves the value at half
-of ITER by 1.5% for an exponent of 2 — and by 348% for one of 100, because how
-far it moves grows with the exponent. So `k` is four or as much sharper as keeps
-the value at half of ITER within 2%, whatever the exponent. Measured on `ident`
-at an ITER of 50:
+The two ways of joining, as they change the count handed to the function
+(written for `ident`, where the count is what the palette sees, with `f(ITER)`
+the count on coming to ITER — `ITER^p0` at the first — `p` the group's exponent
+and `r` its radius):
 
-| exponent | jump at 150 | continuous at 150 | smooth at 150 | smooth at half of ITER |
-| --- | --- | --- | --- | --- |
-| 0.01 | 50.5 | 105 | 50.4 | −1.5% |
-| 0.5 | 86.6 | 123 | 86.5 | −0.8% |
-| 1.5 | 260 | 190 | 260 | +0.8% |
-| 2 | 450 | 250 | 451 | +1.5% |
-| 100 | 10⁴⁹ | 10⁴⁷ | 10⁴⁹ | +2.0% |
+| mode | from ITER − r to ITER + r | past it |
+| --- | --- | --- |
+| **jump** | — | `f(ITER) + ITER·((v/ITER)^p − 1)`: the pace turns to `p` at ITER at once, which shows as a ring where the bands change pace |
+| **smooth** | the pace goes in a straight line from the one the count came with to the stretch's own, and the count is what that pace adds up to | the jump's count, moved on by what the rounding gained or lost |
+
+**Smooth** leaves everything before `ITER − r` as it was, has no corner
+anywhere, and never turns back: its pace is always between the two it joins.
+Where both paces are steady it cuts the corner as a parabola does and moves
+nothing on — with the count untouched up to an ITER of 50 and an exponent of
+nought past it, a radius of 10 makes it 47.5 at ITER, a quarter of the radius
+short, and 50 again from 60 on. Where they bend, what is past the rounding is
+the jump moved on by a little: after `v²` up to 50 and an exponent of one, a
+radius of 10 goes on as `v + 2483` instead of `v + 2450`. A radius wider than
+the first ITER stops short of nought, and two that would overlap are cut down
+alike so that each stays between its neighbours — radii of 40 and 40 between
+ITERs 30 apart become 15 each.
 
 An exponent of 100 is legal and useless past ITER: a few iterations on, the
-bands are finer than the pixels and the colour is noise.
+bands are finer than the pixels and the colour is noise. With the second group
+at ITER 50 and an exponent of 2 and the first at 100 and 1.5, both jump, and an
+initial exponent of one, the count on `ident` is 30 at 30, `50·1.5²` = 112.5 at
+75, and `200 + 100·(1.5^1.5 − 1)` = 284 at 150: the stretch from 100 starts
+from the 200 the one before came to, at a pace of 1.5.
+
+There used to be four modes, and positions saved before the radius name them —
+1.8.0's `outcolorfunafter`, and `outcolorfunchange` with two groups and no
+radius. They are read into the two there are:
+
+| saved as | read as |
+| --- | --- |
+| off, jump | the same |
+| smooth, which rounded the corner in the logarithm of the count, a little on either side of ITER however far | smooth at a radius of three quarters of ITER, or `ITER/(2p)` above an exponent of one: within five hundredths of ITER of what it drew, up to an exponent of a half |
+| continuous, which went on from ITER at the pace the count came with | smooth at three quarters of ITER, with the exponent `0.65 + p/4 + p²/10` — one at one, where continuous changed nothing either — within eleven hundredths of ITER of it up to a half |
+
+Found by setting the curves side by side over four ITERs: such a picture comes
+out alike, not to the pixel. A position whose speed change is no more than one
+group in jump, the initial exponent at one and the rest as it starts, is saved
+as 1.8.0 saved it, `(outcolorfunafter 40 1.5 'jump)`, and opens in 1.8.0 and
+draws there the same. Anything else is saved in the order of the dialog,
+`(outcolorspeedchange 1 40 1.5 'smooth 10 50 2 'off 10)`, which 1.8.0 does not
+know.
 
 ### Past the end of an int
 
@@ -1518,6 +1553,56 @@ back on the way out.
 | Zoom out 10× | `Ctrl` `Alt` `-` |
 
 They scale about the centre of the view, so they undo one another exactly.
+
+## The same picture with any number of threads
+
+A picture used to come out a few pixels different, now and then, when it was
+drawn with several threads: `examples/Hubicka/julia3.xpf` rendered with four
+threads on a busy machine differed in 26 of 3000 renders, by up to 37 pixels
+along its filaments, and never with one thread.
+
+The pixels came from solid guessing. It fills a pixel from the rows and
+columns already calculated round it when they agree, and in Mandelbrot mode
+uses the same neighbours to decide whether a pixel is worth checking for
+periodicity. The guessing runs in passes — every sixth row first, then the
+rows between — and the passes ran in all the threads at once with nothing
+between them: a thread went on to the next pass while the others were still at
+the last, and a row was marked done before it was calculated. So whether a
+neighbour counted as calculated depended on how far the other threads had got.
+
+Each pass is now two phases, its rows and then its columns, and every thread
+finishes one before any starts the next; what a phase calculates is not used as
+a neighbour within it. The neighbours are then the same whatever the number of
+threads, and the 3000 renders all come out alike. With one thread the order is
+the one it always was.
+
+The filters come out alike too. **3D** draws a band of columns to a thread,
+and a column's shade is carried from the column two to its right in the row
+below, so the last two columns of a band read the first two of the band to its
+right; each band used to read copies of its own last column there instead, and
+the picture changed along the bands' edges with the number of threads. Now a
+band waits, row by row, for what the band to its right has drawn there, and the
+bands still run side by side. **Starfield** drew its stars from one random
+generator that every thread advanced at once; now each row starts from the
+place in the sequence that one thread drawing the whole picture would have
+reached, so the stars are the same with any number of threads. They still
+change from one start of XaoS to the next, as they always did: the generator
+is seeded from the clock.
+
+**Antialiasing** was never the cause, though three examples drawn with it —
+`circle`, `helloween` and `warriormask` — came out different from one render
+to the next. What differed was the message with the formula's name: it went
+after five seconds of the wall's clock, and a render slowed down by a busy
+machine drew it in fewer frames, or in none. In a render a message now lasts
+five seconds of the animation's own time, whatever the machine; in the window
+nothing changes.
+
+Of the 169 examples rendered with one thread, 167 draw to the pixel as 1.8.0
+drew them: `galaxy` has its stars from the clock, and `heart` now keeps a
+message that 1.8.0, timing it by the wall's clock, had taken away before the
+picture was drawn. Rendered eight at a
+time on four cores, once with one thread and three times with four, all of
+them draw alike but `galaxy`.
 
 ## Aspect ratio
 

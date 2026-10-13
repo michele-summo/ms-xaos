@@ -1,10 +1,37 @@
 #include "config.h"
+#include <atomic>
 #include <cstdlib>
 #include <cstdio> /*for NULL */
 #include <cmath>
+#include <thread>
 #define SLARGEITER
 #include "xthread.h"
 #include "filter.h"
+
+/* What do_3d keeps of a column from one row to the next: the shade carried
+ * up the slope, and the height. */
+struct threedinp {
+    int max;
+    unsigned int down;
+};
+
+/* The picture is drawn a band of columns to a thread, and a column's shade
+ * comes from the column two to its right in the row below -- so the last two
+ * columns of a band read the first two of the band to their right. Each band
+ * used to put copies of its own last column there instead, which is right at
+ * the edge of the picture and wrong everywhere else: the picture changed at
+ * the bands' edges with the number of threads.
+ *
+ * Now a band, once it has drawn a row, leaves what it computed for its first
+ * two columns here and counts the row done; the band to its left waits for
+ * that before it draws the row above. Every column then reads what one thread
+ * drawing the whole width would have, and the bands still run together, each
+ * a row or so behind the one to its right. The last band waits for none. */
+struct threededges {
+    struct threedinp *columns; /* two a row, a band after another */
+    int rows;
+    std::atomic<int> done[MAXTHREADS]; /* rows each band has left here */
+};
 
 struct threeddata {
     struct palette *pal;
@@ -16,6 +43,7 @@ struct threeddata {
     unsigned int midcolor;
     unsigned int darkcolor;
     unsigned int stereogrammode;
+    struct threededges *edges;
 };
 
 #define spixel_t pixel16_t
@@ -101,6 +129,9 @@ static struct filter *getinstance(const struct filteraction *a)
 {
     struct filter *f = createfilter(a);
     struct threeddata *d = (struct threeddata *)calloc(sizeof(*d), 1);
+    d->edges = new threededges();
+    d->edges->columns = NULL;
+    d->edges->rows = 0;
     f->data = d;
     f->name = "3d";
     return (f);
@@ -117,6 +148,8 @@ static void destroyinstance(struct filter *f)
         d->pixels = 0;
         free(d->pixels);
     }
+    free(d->edges->columns);
+    delete d->edges;
     free(d);
     destroyinheredimage(f);
     free(f);
@@ -175,6 +208,21 @@ static int doit(struct filter *f, int flags, int time)
     }
     updateinheredimage(f);
     val = f->previous->action->doit(f->previous, flags, time);
+    {
+        struct threededges *e = d->edges;
+        if (e->rows != f->childimage->height) {
+            free(e->columns);
+            e->rows = f->childimage->height;
+            e->columns = (struct threedinp *)malloc(
+                sizeof(*e->columns) * 2 * (size_t)e->rows * MAXTHREADS);
+            if (e->columns == NULL) {
+                e->rows = 0;
+                return val;
+            }
+        }
+        for (int i = 0; i < MAXTHREADS; i++)
+            e->done[i].store(0, std::memory_order_relaxed);
+    }
     drivercall(*f->image, xth_function(do_3d8, f, f->image->width),
                xth_function(do_3d16, f, f->image->width),
                xth_function(do_3d24, f, f->image->width),

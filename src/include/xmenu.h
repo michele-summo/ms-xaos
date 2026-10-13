@@ -19,6 +19,16 @@ typedef struct dialog {
     const char *defstr;
     number_t deffloat;
     number_t deffloat2;
+    /* A rule across the dialog above this field, setting it and the ones
+     * after it apart as a group. The dialog's alone: it takes no parameter,
+     * so the fields keep their places in the command. */
+    int separated;
+    /* Shown only while the choice that many fields before it holds entry
+     * shownat -- the radius of a group, which says something only in smooth.
+     * Nought, as every field is unless told, is always shown. Hidden or not,
+     * the field keeps its place in the command and its value. */
+    int shownwith;
+    int shownat;
 } menudialog;
 
 typedef char *(*tokenfunc)(struct uih_context *c);
@@ -177,6 +187,15 @@ typedef char *(*tokenfunc)(struct uih_context *c);
     menudialogs_i18n[no_menudialogs_i18n].defint = 0;                          \
     menudialogs_i18n[no_menudialogs_i18n].defstr = _default;                   \
     ++no_menudialogs_i18n;
+
+/* The field defined next shown only while the choice _back fields before it
+ * holds entry _at; see menudialog's shownwith. */
+#define DIALOGWHEN_I(_back, _at)                                               \
+    menudialogs_i18n[no_menudialogs_i18n].shownwith = _back;                   \
+    menudialogs_i18n[no_menudialogs_i18n].shownat = _at;
+
+/* A rule above the field defined next; see menudialog's separated. */
+#define DIALOGRULE_I()                                                             menudialogs_i18n[no_menudialogs_i18n].separated = 1;
 
 #define NULL_I()                                                               \
     menudialogs_i18n[no_menudialogs_i18n].question = NULL;                     \

@@ -145,8 +145,11 @@ const char *const colorfun[] = {
 };
 
 /* The speed change after ITER, by the number fractal_context holds: off, and
- * the three ways of joining the change to what comes before it. See
- * color_power. */
+ * the two ways of joining a stretch to the one before it. See color_change. */
+const char *const colorfun_modes[] = {"off", "jump", "smooth", NULL};
+
+/* And the four 1.8.0 had, which a position from then names: read, and turned
+ * into the two by uih_setcolorfunlegacy, but no longer offered. */
 const char *const colorfun_after_modes[] = {"off", "jump", "continuous",
                                             "smooth", NULL};
 
@@ -439,87 +442,268 @@ static void color_f_normalize(number_t &v) {
 
 /* --- the speed change after ITER ------------------------------------------
  *
- * What the value handed to the speed function goes through first: left alone
- * up to iter and raised to the exponent past it, so that the function chosen
- * -- a square root, a log, anything -- goes on as it was up to iter and runs
- * faster from there, or slower for an exponent below one. The three modes are
- * three ways of joining the two, which is the whole difference between them
- * (the guide draws them):
+ * What the value handed to the speed function goes through first, so that the
+ * function chosen -- a square root, a log, anything -- goes on as it was up to
+ * an ITER and runs faster from there, or slower for an exponent below one.
  *
- * 1  jump: iter (v/iter)^p past iter. The value is continuous and its slope
- *    jumps from one to p, which shows as a ring where the bands change pace.
- * 2  continuous: iter + (iter/p) ((v/iter)^p - 1) past iter, whose slope is
- *    (v/iter)^(p-1) -- one at iter, then growing or falling as the exponent
- *    says. The value is untouched below iter; at an exponent of nought the
- *    formula's limit, a logarithm, is taken.
- * 3  smooth: v (1 + (v/iter)^k)^((p-1)/k), mode 1 with its corner rounded. It
- *    moves the value below iter a little -- as little as the sharpness k keeps
- *    it; see color_power_sharpness.
+ * The count is cut at the ITERs of the groups that are on, and each stretch
+ * has one exponent of its own: the initial one from the start to the lower
+ * ITER, the lower group's from there to the higher ITER, and the higher
+ * group's past that -- each the stretch's alone, not multiplied by the one
+ * before. A group that is off is left out altogether: with one of them on, the
+ * initial exponent runs up to its ITER and its own from there; with neither,
+ * the initial exponent runs on for every count. The lower ITER goes first
+ * whichever group holds it, and at the same ITER the second group replaces
+ * the first.
  *
- * iter at nought or below makes it a plain power from the start, where the
- * three are the same -- square and square root with any exponent at all. Odd, as the other functions are: a negative value is
- * turned as its opposite is and keeps its sign. Worked in long double
- * whatever the build, as they are, so that the two builds colour alike; mode
- * 3 in the logarithm, so that a large value cannot overflow on the way to a
- * finite answer.
+ * The first stretch is the plain power v^initial, from the start, whether the
+ * groups are on or off. (A group at an ITER of nought or below puts its own
+ * exponent there instead, as a single group's change always did.) Each
+ * stretch after it starts from the count the one before it came to, f(I), and
+ * adds I ((v/I)^e - 1), whose pace is e at I: an exponent of one goes on at a
+ * pace of one, v + f(I) - I, whatever came before, and two squares again from
+ * its ITER. So every stretch is C + K (v/J)^e -- the first with C = 0 and
+ * K = J = 1 -- and that is all that is kept of it.
+ *
+ * A group joins its stretch to the one before in one of two ways:
+ *
+ *   jump    at I, at once: the pace turns there, which shows as a ring where
+ *           the bands change pace
+ *   smooth  over a radius r about I: from I - r to I + r the pace goes in a
+ *           straight line from the one stretch's to the other's, and the count
+ *           is what that pace adds up to. Nothing moves before I - r; past
+ *           I + r the count is the jump's, moved by what the rounding gained
+ *           or lost on the way -- nothing where both paces are steady, a
+ *           little where they bend. The pace in between is always between the
+ *           two, so the colours never turn back, and at a radius of nought it
+ *           is the jump.
+ *
+ * The first rounding stops short of nought, and two that would overlap are cut
+ * down alike, so that each stays between its neighbours.
+ *
+ * 1.8.0 had a mode more, continuous, and a smooth of another kind; a position
+ * from then is read into these two, near enough, by colorfun_from_legacy.
+ * Its jump is the jump here, and with one group and an initial exponent of
+ * one color_power still works it, so that such a picture is drawn to the bit
+ * as it was.
+ *
+ * Odd, as the functions are: a negative value is turned as its opposite is
+ * and keeps its sign. Worked in long double whatever the build, as they are,
+ * so that the two builds colour alike.
  */
-static long double color_power(long double v, long double iter, long double p,
-                               int mode, long double k)
+
+/* 1.8.0's jump: untouched up to iter and iter (v/iter)^p past it, or with
+ * iter at nought or below the plain power from the start. */
+static long double color_power(long double v, long double iter, long double p)
 {
     long double a = v < 0 ? -v : v, r;
     if (!(a > 0))
         return 0;
-    if (!(iter > 0)) {
+    if (!(iter > 0))
         r = expl(p * logl(a));
-    } else if (mode == 3) {
-        long double x = k * logl(a / iter);
-        /* ln(1 + e^x), written so that neither side overflows */
-        long double soft = x > 0 ? x + log1pl(expl(-x)) : log1pl(expl(x));
-        r = expl(logl(a) + (p - 1) / k * soft);
-    } else if (a <= iter) {
+    else if (a <= iter)
         r = a;
-    } else if (mode == 2) {
-        long double x = logl(a / iter);
-        r = fabsl(p) < 1e-12L ? iter * (1 + x) : iter + iter / p * expm1l(p * x);
-    } else {
+    else
         r = iter * expl(p * logl(a / iter));
-    }
     return v < 0 ? -r : r;
 }
 
-/* How sharply the smooth mode turns: the k of (1 + (v/iter)^k)^((p-1)/k).
- *
- * At four, which it was drawn with first, it moves the value at half of iter
- * by 1.5 per cent for an exponent of two -- and by 348 per cent for one of a
- * hundred, since how far it moves it grows with p - 1: the rounding reached
- * back far below iter and the colours changed long before they were asked to.
- * So it is four, or as much sharper as keeps the value at half of iter within
- * two per cent of where it was, whatever the exponent: the widest rounding
- * that still leaves the value below iter as good as untouched.
- *
- * At half of iter the logarithm of the value is moved by
- * (p - 1)/k ln(1 + 2^-k), which falls as k grows; bisected. Worked out once a
- * picture, by set_fractalc, not once a pixel. */
-number_t color_power_sharpness(number_t exponent)
+struct colorfun_group {
+    long double iter, after, radius;
+    int mode;
+};
+
+/* Stretch s at v, above nought. */
+static inline long double color_stretch(const colorfun_plan &plan, int s,
+                                        long double v)
 {
-    const double limit = std::log(1.02);
-    const double d = std::fabs((double)exponent - 1);
-    if (!(d > 0) || !(d < 1e300))
-        return 4;
-    auto moved = [d](double k) { return d / k * std::log1p(std::exp2(-k)); };
-    if (moved(4) <= limit)
-        return 4;
-    double lo = 4, hi = 8;
-    while (moved(hi) > limit && hi < 4096)
-        hi *= 2;
-    for (int i = 0; i < 60; i++) {
-        double mid = (lo + hi) / 2;
-        if (moved(mid) > limit)
-            lo = mid;
+    return plan.C[s] + plan.K[s] * expl(plan.e[s] * logl(v / plan.J[s]));
+}
+
+/* What stretch s adds up to from a to v, both above nought: the integral of
+ * C + K (u/J)^e, worked from a, so that a short way far out keeps its digits.
+ * At e = -1 the power's integral is a logarithm. */
+static long double color_stretch_area(const colorfun_plan &plan, int s,
+                                      long double a, long double v)
+{
+    const long double e1 = plan.e[s] + 1, x = logl(v / a);
+    const long double from = expl(e1 * logl(a / plan.J[s]));
+    const long double grown = fabsl(e1) < 1e-12L ? x : expm1l(e1 * x) / e1;
+    return plan.C[s] * (v - a) + plan.K[s] * plan.J[s] * from * grown;
+}
+
+/* The count inside the rounding of corner c: the pace going in a straight
+ * line from stretch c's to the next one's, added up from where the rounding
+ * starts. The next stretch is taken without what the rounding moved it by,
+ * which is what this adds up to by its end. */
+static long double color_rounded(const colorfun_plan &plan, int c,
+                                 long double a)
+{
+    const long double lo = plan.lo[c], width = plan.hi[c] - lo;
+    const long double w = (a - lo) / width;
+    const long double before = color_stretch(plan, c, a);
+    const long double after = color_stretch(plan, c + 1, a) - plan.moved[c];
+    const long double gained =
+        color_stretch_area(plan, c, lo, a) -
+        (color_stretch_area(plan, c + 1, lo, a) - plan.moved[c] * (a - lo));
+    return before * (1 - w) + after * w + gained / width;
+}
+
+static void color_change_plan(colorfun_plan &plan, long double initial,
+                              colorfun_group g1, colorfun_group g2)
+{
+    plan = colorfun_plan();
+    colorfun_group g[2];
+    int n = 0;
+    if (g1.mode)
+        g[n++] = g1;
+    if (g2.mode) {
+        if (n && g2.iter == g[0].iter)
+            g[0] = g2;
         else
-            hi = mid;
+            g[n++] = g2;
     }
-    return hi;
+    if (n == 2 && g[1].iter < g[0].iter) {
+        colorfun_group t = g[0];
+        g[0] = g[1];
+        g[1] = t;
+    }
+    if (n == 1 && initial == 1 && g[0].mode == 1) {
+        /* at an exponent of one there is nothing to do, as there was not */
+        if (g[0].after == 1)
+            return;
+        plan.kind = 1;
+        plan.iter = g[0].iter;
+        plan.exponent = g[0].after;
+        return;
+    }
+
+    /* the groups at nought or below are all at the start, and only the last
+     * of them says anything: the exponent the first stretch has */
+    int k = 0;
+    while (k < n && !(g[k].iter > 0))
+        k++;
+    plan.C[0] = 0;
+    plan.K[0] = plan.J[0] = 1;
+    plan.e[0] = k == 0 ? initial : g[k - 1].after;
+    int identity = plan.e[0] == 1;
+    long double radius[2] = {0, 0};
+    for (int j = k; j < n; j++) {
+        const int c = plan.corners++;
+        plan.at[c] = g[j].iter;
+        plan.e[c + 1] = g[j].after;
+        if (g[j].mode == 2 && g[j].radius > 0)
+            radius[c] = g[j].radius;
+        if (g[j].after != 1)
+            identity = 0;
+    }
+    /* every exponent one: the count as it was, rounded or not */
+    if (identity)
+        return;
+    plan.kind = 2;
+
+    /* the first rounding stops short of nought; two that would overlap are
+     * cut down alike */
+    if (plan.corners && radius[0] > plan.at[0] * 0.999L)
+        radius[0] = plan.at[0] * 0.999L;
+    if (plan.corners == 2 && radius[0] + radius[1] > plan.at[1] - plan.at[0]) {
+        const long double cut =
+            (plan.at[1] - plan.at[0]) / (radius[0] + radius[1]);
+        radius[0] *= cut;
+        radius[1] *= cut;
+    }
+
+    /* each stretch from the count the one before it came to, moved on by
+     * what a rounding gained or lost */
+    for (int c = 0; c < plan.corners; c++) {
+        const long double I = plan.at[c];
+        plan.C[c + 1] = color_stretch(plan, c, I) - I;
+        plan.K[c + 1] = plan.J[c + 1] = I;
+        plan.lo[c] = I - radius[c];
+        plan.hi[c] = I + radius[c];
+        if (radius[c] > 0) {
+            plan.moved[c] =
+                (color_stretch_area(plan, c, plan.lo[c], plan.hi[c]) -
+                 color_stretch_area(plan, c + 1, plan.lo[c], plan.hi[c])) /
+                (plan.hi[c] - plan.lo[c]);
+            plan.C[c + 1] += plan.moved[c];
+        }
+    }
+}
+
+void color_change_prepare(fractal_context *c)
+{
+    color_change_plan(
+        c->inplan, (long double)c->incolorfuninitial,
+        {(long double)c->incolorfuniter, (long double)c->incolorfunexp,
+         (long double)c->incolorfunradius, c->incolorfunmode},
+        {(long double)c->incolorfun2iter, (long double)c->incolorfun2exp,
+         (long double)c->incolorfun2radius, c->incolorfun2mode});
+    color_change_plan(
+        c->outplan, (long double)c->outcolorfuninitial,
+        {(long double)c->outcolorfuniter, (long double)c->outcolorfunexp,
+         (long double)c->outcolorfunradius, c->outcolorfunmode},
+        {(long double)c->outcolorfun2iter, (long double)c->outcolorfun2exp,
+         (long double)c->outcolorfun2radius, c->outcolorfun2mode});
+}
+
+/* A group as a position from before the radius holds it, in the four modes
+ * of then -- off, jump, continuous, smooth -- read into the three there are,
+ * near enough; the radius is left as it is unless the group is to be smooth.
+ *
+ * Off and jump are what they were. 1.8.0's smooth rounded the corner in the
+ * logarithm of the count, a little on either side of ITER however far off;
+ * the smooth here at a radius of three quarters of ITER keeps within five
+ * hundredths of ITER of it for the exponents up to a half, and at half of
+ * ITER over the exponent above one. Continuous went on from ITER at the pace
+ * the count came with, which no stretch here starts at: it is drawn as smooth
+ * at three quarters of ITER, with the exponent that keeps nearest it,
+ * 0.65 + p/4 + p^2/10 -- one at one, where continuous changed nothing either
+ * -- and within eleven hundredths of ITER of it up to a half. Found by
+ * setting the curves side by side over four ITERs. */
+void colorfun_from_legacy(number_t iter, number_t *exponent, int *mode,
+                          number_t *radius)
+{
+    switch (*mode) {
+    case 1:
+        break;
+    case 2:
+        *mode = 2;
+        *exponent = (number_t)0.65 + *exponent / 4 +
+                    *exponent * *exponent / 10;
+        if (iter > 0)
+            *radius = iter * 3 / 4;
+        break;
+    case 3:
+        *mode = 2;
+        if (iter > 0)
+            *radius = *exponent <= 1 ? iter * 3 / 4 : iter / 2 / *exponent;
+        break;
+    default:
+        *mode = 0;
+        break;
+    }
+}
+
+/* The count v as the plan changes it. */
+static long double color_change(long double v, const colorfun_plan &plan)
+{
+    if (plan.kind == 1)
+        return color_power(v, plan.iter, plan.exponent);
+    long double a = v < 0 ? -v : v, r;
+    if (!(a > 0))
+        return 0;
+    int s = 0;
+    for (int c = 0; c < plan.corners; c++) {
+        if (a > plan.lo[c] && a < plan.hi[c]) {
+            r = color_rounded(plan, c, a);
+            return v < 0 ? -r : r;
+        }
+        if (a >= plan.at[c])
+            s = c + 1;
+    }
+    r = color_stretch(plan, s, a);
+    return v < 0 ? -r : r;
 }
 
 static float color_f_func(number_t v, const float speed, const int func,
@@ -527,25 +711,13 @@ static float color_f_func(number_t v, const float speed, const int func,
 {
     color_f_normalize(v);
     /* The speed change after ITER, on the value before the function has it.
-     * Off -- the default -- or at an exponent of one, nothing at all is done
-     * to it, so that the value goes on to the function to the bit as it did
-     * before there was such a thing. */
-    const int after = inset ? cfractalc.incolorfunmode : cfractalc.outcolorfunmode;
-    if (after) {
-        number_t p = inset ? cfractalc.incolorfunexp : cfractalc.outcolorfunexp;
-        if (p != 1) {
-            number_t iter =
-                inset ? cfractalc.incolorfuniter : cfractalc.outcolorfuniter;
-            number_t k =
-                inset ? cfractalc.incolorfunsharp : cfractalc.outcolorfunsharp;
-            /* set_fractalc works it out; a caller that never went through it
-             * gets it here instead */
-            if (!(k >= 4))
-                k = color_power_sharpness(p);
-            v = color_power((long double)v, (long double)iter, (long double)p,
-                            after, (long double)k);
-            color_f_normalize(v);
-        }
+     * Off -- the default -- or with every exponent at one, nothing at all is
+     * done to it, so that the value goes on to the function to the bit as it
+     * did before there was such a thing. */
+    const colorfun_plan &plan = inset ? cfractalc.inplan : cfractalc.outplan;
+    if (plan.kind) {
+        v = color_change((long double)v, plan);
+        color_f_normalize(v);
     }
     switch (func) {
     case 1:

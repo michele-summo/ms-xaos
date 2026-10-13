@@ -450,6 +450,15 @@ void uih_setoutcolorshift(uih_context *c, int shift);
 /* inset is 1 for the inside, 0 for the outside */
 void uih_setcolorfunafter(uih_context *c, int inset, number_t iter,
                           number_t exponent, int mode);
+void uih_setcolorfunchange(uih_context *c, int inset, number_t initial,
+                           number_t iter, number_t exponent, int mode,
+                           number_t radius, number_t iter2,
+                           number_t exponent2, int mode2, number_t radius2);
+/* Both groups in the four modes positions before the radius name -- off,
+ * jump, continuous, smooth -- read into the three there are */
+void uih_setcolorfunlegacy(uih_context *c, int inset, number_t initial,
+                           number_t iter, number_t exponent, int mode,
+                           number_t iter2, number_t exponent2, int mode2);
 void uih_setfbmparams(uih_context *c, int inset, number_t intensity,
                       number_t frequency, int octaves, number_t roughness,
                       int seed);

@@ -89,6 +89,11 @@ QString CustomDialog::format(number_t number)
     return QString(buf);
 }
 
+/* The name the widget of field i goes by, which accept() finds it by again.
+ * It was the field's label, so two fields with the same label -- the ITER of
+ * two groups -- were one name, and both read back from the first. */
+static QString fieldName(int i) { return QString("field%1").arg(i); }
+
 CustomDialog::CustomDialog(struct uih_context *uih, const menuitem *item,
                            const menudialog *dialog, QWidget *parent)
     : QDialog(parent)
@@ -104,16 +109,23 @@ CustomDialog::CustomDialog(struct uih_context *uih, const menuitem *item,
 
     for (int i = 0; dialog[i].question; i++) {
         QString label(dialog[i].question);
+        const QString name = fieldName(i);
+        if (dialog[i].separated) {
+            QFrame *rule = new QFrame(this);
+            rule->setFrameShape(QFrame::HLine);
+            rule->setFrameShadow(QFrame::Sunken);
+            formLayout->addRow(rule);
+        }
         if (dialog[i].type == DIALOG_COORD) {
 
             QLineEdit *real = new QLineEdit(format(dialog[i].deffloat), this);
             QFontMetrics metric(real->font());
             real->setMinimumWidth(metric.horizontalAdvance(real->text()) * 1.1);
-            real->setObjectName(label + "real");
+            real->setObjectName(name + "real");
             // real->setValidator(new QDoubleValidator(real));
 
             QLineEdit *imag = new QLineEdit(format(dialog[i].deffloat2), this);
-            imag->setObjectName(label + "imag");
+            imag->setObjectName(name + "imag");
             imag->setMinimumWidth(metric.horizontalAdvance(imag->text()) * 1.1);
             // imag->setValidator(new QDoubleValidator(imag));
 
@@ -132,10 +144,10 @@ CustomDialog::CustomDialog(struct uih_context *uih, const menuitem *item,
             QLineEdit *filename = new QLineEdit(dialog[i].defstr, this);
             QFontMetrics metric(filename->font());
             filename->setMinimumWidth(metric.horizontalAdvance(filename->text()) * 1.1);
-            filename->setObjectName(label);
+            filename->setObjectName(name);
 
             QToolButton *chooser = new QToolButton(this);
-            chooser->setObjectName(label);
+            chooser->setProperty("field", i);
             chooser->setText("...");
 
             if (dialog[i].type == DIALOG_IFILE)
@@ -156,10 +168,10 @@ CustomDialog::CustomDialog(struct uih_context *uih, const menuitem *item,
 
             QTextEdit *filenames = new QTextEdit(this);
             filenames->setMaximumHeight(filenames->height() * 2);
-            filenames->setObjectName(label);
+            filenames->setObjectName(name);
 
             QToolButton *chooser = new QToolButton(this);
-            chooser->setObjectName(label);
+            chooser->setProperty("field", i);
             chooser->setText("...");
             connect(chooser, SIGNAL(clicked()), this,
                     SLOT(chooseInputFiles()));
@@ -174,7 +186,7 @@ CustomDialog::CustomDialog(struct uih_context *uih, const menuitem *item,
         } else if (dialog[i].type == DIALOG_CHOICE) {
 
             QComboBox *combo = new QComboBox(this);
-            combo->setObjectName(label);
+            combo->setObjectName(name);
 
             const char **str = (const char **)dialog[i].defstr;
             for (int j = 0; str[j] != NULL; j++)
@@ -291,7 +303,7 @@ CustomDialog::CustomDialog(struct uih_context *uih, const menuitem *item,
         } else if (dialog[i].type == DIALOG_LIST) {
 
             QComboBox *list = new QComboBox(this);
-            list->setObjectName(label);
+            list->setObjectName(name);
             list->setEditable(true);
             list->addItem(dialog[i].defstr);
 
@@ -304,7 +316,7 @@ CustomDialog::CustomDialog(struct uih_context *uih, const menuitem *item,
         } else {
 
             QLineEdit *field = new QLineEdit(this);
-            field->setObjectName(label);
+            field->setObjectName(name);
 
             if (dialog[i].type == DIALOG_INT) {
                 field->setText(QString::number(dialog[i].defint));
@@ -319,6 +331,27 @@ CustomDialog::CustomDialog(struct uih_context *uih, const menuitem *item,
             field->setMinimumWidth(metric.horizontalAdvance(field->text()) * 1.1);
             formLayout->addRow(label, field);
         }
+    }
+
+    /* The fields shown only while a choice before them holds a given entry --
+     * the radius of a group, in smooth alone -- following the choice as it
+     * is changed. A hidden field is still read back on OK, with what it
+     * held. */
+    for (int i = 0; dialog[i].question; i++) {
+        const int back = dialog[i].shownwith;
+        if (back <= 0 || back > i)
+            continue;
+        QComboBox *choice = findChild<QComboBox *>(fieldName(i - back));
+        QWidget *field = findChild<QWidget *>(fieldName(i));
+        if (choice == NULL || field == NULL)
+            continue;
+        const int at = dialog[i].shownat;
+        auto follow = [this, formLayout, field, at](int index) {
+            formLayout->setRowVisible(field, index == at);
+            adjustSize();
+        };
+        follow(choice->currentIndex());
+        connect(choice, &QComboBox::currentIndexChanged, this, follow);
     }
 
     dialogLayout->addLayout(formLayout);
@@ -342,31 +375,31 @@ void CustomDialog::accept()
     m_parameters = (dialogparam *)malloc(sizeof(*m_parameters) * nitems);
 
     for (int i = 0; i < nitems; i++) {
-        QString label(m_dialog[i].question);
+        const QString name = fieldName(i);
 
         if (m_dialog[i].type == DIALOG_COORD) {
 
-            QLineEdit *real = findChild<QLineEdit *>(label + "real");
-            QLineEdit *imag = findChild<QLineEdit *>(label + "imag");
+            QLineEdit *real = findChild<QLineEdit *>(name + "real");
+            QLineEdit *imag = findChild<QLineEdit *>(name + "imag");
 
             m_parameters[i].dcoord[0] = xstrtonum(real->text().toUtf8(), &ps);
             m_parameters[i].dcoord[1] = xstrtonum(imag->text().toUtf8(), &ps);
 
         } else if (m_dialog[i].type == DIALOG_CHOICE) {
 
-            QComboBox *field = findChild<QComboBox *>(label);
+            QComboBox *field = findChild<QComboBox *>(name);
             m_parameters[i].dint = field->currentIndex();
 
         }
         else if (m_dialog[i].type == DIALOG_IFILES){
 
-            QTextEdit *field = findChild<QTextEdit *>(label);
+            QTextEdit *field = findChild<QTextEdit *>(name);
             QString raw_fnames = field->toPlainText();
             fnames = raw_fnames.split("\n");
 
         } else {
 
-            QLineEdit *field = findChild<QLineEdit *>(label);
+            QLineEdit *field = findChild<QLineEdit *>(name);
 
             if (m_dialog[i].type == DIALOG_INT)
                 m_parameters[i].dint = field->text().toInt();
@@ -383,7 +416,7 @@ void CustomDialog::accept()
             } else if (m_dialog[i].type == DIALOG_PALPICKER) {
                 mkcustompalette(palcontext->image->palette, newColors);
             } else if (m_dialog[i].type == DIALOG_LIST) {
-                QComboBox *list = findChild<QComboBox *>(label);
+                QComboBox *list = findChild<QComboBox *>(name);
                 m_parameters[i].dstring = strdup(list->currentText().toUtf8());
             }
             else
@@ -396,14 +429,21 @@ void CustomDialog::accept()
 
 dialogparam *CustomDialog::parameters() { return m_parameters; }
 
+/* The field a "..." button belongs to, and the question it asks. */
+static int chooserField(QObject *chooser)
+{
+    return chooser->property("field").toInt();
+}
+
 void CustomDialog::chooseInputFile()
 {
-    QLineEdit *field = findChild<QLineEdit *>(sender()->objectName());
+    const int i = chooserField(sender());
+    QLineEdit *field = findChild<QLineEdit *>(fieldName(i));
 
     QSettings settings;
     QString fileLocation = settings.value("MainWindow/lastFileLocation", QDir::homePath()).toString();
     QString fileName = QFileDialog::getOpenFileName(
-            this, sender()->objectName(), fileLocation, "*.xpf *.png *.xaf");
+            this, m_dialog[i].question, fileLocation, "*.xpf *.png *.xaf");
     if (!fileName.isNull()) {
         field->setText(fileName);
         settings.setValue("MainWindow/lastFileLocation", QFileInfo(fileName).absolutePath());
@@ -412,11 +452,12 @@ void CustomDialog::chooseInputFile()
 
 void CustomDialog::chooseOutputFile()
 {
-    QLineEdit *field = findChild<QLineEdit *>(sender()->objectName());
+    const int i = chooserField(sender());
+    QLineEdit *field = findChild<QLineEdit *>(fieldName(i));
     QSettings settings;
     QString fileLocation = settings.value("MainWindow/lastFileLocation", QDir::homePath()).toString();
     QString fileName = QFileDialog::getSaveFileName(
-        this, sender()->objectName(), fileLocation);
+        this, m_dialog[i].question, fileLocation);
     if (!fileName.isNull()) {
         field->setText(fileName);
         settings.setValue("MainWindow/lastFileLocation", QFileInfo(fileName).absolutePath());
@@ -425,11 +466,12 @@ void CustomDialog::chooseOutputFile()
 
 void CustomDialog::chooseInputFiles()
 {
-    QTextEdit *field = findChild<QTextEdit *>(sender()->objectName());
+    const int i = chooserField(sender());
+    QTextEdit *field = findChild<QTextEdit *>(fieldName(i));
     QSettings settings;
     QString fileLocation = settings.value("MainWindow/lastFileLocation", QDir::homePath()).toString();
     QStringList fileNames = QFileDialog::getOpenFileNames(
-        this, sender()->objectName(), fileLocation, "*.xpf *.xaf");
+        this, m_dialog[i].question, fileLocation, "*.xpf *.xaf");
     if(!fileNames.isEmpty()) {
         for(auto file: fileNames) {
             field->append(file);

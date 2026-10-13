@@ -50,6 +50,9 @@ struct realloc_s {
     int symto;
     int symref;
     int dirty;
+    /* The phase of solid guessing that calculated this row or column -- see
+     * calculatenew -- or nought. */
+    int phase;
 }
 #ifdef __GNUC__
 __attribute__((aligned(32)))
@@ -88,6 +91,14 @@ struct filltable {
 
 zoom_context czoomc;
 struct filter cfilter;
+
+/* The phase of solid guessing being run, nought outside calculatenew. A row
+ * or column it calculates is not a neighbour to guess from until the phase is
+ * over, though it is no longer dirty: another thread may be half way through
+ * it, or not have reached it, and which it is depends on how the threads were
+ * scheduled. See calculatenew. */
+static int calcphase;
+#define unready(r) ((r)->dirty || (calcphase && (r)->phase == calcphase))
 #ifdef STATISTICS
 static int tocalculate = 0, avoided = 0;
 static int nadded = 0, nsymmetry = 0, nskipped = 0;
@@ -978,27 +989,99 @@ static void fill(void)
     xth_sync();
 }
 
-static void calculatenew(void * /*data*/, struct taskinfo *task, int /*r1*/,
-                         int /*r2*/)
+/* Solid guessing, uninterrupted: the rows every 2*range'th first, then the
+ * ones between them in the order calcpositions gives, each pass its rows and
+ * then its columns. calcline and calccolumn guess a pixel, or choose whether
+ * to check it for periodicity, from the rows and columns already calculated
+ * round it.
+ *
+ * The passes used to run in every thread at once with nothing between them:
+ * a thread went on to the next pass, or from rows to columns, while the others
+ * were still at the last one. So what counted as already calculated round a
+ * pixel was whatever the other threads had got to -- a neighbouring row
+ * finished, or not reached, or half done, since a row was marked clean before
+ * it was calculated -- and the same position rendered with four threads came
+ * out a few pixels different one time in a hundred, where one thread always
+ * drew it the same.
+ *
+ * Each pass is now two phases, its rows and then its columns, every thread
+ * finishing one before any starts the next; and what a phase calculates is no
+ * neighbour within that phase (see unready). The neighbours of a row are then
+ * exactly the rows and columns of the phases before, whatever the number of
+ * threads and however they ran: the picture is the same with one or with
+ * many, and with one it is the one it always was. */
+static int calcrange, calcpass;
+static int calcpositions[16];
+
+static void calcrows(void * /*data*/, struct taskinfo *task, int /*r1*/,
+                     int /*r2*/)
 {
-    int s;
-    int i, y;
-    realloc_t *rx, *ry, *rend;
-    int range = cfractalc.range * 2;
+    realloc_t *ry, *rend;
+    for (ry = czoomc.reallocy + calcpositions[calcpass],
+        rend = czoomc.reallocy + cimage.height;
+         ry < rend && !cfilter.interrupt; ry += calcrange) {
+        xth_lock(0);
+        if (ry->recalculate == 1) {
+            ry->recalculate = 2;
+            /* stamped before it is marked clean, so that a thread that sees
+             * it clean sees the stamp too */
+            ry->phase = calcphase;
+            xth_unlock(0);
+            setchanged(1);
+            ry->dirty = 0;
+            calcline(ry);
+            cfilter.pos++;
+#ifndef DRAW
+            tcallwait();
+#endif
+        } else {
+            xth_unlock(0);
+        }
+    }
+}
+
+static void calccolumns(void * /*data*/, struct taskinfo *task, int /*r1*/,
+                        int /*r2*/)
+{
+    realloc_t *rx, *rend;
+    for (rx = czoomc.reallocx + calcpositions[calcpass],
+        rend = czoomc.reallocx + cimage.width;
+         rx < rend && !cfilter.interrupt; rx += calcrange) {
+        xth_lock(1);
+        if (rx->recalculate == 1) {
+            rx->recalculate = 2;
+            rx->phase = calcphase;
+            xth_unlock(1);
+            setchanged(1);
+            rx->dirty = 0;
+            calccolumn(rx);
+            cfilter.pos++;
+#ifndef DRAW
+            tcallwait();
+#endif
+        } else {
+            xth_unlock(1);
+        }
+    }
+}
+
+static void calculatenew(void)
+{
+    int s, i, y;
+    realloc_t *r, *rend;
     int positions[16];
-    int calcpositions[16];
-    /*int s3; */
-    if (range < 1)
-        range = 1;
-    if (range > 16)
-        range = 16;
+    calcrange = cfractalc.range * 2;
+    if (calcrange < 1)
+        calcrange = 1;
+    if (calcrange > 16)
+        calcrange = 16;
     memset(positions, 0, sizeof(positions));
     calcpositions[0] = 0;
     positions[0] = 1;
-    for (s = 1; s < range;) {
-        for (i = 0; i < range; i++) {
+    for (s = 1; s < calcrange;) {
+        for (i = 0; i < calcrange; i++) {
             if (!positions[i]) {
-                for (y = i; y < range && !positions[y]; y++)
+                for (y = i; y < calcrange && !positions[y]; y++)
                     ;
                 positions[(y + i) / 2] = 1;
                 calcpositions[s++] = (y + i) / 2;
@@ -1006,79 +1089,36 @@ static void calculatenew(void * /*data*/, struct taskinfo *task, int /*r1*/,
         }
     }
 
-    if (!xth_nthread(task)) {
-        STAT(tocalculate = 0);
-        STAT(avoided = 0);
-        cfilter.pass = TR("Message", "Solid guessing 1");
-        cfilter.max = 0;
-        cfilter.pos = 0;
-    }
+    STAT(tocalculate = 0);
+    STAT(avoided = 0);
+    cfilter.pass = TR("Message", "Solid guessing 1");
+    cfilter.max = 0;
+    cfilter.pos = 0;
 
-    /* We don't need to wory about race conditions here, since only
-     * problem that should happen is incorrectly counted number
-     * of lines to do...
-     *
-     * I will fix that problem later, but I think that this information
-     * should be quite useless at multithreaded systems so it should
-     * be a bit inaccurate. Just need to take care in percentage
-     * displayers that thinks like -100% or 150% should happen
-     */
-    if (!xth_nthread(task)) {
-        for (ry = czoomc.reallocy, rend = ry + cimage.height; ry < rend; ry++) {
-            if (ry->recalculate)
-                cfilter.max++;
-        }
-        for (rx = czoomc.reallocx, rend = rx + cimage.width; rx < rend; rx++) {
-            if (rx->recalculate) {
-                cfilter.max++;
-            }
-        }
+    /* The stamps of an earlier frame mean nothing in this one. */
+    for (r = czoomc.reallocy, rend = r + cimage.height; r < rend; r++) {
+        r->phase = 0;
+        if (r->recalculate)
+            cfilter.max++;
     }
-    tcallwait();
-    for (s = 0; s < range; s++) {
-        for (ry = czoomc.reallocy + calcpositions[s],
-            rend = czoomc.reallocy + cimage.height;
-             ry < rend; ry += range) {
-            xth_lock(0);
-            if (ry->recalculate == 1) {
-                ry->recalculate = 2;
-                xth_unlock(0);
-                setchanged(1);
-                ry->dirty = 0;
-                calcline(ry);
-                cfilter.pos++;
-#ifndef DRAW
-                tcallwait();
-#endif
-                if (cfilter.interrupt) {
-                    break;
-                }
-            } else {
-                xth_unlock(0);
-            }
-        } /*for ry */
-        for (rx = czoomc.reallocx + calcpositions[s],
-            rend = czoomc.reallocx + cimage.width;
-             rx < rend; rx += range) {
-            xth_lock(1);
-            if (rx->recalculate == 1) {
-                rx->recalculate = 2;
-                xth_unlock(1);
-                setchanged(1);
-                rx->dirty = 0;
-                calccolumn(rx);
-                cfilter.pos++;
-#ifndef DRAW
-                tcallwait();
-#endif
-                if (cfilter.interrupt) {
-                    return;
-                }
-            } else {
-                xth_unlock(1);
-            }
-        }
+    for (r = czoomc.reallocx, rend = r + cimage.width; r < rend; r++) {
+        r->phase = 0;
+        if (r->recalculate)
+            cfilter.max++;
     }
+    callwait();
+    for (calcpass = 0; calcpass < calcrange && !cfilter.interrupt;
+         calcpass++) {
+        calcphase++;
+        xth_function(calcrows, NULL, 1);
+        xth_sync();
+        if (cfilter.interrupt)
+            break;
+        calcphase++;
+        xth_function(calccolumns, NULL, 1);
+        xth_sync();
+    }
+    calcphase = 0;
     STAT(
         printf("Avoided caluclating of %i points from %i and %2.2f%% %2.2f%%\n",
                avoided, tocalculate, 100.0 * (avoided) / tocalculate,
@@ -1495,7 +1535,7 @@ static int do_fractal(struct filter *f, int flags, int /*time*/)
     if (flags & INTERRUPTIBLE)
         calculatenewinterruptible();
     else {
-        xth_function(calculatenew, NULL, 1);
+        calculatenew();
         if (cfilter.interrupt) {
             getzcontext(f)->incomplete = 1;
         }

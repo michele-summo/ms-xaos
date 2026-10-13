@@ -100,12 +100,21 @@ static int uih_message1(uih_context *c, const char *message, int type)
         uih_scrollup(c), i--;
     c->messg.message[i] = mystrdup(message);
     c->messg.messagetype[i] = type;
+    /* Gone after EXPIRETIME, on the clock the pictures are drawn by when it is
+     * not the wall's. A render counts out each frame's time rather than
+     * measure it, and a message timed by the wall stayed for five seconds of
+     * computing instead of five of the animation -- in the picture or not by
+     * how fast the machine was, and how busy.
+     *
+     * The time is the timer's interval. It used to be an interval of nothing
+     * held back by EXPIRETIME, which comes to the same on the wall's clock and
+     * to nothing on an emulated one, which does not count what a timer is
+     * held back by: the message went at once. */
     c->messg.messagetimer[i] = tl_create_timer();
+    if (c->emulator)
+        tl_emulate_timer(c->messg.messagetimer[i], c->emulator);
     tl_reset_timer(c->messg.messagetimer[i]);
-    tl_set_interval(c->messg.messagetimer[i], 1);
-    ;
-    tl_slowdown_timer(c->messg.messagetimer[i], EXPIRETIME);
-    ;
+    tl_set_interval(c->messg.messagetimer[i], EXPIRETIME);
     tl_set_handler(c->messg.messagetimer[i], (void (*)(void *))uih_scrollup, c);
     tl_add_timer(syncgroup, c->messg.messagetimer[i]);
     /*tl_remove_timer (c->messg.messagetimer[i]); */
