@@ -7,8 +7,9 @@
  * chosen, must do nothing at all when off or at an exponent of one, and
  * otherwise what its two modes say -- jump untouched below ITER and its pace
  * turning there at once, smooth untouched below ITER less the radius, never
- * turning back, without a corner, and the jump moved on by a constant past
- * ITER plus the radius. A position from 1.8.0 in continuous or in its smooth
+ * turning back, without a corner, its pace half way at ITER where the two
+ * are steady, and the jump's count again past ITER plus the radius. The
+ * speeds multiply each stretch's pace, and at one change nothing. A position from 1.8.0 in continuous or in its smooth
  * must come out near what it was. And a value past what an int holds has to
  * land in the palette cycle like any other, where it used to land on one
  * flat entry.
@@ -38,7 +39,7 @@ const char *qt_gettext(const char *, const char *t) { return t; }
 void init_julia(struct image *, number_t, number_t, number_t, number_t) {}
 
 static int failures = 0;
-static char what[160];
+static char what[512];
 
 static void check(int ok, const char *text)
 {
@@ -113,6 +114,18 @@ static void groups(double initial, double iter, double p, int mode, double r,
     cfractalc.outcolorfun2exp = p2;
     cfractalc.outcolorfun2mode = mode2;
     cfractalc.outcolorfun2radius = r2;
+    cfractalc.outcolorfuninitialspeed = 1;
+    cfractalc.outcolorfunspeed = cfractalc.outcolorfun2speed = 1;
+    color_change_prepare(&cfractalc);
+}
+
+/* The speeds of the groups just set: the first stretch's and the two
+ * groups'. */
+static void speeds(double s0, double s1, double s2)
+{
+    cfractalc.outcolorfuninitialspeed = s0;
+    cfractalc.outcolorfunspeed = s1;
+    cfractalc.outcolorfun2speed = s2;
     color_change_prepare(&cfractalc);
 }
 
@@ -361,9 +374,10 @@ int main(void)
                 p, s1);
         check(kept && fabs(s1 / p - 1) < 0.02, what);
 
-        /* smooth: untouched up to ITER - R, no corner anywhere, the pace
-         * always between the two, and past ITER + R the jump moved on by a
-         * constant */
+        /* smooth: untouched up to ITER - R, no corner anywhere, never turning
+         * back, and past ITER + R the jump's count again -- moved on by a
+         * constant only where the pace had to be held at nought, which a
+         * hundredth power over ten iterations needs */
         after(T, p, SMOOTH, R);
         int before = 1, rising = 1;
         for (int i = 1; i <= 100; i++) {
@@ -398,10 +412,13 @@ int main(void)
                 far = 0;
         }
         sprintf(what,
-                "exponent %g, smooth: untouched up to ITER - R, rising, no "
-                "corner, and the jump past ITER + R (moved by %.3g)",
-                p, (double)moved);
-        check(before && rising && corners && far, what);
+                "exponent %g, smooth: untouched up to ITER - R (%d), rising "
+                "(%d), no corner (%d), and the jump past ITER + R (%d, moved "
+                "by %.3g)",
+                p, before, rising, corners, far, (double)moved);
+        check(before && rising && corners && far &&
+                  (p > 2 || fabsl(moved) < 1e-9L),
+              what);
         /* both odd, and finite however large */
         int odd = 1, finite = 1;
         for (int mode = JUMP; mode <= SMOOTH; mode++) {
@@ -429,6 +446,19 @@ int main(void)
                 "it, and %.6g past the rounding, ITER again",
                 at, past);
         check(fabs(at - (T - R / 4)) < 1e-9 && fabs(past - T) < 1e-9, what);
+        /* and goes over in a straight line, half way at ITER: from a pace of
+         * one to one of three */
+        after(T, 1, SMOOTH, R);
+        speeds(1, 3, 1);
+        double lo = slope_right(T - R), mid = slope_right(T),
+               hi = slope_left(T + R), beyond = (double)Q(T + 3 * R);
+        sprintf(what,
+                "steady paces of one and three: %.5g, %.5g at ITER, %.5g, and "
+                "the jump's %.6g past",
+                lo, mid, hi, beyond);
+        check(fabs(lo - 1) < 1e-4 && fabs(mid - 2) < 1e-4 &&
+                  fabs(hi - 3) < 1e-4 && fabs(beyond - (T + 3 * 3 * R)) < 1e-9,
+              what);
         /* and a radius of nought is the jump */
         int same = 1;
         for (double p : {0.5, 2.0})
@@ -529,7 +559,7 @@ int main(void)
                 "1.8.0's smooth and continuous, exponents up to a half, read "
                 "into smooth: within %.3g and %.3g of ITER of it",
                 worst_s / 100, worst_c / 100);
-        check(worst_s < 5 && worst_c < 11, what);
+        check(worst_s < 4 && worst_c < 12, what);
         /* off and jump as they were */
         number_t e = 1.5, r = 7;
         int m = 1;
@@ -723,8 +753,8 @@ int main(void)
                       fabs(p80 - 1) < 1e-4 && fabs(p100 / 2 - 1) < 1e-4 &&
                       fabs(u150 - (100 + a + 100 * (1.5 * 1.5 - 1))) < 1e-9,
                   what);
-            /* smooth goes on as v + a too once past its radius, at a pace of
-             * one -- a moved on by what the rounding took off the square */
+            /* smooth goes on as v + a too once past its radius, a and all,
+             * at a pace of one */
             groups(2, 50, 1, SMOOTH, R, 100, 2, OFF, R);
             double p70 = slope_right(70), d70 = (double)Q(70) - 70,
                    d90 = (double)Q(90) - 90;
@@ -732,8 +762,23 @@ int main(void)
                     "smooth after a square goes on as v + %.6g past its "
                     "radius (pace %.5g)",
                     d70, p70);
-            check(fabs(p70 - 1) < 1e-4 && fabs(d70 - d90) < 1e-9 &&
-                      fabs(d70 - a) < R * R,
+            check(fabs(p70 - 1) < 1e-4 && fabs(d70 - a) < 1e-9 &&
+                      fabs(d90 - a) < 1e-9,
+                  what);
+            /* SPEED_PROBLEM_2: the square to ITER 50, then one, over a radius
+             * of 20 -- the pace 60 where the rounding begins and one where it
+             * ends, and between them the straight line, half way at ITER,
+             * with a parabola of 15 on it that gives back what the line cut
+             * off the square's corner */
+            groups(2, 50, 1, SMOOTH, 20, 100, 2, OFF, R);
+            double q30 = slope_right(30), q50 = slope_right(50),
+                   q70 = slope_left(70), back = (double)Q(80) - 80;
+            sprintf(what,
+                    "radius 20 after a square: pace %.5g, %.5g at ITER, %.5g, "
+                    "and v + %.6g past it",
+                    q30, q50, q70, back);
+            check(fabs(q30 - 60) < 1e-3 && fabs(q50 - 45.5) < 1e-3 &&
+                      fabs(q70 - 1) < 1e-3 && fabs(back - a) < 1e-9,
                   what);
         }
 
@@ -785,7 +830,7 @@ int main(void)
                   fabs(p2 - (10000 + 100 * (pow(4, 1.5) - 1))) < 1e-6,
               what);
         /* smooth at both: no corner at either ITER or either end of a
-         * rounding, and past both the jump moved on by a constant */
+         * rounding, and past both the jump's count again */
         groups(1, 100, 1.5, SMOOTH, 15, 50, 2, SMOOTH, 8);
         int corners = 1;
         for (double at : {42.0, 50.0, 58.0, 85.0, 100.0, 115.0})
@@ -796,10 +841,60 @@ int main(void)
         long double moved = s1500 - Q(1500);
         double drift = (double)fabsl(s2000 - Q(2000) - moved);
         sprintf(what,
-                "smooth at both: no corner, and the jump past both moved on "
-                "by %.4g (%.1e off it)",
+                "smooth at both: no corner, and the jump past both (%.1e and "
+                "%.1e off it)",
                 (double)moved, drift);
-        check(corners && drift < 1e-9, what);
+        check(corners && fabsl(moved) < 1e-9L && drift < 1e-9, what);
+
+        /* the speeds: the first stretch's multiplies the plain power, a
+         * group's the pace its stretch adds -- at an exponent of one a
+         * straight line of that slope -- and a group at ITER nought puts its
+         * own on the first stretch, as it does its exponent */
+        groups(2, 100, 1.5, OFF, R, 50, 2, OFF, R);
+        speeds(3, 7, 7);
+        double sq = (double)Q(10);
+        after(50, 1, JUMP);
+        speeds(1, 3, 1);
+        double line = (double)Q(60), tilt = slope_right(70);
+        after(50, 2, JUMP);
+        speeds(1, 0.5, 1);
+        double half = slope_right(50);
+        groups(1, 100, 1.5, JUMP, R, 0, 2, JUMP, R);
+        speeds(5, 1, 3);
+        double start = (double)Q(10);
+        sprintf(what,
+                "speeds: 3 v^2 at 10 is %.6g; slope 3 from ITER 50 (60 to "
+                "%.6g, pace %.5g); exponent 2 at speed 0.5 starts at a pace of "
+                "%.5g; a group at ITER nought puts its speed on the first "
+                "stretch (10 to %.6g)",
+                sq, line, tilt, half, start);
+        check(fabs(sq - 300) < 1e-9 && fabs(line - 80) < 1e-9 &&
+                  fabs(tilt - 3) < 1e-4 && fabs(half - 1) < 1e-4 &&
+                  fabs(start - 300) < 1e-9,
+              what);
+        /* every speed one is the change as it was without them, and the
+         * speed of a group that is off changes nothing */
+        int unit = 1;
+        for (int i = 1; i <= 300; i++) {
+            double v = i * 0.7;
+            groups(0.5, 100, 1.5, SMOOTH, 20, 40, 0.7, JUMP, R);
+            float x = (float)F(0, v);
+            speeds(1, 1, 1);
+            float y = (float)F(0, v);
+            groups(0.5, 100, 1.5, SMOOTH, 20, 40, 0.7, OFF, R);
+            float z = (float)F(0, v);
+            speeds(1, 1, 9);
+            float w = (float)F(0, v);
+            if (memcmp(&x, &y, sizeof x) || memcmp(&z, &w, sizeof z))
+                unit = 0;
+        }
+        after(50, 1, JUMP);
+        speeds(1, 1, 1);
+        const int none = cfractalc.outplan.kind == 0;
+        speeds(1, 2, 1);
+        check(unit && none && cfractalc.outplan.kind == 2,
+              "speeds at one change nothing, to the bit, nor does an off "
+              "group's; an exponent of one at speed two is a change");
         /* two roundings that would overlap are cut down alike, and meet
          * without a corner */
         groups(1, 50, 2, SMOOTH, 40, 80, 0.5, SMOOTH, 40);

@@ -479,6 +479,9 @@ fractal_context *make_fractalc(const int formula, float wi, float he)
     /* The speed change after ITER is off, so that a picture draws as it
      * always did; the numbers are what it offers when it is turned on. */
     new_ctxt->incolorfuninitial = new_ctxt->outcolorfuninitial = 1;
+    new_ctxt->incolorfuninitialspeed = new_ctxt->outcolorfuninitialspeed = 1;
+    new_ctxt->incolorfunspeed = new_ctxt->outcolorfunspeed = 1;
+    new_ctxt->incolorfun2speed = new_ctxt->outcolorfun2speed = 1;
     new_ctxt->incolorfuniter = new_ctxt->outcolorfuniter = COLORFUN_ITER;
     new_ctxt->incolorfunexp = new_ctxt->outcolorfunexp = COLORFUN_EXP;
     new_ctxt->incolorfunmode = new_ctxt->outcolorfunmode = 0;

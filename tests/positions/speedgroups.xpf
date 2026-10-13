@@ -1,12 +1,14 @@
 ; The speed change after ITER with what 1.8.0 did not have: an initial
-; exponent, a second group, and smooth with a radius. Saved as
-; outcolorspeedchange and incolorspeedchange, and has to come back the same.
+; exponent, a second group, smooth with a radius, and the speeds. Saved as
+; outcolorspeedchange and outcolorspeedlinear (and the same inside), and has to
+; come back the same.
 (initstate)
 (formula 'mandel)
 (maxiter 300)
 (outcoloring 9)
 (outcolorfun 7)
 (outcolorspeedchange 0.8 120 1.5 'smooth 25 40 2 'jump 10)
+(outcolorspeedlinear 1.5 0.5 3)
 (incoloring 1)
 (incolorfun 11)
 (incolorspeed 20)

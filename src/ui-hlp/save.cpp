@@ -304,22 +304,28 @@ static void savepos3(struct uih_context *uih)
 struct colorfun_fields {
     number_t *initial, *iter, *exp, *radius, *iter2, *exp2, *radius2;
     int *mode, *mode2;
+    number_t *speed0, *speed, *speed2;
 };
 
 static colorfun_fields colorfun_side(fractal_context *c, int inset)
 {
     if (inset)
-        return {&c->incolorfuninitial, &c->incolorfuniter,
-                &c->incolorfunexp,     &c->incolorfunradius,
-                &c->incolorfun2iter,   &c->incolorfun2exp,
-                &c->incolorfun2radius, &c->incolorfunmode,
-                &c->incolorfun2mode};
-    return {&c->outcolorfuninitial, &c->outcolorfuniter,
-            &c->outcolorfunexp,     &c->outcolorfunradius,
-            &c->outcolorfun2iter,   &c->outcolorfun2exp,
-            &c->outcolorfun2radius, &c->outcolorfunmode,
-            &c->outcolorfun2mode};
+        return {&c->incolorfuninitial,      &c->incolorfuniter,
+                &c->incolorfunexp,          &c->incolorfunradius,
+                &c->incolorfun2iter,        &c->incolorfun2exp,
+                &c->incolorfun2radius,      &c->incolorfunmode,
+                &c->incolorfun2mode,        &c->incolorfuninitialspeed,
+                &c->incolorfunspeed,        &c->incolorfun2speed};
+    return {&c->outcolorfuninitial,      &c->outcolorfuniter,
+            &c->outcolorfunexp,          &c->outcolorfunradius,
+            &c->outcolorfun2iter,        &c->outcolorfun2exp,
+            &c->outcolorfun2radius,      &c->outcolorfunmode,
+            &c->outcolorfun2mode,        &c->outcolorfuninitialspeed,
+            &c->outcolorfunspeed,        &c->outcolorfun2speed};
 }
+
+static void save_colorfungroups(struct uih_context *uih, int inset,
+                                colorfun_fields now, int unit);
 
 /* The speed change after ITER of one side, inset 1 for the inside.
  *
@@ -331,7 +337,11 @@ static colorfun_fields colorfun_side(fractal_context *c, int inset)
  * the dialog, which 1.8.0 does not know. Either only when something in it has
  * moved, or for a whole position, as the fbm's numbers are; and the old one
  * puts the rest back to how it starts when it is read, so that an animation
- * that turns it off again replays as it was recorded. */
+ * that turns it off again replays as it was recorded.
+ *
+ * The speeds go apart, as (incolorspeedlinear initialspeed speed speed2), and
+ * only where one of them is not one or they have moved: a position that does
+ * not use them opens in 2.0, which knows no speeds, as it did. */
 static void save_colorfunchange(struct uih_context *uih, int inset)
 {
     colorfun_fields now = colorfun_side(uih->fcontext, inset);
@@ -341,10 +351,43 @@ static void save_colorfunchange(struct uih_context *uih, int inset)
                       *now.mode != *was.mode || *now.radius != *was.radius ||
                       *now.iter2 != *was.iter2 || *now.exp2 != *was.exp2 ||
                       *now.mode2 != *was.mode2 || *now.radius2 != *was.radius2;
-    if (!uih->save && !moved)
+    const int speedmoved = *now.speed0 != *was.speed0 ||
+                           *now.speed != *was.speed ||
+                           *now.speed2 != *was.speed2;
+    const int unit = *now.speed0 == 1 && *now.speed == 1 && *now.speed2 == 1;
+    if (!uih->save && !moved && !speedmoved)
         return;
+    if (uih->save || moved)
+        save_colorfungroups(uih, inset, now, unit);
+    if (speedmoved || (uih->save && !unit)) {
+        start_save(uih, inset ? "incolorspeedlinear" : "outcolorspeedlinear");
+        save_float(uih, *now.speed0);
+        save_float(uih, *now.speed);
+        save_float(uih, *now.speed2);
+        stop_save(uih);
+    }
+    *was.initial = *now.initial;
+    *was.iter = *now.iter;
+    *was.exp = *now.exp;
+    *was.mode = *now.mode;
+    *was.radius = *now.radius;
+    *was.iter2 = *now.iter2;
+    *was.exp2 = *now.exp2;
+    *was.mode2 = *now.mode2;
+    *was.radius2 = *now.radius2;
+    *was.speed0 = *now.speed0;
+    *was.speed = *now.speed;
+    *was.speed2 = *now.speed2;
+}
+
+/* The groups themselves: as 1.8.0 wrote them while that is all there is --
+ * which takes the speeds at one, since reading it puts them back there -- or
+ * as (incolorspeedchange ...). */
+static void save_colorfungroups(struct uih_context *uih, int inset,
+                                colorfun_fields now, int unit)
+{
     /* off and jump are 1.8.0's first two modes, by the same numbers */
-    const int plain = *now.initial == 1 && *now.mode != 2 &&
+    const int plain = unit && *now.initial == 1 && *now.mode != 2 &&
                       *now.radius == COLORFUN_RADIUS &&
                       *now.iter2 == COLORFUN2_ITER &&
                       *now.exp2 == COLORFUN2_EXP && *now.mode2 == 0 &&
@@ -367,15 +410,6 @@ static void save_colorfunchange(struct uih_context *uih, int inset)
         save_float(uih, *now.radius2);
     }
     stop_save(uih);
-    *was.initial = *now.initial;
-    *was.iter = *now.iter;
-    *was.exp = *now.exp;
-    *was.mode = *now.mode;
-    *was.radius = *now.radius;
-    *was.iter2 = *now.iter2;
-    *was.exp2 = *now.exp2;
-    *was.mode2 = *now.mode2;
-    *was.radius2 = *now.radius2;
 }
 
 void uih_saveframe(struct uih_context *uih)
@@ -772,6 +806,9 @@ int uih_save_enable(struct uih_context *uih, xio_file f, int mode)
     s->fcontext->outcolorspeed = 1.0f;
     s->fcontext->outcolorshift = 0;
     s->fcontext->incolorfuninitial = s->fcontext->outcolorfuninitial = 1;
+    s->fcontext->incolorfuninitialspeed = s->fcontext->outcolorfuninitialspeed = 1;
+    s->fcontext->incolorfunspeed = s->fcontext->outcolorfunspeed = 1;
+    s->fcontext->incolorfun2speed = s->fcontext->outcolorfun2speed = 1;
     s->fcontext->incolorfuniter = s->fcontext->outcolorfuniter = COLORFUN_ITER;
     s->fcontext->incolorfunexp = s->fcontext->outcolorfunexp = COLORFUN_EXP;
     s->fcontext->incolorfunmode = s->fcontext->outcolorfunmode = 0;

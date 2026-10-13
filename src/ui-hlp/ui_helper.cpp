@@ -2362,8 +2362,30 @@ void uih_setcolorfunchange(uih_context *c, int inset, number_t initial,
     }
 }
 
+/* The speeds of a side -- the first stretch's and the two groups' -- which
+ * the stretches' paces are multiplied by. */
+void uih_setcolorfunspeeds(uih_context *c, int inset, number_t initial,
+                           number_t speed, number_t speed2)
+{
+    fractal_context *f = c->fcontext;
+    number_t *values[3] = {
+        inset ? &f->incolorfuninitialspeed : &f->outcolorfuninitialspeed,
+        inset ? &f->incolorfunspeed : &f->outcolorfunspeed,
+        inset ? &f->incolorfun2speed : &f->outcolorfun2speed};
+    const number_t given[3] = {initial, speed, speed2};
+    int moved = 0;
+    for (int i = 0; i < 3; i++)
+        if (*values[i] != given[i])
+            *values[i] = given[i], moved = 1;
+    if (moved) {
+        f->version++;
+        uih_newimage(c);
+    }
+}
+
 /* Both groups as a position from before the radius holds them, read into
- * the modes there are by colorfun_from_legacy. */
+ * the modes there are by colorfun_from_legacy -- with the speeds at one,
+ * which there were none of then. */
 void uih_setcolorfunlegacy(uih_context *c, int inset, number_t initial,
                            number_t iter, number_t exponent, int mode,
                            number_t iter2, number_t exponent2, int mode2)
@@ -2373,6 +2395,7 @@ void uih_setcolorfunlegacy(uih_context *c, int inset, number_t initial,
     colorfun_from_legacy(iter2, &exponent2, &mode2, &radius2);
     uih_setcolorfunchange(c, inset, initial, iter, exponent, mode, radius,
                           iter2, exponent2, mode2, radius2);
+    uih_setcolorfunspeeds(c, inset, 1, 1, 1);
 }
 
 /* The speed change after ITER as 1.8.0 had it, and as a position from then

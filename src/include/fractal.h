@@ -186,21 +186,25 @@ struct formula {
  * double whatever the build, as the speed functions are, so that the two
  * builds colour alike.
  *
- * kind      0 nothing to do; 1 one group in jump and an initial exponent of
- *           one, worked the way 1.8.0 worked it -- iter, exponent -- so that a
- *           picture from then draws to the bit as it did; 2 the stretches
+ * kind      0 nothing to do; 1 one group in jump, an initial exponent of one
+ *           and every speed one, worked the way 1.8.0 worked it -- iter,
+ *           exponent -- so that a picture from then draws to the bit as it
+ *           did; 2 the stretches
  * corners   how many ITERs cut the count -- nought, one or two
  * at        each corner's ITER
  * lo, hi    where its rounding begins and ends: the ITER less and plus the
  *           radius, or the ITER itself for a jump
- * moved     what the rounding gained or lost by its end, which the next
- *           stretch is moved on by
+ * from, pacelo, pacehi, bump
+ *           for a rounding, the count where it begins, the paces at its two
+ *           ends, and the height at ITER of the parabola added to the
+ *           straight line of paces between them
  * C, K, J, e
  *           the stretches, before the first corner, between, past the last:
  *           C + K (v/J)^e */
-/* What the two groups start as -- the initial exponent at one, the modes off.
- * The first group's ITER and exponent are the ones 1.8.0 had; the radius is
- * how many iterations a smooth group rounds over on either side of its ITER. */
+/* What the two groups start as -- the initial exponent and the speeds at one,
+ * the modes off. The first group's ITER and exponent are the ones 1.8.0 had;
+ * the radius is how many iterations a smooth group rounds over on either side
+ * of its ITER. */
 #define COLORFUN_ITER 100
 #define COLORFUN_EXP 2
 #define COLORFUN_RADIUS 10
@@ -212,7 +216,7 @@ struct colorfun_plan {
     int kind;
     long double iter, exponent;
     int corners;
-    long double at[2], lo[2], hi[2], moved[2];
+    long double at[2], lo[2], hi[2], from[2], pacelo[2], pacehi[2], bump[2];
     long double C[3], K[3], J[3], e[3];
 };
 
@@ -256,6 +260,9 @@ struct fractal_context {
      *            that is on, or for every count with both off: the plain
      *            power v^initial, the same whether the groups are on or off.
      *            One, the default, leaves it as it was
+     * initialspeed
+     *            what the first stretch's pace is multiplied by:
+     *            initialspeed v^initial. One, the default, leaves it as it was
      *
      * and two groups, fun and fun2, of
      *
@@ -268,11 +275,14 @@ struct fractal_context {
      *            exponent at iter: above one the colours speed up from
      *            there, below one they slow down, at one they go on at a
      *            pace of one
+     * speed      what the stretch's pace is multiplied by, so that it adds
+     *            speed iter ((v/iter)^exponent - 1) -- at an exponent of one a
+     *            straight line of slope speed. One leaves it as it was
      * mode       0 off, which is the default and leaves everything as it
      *            was; 1 jump, the pace turning at iter at once; 2 smooth, the
-     *            pace going over from the one stretch's to the other's
-     *            between iter - radius and iter + radius. The names are
-     *            colorfun_modes[]; 1.8.0's four are read into these
+     *            pace going over from the one at iter - radius to the one at
+     *            iter + radius, and the count the jump's again past it. The
+     *            names are colorfun_modes[]; 1.8.0's four are read into these
      * radius     for smooth, how many iterations it rounds over on either
      *            side of iter
      *
@@ -282,12 +292,15 @@ struct fractal_context {
      * exponent is its stretch's own, never multiplied by the one before. See
      * color_change in formulas.cpp. */
     number_t incolorfuninitial, outcolorfuninitial;
+    number_t incolorfuninitialspeed, outcolorfuninitialspeed;
     number_t incolorfuniter, outcolorfuniter;
     number_t incolorfunexp, outcolorfunexp;
+    number_t incolorfunspeed, outcolorfunspeed;
     int incolorfunmode, outcolorfunmode;
     number_t incolorfunradius, outcolorfunradius;
     number_t incolorfun2iter, outcolorfun2iter;
     number_t incolorfun2exp, outcolorfun2exp;
+    number_t incolorfun2speed, outcolorfun2speed;
     int incolorfun2mode, outcolorfun2mode;
     number_t incolorfun2radius, outcolorfun2radius;
     /* What the two groups make of the count, worked out once a picture by

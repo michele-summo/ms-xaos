@@ -1434,25 +1434,31 @@ it was; past it, the count it is handed runs faster or slower, so the colours
 speed up or slow down from there and not before. With `square root` chosen and
 ITER at 40, the colours are the square root's up to 40 iterations and the square
 root of a count that is gathering pace after that. The dialog holds, a side at
-a time, an initial exponent and then two groups, each set apart by a rule:
+a time, an initial exponent and speed and then two groups, each set apart by a
+rule:
 
 | | |
 | --- | --- |
 | **Initial exponent** | the exponent from the start to the first ITER of a group that is on: the count becomes the plain power `v^p0`, the same whether the groups are on or off, and with both off it runs on for every count. At one, where it starts, the count is untouched up to the first ITER |
+| **Initial speed** | what that stretch's pace is multiplied by: `s0·v^p0`. At one, where it starts, it changes nothing |
 | **ITER** | where the group's stretch begins, in the units the function is handed. At nought or below it begins at the start — which makes `ident` a power with any exponent at all |
-| **Exponent** | the stretch's exponent, from its ITER to the next one or on. The stretch starts from the count the one before it came to, `f(ITER)`, and adds `ITER·((v/ITER)^p − 1)`, whose pace at ITER is `p`: above one the colours speed up from there, below one they slow down, at one they go on at a pace of one |
+| **Exponent** | the stretch's exponent, from its ITER to the next one or on: how the stretch bends. It starts from the count the one before it came to, `f(ITER)`, and adds `s·ITER·((v/ITER)^p − 1)`, whose pace at ITER is `s·p`: above one the colours speed up from there, below one they slow down |
+| **Speed** | what the stretch's pace is multiplied by — linear where the exponent is a power: at an exponent of one the stretch is the straight line `f(ITER) + s·(v − ITER)`. At one, where it starts, it changes nothing |
 | **Mode** | **off**, **jump** or **smooth**: whether the group is used, and how its stretch is joined to the one before |
 | **Radius** | in smooth alone, and shown only then: how many iterations the join takes on either side of ITER. Any number from nought, which is the jump |
 
 With both groups on and the first ITER below the second, the count is `v^p0`
 up to `i1`, goes on from there at the pace of `p1`, and from `i2` at the pace
-of `p2` — **each stretch at its own exponent**, never `p0·p1` or `p0·p1·p2`.
-With `p0` = 2, `p1` = 1 at 50 and `p2` = 2 at 100, all jump, the count on
-`ident` is `v²` up to 50; `v + 2450` from 50 to 100, an exponent of one going
-on at a pace of one from the 2500 the square came to; and from 100
-`2550 + 100·((v/100)² − 1)`, squared again from a pace of 2 there. The lower
-ITER goes first whichever group holds it, and **at the same ITER the second
-group replaces the first**, radius and all.
+of `p2` — **each stretch at its own exponent and speed**, never `p0·p1` or
+`p0·p1·p2`. With `p0` = 2, `p1` = 1 at 50 and `p2` = 2 at 100, all jump and
+every speed one, the count on `ident` is `v²` up to 50; `v + 2450` from 50 to
+100, an exponent of one going on at a pace of one from the 2500 the square
+came to; and from 100 `2550 + 100·((v/100)² − 1)`, squared again from a pace
+of 2 there. A speed of 3 on the first group makes the middle stretch
+`2500 + 3·(v − 50)`. The lower ITER goes first whichever group holds it, and
+**at the same ITER the second group replaces the first**, radius, speed and
+all; a group at an ITER of nought or below puts its own exponent and speed on
+the first stretch.
 
 **A group that is off is left out**, its ITER with it:
 
@@ -1463,31 +1469,43 @@ group replaces the first**, radius and all.
 | on | off | `p0` up to the first's ITER, then `p1` |
 | off | off | `p0` for every count, the plain power `v^p0` |
 
-Both start off and the initial exponent at one, where nothing at all is done to
-the value, so every function gives to the bit what it gave before there was such
-a thing.
+Both start off, and the initial exponent and every speed at one, where nothing
+at all is done to the value, so every function gives to the bit what it gave
+before there was such a thing.
 
 The two ways of joining, as they change the count handed to the function
 (written for `ident`, where the count is what the palette sees, with `f(ITER)`
-the count on coming to ITER — `ITER^p0` at the first — `p` the group's exponent
-and `r` its radius):
+the count on coming to ITER — `ITER^p0` at the first — `p` the group's exponent,
+`s` its speed and `r` its radius):
 
 | mode | from ITER − r to ITER + r | past it |
 | --- | --- | --- |
-| **jump** | — | `f(ITER) + ITER·((v/ITER)^p − 1)`: the pace turns to `p` at ITER at once, which shows as a ring where the bands change pace |
-| **smooth** | the pace goes in a straight line from the one the count came with to the stretch's own, and the count is what that pace adds up to | the jump's count, moved on by what the rounding gained or lost |
+| **jump** | — | `f(ITER) + s·ITER·((v/ITER)^p − 1)`: the pace turns at ITER at once, which shows as a ring where the bands change pace |
+| **smooth** | the pace goes in a straight line from the one the count has at `ITER − r` to the one it has at `ITER + r`, half way at ITER, with a parabola about ITER added that gives back what the line cut off the jump's corner | the jump's count, to the digit |
 
-**Smooth** leaves everything before `ITER − r` as it was, has no corner
-anywhere, and never turns back: its pace is always between the two it joins.
-Where both paces are steady it cuts the corner as a parabola does and moves
-nothing on — with the count untouched up to an ITER of 50 and an exponent of
-nought past it, a radius of 10 makes it 47.5 at ITER, a quarter of the radius
-short, and 50 again from 60 on. Where they bend, what is past the rounding is
-the jump moved on by a little: after `v²` up to 50 and an exponent of one, a
-radius of 10 goes on as `v + 2483` instead of `v + 2450`. A radius wider than
-the first ITER stops short of nought, and two that would overlap are cut down
-alike so that each stays between its neighbours — radii of 40 and 40 between
-ITERs 30 apart become 15 each.
+**Smooth** is symmetric about ITER and changes the colours inside the radius
+and nowhere else: before `ITER − r` and past `ITER + r` the picture is the
+jump's. Where both paces are steady the parabola is nothing and the corner is
+cut as a parabola cuts it — with the count untouched up to an ITER of 50 and
+an exponent of nought past it, a radius of 10 makes it 47.5 at ITER, a quarter
+of the radius short, and 50 again from 60 on; from a pace of one to one of
+three it is two at ITER. Where a pace bends the parabola gives back what the
+bend adds: after `v²` up to 50 and an exponent of one, a radius of 20 takes the
+pace from 60 at 30 to 1 at 70, 45.5 at ITER, and goes on from 70 as `v + 2450`,
+as jump does.
+
+It used to blend the two stretches' paces as each would have gone on: the
+square's pace, still growing, kept growing well into the rounding, so it hardly
+fell before ITER and was half way down only half a radius after it, and what it
+gained moved every colour past the rounding on — by 133 bands at a radius of 20.
+
+The parabola never takes the pace below the slower of the two ends. Where it
+would — a slow pace turned very fast over a short radius, as a hundredth power
+over ten iterations — it is held there, and the count past the rounding is
+moved on by what that keeps back. A radius wider than the first ITER stops
+short of nought, and two that would overlap are cut down alike so that each
+stays between its neighbours — radii of 40 and 40 between ITERs 30 apart become
+15 each.
 
 An exponent of 100 is legal and useless past ITER: a few iterations on, the
 bands are finer than the pixels and the colour is noise. With the second group
@@ -1498,21 +1516,25 @@ from the 200 the one before came to, at a pace of 1.5.
 
 There used to be four modes, and positions saved before the radius name them —
 1.8.0's `outcolorfunafter`, and `outcolorfunchange` with two groups and no
-radius. They are read into the two there are:
+radius. They are read into the two there are, with every speed at one:
 
 | saved as | read as |
 | --- | --- |
 | off, jump | the same |
-| smooth, which rounded the corner in the logarithm of the count, a little on either side of ITER however far | smooth at a radius of three quarters of ITER, or `ITER/(2p)` above an exponent of one: within five hundredths of ITER of what it drew, up to an exponent of a half |
-| continuous, which went on from ITER at the pace the count came with | smooth at three quarters of ITER, with the exponent `0.65 + p/4 + p²/10` — one at one, where continuous changed nothing either — within eleven hundredths of ITER of it up to a half |
+| smooth, which rounded the corner in the logarithm of the count, a little on either side of ITER however far | smooth at a radius of three quarters of ITER: within four hundredths of ITER of what it drew up to an exponent of one and a half, a tenth up to two |
+| continuous, which went on from ITER at the pace the count came with | smooth at three quarters of ITER, with the exponent `0.66 + p/4 + 0.09·p²` — one at one, where continuous changed nothing either — within twelve hundredths of ITER of it up to a half |
 
 Found by setting the curves side by side over four ITERs: such a picture comes
 out alike, not to the pixel. A position whose speed change is no more than one
-group in jump, the initial exponent at one and the rest as it starts, is saved
-as 1.8.0 saved it, `(outcolorfunafter 40 1.5 'jump)`, and opens in 1.8.0 and
-draws there the same. Anything else is saved in the order of the dialog,
-`(outcolorspeedchange 1 40 1.5 'smooth 10 50 2 'off 10)`, which 1.8.0 does not
-know.
+group in jump, the initial exponent and every speed at one and the rest as it
+starts, is saved as 1.8.0 saved it, `(outcolorfunafter 40 1.5 'jump)`, and
+opens in 1.8.0 and draws there the same. Anything else is saved as 2.0 saved
+it, in the order of the dialog without the speeds,
+`(outcolorspeedchange 1 40 1.5 'smooth 10 50 2 'off 10)`; and the speeds, only
+where one of them is not one, apart as `(outcolorspeedlinear 1 3 1)` — the
+initial speed and the two groups' — so that a position that does not use them
+still opens in 2.0. The dialog itself is the command `outcolorspeedgroups`,
+with its twelve fields in their order.
 
 ### Past the end of an int
 

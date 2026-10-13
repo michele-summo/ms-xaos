@@ -456,36 +456,50 @@ static void color_f_normalize(number_t &v) {
  * whichever group holds it, and at the same ITER the second group replaces
  * the first.
  *
- * The first stretch is the plain power v^initial, from the start, whether the
- * groups are on or off. (A group at an ITER of nought or below puts its own
- * exponent there instead, as a single group's change always did.) Each
- * stretch after it starts from the count the one before it came to, f(I), and
- * adds I ((v/I)^e - 1), whose pace is e at I: an exponent of one goes on at a
- * pace of one, v + f(I) - I, whatever came before, and two squares again from
- * its ITER. So every stretch is C + K (v/J)^e -- the first with C = 0 and
- * K = J = 1 -- and that is all that is kept of it.
+ * Each stretch has a speed besides, which its pace is multiplied by: the
+ * exponent bends the stretch, the speed tilts it. The first stretch is
+ * s0 v^p0, from the start, whether the groups are on or off. (A group at an
+ * ITER of nought or below puts its own exponent and speed there instead, as a
+ * single group's change always did.) Each stretch after it starts from the
+ * count the one before it came to, f(I), and adds s I ((v/I)^e - 1), whose
+ * pace is s e at I: an exponent of one goes on as the straight line
+ * f(I) + s (v - I), whatever came before, and two squares again from its ITER.
+ * So every stretch is C + K (v/J)^e -- the first with C = 0 and J = 1 -- and
+ * that is all that is kept of it. Every speed at one, as they start, is the
+ * change as it was before there were speeds.
  *
  * A group joins its stretch to the one before in one of two ways:
  *
  *   jump    at I, at once: the pace turns there, which shows as a ring where
  *           the bands change pace
- *   smooth  over a radius r about I: from I - r to I + r the pace goes in a
- *           straight line from the one stretch's to the other's, and the count
- *           is what that pace adds up to. Nothing moves before I - r; past
- *           I + r the count is the jump's, moved by what the rounding gained
- *           or lost on the way -- nothing where both paces are steady, a
- *           little where they bend. The pace in between is always between the
- *           two, so the colours never turn back, and at a radius of nought it
- *           is the jump.
+ *   smooth  over a radius r on either side of I. From I - r to I + r the pace
+ *           goes in a straight line from the one the count has at I - r to
+ *           the one it has at I + r, half way at I, and a parabola about I is
+ *           added to it that gives back what the line cut off the jump's
+ *           corner -- so that from I + r on the count is the jump's again, to
+ *           the digit, and the radius changes the colours inside it and
+ *           nowhere else. Nothing moves before I - r either.
  *
- * The first rounding stops short of nought, and two that would overlap are cut
- * down alike, so that each stays between its neighbours.
+ * The rounding used to blend the two stretches' paces as each would have gone
+ * on: a stretch whose pace was still growing -- a square -- kept it growing
+ * well into the rounding, so the pace hardly fell before I and was half way
+ * down only half a radius after it; and what that gained moved every colour
+ * past the rounding on -- by r^2/3 bands after a square.
+ *
+ * The parabola never takes the pace below the slower of its two ends: where
+ * it would -- a slow pace turned very fast over a short radius, where the
+ * straight line alone already adds up to more than the jump -- it is held
+ * where the pace only just stays above it, and the count past the rounding
+ * moved on by what that keeps back. Held anywhere lower, the pace dipped
+ * towards nought just inside the rounding and rose again, a corner in all but
+ * name. The first rounding stops short of nought, and two that would overlap
+ * are cut down alike, so that each stays between its neighbours.
  *
  * 1.8.0 had a mode more, continuous, and a smooth of another kind; a position
  * from then is read into these two, near enough, by colorfun_from_legacy.
- * Its jump is the jump here, and with one group and an initial exponent of
- * one color_power still works it, so that such a picture is drawn to the bit
- * as it was.
+ * Its jump is the jump here, and with one group, an initial exponent of one
+ * and every speed one color_power still works it, so that such a picture is
+ * drawn to the bit as it was.
  *
  * Odd, as the functions are: a negative value is turned as its opposite is
  * and keeps its sign. Worked in long double whatever the build, as they are,
@@ -509,48 +523,41 @@ static long double color_power(long double v, long double iter, long double p)
 }
 
 struct colorfun_group {
-    long double iter, after, radius;
+    long double iter, after, speed, radius;
     int mode;
 };
 
-/* Stretch s at v, above nought. */
+/* Stretch s at v, above nought, and its pace there. */
 static inline long double color_stretch(const colorfun_plan &plan, int s,
                                         long double v)
 {
     return plan.C[s] + plan.K[s] * expl(plan.e[s] * logl(v / plan.J[s]));
 }
-
-/* What stretch s adds up to from a to v, both above nought: the integral of
- * C + K (u/J)^e, worked from a, so that a short way far out keeps its digits.
- * At e = -1 the power's integral is a logarithm. */
-static long double color_stretch_area(const colorfun_plan &plan, int s,
-                                      long double a, long double v)
+static inline long double color_stretch_pace(const colorfun_plan &plan, int s,
+                                             long double v)
 {
-    const long double e1 = plan.e[s] + 1, x = logl(v / a);
-    const long double from = expl(e1 * logl(a / plan.J[s]));
-    const long double grown = fabsl(e1) < 1e-12L ? x : expm1l(e1 * x) / e1;
-    return plan.C[s] * (v - a) + plan.K[s] * plan.J[s] * from * grown;
+    return plan.K[s] * plan.e[s] / plan.J[s] *
+           expl((plan.e[s] - 1) * logl(v / plan.J[s]));
 }
 
-/* The count inside the rounding of corner c: the pace going in a straight
- * line from stretch c's to the next one's, added up from where the rounding
- * starts. The next stretch is taken without what the rounding moved it by,
- * which is what this adds up to by its end. */
+/* The count inside the rounding of corner c: from where the rounding begins,
+ * what the straight line of paces and the parabola add up to. The parabola's
+ * part, r (t - t^3/3 + 2/3) for t from -1 to 1, is written in s = 1 + t as
+ * r s^2 (3 - s) / 3, which has no difference of near equals in it: near the
+ * start the other form lost what a large parabola left of the digits. */
 static long double color_rounded(const colorfun_plan &plan, int c,
                                  long double a)
 {
-    const long double lo = plan.lo[c], width = plan.hi[c] - lo;
-    const long double w = (a - lo) / width;
-    const long double before = color_stretch(plan, c, a);
-    const long double after = color_stretch(plan, c + 1, a) - plan.moved[c];
-    const long double gained =
-        color_stretch_area(plan, c, lo, a) -
-        (color_stretch_area(plan, c + 1, lo, a) - plan.moved[c] * (a - lo));
-    return before * (1 - w) + after * w + gained / width;
+    const long double r = (plan.hi[c] - plan.lo[c]) / 2, u = a - plan.lo[c];
+    const long double s = u / r;
+    return plan.from[c] + plan.pacelo[c] * u +
+           (plan.pacehi[c] - plan.pacelo[c]) * u * u / (4 * r) +
+           plan.bump[c] * r * s * s * (3 - s) / 3;
 }
 
 static void color_change_plan(colorfun_plan &plan, long double initial,
-                              colorfun_group g1, colorfun_group g2)
+                              long double initialspeed, colorfun_group g1,
+                              colorfun_group g2)
 {
     plan = colorfun_plan();
     colorfun_group g[2];
@@ -568,7 +575,8 @@ static void color_change_plan(colorfun_plan &plan, long double initial,
         g[0] = g[1];
         g[1] = t;
     }
-    if (n == 1 && initial == 1 && g[0].mode == 1) {
+    if (n == 1 && initial == 1 && initialspeed == 1 && g[0].mode == 1 &&
+        g[0].speed == 1) {
         /* at an exponent of one there is nothing to do, as there was not */
         if (g[0].after == 1)
             return;
@@ -579,25 +587,28 @@ static void color_change_plan(colorfun_plan &plan, long double initial,
     }
 
     /* the groups at nought or below are all at the start, and only the last
-     * of them says anything: the exponent the first stretch has */
+     * of them says anything: the exponent and the speed the first stretch
+     * has */
     int k = 0;
     while (k < n && !(g[k].iter > 0))
         k++;
     plan.C[0] = 0;
-    plan.K[0] = plan.J[0] = 1;
+    plan.J[0] = 1;
     plan.e[0] = k == 0 ? initial : g[k - 1].after;
-    int identity = plan.e[0] == 1;
-    long double radius[2] = {0, 0};
+    plan.K[0] = k == 0 ? initialspeed : g[k - 1].speed;
+    int identity = plan.e[0] == 1 && plan.K[0] == 1;
+    long double radius[2] = {0, 0}, speed[2] = {1, 1};
     for (int j = k; j < n; j++) {
         const int c = plan.corners++;
         plan.at[c] = g[j].iter;
         plan.e[c + 1] = g[j].after;
+        speed[c] = g[j].speed;
         if (g[j].mode == 2 && g[j].radius > 0)
             radius[c] = g[j].radius;
-        if (g[j].after != 1)
+        if (g[j].after != 1 || g[j].speed != 1)
             identity = 0;
     }
-    /* every exponent one: the count as it was, rounded or not */
+    /* every exponent and speed one: the count as it was, rounded or not */
     if (identity)
         return;
     plan.kind = 2;
@@ -613,20 +624,34 @@ static void color_change_plan(colorfun_plan &plan, long double initial,
         radius[1] *= cut;
     }
 
-    /* each stretch from the count the one before it came to, moved on by
-     * what a rounding gained or lost */
+    /* each stretch from the count the one before it came to; and each
+     * rounding from the count and pace at its two ends */
     for (int c = 0; c < plan.corners; c++) {
-        const long double I = plan.at[c];
-        plan.C[c + 1] = color_stretch(plan, c, I) - I;
-        plan.K[c + 1] = plan.J[c + 1] = I;
-        plan.lo[c] = I - radius[c];
-        plan.hi[c] = I + radius[c];
-        if (radius[c] > 0) {
-            plan.moved[c] =
-                (color_stretch_area(plan, c, plan.lo[c], plan.hi[c]) -
-                 color_stretch_area(plan, c + 1, plan.lo[c], plan.hi[c])) /
-                (plan.hi[c] - plan.lo[c]);
-            plan.C[c + 1] += plan.moved[c];
+        const long double I = plan.at[c], r = radius[c];
+        plan.C[c + 1] = color_stretch(plan, c, I) - speed[c] * I;
+        plan.K[c + 1] = speed[c] * I;
+        plan.J[c + 1] = I;
+        plan.lo[c] = I - r;
+        plan.hi[c] = I + r;
+        if (!(r > 0))
+            continue;
+        plan.from[c] = color_stretch(plan, c, plan.lo[c]);
+        plan.pacelo[c] = color_stretch_pace(plan, c, plan.lo[c]);
+        plan.pacehi[c] = color_stretch_pace(plan, c + 1, plan.hi[c]);
+        /* what the straight line leaves of the jump's count, given back by a
+         * parabola, whose area over the rounding is 4/3 r of its height */
+        const long double lost = color_stretch(plan, c + 1, plan.hi[c]) -
+                                 plan.from[c] -
+                                 r * (plan.pacelo[c] + plan.pacehi[c]);
+        plan.bump[c] = 3 * lost / (4 * r);
+        /* the lowest height that keeps a + b t + h (1 - t^2) between its two
+         * ends from t = -1 to 1, b being half the line's rise: the one that
+         * puts the parabola's lowest point on an end, h = -|b|/2 */
+        const long double held =
+            -fabsl(plan.pacehi[c] - plan.pacelo[c]) / 4;
+        if (plan.bump[c] < held) {
+            plan.C[c + 1] += 4 * r * (held - plan.bump[c]) / 3;
+            plan.bump[c] = held;
         }
     }
 }
@@ -635,16 +660,22 @@ void color_change_prepare(fractal_context *c)
 {
     color_change_plan(
         c->inplan, (long double)c->incolorfuninitial,
+        (long double)c->incolorfuninitialspeed,
         {(long double)c->incolorfuniter, (long double)c->incolorfunexp,
-         (long double)c->incolorfunradius, c->incolorfunmode},
+         (long double)c->incolorfunspeed, (long double)c->incolorfunradius,
+         c->incolorfunmode},
         {(long double)c->incolorfun2iter, (long double)c->incolorfun2exp,
-         (long double)c->incolorfun2radius, c->incolorfun2mode});
+         (long double)c->incolorfun2speed, (long double)c->incolorfun2radius,
+         c->incolorfun2mode});
     color_change_plan(
         c->outplan, (long double)c->outcolorfuninitial,
+        (long double)c->outcolorfuninitialspeed,
         {(long double)c->outcolorfuniter, (long double)c->outcolorfunexp,
-         (long double)c->outcolorfunradius, c->outcolorfunmode},
+         (long double)c->outcolorfunspeed, (long double)c->outcolorfunradius,
+         c->outcolorfunmode},
         {(long double)c->outcolorfun2iter, (long double)c->outcolorfun2exp,
-         (long double)c->outcolorfun2radius, c->outcolorfun2mode});
+         (long double)c->outcolorfun2speed, (long double)c->outcolorfun2radius,
+         c->outcolorfun2mode});
 }
 
 /* A group as a position from before the radius holds it, in the four modes
@@ -653,13 +684,13 @@ void color_change_prepare(fractal_context *c)
  *
  * Off and jump are what they were. 1.8.0's smooth rounded the corner in the
  * logarithm of the count, a little on either side of ITER however far off;
- * the smooth here at a radius of three quarters of ITER keeps within five
- * hundredths of ITER of it for the exponents up to a half, and at half of
- * ITER over the exponent above one. Continuous went on from ITER at the pace
- * the count came with, which no stretch here starts at: it is drawn as smooth
- * at three quarters of ITER, with the exponent that keeps nearest it,
- * 0.65 + p/4 + p^2/10 -- one at one, where continuous changed nothing either
- * -- and within eleven hundredths of ITER of it up to a half. Found by
+ * the smooth here at a radius of three quarters of ITER keeps within four
+ * hundredths of ITER of it for the exponents up to one and a half, and
+ * within a tenth up to two. Continuous went on from ITER at the pace the
+ * count came with, which no stretch here starts at: it is drawn as smooth at
+ * three quarters of ITER, with the exponent that keeps nearest it,
+ * 0.66 + p/4 + 0.09 p^2 -- one at one, where continuous changed nothing
+ * either -- within twelve hundredths of ITER of it up to a half. Found by
  * setting the curves side by side over four ITERs. */
 void colorfun_from_legacy(number_t iter, number_t *exponent, int *mode,
                           number_t *radius)
@@ -669,15 +700,15 @@ void colorfun_from_legacy(number_t iter, number_t *exponent, int *mode,
         break;
     case 2:
         *mode = 2;
-        *exponent = (number_t)0.65 + *exponent / 4 +
-                    *exponent * *exponent / 10;
+        *exponent = (number_t)0.66 + *exponent / 4 +
+                    (number_t)0.09 * *exponent * *exponent;
         if (iter > 0)
             *radius = iter * 3 / 4;
         break;
     case 3:
         *mode = 2;
         if (iter > 0)
-            *radius = *exponent <= 1 ? iter * 3 / 4 : iter / 2 / *exponent;
+            *radius = iter * 3 / 4;
         break;
     default:
         *mode = 0;

@@ -87,6 +87,8 @@ static menudialog *uih_perturbationdialog, *uih_juliadialog,
     *uih_incolorfundialog, *uih_outcolorfundialog,
     *uih_incolorchangedialog, *uih_outcolorchangedialog,
     *uih_incolorlegacydialog, *uih_outcolorlegacydialog,
+    *uih_incolorgroupsdialog, *uih_outcolorgroupsdialog,
+    *uih_incolorlineardialog, *uih_outcolorlineardialog,
     *uih_renderimgdialog, *palettepickerdialog, *loadgpldialog, *savegpldialog,
     *uih_palettecolorsdialog
 #ifdef USE_SFFE
@@ -317,23 +319,26 @@ void uih_registermenudialogs_i18n(void)
     DIALOGCHOICE_I(TR("Dialog", "Mode:"), colorfun_after_modes, 0);
     NULL_I();
 
-    /* And as the menu offers it now, one dialog a side: the initial exponent,
-     * from nought to the first ITER, and then two groups set apart by a rule,
-     * each with its ITER, the exponent from there and how the two stretches
-     * are joined -- off, jump or smooth, chosen rather than typed as a number,
-     * and off unless turned on -- and, in smooth alone, the radius it rounds
-     * over. */
+    /* And as the menu offers it now, one dialog a side: the initial exponent
+     * and speed, for the stretch from nought to the first ITER, and then two
+     * groups set apart by a rule, each with its ITER, the exponent and the
+     * speed from there and how the two stretches are joined -- off, jump or
+     * smooth, chosen rather than typed as a number, and off unless turned on
+     * -- and, in smooth alone, the radius it rounds over. */
     Register(uih_incolorchangedialog);
     DIALOGFLOAT_I(TR("Dialog", "Initial exponent:"), 1);
+    DIALOGFLOAT_I(TR("Dialog", "Initial speed:"), 1);
     DIALOGRULE_I();
     DIALOGFLOAT_I(TR("Dialog", "ITER:"), COLORFUN_ITER);
     DIALOGFLOAT_I(TR("Dialog", "Exponent:"), COLORFUN_EXP);
+    DIALOGFLOAT_I(TR("Dialog", "Speed:"), 1);
     DIALOGCHOICE_I(TR("Dialog", "Mode:"), colorfun_modes, 0);
     DIALOGWHEN_I(1, 2);
     DIALOGFLOAT_I(TR("Dialog", "Radius:"), COLORFUN_RADIUS);
     DIALOGRULE_I();
     DIALOGFLOAT_I(TR("Dialog", "ITER:"), COLORFUN2_ITER);
     DIALOGFLOAT_I(TR("Dialog", "Exponent:"), COLORFUN2_EXP);
+    DIALOGFLOAT_I(TR("Dialog", "Speed:"), 1);
     DIALOGCHOICE_I(TR("Dialog", "Mode:"), colorfun_modes, 0);
     DIALOGWHEN_I(1, 2);
     DIALOGFLOAT_I(TR("Dialog", "Radius:"), COLORFUN2_RADIUS);
@@ -341,18 +346,60 @@ void uih_registermenudialogs_i18n(void)
 
     Register(uih_outcolorchangedialog);
     DIALOGFLOAT_I(TR("Dialog", "Initial exponent:"), 1);
+    DIALOGFLOAT_I(TR("Dialog", "Initial speed:"), 1);
     DIALOGRULE_I();
     DIALOGFLOAT_I(TR("Dialog", "ITER:"), COLORFUN_ITER);
     DIALOGFLOAT_I(TR("Dialog", "Exponent:"), COLORFUN_EXP);
+    DIALOGFLOAT_I(TR("Dialog", "Speed:"), 1);
     DIALOGCHOICE_I(TR("Dialog", "Mode:"), colorfun_modes, 0);
     DIALOGWHEN_I(1, 2);
     DIALOGFLOAT_I(TR("Dialog", "Radius:"), COLORFUN_RADIUS);
     DIALOGRULE_I();
     DIALOGFLOAT_I(TR("Dialog", "ITER:"), COLORFUN2_ITER);
     DIALOGFLOAT_I(TR("Dialog", "Exponent:"), COLORFUN2_EXP);
+    DIALOGFLOAT_I(TR("Dialog", "Speed:"), 1);
     DIALOGCHOICE_I(TR("Dialog", "Mode:"), colorfun_modes, 0);
     DIALOGWHEN_I(1, 2);
     DIALOGFLOAT_I(TR("Dialog", "Radius:"), COLORFUN2_RADIUS);
+    NULL_I();
+
+    /* And as a position saves them, in two commands: the groups as 2.0 saved
+     * them, and the speeds apart, so that a position that does not use them
+     * opens in 2.0 as well. Read, never opened. */
+    Register(uih_incolorgroupsdialog);
+    DIALOGFLOAT_I(TR("Dialog", "Initial exponent:"), 1);
+    DIALOGFLOAT_I(TR("Dialog", "ITER:"), COLORFUN_ITER);
+    DIALOGFLOAT_I(TR("Dialog", "Exponent:"), COLORFUN_EXP);
+    DIALOGCHOICE_I(TR("Dialog", "Mode:"), colorfun_modes, 0);
+    DIALOGFLOAT_I(TR("Dialog", "Radius:"), COLORFUN_RADIUS);
+    DIALOGFLOAT_I(TR("Dialog", "ITER:"), COLORFUN2_ITER);
+    DIALOGFLOAT_I(TR("Dialog", "Exponent:"), COLORFUN2_EXP);
+    DIALOGCHOICE_I(TR("Dialog", "Mode:"), colorfun_modes, 0);
+    DIALOGFLOAT_I(TR("Dialog", "Radius:"), COLORFUN2_RADIUS);
+    NULL_I();
+
+    Register(uih_incolorlineardialog);
+    DIALOGFLOAT_I(TR("Dialog", "Initial speed:"), 1);
+    DIALOGFLOAT_I(TR("Dialog", "Speed:"), 1);
+    DIALOGFLOAT_I(TR("Dialog", "Speed:"), 1);
+    NULL_I();
+
+    Register(uih_outcolorgroupsdialog);
+    DIALOGFLOAT_I(TR("Dialog", "Initial exponent:"), 1);
+    DIALOGFLOAT_I(TR("Dialog", "ITER:"), COLORFUN_ITER);
+    DIALOGFLOAT_I(TR("Dialog", "Exponent:"), COLORFUN_EXP);
+    DIALOGCHOICE_I(TR("Dialog", "Mode:"), colorfun_modes, 0);
+    DIALOGFLOAT_I(TR("Dialog", "Radius:"), COLORFUN_RADIUS);
+    DIALOGFLOAT_I(TR("Dialog", "ITER:"), COLORFUN2_ITER);
+    DIALOGFLOAT_I(TR("Dialog", "Exponent:"), COLORFUN2_EXP);
+    DIALOGCHOICE_I(TR("Dialog", "Mode:"), colorfun_modes, 0);
+    DIALOGFLOAT_I(TR("Dialog", "Radius:"), COLORFUN2_RADIUS);
+    NULL_I();
+
+    Register(uih_outcolorlineardialog);
+    DIALOGFLOAT_I(TR("Dialog", "Initial speed:"), 1);
+    DIALOGFLOAT_I(TR("Dialog", "Speed:"), 1);
+    DIALOGFLOAT_I(TR("Dialog", "Speed:"), 1);
     NULL_I();
 
     /* The two groups as they were saved before the radius, in the four modes
@@ -752,14 +799,17 @@ static menudialog *uih_getincolorchangedialog(struct uih_context *c)
     if (c != NULL) {
         fractal_context *f = c->fcontext;
         uih_incolorchangedialog[0].deffloat = f->incolorfuninitial;
-        uih_incolorchangedialog[1].deffloat = f->incolorfuniter;
-        uih_incolorchangedialog[2].deffloat = f->incolorfunexp;
-        uih_incolorchangedialog[3].defint = f->incolorfunmode;
-        uih_incolorchangedialog[4].deffloat = f->incolorfunradius;
-        uih_incolorchangedialog[5].deffloat = f->incolorfun2iter;
-        uih_incolorchangedialog[6].deffloat = f->incolorfun2exp;
-        uih_incolorchangedialog[7].defint = f->incolorfun2mode;
-        uih_incolorchangedialog[8].deffloat = f->incolorfun2radius;
+        uih_incolorchangedialog[1].deffloat = f->incolorfuninitialspeed;
+        uih_incolorchangedialog[2].deffloat = f->incolorfuniter;
+        uih_incolorchangedialog[3].deffloat = f->incolorfunexp;
+        uih_incolorchangedialog[4].deffloat = f->incolorfunspeed;
+        uih_incolorchangedialog[5].defint = f->incolorfunmode;
+        uih_incolorchangedialog[6].deffloat = f->incolorfunradius;
+        uih_incolorchangedialog[7].deffloat = f->incolorfun2iter;
+        uih_incolorchangedialog[8].deffloat = f->incolorfun2exp;
+        uih_incolorchangedialog[9].deffloat = f->incolorfun2speed;
+        uih_incolorchangedialog[10].defint = f->incolorfun2mode;
+        uih_incolorchangedialog[11].deffloat = f->incolorfun2radius;
     }
     return (uih_incolorchangedialog);
 }
@@ -769,14 +819,17 @@ static menudialog *uih_getoutcolorchangedialog(struct uih_context *c)
     if (c != NULL) {
         fractal_context *f = c->fcontext;
         uih_outcolorchangedialog[0].deffloat = f->outcolorfuninitial;
-        uih_outcolorchangedialog[1].deffloat = f->outcolorfuniter;
-        uih_outcolorchangedialog[2].deffloat = f->outcolorfunexp;
-        uih_outcolorchangedialog[3].defint = f->outcolorfunmode;
-        uih_outcolorchangedialog[4].deffloat = f->outcolorfunradius;
-        uih_outcolorchangedialog[5].deffloat = f->outcolorfun2iter;
-        uih_outcolorchangedialog[6].deffloat = f->outcolorfun2exp;
-        uih_outcolorchangedialog[7].defint = f->outcolorfun2mode;
-        uih_outcolorchangedialog[8].deffloat = f->outcolorfun2radius;
+        uih_outcolorchangedialog[1].deffloat = f->outcolorfuninitialspeed;
+        uih_outcolorchangedialog[2].deffloat = f->outcolorfuniter;
+        uih_outcolorchangedialog[3].deffloat = f->outcolorfunexp;
+        uih_outcolorchangedialog[4].deffloat = f->outcolorfunspeed;
+        uih_outcolorchangedialog[5].defint = f->outcolorfunmode;
+        uih_outcolorchangedialog[6].deffloat = f->outcolorfunradius;
+        uih_outcolorchangedialog[7].deffloat = f->outcolorfun2iter;
+        uih_outcolorchangedialog[8].deffloat = f->outcolorfun2exp;
+        uih_outcolorchangedialog[9].deffloat = f->outcolorfun2speed;
+        uih_outcolorchangedialog[10].defint = f->outcolorfun2mode;
+        uih_outcolorchangedialog[11].deffloat = f->outcolorfun2radius;
     }
     return (uih_outcolorchangedialog);
 }
@@ -785,6 +838,26 @@ static menudialog *uih_getoutcolorchangedialog(struct uih_context *c)
 static menudialog *uih_getincolorlegacydialog(struct uih_context *)
 {
     return (uih_incolorlegacydialog);
+}
+
+static menudialog *uih_getincolorgroupsdialog(struct uih_context *)
+{
+    return (uih_incolorgroupsdialog);
+}
+
+static menudialog *uih_getoutcolorgroupsdialog(struct uih_context *)
+{
+    return (uih_outcolorgroupsdialog);
+}
+
+static menudialog *uih_getincolorlineardialog(struct uih_context *)
+{
+    return (uih_incolorlineardialog);
+}
+
+static menudialog *uih_getoutcolorlineardialog(struct uih_context *)
+{
+    return (uih_outcolorlineardialog);
 }
 
 static menudialog *uih_getoutcolorlegacydialog(struct uih_context *)
@@ -1033,8 +1106,30 @@ static void uih_setoutcolorfunafter(uih_context *c, dialogparam *p)
                          p[2].dint);
 }
 
-/* The initial exponent and both groups, from the dialog the menu opens now,
- * in its order. */
+/* The initial exponent and speed and both groups, from the dialog the menu
+ * opens now, in its order. */
+static void uih_setcolorfungroupsfrom(uih_context *c, int inset,
+                                      dialogparam *p)
+{
+    uih_setcolorfunchange(c, inset, (number_t)p[0].number,
+                          (number_t)p[2].number, (number_t)p[3].number,
+                          p[5].dint, (number_t)p[6].number,
+                          (number_t)p[7].number, (number_t)p[8].number,
+                          p[10].dint, (number_t)p[11].number);
+    uih_setcolorfunspeeds(c, inset, (number_t)p[1].number,
+                          (number_t)p[4].number, (number_t)p[9].number);
+}
+static void uih_setincolorfungroups(uih_context *c, dialogparam *p)
+{
+    uih_setcolorfungroupsfrom(c, 1, p);
+}
+static void uih_setoutcolorfungroups(uih_context *c, dialogparam *p)
+{
+    uih_setcolorfungroupsfrom(c, 0, p);
+}
+
+/* The groups as a position saves them, without the speeds, which it saves
+ * apart and which are left as they are. */
 static void uih_setcolorfunchangefrom(uih_context *c, int inset,
                                       dialogparam *p)
 {
@@ -1051,6 +1146,18 @@ static void uih_setincolorfunchange(uih_context *c, dialogparam *p)
 static void uih_setoutcolorfunchange(uih_context *c, dialogparam *p)
 {
     uih_setcolorfunchangefrom(c, 0, p);
+}
+
+/* And the speeds, as a position saves them. */
+static void uih_setincolorfunspeeds(uih_context *c, dialogparam *p)
+{
+    uih_setcolorfunspeeds(c, 1, (number_t)p[0].number, (number_t)p[1].number,
+                          (number_t)p[2].number);
+}
+static void uih_setoutcolorfunspeeds(uih_context *c, dialogparam *p)
+{
+    uih_setcolorfunspeeds(c, 0, (number_t)p[0].number, (number_t)p[1].number,
+                          (number_t)p[2].number);
 }
 
 /* And as positions saved them before the radius, in the four modes of then. */
@@ -2037,7 +2144,7 @@ static int nfbmitems;
 /* The speed change after ITER, one entry in each speed function menu, after
  * the functions themselves: it acts on whichever of them is chosen. And the
  * command 1.8.0 saved it with, a side, kept out of the menu. */
-static menuitem colorfunitems[6];
+static menuitem colorfunitems[10];
 void uih_registermenus(void)
 {
     char keys[2];
@@ -2182,9 +2289,10 @@ void uih_registermenus(void)
                        uih_setoutcolorfun, uih_selectedoutcolorfun, "outfun");
 
     /* Registered after the functions, so that it comes after them in the
-     * menu. Its short name is also the command a position saves its values
-     * with, as infbmset is for the fbm's: incolorspeedchange with both groups
-     * and their radii; and out of the menu incolorfunafter, with the three
+     * menu: incolorspeedgroups, the whole dialog. A position saves what it
+     * sets as infbmset is for the fbm's, with commands kept out of the menu:
+     * incolorspeedchange with both groups and their radii, as 2.0 saved them,
+     * and incolorspeedlinear with the speeds; incolorfunafter with the three
      * 1.8.0 had -- still what a position that uses no more is saved with --
      * and incolorfunchange, with the two groups as they were saved before the
      * radius. Those two are read into the modes there are now. */
@@ -2193,13 +2301,37 @@ void uih_registermenus(void)
         m->menuname = side ? "moutcolorfun" : "mincolorfun";
         m->key = NULL;
         m->name = TR("Menu", "Speed change after ITER");
-        m->shortname = side ? "outcolorspeedchange" : "incolorspeedchange";
+        m->shortname = side ? "outcolorspeedgroups" : "incolorspeedgroups";
         m->type = MENU_CUSTOMDIALOG;
         m->flags = MENUFLAG_INTERRUPT;
+        m->function = (void (*)(void))(side ? uih_setoutcolorfungroups
+                                            : uih_setincolorfungroups);
+        m->dialog = (const menudialog *(*)(struct uih_context *))(
+            side ? uih_getoutcolorchangedialog : uih_getincolorchangedialog);
+
+        m = &colorfunitems[6 + side];
+        m->menuname = side ? "moutcolorfun" : "mincolorfun";
+        m->key = NULL;
+        m->name = TR("Menu", "Speed change after ITER (groups)");
+        m->shortname = side ? "outcolorspeedchange" : "incolorspeedchange";
+        m->type = MENU_CUSTOMDIALOG;
+        m->flags = MENUFLAG_INTERRUPT | MENUFLAG_NOMENU;
         m->function = (void (*)(void))(side ? uih_setoutcolorfunchange
                                             : uih_setincolorfunchange);
         m->dialog = (const menudialog *(*)(struct uih_context *))(
-            side ? uih_getoutcolorchangedialog : uih_getincolorchangedialog);
+            side ? uih_getoutcolorgroupsdialog : uih_getincolorgroupsdialog);
+
+        m = &colorfunitems[8 + side];
+        m->menuname = side ? "moutcolorfun" : "mincolorfun";
+        m->key = NULL;
+        m->name = TR("Menu", "Speed change after ITER (speeds)");
+        m->shortname = side ? "outcolorspeedlinear" : "incolorspeedlinear";
+        m->type = MENU_CUSTOMDIALOG;
+        m->flags = MENUFLAG_INTERRUPT | MENUFLAG_NOMENU;
+        m->function = (void (*)(void))(side ? uih_setoutcolorfunspeeds
+                                            : uih_setincolorfunspeeds);
+        m->dialog = (const menudialog *(*)(struct uih_context *))(
+            side ? uih_getoutcolorlineardialog : uih_getincolorlineardialog);
 
         m = &colorfunitems[2 + side];
         m->menuname = side ? "moutcolorfun" : "mincolorfun";
@@ -2225,7 +2357,7 @@ void uih_registermenus(void)
         m->dialog = (const menudialog *(*)(struct uih_context *))(
             side ? uih_getoutcolorlegacydialog : uih_getincolorlegacydialog);
     }
-    menu_add(colorfunitems, 6);
+    menu_add(colorfunitems, 10);
 
     {
         int i;
@@ -2276,7 +2408,7 @@ void uih_unregistermenus(void)
 
     menu_delete(fbmitems, nfbmitems);
 
-    menu_delete(colorfunitems, 6);
+    menu_delete(colorfunitems, 10);
     menu_delnumbered("infun");
     menu_delnumbered("outfun");
     menu_delnumbered("plane");
