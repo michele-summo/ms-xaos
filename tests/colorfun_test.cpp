@@ -376,8 +376,8 @@ int main(void)
 
         /* smooth: untouched up to ITER - R, no corner anywhere, never turning
          * back, and past ITER + R the jump's count again -- moved on by a
-         * constant only where the pace had to be held at nought, which a
-         * hundredth power over ten iterations needs */
+         * constant only where the pace had to be held at the slower of its
+         * two ends, which a hundredth power over ten iterations needs */
         after(T, p, SMOOTH, R);
         int before = 1, rising = 1;
         for (int i = 1; i <= 100; i++) {
