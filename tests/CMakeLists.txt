@@ -143,6 +143,14 @@ foreach(prec ${XAOS_TEST_PRECISIONS})
                         ${CMAKE_SOURCE_DIR}/src/util/xerror.cpp)
    add_test(NAME wstack_${suffix} COMMAND wstack_test_${suffix})
 
+   # --- the undo history ---------------------------------------------------
+   # Undo and redo move one step along the states recorded, whatever was
+   # recorded in between, and a state recorded twice is one step.
+   xaos_add_test_binary(undo_test_${suffix} ${prec}
+                        undo_test.cpp
+                        ${CMAKE_SOURCE_DIR}/src/ui-hlp/undo.cpp)
+   add_test(NAME undo_${suffix} COMMAND undo_test_${suffix})
+
    # --- saved positions ----------------------------------------------------
    # A position survives a save/load round trip only if the text it is written
    # as carries every digit number_t holds, which is a per-precision property.

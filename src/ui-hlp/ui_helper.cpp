@@ -744,44 +744,79 @@ char *uih_savepostostr(struct uih_context *c)
     return (xio_getstring(f));
 }
 
+/* Undo.
+ *
+ * The history (undo.cpp) holds the states the picture has been left in, and a
+ * state is recorded on each side of everything that changes it: before and
+ * after a command (MainWindow::menuActivate), at the press of the mouse and
+ * where the view comes to rest after it (uih_update), round a selection zoom
+ * and the iterations set with the arrows. A state the picture is in already
+ * is not recorded twice, so a command that changes nothing makes no step.
+ *
+ * It used to be a ring that undo went back two places in, on the
+ * understanding that undo itself had just recorded the last one. The mouse
+ * recorded at the release, while the zoom was still slowing down, so undo
+ * went back to a picture half way through it; and every command recorded,
+ * so undo after a recalculation went back to the picture it was showing. */
 void uih_saveundo(struct uih_context *c)
 {
-    xio_file f;
     if (c->play)
         return;
-    c->errstring = NULL;
-    if (c->undo.undos[c->undo.last])
-        free(c->undo.undos[c->undo.last]);
-    f = xio_strwopen();
-    uih_save_position(c, f, UIH_SAVEPOS);
-    c->undo.undos[c->undo.last] = xio_getstring(f);
-    c->undo.last = (c->undo.last + 1) % UNDOLEVEL;
+    undo_record(&c->undo.history, uih_savepostostr(c));
+}
+
+/* The history begins again from the picture as it is, which nothing can be
+ * undone past: the one XaoS starts with, after the configuration and the
+ * command line, is not a step anyone took. */
+void uih_resetundo(struct uih_context *c)
+{
+    undo_clear(&c->undo.history);
+    c->undo.pending = 0;
+    uih_saveundo(c);
+}
+
+static void uih_loadundo(struct uih_context *c, const char *state)
+{
+    char *copy = (char *)malloc(strlen(state) + 1);
+    if (copy == NULL)
+        return;
+    strcpy(copy, state);
+    /* the reader frees what it is given; the history keeps its own */
+    uih_load(c, xio_strropen(copy), "");
+    /* A position starts from initstate, which stops whatever zoom was going;
+     * a button still held starts it again, and that is a step of its own. */
+    c->undo.pending = c->lastbuttons != 0;
 }
 
 void uih_undo(struct uih_context *c)
 {
-    xio_file f;
-    int pos = c->undo.last - 2;
-    if (pos < 0)
-        pos = UNDOLEVEL + pos;
-    if (c->undo.undos[pos]) {
-        f = xio_strropen(c->undo.undos[pos]);
-        c->undo.undos[pos] = NULL;
-        c->undo.last = pos;
-        uih_load(c, f, "");
-    }
+    const char *state;
+    if (c->play)
+        return;
+    /* Where the picture is now is recorded first, so that redo can come back
+     * to it: a press of the mouse that has not come to rest yet, or whatever
+     * moved since the last step -- the autopilot, a rotation -- if nothing
+     * has been undone since. After an undo that is only drift, and recording
+     * it would cut off the redo and bring the next undo back to the same
+     * place. */
+    if (c->undo.pending || !undo_canredo(&c->undo.history))
+        uih_saveundo(c);
+    state = undo_back(&c->undo.history);
+    if (state != NULL)
+        uih_loadundo(c, state);
 }
 
 void uih_redo(struct uih_context *c)
 {
-    xio_file f;
-    int pos = c->undo.last;
-    if (c->undo.undos[pos]) {
-        f = xio_strropen(c->undo.undos[pos]);
-        c->undo.undos[pos] = NULL;
-        c->undo.last = pos;
-        uih_load(c, f, "");
-    }
+    const char *state;
+    if (c->play)
+        return;
+    /* a press not yet at rest is a new step, which leaves nothing to redo */
+    if (c->undo.pending)
+        uih_saveundo(c);
+    state = undo_forward(&c->undo.history);
+    if (state != NULL)
+        uih_loadundo(c, state);
 }
 
 extern xio_pathdata configfile;
@@ -1612,7 +1647,6 @@ void uih_scaleview(uih_context *c, number_t factor)
 {
     if (factor <= 0)
         return;
-    uih_saveundo(c);
     c->fcontext->s.rr *= factor;
     c->fcontext->s.ri *= factor;
     /* A recalculation and not an animation step. uih_animate_image marks the
@@ -1672,6 +1706,8 @@ void uih_zoomrectangle(uih_context *c, int x1, int y1, int x2, int y2)
         y2 = (int)(my + rh / 2);
     }
 
+    /* a step of the undo history, as a command is: the selection comes
+     * from the widget and not from the menu, so it records its own */
     uih_saveundo(c);
     uih_getcoord(c, (x1 + x2) / 2, (y1 + y2) / 2, &cr, &ci);
     c->fcontext->s.rr *= (number_t)(x2 - x1) / (number_t)width;
@@ -1679,6 +1715,7 @@ void uih_zoomrectangle(uih_context *c, int x1, int y1, int x2, int y2)
     c->fcontext->s.cr = cr;
     c->fcontext->s.ci = ci;
     uih_animate_image(c);
+    uih_saveundo(c);
 }
 
 /* The four fixed steps. Ultra Fractal offers the same pair of magnitudes, and
@@ -1821,11 +1858,16 @@ int uih_update(uih_context *c, int mousex, int mousey, int mousebuttons)
     int time;
     uih = c;
 
-    if (!mousebuttons && uih->lastbuttons)
-        uih_saveundo(c);
-    uih->lastbuttons = mousebuttons;
     if (c->incalculation)
         return 0;
+    /* A press of the mouse is a step of the undo history. The picture is
+     * recorded here, before the press has moved it, and again at the end,
+     * once the view has come to rest. */
+    if (mousebuttons && !c->lastbuttons && !c->play) {
+        uih_saveundo(c);
+        c->undo.pending = 1;
+    }
+    c->lastbuttons = mousebuttons;
     if (c->emulator != NULL)
         tl_elpased(c->emulator, c->emulatedframetime);
 
@@ -1856,6 +1898,9 @@ int uih_update(uih_context *c, int mousex, int mousey, int mousebuttons)
     if (c->play) {
         uih_playupdate(c);
         if (!c->play) {
+            /* an animation that has played is one step, from where the
+             * command that started it was given */
+            uih_saveundo(c);
             c->inanimation = 2;
             return 1;
         }
@@ -2073,6 +2118,14 @@ int uih_update(uih_context *c, int mousex, int mousey, int mousebuttons)
         uih_finishpalette(c);
     if (!inmovement)
         uih_callcomplette(c);
+    /* The step of a press ends where the view comes to rest: the button up
+     * and the zoom it set going slowed to a stop, not at the release, when
+     * the zoom still has some way to go. */
+    if (c->undo.pending && !c->lastbuttons && !c->step && !c->zoomactive &&
+        !c->play) {
+        uih_saveundo(c);
+        c->undo.pending = 0;
+    }
     if (c->inanimation < inmovement * 2)
         c->inanimation = inmovement * 2;
     return (inmovement * 2);
@@ -2917,12 +2970,9 @@ void uih_initstate(struct uih_context *uih)
 void uih_freecontext(uih_context *c)
 {
     struct filter *f;
-    int i;
     if (c->emulator != NULL)
         uih_noconstantframetime(c);
-    for (i = 0; i < UNDOLEVEL; i++)
-        if (c->undo.undos[i])
-            free(c->undo.undos[i]), c->undo.undos[i] = 0;
+    undo_clear(&c->undo.history);
     while (c->queue->first) {
         f = c->queue->first;
         removefilter(c->queue->first);

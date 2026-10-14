@@ -3,6 +3,7 @@
 #include "timers.h"
 #include "xio.h"
 #include "fractal.h"
+#include "undo.h"
 
 #define MAXFILTERS 20
 #define AVRGSIZE 50
@@ -108,10 +109,11 @@ struct uih_playcontext {
     ((startval) +                                                              \
      ((endval) - (startval)) * MORPHVALUE(time, len, starttime, endtime))
 
-#define UNDOLEVEL 256
 struct uih_undocontext {
-    int last;
-    char *undos[256];
+    struct undo_history history;
+    /* A press of the mouse whose step ends only where the view comes to
+     * rest; see uih_update. */
+    int pending;
 };
 struct uih_context {
     void (*updatemenus)(struct uih_context *, const char *);
@@ -567,6 +569,7 @@ void uih_noconstantframetime(uih_context *c);
 
 /*undo and redo*/
 void uih_saveundo(uih_context *c);
+void uih_resetundo(uih_context *c);
 void uih_scaleview(uih_context *c, number_t factor);
 void uih_zoomrectangle(uih_context *c, int x1, int y1, int x2, int y2);
 void uih_zoomin2(uih_context *c);

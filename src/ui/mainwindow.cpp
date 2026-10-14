@@ -152,8 +152,14 @@ void MainWindow::menuActivate(const menuitem *item, dialogparam *d)
             uih_message(uih, s);
         } else
             uih_message(uih, item->name);
-        uih_saveundo(uih);
+        /* A command is a step of the undo history: the picture as it found
+         * it, should something have moved since the last step, and as it
+         * left it. */
+        if (!(item->flags & MENUFLAG_NOUNDO))
+            uih_saveundo(uih);
         menu_activate(item, uih, d);
+        if (!(item->flags & MENUFLAG_NOUNDO))
+            uih_saveundo(uih);
         if (d != NULL)
             menu_destroydialog(item, d, uih);
     }
@@ -337,16 +343,27 @@ void MainWindow::processEvents(bool wait)
         if (uih->incalculation)
             uih_interrupt(uih);
         else {
+            /* a step of the undo history, as the command would be */
+            uih_saveundo(uih);
             uih_setmaxiter(uih, maxiter);
+            uih_saveundo(uih);
             dirty = false;
         }
     }
     if (uih->cycling) {
+        /* The speed moves for as long as an arrow is held, and the whole of
+         * it is one step of the undo history. */
+        bool held = key & (KEYLEFT | KEYRIGHT),
+             washeld = lastkey & (KEYLEFT | KEYRIGHT);
+        if (held && !washeld)
+            uih_saveundo(uih);
         if (processArrows(&uih->cyclingspeed,
                           TR("Message", "Cycling speed: %i   "), 1, key,
                           lastkey, KEYLEFT, KEYRIGHT, 0, -1000000, INT_MAX)) {
             uih_setcycling(uih, uih->cyclingspeed);
         }
+        if (!held && washeld)
+            uih_saveundo(uih);
     }
     if (tl_lookup_timer(maintimer) > FRAMETIME || buttons) {
         double mul1 = tl_lookup_timer(maintimer) / FRAMETIME;
@@ -749,10 +766,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
     const menuitem *item;
     dialogparam *d;
-    while ((item = menu_delqueue(&d)) != NULL) {
-        uih_saveundo(uih);
+    while ((item = menu_delqueue(&d)) != NULL)
         menu_activate(item, uih, d);
-    }
+    uih_resetundo(uih);
 
     char welcome[80];
     sprintf(welcome, TR("Message", "Welcome to %s version %s"), XaoS_NAME,
@@ -809,6 +825,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     *dst++ = '\0';
     // printf("command = %s\n", com);
     uih_loadstr(uih, com);
+    uih_resetundo(uih);
 #endif
 
 }

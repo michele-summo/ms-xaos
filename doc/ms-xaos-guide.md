@@ -56,6 +56,38 @@ Everything a position can hold now survives a save and load unchanged: all 169
 shipped examples and 141 generated positions covering every formula, plane,
 colouring mode and filter round-trip pixel for pixel.
 
+## Undo
+
+Edit → **Undo** (`U`, or `Ctrl` `Z`) goes back one step and **Redo** (`Ctrl`
+`Y` on Windows) forward again. A step is anything that changes the picture: a
+command — a formula, a palette, a colouring mode, a dialog, a fixed zoom — a
+press of the mouse with the zoom, pan or rotation it sets going, a selection
+zoom, and the iterations set with the arrows. A command that changes nothing,
+such as Recalculate, is not a step, and undo goes no further back than the
+picture XaoS opened with, after the configuration and the command line. Each
+step is kept as a saved position, so undo puts back everything a position
+holds, as exactly as reopening it does; the last 256 are kept.
+
+It went wrong in two ways. The mouse kept its step at the release, while the
+zoom was still slowing down, so undo brought back a picture half way through
+it; the step is now kept where the view comes to rest. And every command kept
+a step, whether it changed anything or not, while undo went two back on the
+understanding that it had kept the last one itself — after a Recalculate it
+brought back the picture already on screen. A picture is now kept only where
+it differs from the last one kept, and undo and redo move one step along
+them. A new step after an undo cuts off what could have been redone, as in an
+editor.
+
+What moved on its own since the last step — the autopilot, a continuous
+rotation — is kept as a step of its own when Undo is pressed, so that Redo
+comes back to it.
+
+Undo found one thing wrong with positions. Loading one with a built-in
+palette after a custom palette left the custom palette marked as in use, so
+the position was saved again as a custom palette: not what had been loaded,
+and for undo not the step it had gone back to, which cost the redo. A
+built-in palette now clears the mark, as a generated one always did.
+
 ## User formulas
 
 **Reference.** Help → User formula reference lists every function, variable and
@@ -1794,13 +1826,14 @@ runtime so it runs on a machine without Qt.
 
     ctest --test-dir build
 
-347 tests: the formula parser at both precisions, the accuracy of `gamma`,
+349 tests: the formula parser at both precisions, the accuracy of `gamma`,
 `lambertw`, `erf` and `randsc` against exact references where any exist, the
 iteration loops against recorded checksums, the colouring speed functions
 against what they gave before and what they are for, saved positions
 round-tripping and every render exiting cleanly, the overlay save/restore, the
-help reference against the parser's own table, and the random `poly` of its
-Utilities tab against the polynomial written out term by term.
+undo history, the help reference against the parser's own table, and the
+random `poly` of its Utilities tab against the polynomial written out term by
+term.
 
 One of them measures speed rather than answers. Timing in nanoseconds would
 assert which machine the suite is running on, so it asserts a ratio instead:

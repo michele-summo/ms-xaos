@@ -727,6 +727,11 @@ void uih_playdefpalette(struct uih_context *uih, int shift)
     }
     uih->manualpaletteshift = 0;
     uih->paletteshift = shift;
+    /* No longer the custom palette, as for (palette ...). Left on, a position
+     * loaded after one with a custom palette was saved again as a custom
+     * palette, which is not what was loaded; and undo, which compares what it
+     * saves with the step it went back to, lost its redo there. */
+    uih->palettepickerenabled = 0;
 }
 
 void uih_zoomcenter(struct uih_context *uih, number_t x, number_t y)

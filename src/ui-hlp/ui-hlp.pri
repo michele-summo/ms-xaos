@@ -6,7 +6,8 @@ SOURCES += $$PWD/autopilot.cpp \
     $$PWD/playtext.cpp \
     $$PWD/save.cpp \
     $$PWD/messg.cpp \
-    $$PWD/wstack.cpp
+    $$PWD/wstack.cpp \
+    $$PWD/undo.cpp
 
 HEADERS += $$PWD/play.h \
     $$PWD/autod.h \

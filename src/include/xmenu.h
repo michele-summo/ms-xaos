@@ -420,6 +420,9 @@ See ui/ui.c, ui_registermenus_i18n() for further details. */
 #define MENUFLAG_NOPLAY 64
 #define MENUFLAG_ATSTARTUP 128
 #define MENUFLAG_DIALOGATDISABLE 256
+/* Undo and redo: the item moves along the undo history, and the history does
+ * not record the picture round it as it does round any other command. */
+#define MENUFLAG_NOUNDO 512
 
 #define NITEMS(n) (sizeof(n) / sizeof(menuitem))
 #define menu_getdialog(context, m)                                             \

@@ -1733,10 +1733,12 @@ void uih_registermenus_i18n(void)
               uih_savecfg);
     MENUSEPARATOR_I("file");
     MENUNOP_I("edit", "u", TR("Menu", "Undo"), "undo",
-              MENUFLAG_INTERRUPT | MENUFLAG_NOPLAY | MENUFLAG_NOOPTION,
+              MENUFLAG_INTERRUPT | MENUFLAG_NOPLAY | MENUFLAG_NOOPTION |
+                  MENUFLAG_NOUNDO,
               uih_undo);
     MENUNOP_I("edit", NULL, TR("Menu", "Redo"), "redo",
-              MENUFLAG_INTERRUPT | MENUFLAG_NOPLAY | MENUFLAG_NOOPTION,
+              MENUFLAG_INTERRUPT | MENUFLAG_NOPLAY | MENUFLAG_NOOPTION |
+                  MENUFLAG_NOUNDO,
               uih_redo);
     MENUNOP_I("edit", NULL, TR("Menu", "Copy position URL"), "copyurl",
               MENUFLAG_INTERRUPT | MENUFLAG_NOPLAY | MENUFLAG_NOOPTION, uih_copyposurl);
