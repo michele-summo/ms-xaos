@@ -1,20 +1,22 @@
-# MS XaoS 2.1
+# MS XaoS 2.2
 
-What has changed since 1.8.0. Version 2.0 was never released on its own, so
-what it brought is here too. Everything MS XaoS adds over
+What has changed since 1.8.0. Versions 2.0 and 2.1 were never released on
+their own, so what they brought is here too. Everything MS XaoS adds over
 [XaoS](https://github.com/xaos-project/XaoS) 4.3.3 is in the notes of
 [1.6](https://github.com/michele-summo/ms-xaos/releases/tag/v1.6),
 [1.7](https://github.com/michele-summo/ms-xaos/releases/tag/v1.7),
 [1.7.2](https://github.com/michele-summo/ms-xaos/releases/tag/v1.7.2),
 [1.7.4](https://github.com/michele-summo/ms-xaos/releases/tag/v1.7.4) and
 [1.8.0](https://github.com/michele-summo/ms-xaos/releases/tag/v1.8.0), and the
-[guide](https://github.com/michele-summo/ms-xaos/blob/v2.1/doc/ms-xaos-guide.md)
+[guide](https://github.com/michele-summo/ms-xaos/blob/v2.2/doc/ms-xaos-guide.md)
 says what each thing does and why it was made that way.
 
 The first number has moved because one thing saved by 1.8.0 no longer draws to
 the pixel what it drew: the speed change after ITER in **smooth** or
 **continuous**. Those two modes are gone, and such a position is read into the
-ones there are now, near enough to look alike.
+ones there are now, near enough to look alike. And the colour count is now
+worked out whole and at an even pace, which moves the colours of a smooth
+picture by a few levels and of some others by one.
 
 ## The speed change after ITER
 
@@ -115,10 +117,84 @@ Three more things changed with the threads or with the machine:
   picture. In a render they now last five seconds of the animation's own time;
   in the window nothing changes.
 
-Of the 169 examples rendered with one thread, 167 draw to the pixel as 1.8.0
-drew them: `galaxy` has its stars from the clock, and `heart` keeps a message
-that 1.8.0 had taken away before the picture was drawn. With four threads they
-all draw as with one, `galaxy` apart.
+With this alone, of the 169 examples rendered with one thread, 167 drew to the
+pixel as 1.8.0 drew them: `galaxy` has its stars from the clock, and `heart`
+keeps a message that 1.8.0 had taken away before the picture was drawn. With
+four threads they all draw as with one, `galaxy` apart. The colour count below
+moves more of them, for reasons of its own.
+
+## The colour count
+
+The value a colouring mode hands to the palette lost digits on the way, and
+smooth colouring worked out its fraction of an iteration at an uneven pace.
+Neither showed at a colouring speed of one; both did as soon as a speed change
+or a colouring speed ran the colours fast.
+
+### Whole
+
+Smooth colouring made its count an int of 256ths of an iteration before the
+colouring speed, the function or the speed change had it, and what the
+function gave back was a float, which past 65 536 entries keeps less than a
+256th of one. With a speed change at 2500 entries an iteration, a view came
+out in **stripes of one colour** eight pixels wide, ten entries apart, where
+the palette should have run through every entry between. The count now goes on
+whole, and the functions, the colouring speed and the speed change are worked
+in the build's own type, as the formulas are — long double in the ordinary
+build, `__float128` in quad.
+
+Two things are kept as they were:
+
+* **An infinity** — the middle of a potential gone to infinity, the ground
+  round a formula that escapes at once — lands on the first entry, where the
+  float's overflow always sent it. A finite value past what a float holds
+  lands where it says.
+* **A value on the edge of a 256th** stays on it: the value is rounded to a
+  256th of a 256th before it is cut to a 256th. The real part of a Newton
+  orbit comes to rest on a root, exactly on such an edge, and the last digits
+  of the convergence put each pixel on one side or the other — a 256th of an
+  entry, until an **edge filter** draws every such pixel and the contours come
+  out toothed like gears. The float rounded most of them away and left
+  notches; now there are none.
+
+**Magnet and Magnet2 in smooth colouring** change the most: far from the set
+their count is negative, which the int took four thousand million 256ths on
+and the float drew in steps of an entry or two, flat patches with hard edges
+where there is now the gradient the count describes.
+
+### At an even pace
+
+Smooth colouring took the fraction of the last iteration where the bailout
+falls between the orbit's squared modulus before the escaping pass and after
+it, linearly in its logarithm. The count ran on unbroken that way but its pace
+did not: the modulus is all but squared from one pass to the next, so the pace
+changed across every iteration and **turned at once at its edge** — by 4.26 in
+a view of a speed change running ten thousand entries an iteration, which drew
+the bands changing density at a stroke.
+
+With the circle, the orbit is now carried on past the bailout until its
+squared modulus passes a million — three or four passes more for a square —
+and the fraction is taken in the logarithm of the logarithm, where a squaring
+is a step of one length, with the degree the orbit's own. The count stays
+within a tenth of an iteration of what it was, and the turn of 4.26 comes out
+at 1.0000.
+
+That is for the Mandelbrots, Triceratops, Mandelbar, Lambda, Manowar, Spider,
+Phoenix and Octo, and for a user formula while its orbit grows as a power. The
+Barnsleys multiply the orbit rather than square it, and the count at the
+bailout is already the right one for them; Newton, Magnet and Catseye converge
+or test their escape their own way; and the other bailout shapes measure the
+orbit by something that turns with it, which carried on made the turns worse.
+Those keep the count at the bailout.
+
+### What it costs
+
+On a picture that comes out the same, the count worked whole costs two to five
+per cent in the ordinary build and seven to twenty in quad, where a logarithm
+in `__float128` is worked in software. The passes and logarithms of the even
+pace cost 11 to 28 per cent more in the ordinary build and 18 to 20 in quad on
+the smooth pictures tried, and nothing on the others. Where stripes become a
+gradient the render takes longer as well, since solid guessing fills a pixel
+only from neighbours of one colour.
 
 ## Tests
 
@@ -127,21 +203,38 @@ checks each stretch at its own exponent and speed; smooth with no corner and
 never turning back, the jump's count past its radius, and at ITER the pace half
 way between two steady ones; groups that are off, and speeds at one, changing
 nothing to the bit; and 1.8.0's smooth and continuous against the curves they
-drew. The round
-trip has two more positions: one with both groups, a radius and the speeds, and
-one written as 1.8.0 and the groups without a radius saved it. The threads were
-checked by rendering, as above.
+drew. It checks the colour count too: a hundred and one colours along a
+fortieth of a 256th of an iteration at a high speed, where the int gave one; a
+value given back to a quarter past ten million; a value on the edge of a 256th
+staying on it; an infinity on the first entry; and, through the Mandelbrot's
+own smooth loop, steps of the same length either side of an iteration's edge,
+8.9 entries and 8.8, where they were 8.3 and 33.5. The fingerprints of the
+iteration loops were taken again in the smooth columns of the formulas whose
+count changed; everywhere else they are as they were. The round trip has two
+more positions: one with both groups, a radius and the speeds, and one written
+as 1.8.0 and the groups without a radius saved it. The threads were checked by
+rendering, as above.
 
 ## Compatibility
 
 * Positions saved by 1.8.0 load. A speed change after ITER that is off or in
   jump draws as it did; in smooth or continuous it draws alike, not to the
   pixel.
-* Positions saved by 2.1 open in 1.8.0 and draw the same there when their
-  speed change is off or one group in jump, with the initial exponent and the
-  speeds at one. Any other speed change is written with commands 1.8.0 does not
-  know, so it cannot open them.
-* Positions saved by 2.0 open; their smooth is drawn with the rounding of 2.1.
-* Pictures drawn with one thread are 1.8.0's to the pixel, but for a message a
-  render now times by its own clock; with several threads they are now the
-  same as with one.
+* Positions saved by 2.2 open in 1.8.0 when their speed change is off or one
+  group in jump, with the initial exponent and the speeds at one. Any other
+  speed change is written with commands 1.8.0 does not know, so it cannot open
+  them.
+* Positions saved by 2.0 and 2.1 open; the smooth of 2.0's speed change is
+  drawn with the rounding of 2.1.
+* Of the 169 examples rendered one at a time at 640×480, 82 draw to the pixel
+  as 1.8.0 drew them and 57 more differ by three levels at most in at most 113
+  pixels. Of the other thirty, four differ by a message or by the clock, as
+  above; the fifteen that colour smoothly with a power, by up to thirteen
+  levels across much of the picture — `eye` by up to 39, and `spiral4`, whose
+  smooth log on a true-colour palette magnifies any change, in the middle of
+  one small detail; three of true colour and smooth log by up to five; `edge`
+  has lost its notches; and seven differ in at most a hundred pixels, where a
+  value sat on the edge of an entry and a filter or an unblended palette shows
+  the step.
+* With several threads a picture is now the same as with one, and the two
+  builds colour as alike as they did.
