@@ -1,14 +1,14 @@
-# MS XaoS 2.2
+# MS XaoS 2.3
 
-What has changed since 1.8.0. Versions 2.0 and 2.1 were never released on
-their own, so what they brought is here too. Everything MS XaoS adds over
+What has changed since 1.8.0. Versions 2.0, 2.1 and 2.2 were never released
+on their own, so what they brought is here too. Everything MS XaoS adds over
 [XaoS](https://github.com/xaos-project/XaoS) 4.3.3 is in the notes of
 [1.6](https://github.com/michele-summo/ms-xaos/releases/tag/v1.6),
 [1.7](https://github.com/michele-summo/ms-xaos/releases/tag/v1.7),
 [1.7.2](https://github.com/michele-summo/ms-xaos/releases/tag/v1.7.2),
 [1.7.4](https://github.com/michele-summo/ms-xaos/releases/tag/v1.7.4) and
 [1.8.0](https://github.com/michele-summo/ms-xaos/releases/tag/v1.8.0), and the
-[guide](https://github.com/michele-summo/ms-xaos/blob/v2.2/doc/ms-xaos-guide.md)
+[guide](https://github.com/michele-summo/ms-xaos/blob/v2.3/doc/ms-xaos-guide.md)
 says what each thing does and why it was made that way.
 
 The first number has moved because one thing saved by 1.8.0 no longer draws to
@@ -196,36 +196,81 @@ the smooth pictures tried, and nothing on the others. Where stripes become a
 gradient the render takes longer as well, since solid guessing fills a pixel
 only from neighbours of one colour.
 
+## Undo
+
+Edit → **Undo** (`U`, or `Ctrl` `Z`) now goes back one step for anything that
+changes the picture, and **Redo** (`Ctrl` `Y` on Windows) forward again. It
+went wrong in two ways:
+
+* **After the mouse** it went back to a picture half way through the zoom,
+  and a second Undo was needed to get to where it had started: the step was
+  kept at the release, while the zoom was still slowing down. It is now kept
+  where the view comes to rest.
+* **After a command that changes nothing** — Recalculate, hiding the messages
+  — it did nothing at all. Every command kept a step, and undo went two back
+  on the understanding that it had kept the last one itself, so it brought
+  back the picture already on screen.
+
+A picture is now kept only where it differs from the last one kept, and undo
+and redo move one step along them whatever was kept in between. A step is a
+command or a dialog — a formula, a palette, a colouring mode, a fixed zoom —
+a press of the mouse with the zoom, pan or rotation it sets going, a
+selection zoom, the iterations or the cycling speed set with the arrows, and
+an animation played to its end. A new step after an undo cuts off what could
+have been redone, as in an editor. Undo stops at the picture XaoS opened
+with, after the configuration and the command line, and what moved on its
+own since the last step — the autopilot, a continuous rotation — is kept when
+Undo is pressed, so that Redo comes back to it. The last 256 pictures are
+kept.
+
+Each step is a saved position, so undo needs a position to come back as it
+was saved. The 179 among the examples and the tests do, to the letter,
+loaded alone or over one another. One more did not: a position with a
+built-in palette, loaded after a custom palette, was saved again as a custom
+palette, which undo took for a change and which cost the redo. A built-in
+palette now clears the custom one, as a generated one always did.
+
 ## Tests
 
-347 tests, as many as 1.8.0, with more in them. The colouring speed test now
-checks each stretch at its own exponent and speed; smooth with no corner and
-never turning back, the jump's count past its radius, and at ITER the pace half
-way between two steady ones; groups that are off, and speeds at one, changing
-nothing to the bit; and 1.8.0's smooth and continuous against the curves they
-drew. It checks the colour count too: a hundred and one colours along a
-fortieth of a 256th of an iteration at a high speed, where the int gave one; a
-value given back to a quarter past ten million; a value on the edge of a 256th
-staying on it; an infinity on the first entry; and, through the Mandelbrot's
-own smooth loop, steps of the same length either side of an iteration's edge,
-8.9 entries and 8.8, where they were 8.3 and 33.5. The fingerprints of the
-iteration loops were taken again in the smooth columns of the formulas whose
-count changed; everywhere else they are as they were. The round trip has two
-more positions: one with both groups, a radius and the speeds, and one written
-as 1.8.0 and the groups without a radius saved it. The threads were checked by
-rendering, as above.
+349 tests, two more than 1.8.0 and more in the others. The colouring speed test
+now checks each stretch at its own exponent and speed; smooth with no corner
+and never turning back, the jump's count past its radius, and at ITER the pace
+half way between two steady ones; groups that are off, and speeds at one,
+changing nothing to the bit; and 1.8.0's smooth and continuous against the
+curves they drew. It checks the colour count too: a hundred and one colours
+along a fortieth of a 256th of an iteration at a high speed, where the int gave
+one; a value given back to a quarter past ten million; a value on the edge of a
+256th staying on it; an infinity on the first entry; and, through the
+Mandelbrot's own smooth loop, steps of the same length either side of an
+iteration's edge, 8.9 entries and 8.8, where they were 8.3 and 33.5. The
+fingerprints of the iteration loops were taken again in the smooth columns of
+the formulas whose count changed; everywhere else they are as they were. The
+round trip has two more positions: one with both groups, a radius and the
+speeds, and one written as 1.8.0 and the groups without a radius saved it. The
+threads were checked by rendering, as above.
+
+The two new tests are the undo history, at each precision: a step only where
+the picture differs, undo and redo one step at a time and stopping at either
+end, the redo kept when the picture undo went to is kept again and cut off by
+a new one, and the oldest step dropped from a full history. Undo itself was
+tried in the running program — a palette, a formula, a zoom with the mouse, a
+Recalculate, the iterations with the arrows, an undo while the zoom was still
+slowing down — each undone and redone and set against the picture it should
+come back to, pixel for pixel.
 
 ## Compatibility
 
 * Positions saved by 1.8.0 load. A speed change after ITER that is off or in
   jump draws as it did; in smooth or continuous it draws alike, not to the
   pixel.
-* Positions saved by 2.2 open in 1.8.0 when their speed change is off or one
+* Positions saved by 2.3 open in 1.8.0 when their speed change is off or one
   group in jump, with the initial exponent and the speeds at one. Any other
   speed change is written with commands 1.8.0 does not know, so it cannot open
   them.
-* Positions saved by 2.0 and 2.1 open; the smooth of 2.0's speed change is
-  drawn with the rounding of 2.1.
+* Positions saved by 2.0, 2.1 and 2.2 open; the smooth of 2.0's speed change
+  is drawn with the rounding of 2.1.
+* A position with a built-in palette, opened after a custom palette, is saved
+  again with its own palette, where 1.8.0 saved it as a custom one.
 * Of the 169 examples rendered one at a time at 640×480, 82 draw to the pixel
   as 1.8.0 drew them and 57 more differ by three levels at most in at most 113
   pixels. Of the other thirty, four differ by a message or by the clock, as
