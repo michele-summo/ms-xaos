@@ -1420,7 +1420,7 @@ itself, so a function can be thought of in iterations. Every one is odd,
 | --- | --- |
 | `ident`, `log`, `atan`, `sin`, `cos`, `square`, `cube`, `square root`, `cube root` | what there always was, unchanged to the bit |
 | `log log` | `log(1 + log(1 + v))`, for the deep zooms where log alone still packs the bands too close: at a million iterations log gives 13.8 bands and this 2.7 |
-| `exp` | `e^v − 1`, the other way from log: it opens the small values out. For the quantities that stay small — the components true colour and the decompositions read; a count passes the largest number a float holds by ninety iterations |
+| `exp` | `e^v − 1`, the other way from log: it opens the small values out. For the quantities that stay small — the components true colour and the decompositions read; at a count of ninety it is already past 10³⁸ |
 | `triangle` | the sine with its curves straightened: the same period and height, the palette walked forwards and back at a steady pace instead of lingering at the turns |
 
 The new ones come after the old, so every number a saved position holds still
@@ -1543,8 +1543,8 @@ what an int holds — 8.4 million bands — was converted anyway, which is
 undefined: every such pixel took one and the same entry. `cube` reaches it at
 204 iterations, so a cube-coloured picture past that was a flat patch; `exp`
 and a large speed change reach it at once. It now lands where its value says, wrapped
-round the palette as any smaller value is, and a value past what a float holds
-is held at the largest one rather than becoming infinity. Inside an int nothing
+round the palette as any smaller value is; one too large for its 256ths to fit
+a double lands on the first entry, as an infinity always did. Inside an int nothing
 moves. Outside it, the one change to a picture saved before is in smooth
 colouring of Magnet and Magnet2 far from the set, which was one flat colour and
 now shows the bands the count describes there.
@@ -1555,6 +1555,124 @@ which every position begins with, did not put the fbm's five numbers back to
 their defaults — a position saves them only where they differ from those, so one
 loaded after another that had moved them drew with the other's; it now resets
 them, and turns the speed change after ITER off with them.
+
+### The count, whole
+
+The value a colouring mode hands over lost digits on its way to the palette in
+two places. Smooth colouring made its count an int of 256ths of an iteration
+before the colouring speed, the function or the speed change had it; and what
+the function gave back was a float, which past 65 536 entries keeps less than
+a 256th of one and past sixteen million not even a whole one. Neither shows at
+a speed of one, where a 256th of an iteration is a 256th of an entry. Both show
+as soon as something runs the colours fast: with a speed change taking the
+count from nought to ten thousand entries an iteration, a view at thirty
+iterations, where the pace was 2500, came out in stripes of one colour eight
+pixels wide, each a 256th of an iteration and ten entries from the next, where
+the palette should have run through every entry between.
+
+The count now goes on whole, and the function, the colouring speed and the
+speed change are worked in the build's own type, as the formulas are — long
+double in the ordinary build, `__float128` in quad — and give back what they
+work out. The two builds colour as alike as they did: on the pictures tried
+they differ where they always did, in a deep zoom whose orbits quad works out
+further, and nowhere else.
+
+Two things are kept as they were.
+
+* **An infinity** — the middle of a potential gone to infinity, the ground
+  round a formula that escapes at once — lands on the first entry, as a value
+  that is no number does. Made 256ths in a float, every such value used to
+  come out infinite and land there; what colour an infinity should take is
+  anybody's guess, and this way it takes the one it always took. A finite
+  value past what a float holds lands where it says.
+* **A value on the edge of a 256th** stays on it: the value is rounded to a
+  256th of a 256th before it is cut to a 256th, since the colouring tells
+  nothing finer. The real part of a Newton orbit comes to rest on a root, at
+  one or at minus a half, which puts `iter+real` exactly on such an edge, and
+  the last digits of the convergence would put each pixel on one side or the
+  other — a 256th of an entry, which nobody sees, until an edge filter draws
+  every such pixel as an edge and the contours come out toothed like gears.
+  The float used to round most of them away and left notches; now there are
+  none.
+
+Rendered against the build before at 640×480 — before the change in the next
+section — of the 169 examples 83 drew to the pixel as they did and 71 more
+differed by a single level in at most 113 pixels. Of the other fifteen, the true-colour and smooth-log ones — `perb4`,
+`spiral4`, `truecol1`, `truecol3` — differ by up to five levels in up to a
+seventh of the pixels, their components having come back as floats too;
+`edge` has lost its notches; and the rest differ in a handful of pixels where
+a value sat on the edge of an entry and a filter or a palette drawn without
+blending shows the step. Magnet and Magnet2 in smooth colouring change the
+most: far from the set their count is negative, which the int, read as
+unsigned, took four thousand million 256ths on, and the float then drew in
+steps of an entry or two — flat patches with hard edges where there is now the
+gradient the count describes.
+
+On a picture that comes out the same it costs two to five per cent in the
+ordinary build, and seven to twenty in quad, where the logarithms of the count
+and the functions are worked in software. Where the stripes become a gradient
+the render takes longer as well: solid guessing fills a pixel only from
+neighbours of one colour, and the picture written out is larger — the view at
+thirty iterations, at 1200×1200, took 1.07 seconds where its stripes took 0.30.
+
+### The smooth count's pace
+
+Smooth colouring adds to the count of whole iterations how far into the last
+one the point escaped. It worked that out where the bailout falls between the
+quantity before the escaping pass and after it, linearly in its logarithm. The
+count runs on unbroken from one iteration to the next that way, but its pace
+does not: from one pass to the next the quantity is all but squared, so the
+pace changes across every iteration and turns at once where the next begins.
+In a view 2.6×10⁻⁷ across, where the count goes from 59.94 to 60.02, it turned
+by 4.26 at the edge between the two. At a colouring speed of one that moves a
+colour by a few hundredths of an entry; with a speed change running ten
+thousand entries an iteration, it is the bands changing density at a stroke
+along every edge of an iteration.
+
+Now the orbit is carried on past the bailout until its squared modulus passes
+a million — three or four passes more for a square — and the fraction is taken
+in the logarithm of the logarithm, where a squaring is a step of one length:
+
+    n + ln(ln T / ln s) / ln(ln m / ln s)
+
+with `s` and `m` the squared modulus either side of a million, `T` the bailout
+and `n` the passes made. The passes past the bailout take themselves back, and
+the degree is the orbit's own, `ln m / ln s`, so a cube is counted as a cube.
+The count stays within a tenth of an iteration of what it was, and its pace
+runs on: the turn of 4.26 in that view comes out at 1.0000, and along a ray
+from outside the set the turns of 1.3 to 1.8 at every edge at 1.0025.
+
+| | the count |
+| --- | --- |
+| the Mandelbrots, Triceratops, Mandelbar, Lambda, Manowar, Spider, Phoenix and Octo, on the circle | carried past the bailout |
+| a user formula escaping on the circle | carried past it while the orbit grows as a power of one and a half at least, and counted at the bailout where it does not |
+| the three Barnsleys | at the bailout: they multiply the orbit by `c`, so that its logarithm grows by a step instead of doubling, and the count at the bailout is already the right one for them |
+| Newton, Magnet, Catseye | at the bailout: they converge, or test their escape their own way |
+| every bailout shape but the circle | at the bailout |
+
+The shapes stay as they were because each measures the orbit by something that
+turns with it, while every pass doubles its angle: carried on with its own
+measure, the degree came out unsteady enough to make the turns worse — the
+hexagon's from 1.28 to between 1.67 and 3.57 along that ray — and the square's
+even turn back.
+
+Of the 169 examples, the 154 that do not colour smoothly draw to the pixel as
+they did before this. The fifteen that do change by up to thirteen levels in up
+to nine tenths of the pixels — `eye` by up to 39, where its palette's
+neighbouring entries lie far apart, and `spiral4`, whose smooth log on a
+true-colour palette magnifies any change in the count, in the middle of one
+small detail. Against 2.1, with the changes of the section before, 84 draw to
+the pixel as they did and 59 more differ by three levels at most in at most 500
+pixels.
+
+It costs those passes and two logarithms more for every pixel that escapes: on
+the smooth pictures tried, 11 to 28 per cent in the ordinary build and 18 to
+20 in quad, where a logarithm in `__float128` takes 946 ns against 39 in long
+double; a picture that does not colour smoothly is unchanged. Worked in double,
+the four logarithms would have cost 8 to 19 per cent in the ordinary build and
+saved 8 in quad — a double carries the fraction to sixteen digits, where a
+speed of ten thousand needs nine — but the colouring is worked in the build's
+own type throughout, as the formulas are.
 
 ## Zooming
 

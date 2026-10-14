@@ -24,6 +24,7 @@
 #include <quadmath.h>
 
 #define nsqrt sqrtq
+#define ncbrt cbrtq
 #define nexp expq
 #define nlog logq
 #define nlog10 log10q
@@ -66,6 +67,7 @@
 #ifdef USE_LONG_DOUBLE
 
 #define nsqrt sqrtl
+#define ncbrt cbrtl
 #define nexp expl
 #define nlog logl
 #define nlog10 log10l
@@ -99,6 +101,7 @@
 #else /* plain double */
 
 #define nsqrt sqrt
+#define ncbrt cbrt
 #define nexp exp
 #define nlog log
 #define nlog10 log10

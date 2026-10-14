@@ -26,10 +26,56 @@
  * wrong one leaves seams along the sides. A formula whose bailout test is its
  * own gives its own here instead. */
 #define PRESMOOTH zre = bailout_measure(zre, zim, rp, ip)
+/* With the circle that quantity is the squared modulus, which the orbit all
+ * but squares from one pass to the next once it is out: the count can be
+ * carried on past the bailout, which smooth colouring does; see SMOOTHOUTPUT.
+ * A formula with a quantity of its own says so itself where it can, and one
+ * whose orbit does not grow as a power says SMOOTHNEAR. */
+#if !defined(SMOOTHFAR) && !defined(SMOOTHNEAR)
+#define SMOOTHFAR (cfractalc.bailoutmode == BAILOUT_CIRCLE)
+#define SMOOTHFARMEASURE (rp + ip)
+#endif
 #endif
 #ifndef SMOOTHTHRESHOLD
 /* What that quantity is compared against; see PRESMOOTH. */
 #define SMOOTHTHRESHOLD bailout_threshold()
+#endif
+/* The orbit carried on past the bailout until the quantity passes
+ * SMOOTH_FAR, and the count worked out there; see SMOOTHOUTPUT. iter goes
+ * down with the passes, as some formulas read it, and is put back after:
+ * these are not passes the escape is counted in. */
+#ifndef SMOOTHBEYOND
+#ifdef SMOOTHFAR
+#define SMOOTHBEYOND(beyond, smoothed)                                         \
+    if (SMOOTHFAR) {                                                           \
+        const number_t far_t = SMOOTHTHRESHOLD;                                \
+        const number_t far_b = far_t > SMOOTH_FAR ? far_t : SMOOTH_FAR;        \
+        const number_t far_s0 = szmag, far_m0 = SMOOTHFARMEASURE;              \
+        number_t far_s = far_s0, far_m = far_m0;                               \
+        unsigned int far_k = 0;                                                \
+        while (far_m < far_b && far_k < 64) {                                  \
+            iter--;                                                            \
+            FORMULA;                                                           \
+            far_k++;                                                           \
+            far_s = far_m;                                                     \
+            far_m = SMOOTHFARMEASURE;                                          \
+            /* well out and not squaring: no power to count by */              \
+            if (far_s > SMOOTH_POWER && far_m * far_m < far_s * far_s * far_s) \
+                break;                                                         \
+        }                                                                      \
+        iter += far_k;                                                         \
+        beyond = far_m >= far_b &&                                             \
+                 smooth_count_far(cfractalc.maxiter - iter + far_k, far_s,     \
+                                  far_m, far_t, smoothed);                     \
+        if (!beyond && far_k) {                                                \
+            smoothed = smooth_count_near(cfractalc.maxiter - iter, far_s0,     \
+                                         far_m0, far_t);                       \
+            beyond = 1;                                                        \
+        }                                                                      \
+    }
+#else
+#define SMOOTHBEYOND(beyond, smoothed)
+#endif
 #endif
 #ifndef UFORMULA
 #define UFORMULA FORMULA
@@ -703,6 +749,10 @@ static void JULIA(struct image *image, number_t pre, number_t pim)
  * which is why the user formula could not have a smooth variant at all. */
 #undef CUSTOMSAVEZMAG
 #undef SMOOTHTHRESHOLD
+#undef SMOOTHFAR
+#undef SMOOTHFARMEASURE
+#undef SMOOTHNEAR
+#undef SMOOTHBEYOND
 #undef SMOOTH
 #undef SMOOTHMODE
 #undef RANGE

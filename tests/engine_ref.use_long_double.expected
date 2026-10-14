@@ -1,28 +1,28 @@
-Mandelbrot               calc=ea413160e5583efa peri=ea413160e5583efa scalc=2b1a163be8602ebc speri=2b1a163be8602ebc sshift=931e6b2a8a511984
-Mandelbrot^3             calc=a8e9ee778554ed6d peri=a8e9ee778554ed6d scalc=e4b67f0afb11a215 speri=e4b67f0afb11a215 sshift=8e69fe7ca42ad70d
-Mandelbrot^4             calc=dc86372290627370 peri=dc86372290627370 scalc=1cf6c569ad6b354d speri=1cf6c569ad6b354d sshift=d429ca4966a70fa5
-Mandelbrot^5             calc=562a65b45a0fcb97 peri=562a65b45a0fcb97 scalc=175a202f61197877 speri=175a202f61197877 sshift=bebb389c8b3290cf
-Mandelbrot^6             calc=a20f9c8d1af29dd1 peri=a20f9c8d1af29dd1 scalc=715049cc18098008 speri=715049cc18098008 sshift=79dd2e9559d774f8
-Newton                   calc=148b716f47d7ea96 peri=0000000000000000 scalc=1ca2b8f73e2077f4 speri=0000000000000000 sshift=64779b77e92dbe6c
+Mandelbrot               calc=ea413160e5583efa peri=ea413160e5583efa scalc=0408762da42611cd speri=0408762da42611cd sshift=b2809d4840b7b3d5
+Mandelbrot^3             calc=a8e9ee778554ed6d peri=a8e9ee778554ed6d scalc=ca296fc029dbfc41 speri=ca296fc029dbfc41 sshift=5c93cd3d2ab10b41
+Mandelbrot^4             calc=dc86372290627370 peri=dc86372290627370 scalc=8d3c4fffaffd57b7 speri=8d3c4fffaffd57b7 sshift=736620bf38360fc7
+Mandelbrot^5             calc=562a65b45a0fcb97 peri=562a65b45a0fcb97 scalc=c7fef81cd458ab3e speri=c7fef81cd458ab3e sshift=5d5604d7d4e6530e
+Mandelbrot^6             calc=a20f9c8d1af29dd1 peri=a20f9c8d1af29dd1 scalc=3de8a1ccffc5f12e speri=3de8a1ccffc5f12e sshift=61d8bfd412734356
+Newton                   calc=148b716f47d7ea96 peri=0000000000000000 scalc=b8e4173a4d6cd335 speri=0000000000000000 sshift=7a6e485505566235
 Newton^4                 calc=90ac29af87aeafc1 peri=0000000000000000 scalc=973037ec472f66cb speri=0000000000000000 sshift=917686136456828b
 Barnsley1 Mandelbrot     calc=42e85a272caf8abc peri=0000000000000000 scalc=6570a7f7bb104329 speri=0000000000000000 sshift=6570a7f7bb104329
 Barnsley2 Mandelbrot     calc=0685beb5fb735e87 peri=0000000000000000 scalc=c8b61d0de9a390c9 speri=0000000000000000 sshift=04bfc33d96638619
 Barnsley3 Mandelbrot     calc=409bf98f8301422a peri=0000000000000000 scalc=da624f00d90738dd speri=0000000000000000 sshift=bb4e37573591f82d
-Octo                     calc=9cfff8d57df47ff2 peri=0000000000000000 scalc=cea617a200a0855f speri=0000000000000000 sshift=fe6065da84c71f8f
-MandPhoenix              calc=326a0b488c33ca06 peri=326a0b488c33ca06 scalc=01f8b5b2761d430a speri=01f8b5b2761d430a sshift=829e82bea9d17e2a
-Magnet                   calc=462d10993d47ebbe peri=462d10993d47ebbe scalc=eead91633e2b7b30 speri=eead91633e2b7b30 sshift=e322eba7ad2355c0
-Magnet2                  calc=055caf63a1ae8205 peri=055caf63a1ae8205 scalc=d2c253d500067edd speri=d2c253d500067edd sshift=633587a71c354fe2
-Triceratops              calc=b1d9fb7d8c51ed86 peri=b1d9fb7d8c51ed86 scalc=ac8739765224061c speri=ac8739765224061c sshift=ac8739765224061c
-Catseye                  calc=14c6f2fd30d4e383 peri=14c6f2fd30d4e383 scalc=b449e707e325bc83 speri=b449e707e325bc83 sshift=26a85208dfcb4683
-Mandelbar                calc=8aa6283af47bd861 peri=8aa6283af47bd861 scalc=e01bc7c2f7bd4e35 speri=e01bc7c2f7bd4e35 sshift=c34ad548b4142fb5
+Octo                     calc=9cfff8d57df47ff2 peri=0000000000000000 scalc=960ae3030e9f5598 speri=0000000000000000 sshift=28f1673494586918
+MandPhoenix              calc=326a0b488c33ca06 peri=326a0b488c33ca06 scalc=6812da554f3a9724 speri=6812da554f3a9724 sshift=b1dbe91b159cfbf4
+Magnet                   calc=462d10993d47ebbe peri=462d10993d47ebbe scalc=687332d06aa8b5b4 speri=687332d06aa8b5b4 sshift=1f1c0bd82c1418bc
+Magnet2                  calc=055caf63a1ae8205 peri=055caf63a1ae8205 scalc=69fa2385d5734af1 speri=69fa2385d5734af1 sshift=3061678ab58489ec
+Triceratops              calc=b1d9fb7d8c51ed86 peri=b1d9fb7d8c51ed86 scalc=76c5901f63e75f91 speri=76c5901f63e75f91 sshift=3a911de59508ee91
+Catseye                  calc=14c6f2fd30d4e383 peri=14c6f2fd30d4e383 scalc=966b6395aefdce83 speri=966b6395aefdce83 sshift=966b6395aefdce83
+Mandelbar                calc=8aa6283af47bd861 peri=8aa6283af47bd861 scalc=308d03a728a1f732 speri=308d03a728a1f732 sshift=9fe6b9c5543c0f2a
 Lambda Mandelbrot        calc=5e29d8fd01393947 peri=5e29d8fd01393947 scalc=b21f0a6dda790e1f speri=b21f0a6dda790e1f sshift=b21f0a6dda790e1f
-Manowar                  calc=6c0fddf9c3ecc5b1 peri=0000000000000000 scalc=2525699e294ba303 speri=0000000000000000 sshift=e68e7e9cde4edabb
-Spider                   calc=b196fda81ed99f23 peri=0000000000000000 scalc=1e003d1509224ad1 speri=0000000000000000 sshift=585fd0892cf43949
+Manowar                  calc=6c0fddf9c3ecc5b1 peri=0000000000000000 scalc=4edf3e5db43e73ee speri=0000000000000000 sshift=ac9623c495fd334e
+Spider                   calc=b196fda81ed99f23 peri=0000000000000000 scalc=a200c08d6e0c2e27 speri=0000000000000000 sshift=d276dd45c2492037
 Sierpinski               calc=c35e893d64de6f83 peri=0000000000000000 scalc=0000000000000000 speri=0000000000000000 sshift=0000000000000000
 Sierpinski Carpet        calc=c35e893d64de6f83 peri=0000000000000000 scalc=0000000000000000 speri=0000000000000000 sshift=0000000000000000
 Koch Snowflake           calc=966b6395aefdce83 peri=0000000000000000 scalc=0000000000000000 speri=0000000000000000 sshift=0000000000000000
 Spidron Hornflake        calc=234b5093b259735a peri=0000000000000000 scalc=0000000000000000 speri=0000000000000000 sshift=0000000000000000
-Mandelbrot^9             calc=003d6233c6908c33 peri=003d6233c6908c33 scalc=bf41c2e84ffaf689 speri=bf41c2e84ffaf689 sshift=28b9b43f881d3391
+Mandelbrot^9             calc=003d6233c6908c33 peri=003d6233c6908c33 scalc=4f1c62e579cd5fa0 speri=4f1c62e579cd5fa0 sshift=e2342538854ad0d8
 Beryl                    calc=c35e893d64de6f83 peri=c35e893d64de6f83 scalc=0000000000000000 speri=0000000000000000 sshift=0000000000000000
 Golden Sierpinski        calc=c35e893d64de6f83 peri=0000000000000000 scalc=0000000000000000 speri=0000000000000000 sshift=0000000000000000
 Circle 7                 calc=c35e893d64de6f83 peri=0000000000000000 scalc=0000000000000000 speri=0000000000000000 sshift=0000000000000000

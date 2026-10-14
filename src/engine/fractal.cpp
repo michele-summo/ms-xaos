@@ -231,6 +231,9 @@ void set_fractalc(fractal_context *context, struct image *img)
         }
         cfractalc.bailoutsides = sides;
         cfractalc.bailoutapothem = nsqrt(cfractalc.bailout);
+        cfractalc.bailoutloglogof = cfractalc.bailout;
+        cfractalc.bailoutloglog =
+            cfractalc.bailout > 1 ? nlog(nlog(cfractalc.bailout)) : 0;
         for (int k = 0; k < sides; k++) {
             number_t t = turn + (number_t)k * 2 * N_PI / (number_t)sides;
             cfractalc.bailoutnx[k] = ncos(t);

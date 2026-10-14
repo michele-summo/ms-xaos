@@ -214,10 +214,10 @@ struct formula {
 
 struct colorfun_plan {
     int kind;
-    long double iter, exponent;
+    number_t iter, exponent;
     int corners;
-    long double at[2], lo[2], hi[2], from[2], pacelo[2], pacehi[2], bump[2];
-    long double C[3], K[3], J[3], e[3];
+    number_t at[2], lo[2], hi[2], from[2], pacelo[2], pacehi[2], bump[2];
+    number_t C[3], K[3], J[3], e[3];
 };
 
 struct fractal_context {
@@ -244,6 +244,9 @@ struct fractal_context {
     number_t bailoutnx[BAILOUT_MAXSIDES], bailoutny[BAILOUT_MAXSIDES];
     number_t bailoutapothem;
     int bailoutsides;
+    /* And ln ln of the bailout, which the smooth count carried past it reads
+     * at every pixel (see smooth_count_far), with the bailout it is of. */
+    number_t bailoutloglog, bailoutloglogof;
     OutColormodeType coloringmode;
     int incoloringmode;
     int intcolor, outtcolor;

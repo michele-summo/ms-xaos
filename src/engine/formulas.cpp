@@ -294,27 +294,115 @@ static inline number_t bailout_threshold(void)
         OUTOUTPUT();                                                           \
     }
 
+/* --- the smooth count --------------------------------------------------------
+ *
+ * How far into its last iteration a point escaped, which smooth colouring adds
+ * to the count of whole ones; in 256ths of an iteration.
+ *
+ * At the bailout -- smooth_count_near, what XaoS always did -- it is where the
+ * threshold falls between the quantity before the escaping pass and after it,
+ * linearly in its logarithm. The count runs on unbroken from one iteration to
+ * the next, but not its pace: the quantity is all but squared from one pass to
+ * the next, so the count's pace changes across every iteration and turns at
+ * once where the next begins -- by four times, at the edge of an iteration in
+ * a view of SPEED_PROBLEM_4. At a colouring speed of one that moves a colour
+ * by a few hundredths of an entry; ten thousand times faster it is the bands
+ * changing density at a stroke along every edge of an iteration.
+ *
+ * Past it -- smooth_count_far -- the orbit is carried on until the quantity
+ * passes SMOOTH_FAR, where the squaring is all there is to it, and the
+ * fraction is taken in the logarithm of the logarithm, where a squaring is a
+ * step of one length:
+ *
+ *     done + ln(ln T / ln s) / ln(ln m / ln s)
+ *
+ * with s and m the quantity either side of SMOOTH_FAR, T the bailout and done
+ * the passes made. The passes past the bailout take themselves back: each adds
+ * one to done and doubles ln m, which takes one from the fraction. The degree
+ * is the orbit's own, ln m / ln s, so a cube is counted as a cube. The count
+ * is the one at the bailout to within a tenth of an iteration, and its pace
+ * runs on unbroken from one iteration to the next: the turn of four at the
+ * edge of that view comes out at 1.0000, and along a ray from outside the set
+ * the turns of 1.3 to 1.8 at every edge at 1.0025 -- 1.0003 at 10^12, which
+ * costs a pass more for nothing anyone could see.
+ *
+ * With the circle only. Every other shape measures the orbit by something that
+ * turns with it while the passes double its angle, and carried on, the degree
+ * came out unsteady enough to make the turns worse, and the square's even turn
+ * back. Those, and the formulas that converge or test their escape their own
+ * way, are counted at the bailout.
+ *
+ * And with a power only. The Barnsleys multiply the orbit by c, so that its
+ * logarithm grows by a step of its own rather than doubling; the count at the
+ * bailout, linear in that logarithm, is already the right one for them, and in
+ * the logarithm of the logarithm their steps shrink to nothing and the count
+ * runs off. They stay at the bailout, and so does an orbit of a user formula
+ * that is well out -- past SMOOTH_POWER -- and does not grow as a power of one
+ * and a half at least, which is given up on there. */
+static const number_t SMOOTH_FAR = 1e6;
+static const number_t SMOOTH_POWER = 1e3;
+
+/* At the bailout: done passes, the last from s to m either side of t. */
+static inline number_t smooth_count_near(unsigned int done, number_t s,
+                                         number_t m, number_t t)
+{
+    /* Enough to keep a logarithm away from zero and no more. It was a
+     * millionth, which is nothing beside a bailout of four and everything
+     * beside a Newton convergence of a millionth; below one it now follows the
+     * threshold down. At the bailouts anyone uses it is the millionth it
+     * always was. */
+    const number_t nudge =
+        t < 1 ? (number_t)t * (number_t)1e-6 : (number_t)0.000001;
+    m += nudge;
+    s += nudge;
+    return (number_t)(done * 256) +
+           nlog((number_t)(t / s)) / nlog((number_t)(m / s)) * 256;
+}
+
+/* Past it: done passes, the last from s to m either side of SMOOTH_FAR, the
+ * bailout t. Says whether there was a count to be had: not where the
+ * logarithms have nothing to work on, a quantity that never went past one or
+ * one that ran to infinity, nor where the last pass was no power of one and a
+ * half. */
+static inline int smooth_count_far(unsigned int done, number_t s, number_t m,
+                                   number_t t, number_t &smoothed)
+{
+    const number_t ls = nlog(s), lm = nlog(m);
+    if (!(ls > 0) || !(lm >= ls * (number_t)1.5) || !(t > 1) ||
+        !(lm - lm == 0))
+        return 0;
+    /* ln ln t, worked out once a picture by set_fractalc */
+    const number_t llt = t == cfractalc.bailoutloglogof ? cfractalc.bailoutloglog
+                                                        : nlog(nlog(t));
+    const number_t lls = nlog(ls);
+    smoothed = ((number_t)done + (llt - lls) / (nlog(lm) - lls)) * 256;
+    return 1;
+}
+
 #define SMOOTHOUTPUT()                                                         \
     {                                                                          \
-        PRESMOOTH;                                                             \
-        {                                                                      \
-            /* Enough to keep a logarithm away from zero and no more. It was   \
-             * a millionth, which is nothing beside a bailout of four and      \
-             * everything beside a Newton convergence of a millionth; below    \
-             * one it now follows the threshold down. At the bailouts anyone   \
-             * uses it is the millionth it always was. */                      \
-            number_t nudge = SMOOTHTHRESHOLD < 1                               \
-                                 ? (number_t)SMOOTHTHRESHOLD * (number_t)1e-6  \
-                                 : (number_t)0.000001;                         \
-            zre += nudge;                                                      \
-            szmag += nudge;                                                    \
+        /* The smooth count, in 256ths of an iteration as the others are, and  \
+         * whole, in number_t as the rest of the colouring is: carried past    \
+         * the bailout where the orbit can be (SMOOTHBEYOND, see docalc.h),    \
+         * at the bailout where not. It was made an int here, before the       \
+         * colouring speed, the function and the speed change had it: a        \
+         * 256th of an iteration is nothing at a speed of one, and a stripe    \
+         * of one colour wherever they run the count faster -- ten entries a   \
+         * step at 2500 an iteration, where the bands should have been finer   \
+         * than the pixels. */                                                 \
+        number_t smoothed = 0;                                                 \
+        int beyond = 0;                                                        \
+        SMOOTHBEYOND(beyond, smoothed);                                        \
+        if (!beyond) {                                                         \
+            PRESMOOTH;                                                         \
+            smoothed = smooth_count_near(cfractalc.maxiter - iter, szmag,      \
+                                         zre, SMOOTHTHRESHOLD);                \
         }                                                                      \
-        iter = (int)(((cfractalc.maxiter - iter) * 256 +                       \
-                      log((double)(SMOOTHTHRESHOLD / (szmag))) /               \
-                          log((double)((zre) / (szmag))) * 256));              \
-        if (cfractalc.coloringmode == OutColormodeClass::ColOut_smooth_log) { \
-           iter = log(iter) * ((cpalette.size - 1))/log(cfractalc.maxiter * 256) + 1;  \
-        }\
+        if (cfractalc.coloringmode == OutColormodeClass::ColOut_smooth_log) {  \
+            smoothed = nlog(smoothed) * ((cpalette.size - 1)) /                \
+                           nlog((number_t)(cfractalc.maxiter * 256)) +         \
+                       1;                                                      \
+        }                                                                      \
         /* The colouring speed, the shift and the colouring function. Every    \
          * other outside mode meets color_precalc on its way out of            \
          * color_output; this one returns a pixel of its own and so skipped    \
@@ -327,7 +415,6 @@ static inline number_t bailout_threshold(void)
          * can carry the value below zero, and the modulus of a negative is    \
          * not the wrap that is wanted. */                                     \
         {                                                                      \
-            number_t smoothed = (number_t)iter;                                \
             /* The smooth count worn.                                          \
              *                                                                 \
              * Here, and not in color_output: this macro works the count out    \
@@ -432,12 +519,17 @@ static number_t fbm_at_pixel(int inset)
 
 /* 2021-02-09 MSUMMO calculate color functions */
 const number_t V_MAX = DBL_MAX / SMUL;
-static void color_f_normalize(number_t &v) {
+/* Held within V_MAX, the largest value whose 256ths a double still holds;
+ * says whether it had to be. */
+static int color_f_normalize(number_t &v) {
     if (v < -V_MAX) {
         v = -V_MAX;
+        return 1;
     } else if (v > V_MAX) {
         v = V_MAX;
+        return 1;
     }
+    return 0;
 }
 
 /* --- the speed change after ITER ------------------------------------------
@@ -502,42 +594,42 @@ static void color_f_normalize(number_t &v) {
  * drawn to the bit as it was.
  *
  * Odd, as the functions are: a negative value is turned as its opposite is
- * and keeps its sign. Worked in long double whatever the build, as they are,
- * so that the two builds colour alike.
+ * and keeps its sign. Worked in number_t, as the formulas are: long double in
+ * the ordinary build, __float128 in quad.
  */
 
 /* 1.8.0's jump: untouched up to iter and iter (v/iter)^p past it, or with
  * iter at nought or below the plain power from the start. */
-static long double color_power(long double v, long double iter, long double p)
+static number_t color_power(number_t v, number_t iter, number_t p)
 {
-    long double a = v < 0 ? -v : v, r;
+    number_t a = v < 0 ? -v : v, r;
     if (!(a > 0))
         return 0;
     if (!(iter > 0))
-        r = expl(p * logl(a));
+        r = nexp(p * nlog(a));
     else if (a <= iter)
         r = a;
     else
-        r = iter * expl(p * logl(a / iter));
+        r = iter * nexp(p * nlog(a / iter));
     return v < 0 ? -r : r;
 }
 
 struct colorfun_group {
-    long double iter, after, speed, radius;
+    number_t iter, after, speed, radius;
     int mode;
 };
 
 /* Stretch s at v, above nought, and its pace there. */
-static inline long double color_stretch(const colorfun_plan &plan, int s,
-                                        long double v)
+static inline number_t color_stretch(const colorfun_plan &plan, int s,
+                                     number_t v)
 {
-    return plan.C[s] + plan.K[s] * expl(plan.e[s] * logl(v / plan.J[s]));
+    return plan.C[s] + plan.K[s] * nexp(plan.e[s] * nlog(v / plan.J[s]));
 }
-static inline long double color_stretch_pace(const colorfun_plan &plan, int s,
-                                             long double v)
+static inline number_t color_stretch_pace(const colorfun_plan &plan, int s,
+                                          number_t v)
 {
     return plan.K[s] * plan.e[s] / plan.J[s] *
-           expl((plan.e[s] - 1) * logl(v / plan.J[s]));
+           nexp((plan.e[s] - 1) * nlog(v / plan.J[s]));
 }
 
 /* The count inside the rounding of corner c: from where the rounding begins,
@@ -545,18 +637,18 @@ static inline long double color_stretch_pace(const colorfun_plan &plan, int s,
  * part, r (t - t^3/3 + 2/3) for t from -1 to 1, is written in s = 1 + t as
  * r s^2 (3 - s) / 3, which has no difference of near equals in it: near the
  * start the other form lost what a large parabola left of the digits. */
-static long double color_rounded(const colorfun_plan &plan, int c,
-                                 long double a)
+static number_t color_rounded(const colorfun_plan &plan, int c,
+                              number_t a)
 {
-    const long double r = (plan.hi[c] - plan.lo[c]) / 2, u = a - plan.lo[c];
-    const long double s = u / r;
+    const number_t r = (plan.hi[c] - plan.lo[c]) / 2, u = a - plan.lo[c];
+    const number_t s = u / r;
     return plan.from[c] + plan.pacelo[c] * u +
            (plan.pacehi[c] - plan.pacelo[c]) * u * u / (4 * r) +
            plan.bump[c] * r * s * s * (3 - s) / 3;
 }
 
-static void color_change_plan(colorfun_plan &plan, long double initial,
-                              long double initialspeed, colorfun_group g1,
+static void color_change_plan(colorfun_plan &plan, number_t initial,
+                              number_t initialspeed, colorfun_group g1,
                               colorfun_group g2)
 {
     plan = colorfun_plan();
@@ -597,7 +689,7 @@ static void color_change_plan(colorfun_plan &plan, long double initial,
     plan.e[0] = k == 0 ? initial : g[k - 1].after;
     plan.K[0] = k == 0 ? initialspeed : g[k - 1].speed;
     int identity = plan.e[0] == 1 && plan.K[0] == 1;
-    long double radius[2] = {0, 0}, speed[2] = {1, 1};
+    number_t radius[2] = {0, 0}, speed[2] = {1, 1};
     for (int j = k; j < n; j++) {
         const int c = plan.corners++;
         plan.at[c] = g[j].iter;
@@ -618,7 +710,7 @@ static void color_change_plan(colorfun_plan &plan, long double initial,
     if (plan.corners && radius[0] > plan.at[0] * 0.999L)
         radius[0] = plan.at[0] * 0.999L;
     if (plan.corners == 2 && radius[0] + radius[1] > plan.at[1] - plan.at[0]) {
-        const long double cut =
+        const number_t cut =
             (plan.at[1] - plan.at[0]) / (radius[0] + radius[1]);
         radius[0] *= cut;
         radius[1] *= cut;
@@ -627,7 +719,7 @@ static void color_change_plan(colorfun_plan &plan, long double initial,
     /* each stretch from the count the one before it came to; and each
      * rounding from the count and pace at its two ends */
     for (int c = 0; c < plan.corners; c++) {
-        const long double I = plan.at[c], r = radius[c];
+        const number_t I = plan.at[c], r = radius[c];
         plan.C[c + 1] = color_stretch(plan, c, I) - speed[c] * I;
         plan.K[c + 1] = speed[c] * I;
         plan.J[c + 1] = I;
@@ -640,15 +732,15 @@ static void color_change_plan(colorfun_plan &plan, long double initial,
         plan.pacehi[c] = color_stretch_pace(plan, c + 1, plan.hi[c]);
         /* what the straight line leaves of the jump's count, given back by a
          * parabola, whose area over the rounding is 4/3 r of its height */
-        const long double lost = color_stretch(plan, c + 1, plan.hi[c]) -
+        const number_t lost = color_stretch(plan, c + 1, plan.hi[c]) -
                                  plan.from[c] -
                                  r * (plan.pacelo[c] + plan.pacehi[c]);
         plan.bump[c] = 3 * lost / (4 * r);
         /* the lowest height that keeps a + b t + h (1 - t^2) between its two
          * ends from t = -1 to 1, b being half the line's rise: the one that
          * puts the parabola's lowest point on an end, h = -|b|/2 */
-        const long double held =
-            -fabsl(plan.pacehi[c] - plan.pacelo[c]) / 4;
+        const number_t held =
+            -nfabs(plan.pacehi[c] - plan.pacelo[c]) / 4;
         if (plan.bump[c] < held) {
             plan.C[c + 1] += 4 * r * (held - plan.bump[c]) / 3;
             plan.bump[c] = held;
@@ -659,22 +751,22 @@ static void color_change_plan(colorfun_plan &plan, long double initial,
 void color_change_prepare(fractal_context *c)
 {
     color_change_plan(
-        c->inplan, (long double)c->incolorfuninitial,
-        (long double)c->incolorfuninitialspeed,
-        {(long double)c->incolorfuniter, (long double)c->incolorfunexp,
-         (long double)c->incolorfunspeed, (long double)c->incolorfunradius,
+        c->inplan, (number_t)c->incolorfuninitial,
+        (number_t)c->incolorfuninitialspeed,
+        {(number_t)c->incolorfuniter, (number_t)c->incolorfunexp,
+         (number_t)c->incolorfunspeed, (number_t)c->incolorfunradius,
          c->incolorfunmode},
-        {(long double)c->incolorfun2iter, (long double)c->incolorfun2exp,
-         (long double)c->incolorfun2speed, (long double)c->incolorfun2radius,
+        {(number_t)c->incolorfun2iter, (number_t)c->incolorfun2exp,
+         (number_t)c->incolorfun2speed, (number_t)c->incolorfun2radius,
          c->incolorfun2mode});
     color_change_plan(
-        c->outplan, (long double)c->outcolorfuninitial,
-        (long double)c->outcolorfuninitialspeed,
-        {(long double)c->outcolorfuniter, (long double)c->outcolorfunexp,
-         (long double)c->outcolorfunspeed, (long double)c->outcolorfunradius,
+        c->outplan, (number_t)c->outcolorfuninitial,
+        (number_t)c->outcolorfuninitialspeed,
+        {(number_t)c->outcolorfuniter, (number_t)c->outcolorfunexp,
+         (number_t)c->outcolorfunspeed, (number_t)c->outcolorfunradius,
          c->outcolorfunmode},
-        {(long double)c->outcolorfun2iter, (long double)c->outcolorfun2exp,
-         (long double)c->outcolorfun2speed, (long double)c->outcolorfun2radius,
+        {(number_t)c->outcolorfun2iter, (number_t)c->outcolorfun2exp,
+         (number_t)c->outcolorfun2speed, (number_t)c->outcolorfun2radius,
          c->outcolorfun2mode});
 }
 
@@ -717,11 +809,11 @@ void colorfun_from_legacy(number_t iter, number_t *exponent, int *mode,
 }
 
 /* The count v as the plan changes it. */
-static long double color_change(long double v, const colorfun_plan &plan)
+static number_t color_change(number_t v, const colorfun_plan &plan)
 {
     if (plan.kind == 1)
         return color_power(v, plan.iter, plan.exponent);
-    long double a = v < 0 ? -v : v, r;
+    number_t a = v < 0 ? -v : v, r;
     if (!(a > 0))
         return 0;
     int s = 0;
@@ -737,38 +829,38 @@ static long double color_change(long double v, const colorfun_plan &plan)
     return v < 0 ? -r : r;
 }
 
-static float color_f_func(number_t v, const float speed, const int func,
-                          const int shift, const int inset)
+static number_t color_f_func(number_t v, const float speed, const int func,
+                             const int shift, const int inset)
 {
-    color_f_normalize(v);
+    int held = color_f_normalize(v);
     /* The speed change after ITER, on the value before the function has it.
      * Off -- the default -- or with every exponent at one, nothing at all is
      * done to it, so that the value goes on to the function to the bit as it
      * did before there was such a thing. */
     const colorfun_plan &plan = inset ? cfractalc.inplan : cfractalc.outplan;
     if (plan.kind) {
-        v = color_change((long double)v, plan);
-        color_f_normalize(v);
+        v = color_change(v, plan);
+        held |= color_f_normalize(v);
     }
     switch (func) {
     case 1:
         // LOG
         if (v > 0)
-            v = logl(v + 1);
+            v = nlog(v + 1);
         else
-            v = -logl(-v + 1);
+            v = -nlog(-v + 1);
         break;
     case 2:
         // ATAN
-        v = atanl(v);
+        v = natan(v);
         break;
     case 3:
         // SIN
-        v = sinl(v);
+        v = nsin(v);
         break;
     case 4:
         // COS
-        v = cosl(v);
+        v = ncos(v);
         break;
     case 5:
         // SQR
@@ -776,70 +868,76 @@ static float color_f_func(number_t v, const float speed, const int func,
             v = v * v;
         else
             v = -(v * v);
-        color_f_normalize(v);
+        held |= color_f_normalize(v);
         break;
     case 6:
         // CUBE
         v = v * v * v;
-        color_f_normalize(v);
+        held |= color_f_normalize(v);
         break;
     case 7:
         // SQRT
         if (v > 0)
-            v = sqrtl(v);
+            v = nsqrt(v);
         else
-            v = -sqrtl(-v);
+            v = -nsqrt(-v);
         break;
     case 8:
         // CBRT
         if (v > 0)
-            v = cbrtl(v);
+            v = ncbrt(v);
         else
-            v = -cbrtl(-v);
+            v = -ncbrt(-v);
         break;
     case 9:
         /* LOG LOG: log once more, for the deep zooms where the count runs to
          * millions and log alone still packs the bands too close -- at a
          * million it gives 13.8 bands and this 2.7 */
         if (v > 0)
-            v = logl(1 + logl(v + 1));
+            v = nlog(1 + nlog(v + 1));
         else
-            v = -logl(1 + logl(-v + 1));
+            v = -nlog(1 + nlog(-v + 1));
         break;
     case 10:
         /* EXP: the other way from log, e^v - 1, which opens the small values
          * out. For the quantities that stay small -- the components that true
-         * colour and the decompositions read; a count is past the largest
-         * number a float holds by ninety iterations. */
+         * colour and the decompositions read; at a count of ninety it is
+         * already past 10^38. */
         if (v > 0)
-            v = expm1l(v);
+            v = nexpm1(v);
         else
-            v = -expm1l(-v);
-        color_f_normalize(v);
+            v = -nexpm1(-v);
+        held |= color_f_normalize(v);
         break;
     case 11: {
         /* TRIANGLE: the sine with its curves straightened -- the same period
          * and height, the palette walked forwards and back at a steady pace
          * instead of lingering at the turns */
-        long double s =
-            (long double)v * 2 / 3.14159265358979323846264338327950288L;
-        long double t = s + 1 - 4 * floorl((s + 1) / 4);
-        v = 1 - fabsl(t - 2);
+        number_t s = v * 2 / N_PI;
+        number_t t = s + 1 - 4 * nfloor((s + 1) / 4);
+        v = 1 - nfabs(t - 2);
         break;
     }
     }
     v = v * speed;
     v += shift;
-    color_f_normalize(v);
-    /* What is handed back is a float, which holds no more than FLT_MAX: past
-     * it the conversion gives an infinity, and an infinity reaches no colour.
-     * No function goes near it at the counts a picture has except exp and a
-     * large speed change, which reach it at once; held here, color_wrap takes
-     * it round the palette like any other large value. */
-    if (v > FLT_MAX)
-        v = FLT_MAX;
-    else if (v < -FLT_MAX)
-        v = -FLT_MAX;
+    held |= color_f_normalize(v);
+    /* Handed back whole. It was a float, which past 65536 entries kept less
+     * than a 256th of one -- the gradient between two entries in steps --
+     * and past sixteen million skipped whole entries. Held within V_MAX by
+     * color_f_normalize, it goes on to color_wrap, which takes any value
+     * round the palette.
+     *
+     * Except a value that had to be held there -- an infinity, or a number
+     * past what a double's 256ths hold, coming in or on the way -- and is
+     * still past what a float's 256ths hold: such a value, made 256ths in a
+     * float, came out infinite and landed on the first entry, where a value
+     * that is no number lands. It is made one, and lands there still. What
+     * colour an infinity takes is anybody's guess, and this way it takes the
+     * one it always took: the middle of a potential gone to infinity, the
+     * ground round a formula that escapes at once. */
+    if (held && (v > FLT_MAX / SMUL || v < -FLT_MAX / SMUL))
+        v = (number_t)NAN;
     return v;
 }
 
@@ -856,6 +954,15 @@ static unsigned int color_wrap(number_t v, unsigned int cycle)
 {
     if (!(v == v) || cycle == 0)
         return 0;
+    /* Rounded to a 256th of a 256th before it is cut to a 256th: the
+     * colouring tells nothing finer, and a value that lies on the edge of a
+     * 256th -- the real part of a Newton orbit come to rest on a root, at one
+     * or at minus a half -- otherwise falls either side of it with the last
+     * digits of the convergence. One way or the other it is a 256th of an
+     * entry, which nobody sees, until an edge filter draws every such pixel
+     * as an edge and the contours come out toothed like gears. A float used
+     * to round most of them away, and left notches. */
+    v = nfloor(v * 256 + (number_t)0.5) / 256;
     if (v > -(number_t)2147483647 && v < (number_t)2147483647) {
         int i = (int)v;
         if (i < 0) {
@@ -2035,6 +2142,8 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
     rp = zre * zre;                                                            \
     ip = zim * zim;
 #define SMOOTH
+/* the orbit multiplied by c: counted at the bailout, see SMOOTH_FAR */
+#define SMOOTHNEAR
 #define SCALC sbarnsley1_calc
 #define CALC barnsley1_calc
 #define JULIA barnsley1_julia
@@ -2054,6 +2163,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
     rp = zre * zre;                                                            \
     ip = zim * zim;
 #define SMOOTH
+#define SMOOTHNEAR
 #define SCALC sbarnsley2_calc
 #define CALC barnsley2_calc
 #define JULIA barnsley2_julia
@@ -2074,6 +2184,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
     rp = zre * zre;                                                            \
     ip = zim * zim;
 #define SMOOTH
+#define SMOOTHNEAR
 #define SCALC sbarnsley3_calc
 #define CALC barnsley3_calc
 #define JULIA barnsley3_julia
@@ -2178,6 +2289,9 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
 #define SMOOTH
 #define CUSTOMSAVEZMAG szmag = zpr * zpr + zpm * zpm
 #define PRESMOOTH zre = zpr * zpr + zpm * zpm
+/* a squared modulus, carried past the bailout as the circle's is */
+#define SMOOTHFAR (cfractalc.bailoutmode == BAILOUT_CIRCLE)
+#define SMOOTHFARMEASURE (zpr * zpr + zpm * zpm)
 #include "docalc.h"
 
 #define VARIABLES number_t yre, yim, re1tmp, re2tmp, im1tmp;
@@ -2350,6 +2464,9 @@ not_converged(n) \
     zre = newtok ? n : bailout_measure(zre, zim, zre * zre, zim * zim)
 #define SMOOTHTHRESHOLD                                                        \
     (newtok ? cfractalc.newtonconvergence : bailout_threshold())
+/* escaping on the circle, carried past the bailout as the built-in ones are */
+#define SMOOTHFAR (!newtok && cfractalc.bailoutmode == BAILOUT_CIRCLE)
+#define SMOOTHFARMEASURE (zre * zre + zim * zim)
 #include "docalc.h"
 #endif
 

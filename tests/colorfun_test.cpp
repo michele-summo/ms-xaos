@@ -9,10 +9,14 @@
  * turning there at once, smooth untouched below ITER less the radius, never
  * turning back, without a corner, its pace half way at ITER where the two
  * are steady, and the jump's count again past ITER plus the radius. The
- * speeds multiply each stretch's pace, and at one change nothing. A position from 1.8.0 in continuous or in its smooth
- * must come out near what it was. And a value past what an int holds has to
- * land in the palette cycle like any other, where it used to land on one
- * flat entry.
+ * speeds multiply each stretch's pace, and at one change nothing. A position
+ * from 1.8.0 in continuous or in its smooth must come out near what it was.
+ * A value past what an int holds has to land in the palette cycle like any
+ * other, where it used to land on one flat entry. And the smooth count has to
+ * reach the functions whole, and what they give back come back whole, where
+ * the one was cut to 256ths of an iteration and the other to a float; and its
+ * pace has to run on from one iteration to the next, where it turned at every
+ * edge of one.
  *
  * formulas.cpp is included rather than linked, since the functions are its
  * own and static.
@@ -56,9 +60,9 @@ static double F(int func, double v)
 
 enum { OFF = 0, JUMP = 1, SMOOTH = 2 };
 
-/* 1.8.0's jump -- one group, an initial exponent of one -- in the long double
- * it is worked in: slopes are taken from this, a float's rounding being
- * coarser than a small step. */
+/* 1.8.0's jump -- one group, an initial exponent of one -- as it is worked
+ * out: slopes are taken from this, a float's rounding being coarser than a
+ * small step. */
 static long double P(long double v)
 {
     return color_power(v, (long double)cfractalc.outcolorfuniter,
@@ -174,7 +178,8 @@ int main(void)
      *
      * Checksums of what each returned before the four were added, over
      * values from minus to plus sixty-four thousand, at a speed of 1.5 and a
-     * shift of three; the same at both precisions. */
+     * shift of three; the same at both precisions. Taken as a float, which is
+     * what they were given back in then. */
     {
         static const unsigned long long was[9] = {
             0x86f94c9dad52da04ULL, /* ident */
@@ -203,7 +208,10 @@ int main(void)
 
     /* And the palette entries a picture is drawn with, where the value stays
      * inside an int -- which is where the old conversion was right, and where
-     * the wrap that replaced it has to be the same. */
+     * the wrap that replaced it has to be the same. All but cube's: its values
+     * here run to six million entries, where the float the function used to
+     * give its value back in held half an entry at best, and it comes back
+     * whole now, the same at both precisions. */
     static unsigned int pix[257];
     for (int k = 0; k < 257; k++)
         pix[k] = k * 2654435761u;
@@ -219,7 +227,7 @@ int main(void)
         static const unsigned long long was[9] = {
             0x09162b3dabbd603fULL, 0x415aa9f6ce56c664ULL, 0xd58647bfc82ccb29ULL,
             0x24a39108ef3ac5d4ULL, 0x93ce72292ae57784ULL, 0x2997877a97e99914ULL,
-            0xf82f56aeb277f090ULL, 0x53ea6974bedf79d8ULL, 0x5e9d70857b8e0f66ULL,
+            0x14a950c94b301fa1ULL, 0x53ea6974bedf79d8ULL, 0x5e9d70857b8e0f66ULL,
         };
         for (int f = 0; f < 9; f++) {
             cfractalc.outcolorfun = f;
@@ -251,9 +259,10 @@ int main(void)
         const unsigned int cycle = 255 << 8;
         int right = 1, seen[256] = {0}, distinct = 0;
         for (unsigned it = 204; it < 1000; it++) {
-            float r = color_f_func((number_t)it, 1.0f, 6, 0, 0);
-            unsigned int at = (unsigned int)fmodl(
-                truncl((long double)r * 256), (long double)cycle);
+            number_t r = color_f_func((number_t)it, 1.0f, 6, 0, 0);
+            unsigned int at = (unsigned int)nfmod(
+                ntrunc(nfloor(r * 256 * 256 + (number_t)0.5) / 256),
+                (number_t)cycle);
             unsigned int got = color_output(0, 0, it);
             if (got != 1 + (at >> 8))
                 right = 0;
@@ -265,6 +274,110 @@ int main(void)
                 distinct);
         check(right && distinct > 100, what);
         cfractalc.outcolorfun = 0;
+    }
+
+    /* --- the smooth count, whole ------------------------------------------
+     *
+     * Smooth colouring works out a fractional count and hands it to the
+     * colouring speed, the function and the speed change. It was made an int
+     * of 256ths of an iteration first, and what the function gave back a
+     * float: a picture coloured fast enough came out in stripes of one colour
+     * a 256th of an iteration wide, where the bands should have run finer
+     * than the pixels. Along a stretch where the count moves by a
+     * ten-thousandth of an iteration -- a fortieth of a 256th -- at a speed
+     * that makes that a hundred entries, the colours have to go through the
+     * palette, not sit on one or two. */
+    {
+        cfractalc.maxiter = 1000;
+        cfractalc.bailout = 4;
+        cfractalc.coloringmode = OutColormodeType::ColOut_smooth;
+        cfractalc.outcolorspeed = 1e6f;
+        int seen[256] = {0}, distinct = 0;
+        for (int i = 0; i <= 100; i++) {
+            unsigned int got = formulas[0].smooth_calculate(
+                0, 0, (number_t)0.4 + (number_t)3.6e-6 * i / 100,
+                (number_t)0.3);
+            if (!seen[got & 255]++)
+                distinct++;
+        }
+        sprintf(what, "the smooth count reaches the colouring whole: %d "
+                      "colours along a fortieth of a 256th of an iteration",
+                distinct);
+        check(distinct > 50, what);
+        cfractalc.outcolorspeed = 1.0f;
+        cfractalc.coloringmode = OutColormodeType::ColOut_iter;
+        cfractalc.maxiter = 100000;
+
+        /* and what the function gives back keeps a fraction a float would
+         * have dropped */
+        const number_t big = (number_t)10000000 + (number_t)0.25;
+        check(color_f_func(big, 1.0f, 0, 0, 0) == big,
+              "and comes back whole: ten million and a quarter, where a "
+              "float gave back ten million");
+    }
+
+    /* --- the smooth count's pace across an iteration ------------------------
+     *
+     * Carried past the bailout, the count runs at an unbroken pace from one
+     * iteration to the next; worked out at the bailout, its pace turned at
+     * every edge of one. Along the middle row of a view of SPEED_PROBLEM_4,
+     * where the count crosses from sixty iterations to fifty-nine at a little
+     * past half way, at a speed that makes each step along the row a score of
+     * entries, the steps either side of the crossing have to be the same
+     * length -- where they were four times apart. */
+    {
+        cfractalc.maxiter = 119;
+        cfractalc.bailout = 4;
+        cfractalc.bailoutmode = BAILOUT_CIRCLE;
+        cfractalc.coloringmode = OutColormodeType::ColOut_smooth;
+        cfractalc.outcolorspeed = 1e5f;
+        const number_t w = (number_t)2.594002287591634e-7L;
+        const number_t x0 = (number_t)-1.09552416248921536735L - w / 2;
+        const number_t y = (number_t)-0.246092126816945990176L;
+        int step[400];
+        unsigned int last = 0;
+        for (int i = 0; i <= 400; i++) {
+            unsigned int got =
+                formulas[0].smooth_calculate(0, 0, x0 + w * i / 400, y);
+            if (i) {
+                int d = ((int)got - (int)last) % 255;
+                if (d > 127)
+                    d -= 255;
+                if (d < -127)
+                    d += 255;
+                step[i - 1] = d < 0 ? -d : d;
+            }
+            last = got;
+        }
+        double before = 0, after = 0;
+        for (int i = 60; i < 200; i++)
+            before += step[i];
+        for (int i = 250; i < 390; i++)
+            after += step[i];
+        sprintf(what, "the smooth count's pace runs on across an iteration: "
+                      "%.1f entries a step before the crossing, %.1f after",
+                before / 140, after / 140);
+        check(fabs(after / before - 1) < 0.05, what);
+        cfractalc.outcolorspeed = 1.0f;
+        cfractalc.coloringmode = OutColormodeType::ColOut_iter;
+        cfractalc.maxiter = 100000;
+    }
+
+    /* --- the edge of a 256th ------------------------------------------------
+     *
+     * Rounded to a 256th of a 256th before it is cut to a 256th, a value that
+     * lies on the edge of one -- the real part of a Newton orbit come to rest
+     * on a root -- stays on it whichever way the last digits of the
+     * convergence went; one a hundredth of a 256th short of it does not. */
+    {
+        const unsigned int cycle = 255 << 8;
+        const number_t tiny = (number_t)1e-4;
+        check(color_wrap(3584 - tiny, cycle) == 3584 &&
+                  color_wrap(3584 + tiny, cycle) == 3584 &&
+                  color_wrap(-128 + tiny, cycle) == color_wrap(-128, cycle) &&
+                  color_wrap(3584 - (number_t)0.01, cycle) == 3583,
+              "a value on the edge of a 256th stays on it, either side of "
+              "it by a ten-thousandth; one a hundredth short does not");
     }
 
     /* --- log log, exp, triangle ----------------------------------------- */
@@ -296,9 +409,14 @@ int main(void)
         check(odd, "exp is odd");
         check(fabs(F(10, 1) - (exp(1.0) - 1)) < 1e-6, "and e - 1 at one");
         double big = F(10, 5000);
-        check(std::isfinite(big) && big > 3e38,
-              "and a value past what a float holds is held at the largest "
-              "one, not infinity");
+        check(big != big && color_wrap((number_t)big * 256, 255 << 8) == 0,
+              "and a value past what a double holds lands on the first "
+              "entry, as a value that is no number does and as an infinity "
+              "always did");
+        double past = F(10, 100);
+        check(fabs(past / (exp(100.0) - 1) - 1) < 1e-12,
+              "and one past what a float holds but not a double lands where "
+              "its value says");
     }
     {
         int odd = 1, period = 1, bounded = 1;
@@ -419,7 +537,9 @@ int main(void)
         check(before && rising && corners && far &&
                   (p > 2 || fabsl(moved) < 1e-9L),
               what);
-        /* both odd, and finite however large */
+        /* both odd, and never an infinity however large: past what a
+         * double holds, a value that is no number, which lands on the first
+         * entry */
         int odd = 1, finite = 1;
         for (int mode = JUMP; mode <= SMOOTH; mode++) {
             after(T, p, mode, R);
@@ -428,10 +548,10 @@ int main(void)
                 if (F(0, v) != -F(0, -v))
                     odd = 0;
             }
-            if (!std::isfinite(F(0, 1e6)))
+            if (std::isinf(F(0, 1e6)))
                 finite = 0;
         }
-        sprintf(what, "exponent %g: odd and finite in both", p);
+        sprintf(what, "exponent %g: odd, and no infinity, in both", p);
         check(odd && finite, what);
     }
     {
