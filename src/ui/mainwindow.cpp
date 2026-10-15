@@ -832,19 +832,24 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
 MainWindow::~MainWindow()
 {
+    /* The image is the window's -- makeImage made it -- but the context is
+     * where it is kept, and uih_freecontext frees the context itself. So it
+     * is taken out first. It used to be read back afterwards, from the freed
+     * context: mostly still there, and so mostly no harm, until something
+     * had moved the heap on -- the palette editor, say -- and XaoS crashed on
+     * closing, reading the image or calling through its free pointer. The
+     * 0xFEEEFEEEFEEEFEEE once guarded against here was the same read, caught
+     * where the heap had filled the freed block. */
+    struct image *image = uih->image;
     uih_cycling_off(uih);
     uih_freecatalog(uih);
     uih_freecontext(uih);
+    uih = NULL;
     tl_free_timer(maintimer);
     tl_free_timer(arrowtimer);
     tl_free_timer(loopt);
-    // Sometimes the image pointer is set to to 0xFEEEFEEEFEEEFEEE when we get
-    // here and it crashes without this guard. Not sure why. Possibly
-    // related to https://sourceforge.net/p/mingw-w64/bugs/727/
-    if (uih->image != (image *)0xFEEEFEEEFEEEFEEE) {
-        destroypalette(uih->image->palette);
-        destroy_image(uih->image);
-    }
+    destroypalette(image->palette);
+    destroy_image(image);
 }
 
 void MainWindow::readSettings()
