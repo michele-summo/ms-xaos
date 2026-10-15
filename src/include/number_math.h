@@ -148,4 +148,32 @@
 #define N_2PI (2 * N_PI)
 #define N_1_2PI (1 / N_2PI)
 
+/* The sine and cosine of an angle in degrees: the turn a view is drawn at.
+ *
+ * Worked in number_t, pi and all. They were worked from M_PI, a double, which
+ * in the quad build also took the angle to the double sine and cosine -- a
+ * pair that makes a turn only to sixteen digits, so that a center turned by
+ * it and turned back came out moved by 5e-17 of its distance from the origin.
+ * Invisible down to 1e-16; below it, in the one build made for going there, a
+ * turned view showed another place altogether.
+ *
+ * Exact on a quarter turn, where no pi is exact enough to make the cosine of
+ * 90 degrees nought. */
+static inline void nsincosdeg(number_t degrees, number_t *sine,
+                              number_t *cosine)
+{
+    const number_t quarters = degrees / 90;
+    if (quarters == nfloor(quarters) && quarters * 90 == degrees) {
+        static const int sines[4] = {0, 1, 0, -1};
+        int q = (int)nfmod(quarters, 4);
+        if (q < 0)
+            q += 4;
+        *sine = sines[q];
+        *cosine = sines[(q + 1) % 4];
+        return;
+    }
+    *sine = nsin(degrees * N_PI / 180);
+    *cosine = ncos(degrees * N_PI / 180);
+}
+
 #endif /* NUMBER_MATH_H */

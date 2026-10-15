@@ -48,8 +48,7 @@ static symmetry2 sym_lines[100];
 
 static void precalculate_rotation(fractal_context *c)
 {
-    c->sin = sin((c->angle) * M_PI / 180);
-    c->cos = cos((c->angle) * M_PI / 180);
+    nsincosdeg(c->angle, &c->sin, &c->cos);
 }
 
 static void recalc_view(fractal_context *c)

@@ -10,6 +10,7 @@
 #include "filter.h"
 #include "i18n.h"
 #include "ui_helper.h"
+#include "viewtools.h"
 
 #ifdef USE_FLOAT128
 #include <quadmath.h>
@@ -101,6 +102,7 @@ CustomDialog::CustomDialog(struct uih_context *uih, const menuitem *item,
     m_menuitem = item;
     m_dialog = dialog;
     m_parameters = 0;
+    turning = false;
 
     setWindowTitle(item->name);
 
@@ -331,6 +333,9 @@ CustomDialog::CustomDialog(struct uih_context *uih, const menuitem *item,
             field->setMinimumWidth(metric.horizontalAdvance(field->text()) * 1.1);
             formLayout->addRow(label, field);
         }
+
+        if (dialog[i].viewtools)
+            addViewTools(formLayout, i, i - dialog[i].viewtools);
     }
 
     /* The fields shown only while a choice before them holds a given entry --
@@ -428,6 +433,126 @@ void CustomDialog::accept()
 }
 
 dialogparam *CustomDialog::parameters() { return m_parameters; }
+
+/* The slices a full turn is cut into, kept from one opening of the View
+ * dialog to the next while XaoS runs. Nowhere else: it is not part of the
+ * view, and a saved position says nothing of it. */
+static int viewSlices = 0;
+
+/* What a field holds, or false where it does not read as a number -- so that
+ * a tool leaves alone what it cannot make sense of. */
+static bool readNumber(QLineEdit *field, number_t *number)
+{
+    const QByteArray text = field->text().trimmed().toUtf8();
+    char *end;
+    *number = xstrtonum(text.constData(), &end);
+    return end != text.constData() && *end == 0;
+}
+
+/* A rule and the slices under it, a rule and the axes under that: see
+ * menudialog's viewtools. They change what the angle and center fields hold
+ * and nothing else, so OK applies it all as one step and Cancel none of it. */
+void CustomDialog::addViewTools(QFormLayout *form, int angle, int center)
+{
+    QLineEdit *angleField = findChild<QLineEdit *>(fieldName(angle));
+    QLineEdit *real = findChild<QLineEdit *>(fieldName(center) + "real");
+    QLineEdit *imag = findChild<QLineEdit *>(fieldName(center) + "imag");
+    if (angleField == NULL || real == NULL || imag == NULL)
+        return;
+
+    QFrame *rule = new QFrame(this);
+    rule->setFrameShape(QFrame::HLine);
+    rule->setFrameShadow(QFrame::Sunken);
+    form->addRow(rule);
+
+    QSpinBox *slices = new QSpinBox(this);
+    slices->setRange(0, 999);
+    slices->setValue(viewSlices);
+    slices->setToolTip(TR("Dialog", "How many equal slices a full turn is cut "
+                                    "into: - and + turn the angle by one"));
+    QToolButton *back = new QToolButton(this);
+    back->setText(QString(QChar(0x2212)));
+    back->setToolTip(TR("Dialog", "Turn the angle back by one slice, "
+                                  "360 degrees over the slices"));
+    QToolButton *on = new QToolButton(this);
+    on->setText("+");
+    on->setToolTip(TR("Dialog", "Turn the angle on by one slice, "
+                                "360 degrees over the slices"));
+
+    /* Nought slices is no slice to turn by. */
+    auto enable = [back, on](int n) {
+        back->setEnabled(n > 0);
+        on->setEnabled(n > 0);
+    };
+    enable(slices->value());
+    connect(slices, &QSpinBox::valueChanged, this, [this, enable](int n) {
+        viewSlices = n;
+        turning = false;
+        enable(n);
+    });
+    /* Typed by hand, the angle is where turning starts from again. setText
+     * below is not typing, so the slices turned stay counted from where
+     * they began. */
+    connect(angleField, &QLineEdit::textEdited, this,
+            [this](const QString &) { turning = false; });
+    auto turn = [this, angleField, slices](int step) {
+        if (!turning) {
+            if (!readNumber(angleField, &turnfrom))
+                return;
+            turnsteps = 0;
+            turning = true;
+        }
+        turnsteps += step;
+        angleField->setText(
+            format(view_turn(turnfrom, turnsteps, slices->value())));
+    };
+    connect(back, &QToolButton::clicked, this, [turn] { turn(-1); });
+    connect(on, &QToolButton::clicked, this, [turn] { turn(1); });
+
+    QBoxLayout *turnRow = new QBoxLayout(QBoxLayout::LeftToRight);
+    turnRow->setContentsMargins(0, 0, 0, 0);
+    turnRow->addWidget(slices);
+    turnRow->addWidget(back);
+    turnRow->addWidget(on);
+    turnRow->addStretch();
+    form->addRow(TR("Dialog", "Slices:"), turnRow);
+
+    rule = new QFrame(this);
+    rule->setFrameShape(QFrame::HLine);
+    rule->setFrameShadow(QFrame::Sunken);
+    form->addRow(rule);
+
+    QToolButton *alongR = new QToolButton(this);
+    alongR->setText("R");
+    alongR->setToolTip(TR("Dialog", "Move the view across the picture until "
+                                    "the origin is in the middle from left to "
+                                    "right, at the angle above"));
+    QToolButton *alongI = new QToolButton(this);
+    alongI->setText("I");
+    alongI->setToolTip(TR("Dialog", "Move the view up or down the picture "
+                                    "until the origin is in the middle from "
+                                    "top to bottom, at the angle above"));
+    auto centre = [angleField, real, imag](int axis) {
+        number_t a, cr, ci;
+        if (!readNumber(angleField, &a) || !readNumber(real, &cr) ||
+            !readNumber(imag, &ci))
+            return;
+        view_centeronaxis(a, axis, &cr, &ci);
+        real->setText(format(cr));
+        imag->setText(format(ci));
+    };
+    connect(alongR, &QToolButton::clicked, this,
+            [centre] { centre(VIEW_AXIS_R); });
+    connect(alongI, &QToolButton::clicked, this,
+            [centre] { centre(VIEW_AXIS_I); });
+
+    QBoxLayout *axisRow = new QBoxLayout(QBoxLayout::LeftToRight);
+    axisRow->setContentsMargins(0, 0, 0, 0);
+    axisRow->addWidget(alongR);
+    axisRow->addWidget(alongI);
+    axisRow->addStretch();
+    form->addRow(TR("Dialog", "Center by axis:"), axisRow);
+}
 
 /* The field a "..." button belongs to, and the question it asks. */
 static int chooserField(QObject *chooser)

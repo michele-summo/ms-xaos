@@ -151,6 +151,14 @@ foreach(prec ${XAOS_TEST_PRECISIONS})
                         ${CMAKE_SOURCE_DIR}/src/ui-hlp/undo.cpp)
    add_test(NAME undo_${suffix} COMMAND undo_test_${suffix})
 
+   # --- the View dialog's tools --------------------------------------------
+   # Turning by slices comes round to a whole turn exactly, and centering on
+   # an axis leaves the origin in the middle of the picture as it is drawn.
+   xaos_add_test_binary(viewtools_test_${suffix} ${prec}
+                        viewtools_test.cpp
+                        ${CMAKE_SOURCE_DIR}/src/ui-hlp/viewtools.cpp)
+   add_test(NAME viewtools_${suffix} COMMAND viewtools_test_${suffix})
+
    # --- saved positions ----------------------------------------------------
    # A position survives a save/load round trip only if the text it is written
    # as carries every digit number_t holds, which is a per-precision property.

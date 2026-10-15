@@ -2,6 +2,7 @@
 #define CUSTOMDIALOG_H
 
 #include <QDialog>
+#include <QFormLayout>
 #include <QLabel>
 #include <QSpinBox>
 #include <QSlider>
@@ -22,6 +23,12 @@ class CustomDialog : public QDialog
     QSpinBox *algono, *seedno, *shiftno;
     QLabel *img;
     QSlider *seedslider, *algoslider, *shiftslider;
+    /* Turning the angle by slices: where it started from, and how many
+     * slices on it is, until the angle or the slices are changed by hand. */
+    bool turning;
+    number_t turnfrom;
+    int turnsteps;
+    void addViewTools(QFormLayout *form, int angle, int center);
     unsigned char newColors[][3];
   private slots:
     void chooseInputFile();

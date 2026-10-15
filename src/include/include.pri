@@ -25,6 +25,7 @@ HEADERS += \
     $$PWD/truecolor.h \
     $$PWD/ui_helper.h \
     $$PWD/undo.h \
+    $$PWD/viewtools.h \
     $$PWD/xerror.h \
     $$PWD/xio.h \
     $$PWD/xmenu.h \

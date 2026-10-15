@@ -1726,6 +1726,39 @@ back on the way out.
 
 They scale about the centre of the view, so they undo one another exactly.
 
+## Turning and centring the view
+
+**Fractal → View** sets the centre, radius and angle by number. Under the
+angle it has two tools for those same fields. They fill the fields in and do
+nothing else: OK applies what they show as one step of undo, Cancel none of
+it, and a saved position never hears of them.
+
+**Slices** cuts a full turn into that many equal ones, and **−** and **+**
+turn the angle back or on by one: 60 degrees for six, 360 for one. With none,
+the two are disabled. The turns are counted from the angle they started from,
+so six sixths are a whole turn to the last digit; typing an angle, or changing
+the slices, starts the count again from there. The number of slices is kept
+while XaoS runs, for the next time the dialog is opened.
+
+**Center by axis** moves the centre straight across the picture (**R**) or
+straight up it (**I**) until the origin is in the middle that way, at the
+angle in the dialog. Unturned, that is the real or the imaginary part becoming
+nought and the other kept. Turned, it is the same along the picture's own axes:
+R at 90 degrees clears the imaginary part, and R and then I bring the origin to
+the middle at any angle. A centre already there is left alone, and a part the
+turning leaves as rounding is taken for nought, so the field says 0 and not
+1e-17.
+
+The turn itself is worked in the build's own type, pi and all. It was worked
+from a double pi, which in the quad build also meant a double sine and cosine:
+a pair that is a turn only to sixteen digits, so the centre of a turned view
+was drawn 5e-17 of its distance from the origin away from where it was. Below
+1e-16, where quad is for, a view turned by 30 degrees showed another place
+altogether. A quarter turn is now exact. In the ordinary build a turned picture
+is the same but for pixels at the edge of its precision: 52 of the 64 examples
+with an angle are unchanged, the rest move scattered pixels where the detail
+is finer than the arithmetic.
+
 ## The same picture with any number of threads
 
 A picture used to come out a few pixels different, now and then, when it was
@@ -1826,14 +1859,14 @@ runtime so it runs on a machine without Qt.
 
     ctest --test-dir build
 
-349 tests: the formula parser at both precisions, the accuracy of `gamma`,
+351 tests: the formula parser at both precisions, the accuracy of `gamma`,
 `lambertw`, `erf` and `randsc` against exact references where any exist, the
 iteration loops against recorded checksums, the colouring speed functions
 against what they gave before and what they are for, saved positions
 round-tripping and every render exiting cleanly, the overlay save/restore, the
-undo history, the help reference against the parser's own table, and the
-random `poly` of its Utilities tab against the polynomial written out term by
-term.
+undo history, the View dialog's turning and centring, the help reference
+against the parser's own table, and the random `poly` of its Utilities tab
+against the polynomial written out term by term.
 
 One of them measures speed rather than answers. Timing in nanoseconds would
 assert which machine the suite is running on, so it asserts a ratio instead:

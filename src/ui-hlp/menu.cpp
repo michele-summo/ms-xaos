@@ -155,6 +155,7 @@ void uih_registermenudialogs_i18n(void)
     Register(uih_viewdialog);
     DIALOGCOORD_I(TR("Dialog", "Center:"), 0, 0);
     DIALOGFLOAT_I(TR("Dialog", "Radius:"), 1);
+    DIALOGVIEWTOOLS_I(2);
     DIALOGFLOAT_I(TR("Dialog", "Angle:"), 0);
     NULL_I();
 

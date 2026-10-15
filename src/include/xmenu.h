@@ -29,6 +29,12 @@ typedef struct dialog {
      * the field keeps its place in the command and its value. */
     int shownwith;
     int shownat;
+    /* Under this field, an angle, the View dialog's tools for it: turning it
+     * by slices of a full turn, and centering the coordinate that many fields
+     * before it on an axis of the picture as the angle turns it. They only
+     * fill in the two fields, and take no parameter, as a rule takes none.
+     * Nought, as every field is unless told, has no tools. */
+    int viewtools;
 } menudialog;
 
 typedef char *(*tokenfunc)(struct uih_context *c);
@@ -196,6 +202,11 @@ typedef char *(*tokenfunc)(struct uih_context *c);
 
 /* A rule above the field defined next; see menudialog's separated. */
 #define DIALOGRULE_I()                                                             menudialogs_i18n[no_menudialogs_i18n].separated = 1;
+
+/* The View dialog's tools under the angle defined next, the center being
+ * _back fields before it; see menudialog's viewtools. */
+#define DIALOGVIEWTOOLS_I(_back)                                               \
+    menudialogs_i18n[no_menudialogs_i18n].viewtools = _back;
 
 #define NULL_I()                                                               \
     menudialogs_i18n[no_menudialogs_i18n].question = NULL;                     \
