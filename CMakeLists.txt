@@ -59,17 +59,6 @@
 #   building it, or -DDEEPZOOM=ON to make the main binary quad instead, in
 #   which case no second one is built.
 #
-# * Alternatively, it is possible to build XaoS with the OpenGL driver. For this, you may need
-#   additional libraries:
-#
-#   - freeglut3-dev
-#
-#   Add
-#
-#   -DOPENGL=ON
-#
-#   on the cmake command line to enable the driver.
-#
 # Notes if you use Qt Creator to build XaoS via cmake:
 #
 # * You may get an error like 'No CMake configuration for build type "Debug" found.'
@@ -102,7 +91,6 @@ project(XaoS)
 option(DEEPZOOM "Build the XaoS binary itself at 128-bit precision" OFF)
 option(DIAG "Also build XaoS-diag, which reports overlay/calculation ordering" OFF)
 option(QUAD "Also build a separate XaoS-quad binary at 128-bit precision" ON)
-option(OPENGL "Use OpenGL" OFF)
 
 # 128-bit arithmetic is __float128 from libquadmath, a GCC extension. Clang on
 # macOS does not provide it, so the quad binary is only offered where it
@@ -137,10 +125,6 @@ else()
    set(XAOS_EXTRA_PRECISIONS "")
 endif()
 
-if(OPENGL)
-   add_definitions(-DUSE_OPENGL)
-endif(OPENGL)
-
 # general definitions
 add_definitions(-DUSE_SFFE -DSFFE_CMPLX_GSL)
 
@@ -163,13 +147,6 @@ set(CMAKE_AUTORCC ON)
 # look for Qt6
 find_package(QT NAMES Qt6 COMPONENTS Widgets PrintSupport REQUIRED)
 find_package(Qt6 COMPONENTS Widgets PrintSupport REQUIRED)
-
-if(OPENGL)
-   find_package(QT NAMES Qt6 COMPONENTS OpenGL OpenGLWidgets REQUIRED)
-   find_package(Qt6 COMPONENTS OpenGL OpenGLWidgets REQUIRED)
-   find_package(GLUT REQUIRED)
-   find_package(OpenGL REQUIRED)
-endif(OPENGL)
 
 # OS specific stuff
 # on macOS the QT libraries are usually not installed into the system library folders
@@ -252,9 +229,6 @@ else()
        if(precision STREQUAL "USE_FLOAT128")
           target_link_libraries(${target} quadmath)
        endif()
-       if(OPENGL)
-          target_link_libraries(${target} Qt6::OpenGL Qt6::OpenGLWidgets)
-       endif(OPENGL)
     endfunction()
 
     xaos_add_binary(XaoS ${XAOS_PRECISION})
@@ -363,9 +337,6 @@ if(EMSCRIPTEN)
    if(XAOS_PRECISION STREQUAL "USE_FLOAT128")
       target_link_libraries(xaos PUBLIC quadmath)
    endif()
-   if(OPENGL)
-      target_link_libraries(xaos PUBLIC Qt6::OpenGL Qt6::OpenGLWidgets)
-   endif(OPENGL)
 endif(EMSCRIPTEN)
 
 if (EMSCRIPTEN)

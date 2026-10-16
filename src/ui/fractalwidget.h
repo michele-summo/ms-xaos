@@ -3,17 +3,10 @@
 
 #include "config.h"
 #include <QWidget>
-#ifdef USE_OPENGL
-#include <QOpenGLWidget>
-#endif
 class QImage;
 class QPoint;
 
-#ifdef USE_OPENGL
-class FractalWidget : public QOpenGLWidget
-#else
 class FractalWidget : public QWidget
-#endif
 {
     Q_OBJECT
   private:
@@ -34,12 +27,7 @@ class FractalWidget : public QWidget
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
     void wheelEvent(QWheelEvent *event);
-#ifdef USE_OPENGL
-    void paintGL();
-    void resizeGL(int w, int h);
-#else
     void paintEvent(QPaintEvent *event);
-#endif
   public:
     FractalWidget();
     QSize sizeHint() const;

@@ -1850,7 +1850,6 @@ Both binaries land in `bin/`. Options:
 | `-DQUAD=OFF` | skip the second binary |
 | `-DDEEPZOOM=ON` | make the main binary quad, and build no second one |
 | `-DDIAG=ON` | also build `XaoS-diag`, which reports overlay and calculation ordering to `xaos-diag.txt` |
-| `-DOPENGL=ON` | the OpenGL driver |
 
 `cmake --build build --target deploy` fills `bin/` with the Qt and compiler
 runtime so it runs on a machine without Qt.

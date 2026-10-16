@@ -339,10 +339,6 @@ static void ui_about(struct uih_context *uih)
             + ", quad precision"
 #endif
 
-#ifdef USE_OPENGL
-            + ", OpenGL"
-#endif
-
             ")"
             "<br>"
             "Fast interactive real-time fractal zoomer/morpher<br>"

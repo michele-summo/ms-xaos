@@ -61,9 +61,7 @@ class MainWindow : public QMainWindow
     bool eventFilter(QObject *object, QEvent *event) override;
     void resizeEvent(QResizeEvent *event);
 #ifndef Q_OS_MACOS
-#ifndef USE_OPENGL
     void mouseMoveEvent(QMouseEvent *event);
-#endif
 #endif
 private slots:
     void activateMenuItem();
@@ -76,10 +74,8 @@ private slots:
     ~MainWindow();
 
 #ifndef Q_OS_MACOS
-#ifndef USE_OPENGL
     void showFullScreen();
     void showNormal();
-#endif
 #endif
     void pleaseWait();
     int showProgress(int display, const char *text, float percent);

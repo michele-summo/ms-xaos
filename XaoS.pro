@@ -19,11 +19,6 @@ macx {
     TARGET = xaos
 }
 
-contains(DEFINES, USE_OPENGL) {
-    QT += opengl
-    win32:LIBS += -lopengl32
-}
-
 # qmake builds one binary per invocation, so the quad version is a separate
 # build configuration rather than a second target: add "quad" to CONFIG (in Qt
 # Creator, Projects -> Build Steps -> Additional arguments: CONFIG+=quad) and

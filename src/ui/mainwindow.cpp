@@ -1864,7 +1864,6 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
 }
 
 #ifndef Q_OS_MACOS
-#ifndef USE_OPENGL
 
 void MainWindow::showFullScreen()
 {
@@ -1889,15 +1888,12 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event)
     }
 }
 #endif
-#endif
 
 void MainWindow::resizeEvent(QResizeEvent * /*event*/)
 {
 #ifndef Q_OS_MACOS
-#ifndef USE_OPENGL
     if (isFullScreen())
         menuBarRef->resize(size().width(), menuBarRef->sizeHint().height());
-#endif
 #endif
     shouldResize = true;
 }
