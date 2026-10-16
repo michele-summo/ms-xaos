@@ -456,7 +456,6 @@ static void ui_unregistermenus(void)
     menu_delete(menuitems_i18n, ui_no_menuitems_i18n);
 }
 
-QTranslator qtTranslator;
 QTranslator qtBaseTranslator;
 QTranslator xaosTranslator;
 char languageSetting[6] = "";
@@ -496,18 +495,20 @@ void setLanguage(const char *lang) {
     } else {
         languageSysDefault = false;
     }
-    qApp->removeTranslator(&qtTranslator);
+    qApp->removeTranslator(&qtBaseTranslator);
     qApp->removeTranslator(&xaosTranslator);
     QString language = QString(lang);
     if (language.isNull() || languageSysDefault) {
         language = QLocale::system().name();
     }
     strcpy(languageSetting, language.toStdString().c_str());
-    success = qtTranslator.load("qt_" + language,
-                      QLibraryInfo::path(QLibraryInfo::TranslationsPath));
-    qApp->installTranslator(&qtTranslator);
-    success = qtBaseTranslator.load(QLocale::system(),
-                          QStringLiteral("qtbase_"));
+    /* Qt's own texts -- OK and Cancel, the file and colour dialogs -- from
+     * the translations built in beside XaoS's own (i18n/qt), in the language
+     * chosen. They were looked for where Qt is installed, which a machine
+     * running XaoS out of its folder has not got, and in the system's
+     * language whatever had been chosen. QTranslator drops the country when
+     * there is no file for it, so it_IT finds qtbase_it. */
+    success = qtBaseTranslator.load("qtbase_" + language, ":/i18n/qt");
     qApp->installTranslator(&qtBaseTranslator);
     success = xaosTranslator.load("XaoS_" + language, ":/i18n");
     qApp->installTranslator(&xaosTranslator);

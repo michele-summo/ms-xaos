@@ -57,6 +57,9 @@ object_script.*
 moc_*
 qrc_*
 *.qm
+# Qt's own translations, copied from Qt and embedded through XaoS.qrc: the
+# build does not make them, so they are kept.
+!i18n/qt/*.qm
 
 # Mac stuff
 .DS_Store

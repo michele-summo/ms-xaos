@@ -34,6 +34,17 @@ program: some of those words are also keywords of a saved position. The
 choices of every dialog are shown through `TR("Dialog", ...)`, so a choice
 list that is marked is translated and one that is not stays English.
 
+## Qt's own texts
+
+OK, Cancel and the file and colour dialogs come from Qt's translations, not
+XaoS's. The `qt/` folder holds `qtbase_LL.qm` for the languages XaoS has
+complete translations for (German, Spanish, French, Italian, Portuguese,
+Russian), copied from the Qt 6.8.0 installation, and XaoS.qrc builds them in.
+There is no European Portuguese one in Qt, so `qtbase_pt.qm` is the
+Brazilian `qtbase_pt_BR.qm`. They are kept in the repository, past the
+`*.qm` of .gitignore, because the build does not make them and not every
+Qt installation carries them.
+
 ## Adding a new language
 
 To add a new translation, do the following:
