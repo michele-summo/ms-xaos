@@ -57,7 +57,7 @@ static struct filter *getinstance(const struct filteraction *a)
     struct filter *f = createfilter(a);
     struct intdata *i = (struct intdata *)calloc(1, sizeof(*i));
     f->data = i;
-    f->name = "Interlace filter";
+    f->name = QT_TRANSLATE_NOOP("Filter", "Interlace filter");
     return (f);
 }
 

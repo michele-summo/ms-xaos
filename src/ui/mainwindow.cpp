@@ -1391,11 +1391,11 @@ void MainWindow::showDialog(const char *name)
 
                 // Add them to Layout
                 QFormLayout *formLayout = new QFormLayout();
-                formLayout->addRow("Algorithm", algono);
+                formLayout->addRow(TR("Dialog", "Algorithm"), algono);
                 formLayout->addWidget(algoslider);
-                formLayout->addRow("Seed", seedno);
+                formLayout->addRow(TR("Dialog", "Seed"), seedno);
                 formLayout->addWidget(seedslider);
-                formLayout->addRow("Shift", shiftno);
+                formLayout->addRow(TR("Dialog", "Shift"), shiftno);
                 formLayout->addWidget(shiftslider);
 
                 img = new QLabel(qDialog);
@@ -1625,7 +1625,7 @@ void MainWindow::showDialog(const char *name)
 
                 const char **str = (const char **)dialog->defstr;
                 for (int j = 0; str[j] != NULL; j++)
-                    combo->addItem(str[j]);
+                    combo->addItem(TR("Dialog", str[j]));
                 combo->setCurrentIndex(dialog->defint);
                 QFormLayout *formLayout = new QFormLayout();
                 formLayout->addRow(label, combo);

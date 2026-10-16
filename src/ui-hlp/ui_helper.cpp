@@ -3371,7 +3371,7 @@ void uih_cartesiangrid(uih_context *uih)
             uih_removew(uih, cartesiangridwindow);
             cartesiangridwindow = NULL;
         } else {
-            uih_error(uih, "Cartesian Grid not supported on zoom > 100000x");
+            uih_error(uih, TR("Error", "Cartesian grid not supported on zoom > 100000x"));
         }
     }
 

@@ -1191,13 +1191,18 @@ static void kandinsky_segments(int whitemode, int nsegments)
 }
 
 /* What each is called in the palette dialog, counting from one as the dialog
- * does. */
+ * does. The dialogs translate the name in the "Palette" context. */
 const char *palette_algorithm_name(int algorithm)
 {
     static const char *const names[PALGORITHMS] = {
-        "Dark and colour", "Black, colour, white", "Warm over dark green",
-        "Smog", "Warm over night", "Favoured pairs", "Random colours",
-        "Kandinsky"};
+        QT_TRANSLATE_NOOP("Palette", "Dark and colour"),
+        QT_TRANSLATE_NOOP("Palette", "Black, colour, white"),
+        QT_TRANSLATE_NOOP("Palette", "Warm over dark green"),
+        QT_TRANSLATE_NOOP("Palette", "Smog"),
+        QT_TRANSLATE_NOOP("Palette", "Warm over night"),
+        QT_TRANSLATE_NOOP("Palette", "Favoured pairs"),
+        QT_TRANSLATE_NOOP("Palette", "Random colours"),
+        QT_TRANSLATE_NOOP("Palette", "Kandinsky")};
     if (algorithm < 1 || algorithm > PALGORITHMS)
         return "";
     return names[algorithm - 1];

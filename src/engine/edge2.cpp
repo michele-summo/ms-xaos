@@ -87,7 +87,7 @@ static int doit(struct filter *f, int flags, int time)
     return val;
 }
 
-const struct filteraction edge2_filter = {"Edge detection2",
+const struct filteraction edge2_filter = {QT_TRANSLATE_NOOP("Filter", "Edge detection2"),
                                           "edge2",
                                           0,
                                           getinstance,

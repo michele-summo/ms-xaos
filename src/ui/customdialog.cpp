@@ -192,7 +192,7 @@ CustomDialog::CustomDialog(struct uih_context *uih, const menuitem *item,
 
             const char **str = (const char **)dialog[i].defstr;
             for (int j = 0; str[j] != NULL; j++)
-                combo->addItem(str[j]);
+                combo->addItem(TR("Dialog", str[j]));
             combo->setCurrentIndex(dialog[i].defint);
 
             formLayout->addRow(label, combo);
@@ -249,11 +249,11 @@ CustomDialog::CustomDialog(struct uih_context *uih, const menuitem *item,
             shiftslider->setValue(shiftno->value());
 
             // Add them to Layout
-            formLayout->addRow("Algorithm", algono);
+            formLayout->addRow(TR("Dialog", "Algorithm"), algono);
             formLayout->addWidget(algoslider);
-            formLayout->addRow("Seed", seedno);
+            formLayout->addRow(TR("Dialog", "Seed"), seedno);
             formLayout->addWidget(seedslider);
-            formLayout->addRow("Shift", shiftno);
+            formLayout->addRow(TR("Dialog", "Shift"), shiftno);
             formLayout->addWidget(shiftslider);
 
             img = new QLabel(this);

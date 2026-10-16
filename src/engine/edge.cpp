@@ -56,7 +56,7 @@ static int initialize(struct filter *f, struct initdata *i)
 static struct filter *getinstance(const struct filteraction *a)
 {
     struct filter *f = createfilter(a);
-    f->name = "Edge detection";
+    f->name = QT_TRANSLATE_NOOP("Filter", "Edge detection");
     return (f);
 }
 

@@ -121,9 +121,9 @@ const char *const tcolorname[] = {
     "abs(im*cim) abs(re*cre) abs(re*cim)",
     "abs(re*im-csqr) abs(re^2-csqr) abs(im^2-csqr)",
     "angle angle2 angle",
-    "Disable truecolor colouring",
-    "simple red (for education purposes)",
-    "simple blue (for education purposes)",
+    QT_TRANSLATE_NOOP("Menu", "Disable truecolor colouring"),
+    QT_TRANSLATE_NOOP("Menu", "simple red (for education purposes)"),
+    QT_TRANSLATE_NOOP("Menu", "simple blue (for education purposes)"),
     NULL};
 
 const char *const colorfun[] = {

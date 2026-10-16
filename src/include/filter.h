@@ -2,6 +2,14 @@
 #define IMAGE_H
 #include "config.h"
 
+/* Marks a text for lupdate where it is written -- a filter's name, which
+ * the Filters menu translates when it is built. Qt defines it as the text
+ * itself, and so does this, for the engine, which is compiled without
+ * Qt. */
+#ifndef QT_TRANSLATE_NOOP
+#define QT_TRANSLATE_NOOP(scope, x) x
+#endif
+
 typedef unsigned char pixel_t;
 typedef unsigned char
     rgb_t[4]; /*4 is better than 3 - makes multiplying easier */

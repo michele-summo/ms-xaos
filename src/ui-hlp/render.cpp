@@ -332,7 +332,7 @@ int uih_renderanimation(struct uih_context *gc1, const char *basename,
               link_target = s;
             if (symlink(link_target, t) != 0) {
                 if (gc)
-                    uih_error(gc, "Error creating symlink.");
+                    uih_error(gc, TR("Error", "Error creating symlink."));
                 else
                     printf("Error creating symlink.");
             }

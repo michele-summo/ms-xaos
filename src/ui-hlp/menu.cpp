@@ -37,13 +37,23 @@
 
 const static char *const morphstypes[] = {"view", "julia", "angle", "line"};
 
-static const char *const imgtypes[] = {"Truecolor", "256 colors", NULL};
+/* The choices of a dialog are shown translated in the "Dialog" context and
+ * stay what they are here, since a saved position names some of them. */
+static const char *const imgtypes[] = {QT_TRANSLATE_NOOP("Dialog", "Truecolor"),
+                                       QT_TRANSLATE_NOOP("Dialog", "256 colors"),
+                                       NULL};
 
-static const char *const yesno[] = {"No", "Yes", NULL};
+static const char *const yesno[] = {QT_TRANSLATE_NOOP("Dialog", "No"),
+                                    QT_TRANSLATE_NOOP("Dialog", "Yes"), NULL};
 
-const static char *const lineposs[] = {"screen", "scaled", "fractal", NULL};
+const static char *const lineposs[] = {QT_TRANSLATE_NOOP("Dialog", "screen"),
+                                       QT_TRANSLATE_NOOP("Dialog", "scaled"),
+                                       QT_TRANSLATE_NOOP("Dialog", "fractal"),
+                                       NULL};
 
-const char *const uih_colornames[] = {"white", "black", "red", NULL};
+const char *const uih_colornames[] = {QT_TRANSLATE_NOOP("Dialog", "white"),
+                                      QT_TRANSLATE_NOOP("Dialog", "black"),
+                                      QT_TRANSLATE_NOOP("Dialog", "red"), NULL};
 
 /* Registering internationalized dialogs.
  *
@@ -432,7 +442,7 @@ void uih_registermenudialogs_i18n(void)
     NULL_I();
 
     Register(palettegradientdialog);
-    DIALOGPALSLIDER_I("Visualiser:", 0);
+    DIALOGPALSLIDER_I(TR("Dialog", "Visualiser:"), 0);
     NULL_I();
 
     Register(uih_palettecolorsdialog);
@@ -442,7 +452,7 @@ void uih_registermenudialogs_i18n(void)
     NULL_I();
 
     Register(palettepickerdialog);
-    DIALOGPALPICKER_I("Palette:", 0);
+    DIALOGPALPICKER_I(TR("Dialog", "Palette:"), 0);
     NULL_I();
 
     Register(loadgpldialog);
@@ -519,7 +529,7 @@ static void uih_render(struct uih_context *c, dialogparam *d)
 {
 
     if(fnames.size() == 0) {
-        uih_error(c, "No file Selected");
+        uih_error(c, TR("Error", "No file selected"));
         return;
     }
     if (d[2].dint <= 0 || d[2].dint > 4096) {
@@ -583,7 +593,7 @@ static void uih_renderimg(struct uih_context *c, dialogparam *d)
 {
     xio_file f = xio_wopen(".xaos_temp.xpf");
     if(!f) {
-        uih_error(c, "Could not Render Image");
+        uih_error(c, TR("Error", "Could not render the image"));
         return;
     }
 
@@ -1196,7 +1206,7 @@ static void uih_loadgpl(struct uih_context *uih, xio_constpath d)
         QTextStream in(loadfile);
         QStringList colorvals= in.readAll().split("\n");
         if((int)colorvals.size() != 36) {
-            uih_error(uih, "Corrupted palette File");
+            uih_error(uih, TR("Error", "Corrupted palette file"));
             loadfile->close();
             return;
         }
@@ -1210,7 +1220,7 @@ static void uih_loadgpl(struct uih_context *uih, xio_constpath d)
             if (r < 0 || r > 255 ||
                 g < 0 || g > 255 ||
                 b < 0 || b > 255) {
-                uih_error(uih, "RGB out of range. Failed to load palette.");
+                uih_error(uih, TR("Error", "RGB out of range. Failed to load palette."));
                 loadfile->close();
                 return;
             }
@@ -1226,7 +1236,7 @@ static void uih_loadgpl(struct uih_context *uih, xio_constpath d)
         uih_message(uih, s);
 
     } else {
-        uih_error(uih, "Failed to open palette configuration");
+        uih_error(uih, TR("Error", "Failed to open palette configuration"));
         return;
     }
 
@@ -1255,7 +1265,7 @@ static void uih_savegpl(struct uih_context *uih, xio_constpath d) {
             uih_message(uih, s);
 
         } else {
-        uih_error(uih, "Failed to save palette Configuration");
+        uih_error(uih, TR("Error", "Failed to save palette configuration"));
     }
     uih->palettepickerenabled = 1;
 }
@@ -1900,21 +1910,23 @@ void uih_registermenus_i18n(void)
                 UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,                      \
                 uih_setbailoutmode, mode,                                      \
                 uih_selectedbailoutmode)
-    BAILRB("mbailout", "Circle (classic)", "bail0", BAILOUT_CIRCLE);
-    BAILRB("mbailout", "Square", "bail1", BAILOUT_SQUARE);
-    BAILRB("mbailout", "Diamond", "bail2", BAILOUT_DIAMOND);
-    BAILRB("mbailout", "Real axis", "bail3", BAILOUT_REAL);
-    BAILRB("mbailout", "Imaginary axis", "bail4", BAILOUT_IMAG);
-    BAILRB("mbailout", "Both axes", "bail5", BAILOUT_BOTH);
+    /* The names are marked where they are written, since lupdate does not
+     * look through the macro to the TR inside it. */
+    BAILRB("mbailout", QT_TRANSLATE_NOOP("Menu", "Circle (classic)"), "bail0", BAILOUT_CIRCLE);
+    BAILRB("mbailout", QT_TRANSLATE_NOOP("Menu", "Square"), "bail1", BAILOUT_SQUARE);
+    BAILRB("mbailout", QT_TRANSLATE_NOOP("Menu", "Diamond"), "bail2", BAILOUT_DIAMOND);
+    BAILRB("mbailout", QT_TRANSLATE_NOOP("Menu", "Real axis"), "bail3", BAILOUT_REAL);
+    BAILRB("mbailout", QT_TRANSLATE_NOOP("Menu", "Imaginary axis"), "bail4", BAILOUT_IMAG);
+    BAILRB("mbailout", QT_TRANSLATE_NOOP("Menu", "Both axes"), "bail5", BAILOUT_BOTH);
     SUBMENU_I("mbailout", NULL, TR("Menu", "Triangle"), "mbailtri");
     SUBMENU_I("mbailout", NULL, TR("Menu", "Hexagon"), "mbailhex");
-    BAILRB("mbailout", "Octagon", "bail11", BAILOUT_OCTAGON);
-    BAILRB("mbailtri", "0 degrees", "bail6", BAILOUT_TRIANGLE0);
-    BAILRB("mbailtri", "90 degrees", "bail7", BAILOUT_TRIANGLE90);
-    BAILRB("mbailtri", "180 degrees", "bail12", BAILOUT_TRIANGLE180);
-    BAILRB("mbailtri", "-90 degrees", "bail8", BAILOUT_TRIANGLEM90);
-    BAILRB("mbailhex", "0 degrees", "bail9", BAILOUT_HEXAGON0);
-    BAILRB("mbailhex", "90 degrees", "bail10", BAILOUT_HEXAGON90);
+    BAILRB("mbailout", QT_TRANSLATE_NOOP("Menu", "Octagon"), "bail11", BAILOUT_OCTAGON);
+    BAILRB("mbailtri", QT_TRANSLATE_NOOP("Menu", "0 degrees"), "bail6", BAILOUT_TRIANGLE0);
+    BAILRB("mbailtri", QT_TRANSLATE_NOOP("Menu", "90 degrees"), "bail7", BAILOUT_TRIANGLE90);
+    BAILRB("mbailtri", QT_TRANSLATE_NOOP("Menu", "180 degrees"), "bail12", BAILOUT_TRIANGLE180);
+    BAILRB("mbailtri", QT_TRANSLATE_NOOP("Menu", "-90 degrees"), "bail8", BAILOUT_TRIANGLEM90);
+    BAILRB("mbailhex", QT_TRANSLATE_NOOP("Menu", "0 degrees"), "bail9", BAILOUT_HEXAGON0);
+    BAILRB("mbailhex", QT_TRANSLATE_NOOP("Menu", "90 degrees"), "bail10", BAILOUT_HEXAGON90);
 #undef BAILRB
     MENUCDIALOG_I("calc", NULL, TR("Menu", "Newton convergence"), "newtonconvergence",
                   MENUFLAG_INTERRUPT, uih_setnewtonconvergence, uih_getnewtonconvergencedialog);
@@ -2030,29 +2042,33 @@ void uih_registermenus_i18n(void)
     uih_no_menuitems_i18n = no_menuitems_i18n;
 }
 
-static const menuitem menuitems2[] = {
+/* Not const: the names are translated when the table is registered, in
+ * uih_registermenus, which runs after the language has been set. They
+ * were TR() here, and an initializer runs before main, when there is no
+ * translation yet -- and qt_gettext kept the English it got. */
+static menuitem menuitems2[] = {
     /* Above the true-colour submenus, as the modes they hold are ordinary
      * palette modes and true colour is a different thing entirely. */
-    SUBMENU("mincoloring", NULL, "Other coloring mode", "mothincoloring"),
-    SUBMENU("moutcoloring", NULL, "Other coloring mode", "mothoutcoloring"),
-    SUBMENU("mincoloring", NULL, "True-color incoloring mode", "tincoloring"),
-    SUBMENU("moutcoloring", NULL, "True-color outcoloring mode",
+    SUBMENU("mincoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Other coloring mode"), "mothincoloring"),
+    SUBMENU("moutcoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Other coloring mode"), "mothoutcoloring"),
+    SUBMENU("mincoloring", NULL, QT_TRANSLATE_NOOP("Menu", "True-color incoloring mode"), "tincoloring"),
+    SUBMENU("moutcoloring", NULL, QT_TRANSLATE_NOOP("Menu", "True-color outcoloring mode"),
             "toutcoloring"),
-    MENUCDIALOG("mincoloring", NULL, TR("Menu", "Coloring speed"), "mincolorspeed",
+    MENUCDIALOG("mincoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Coloring speed"), "mincolorspeed",
                 MENUFLAG_INTERRUPT,
                 uih_setincolorspeed, uih_getincolorspeeddialog),
-    MENUCDIALOG("moutcoloring", NULL, TR("Menu", "Coloring speed"), "moutcolorspeed",
+    MENUCDIALOG("moutcoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Coloring speed"), "moutcolorspeed",
                 MENUFLAG_INTERRUPT,
                 uih_setoutcolorspeed, uih_getoutcolorspeeddialog),
-    MENUCDIALOG("mincoloring", NULL, TR("Menu", "Coloring shift"), "mincolorshift",
+    MENUCDIALOG("mincoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Coloring shift"), "mincolorshift",
                 MENUFLAG_INTERRUPT,
                 uih_setincolorshift, uih_getincolorshiftdialog),
-    MENUCDIALOG("moutcoloring", NULL, TR("Menu", "Coloring shift"), "moutcolorshift",
+    MENUCDIALOG("moutcoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Coloring shift"), "moutcolorshift",
                 MENUFLAG_INTERRUPT,
                 uih_setoutcolorshift, uih_getoutcolorshiftdialog),
-    SUBMENU("mincoloring", NULL, "Coloring speed functions",
+    SUBMENU("mincoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Coloring speed functions"),
             "mincolorfun"),
-    SUBMENU("moutcoloring", NULL, "Coloring speed functions",
+    SUBMENU("moutcoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Coloring speed functions"),
             "moutcolorfun")};
 
 static int uih_selectedformula(struct uih_context *c, int n)
@@ -2191,7 +2207,13 @@ void uih_registermenus(void)
                             uih_setincoloringmode, uih_selectedincoloring,
                             "in");
 
-    menu_genernumbered(TCOLOR - 1, "tincoloring", tcolorname, NULL, MENU_INT,
+    /* The entries that are words rather than formulas are marked in
+     * formulas.cpp; the rest find no translation and stay as they are. */
+    static const char *tcolornames[TCOLOR];
+    for (i = 0; i < TCOLOR - 1; i++)
+        tcolornames[i] = TR("Menu", tcolorname[i]);
+    tcolornames[TCOLOR - 1] = NULL;
+    menu_genernumbered(TCOLOR - 1, "tincoloring", tcolornames, NULL, MENU_INT,
                        UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
                        uih_setintruecolor, uih_selectedintcoloring, "int");
 
@@ -2206,7 +2228,7 @@ void uih_registermenus(void)
                             uih_setoutcoloringmode, uih_selectedoutcoloring,
                             "out");
 
-    menu_genernumbered(TCOLOR - 1, "toutcoloring", tcolorname, NULL, MENU_INT,
+    menu_genernumbered(TCOLOR - 1, "toutcoloring", tcolornames, NULL, MENU_INT,
                        UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
                        uih_setouttruecolor, uih_selectedouttcoloring, "outt");
 
@@ -2381,7 +2403,7 @@ void uih_registermenus(void)
         item[i].flags =
             MENUFLAG_CHECKBOX | MENUFLAG_INTERRUPT | MENUFLAG_NOPLAY;
         item[i].iparam = i;
-        item[i].name = uih_filters[i]->name;
+        item[i].name = TR("Filter", uih_filters[i]->name);
         item[i].shortname = uih_filters[i]->shortname;
         if (!strcmp(item[i].shortname, "palette"))
             item[i].shortname = "palettef";
@@ -2391,6 +2413,8 @@ void uih_registermenus(void)
     }
     menu_add(item, uih_nfilters);
 
+    for (i = 0; i < (int)NITEMS(menuitems2); i++)
+        menuitems2[i].name = TR("Menu", menuitems2[i].name);
     menu_add(menuitems2, NITEMS(menuitems2));
 }
 

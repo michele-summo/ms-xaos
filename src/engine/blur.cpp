@@ -138,7 +138,7 @@ static struct filter *getinstance(const struct filteraction *a)
     i->table = NULL;
     f->childimage = NULL;
     f->data = i;
-    f->name = "Motionblur";
+    f->name = QT_TRANSLATE_NOOP("Filter", "Motionblur");
     return (f);
 }
 

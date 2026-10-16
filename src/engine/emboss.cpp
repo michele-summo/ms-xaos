@@ -98,7 +98,7 @@ static struct filter *getinstance(const struct filteraction *a)
         createpalette(0, 256, GRAYSCALE, 0, 256, NULL, NULL, NULL, NULL, NULL);
     f->childimage = NULL;
     f->data = i;
-    f->name = "Emboss";
+    f->name = QT_TRANSLATE_NOOP("Filter", "Emboss");
     return (f);
 }
 

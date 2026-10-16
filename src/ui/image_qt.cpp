@@ -4,6 +4,7 @@
 #include "grlib.h"
 #include "xio.h"
 #include "misc-f.h"
+#include "i18n.h"
 
 void rgbtohex (int r, int g, int b, char color[6]) {
     QColor rgb(r, g, b);
@@ -184,8 +185,8 @@ void overlayGrid(uih_context *c, int fgcolor)
     double currzoom =
         (c->fcontext->currentformula->v.rr) / (c->fcontext->s.rr);
     if(currzoom > 100000){
-        uih_error(c, "Cartesian Grid not supported on zoom > 100000x");
-        uih_message(c, "Re-enable after zooming out");
+        uih_error(c, TR("Error", "Cartesian grid not supported on zoom > 100000x"));
+        uih_message(c, TR("Message", "Re-enable after zooming out"));
         uih_cartesiangrid(c);
     }
 

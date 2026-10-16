@@ -71,7 +71,7 @@ static struct filter *getinstance(const struct filteraction *a)
     i->palette = createpalette(0, 65536, IMAGETYPE, 0, 65536, NULL, NULL, NULL,
                                NULL, NULL);
     f->data = i;
-    f->name = "Random dot stereogram";
+    f->name = QT_TRANSLATE_NOOP("Filter", "Random dot stereogram");
     return (f);
 }
 

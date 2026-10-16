@@ -14,6 +14,15 @@
  * described here and nothing is described that the parser does not have.
  */
 
+/* The descriptions and section headings are marked for lupdate in the
+ * "FormulaHelp" context, and the dialog translates them when it shows them;
+ * names and argument lists are syntax and stay as written. Qt defines the
+ * marker as the text itself, and so does this, for the test that links the
+ * tables with no Qt. */
+#ifndef QT_TRANSLATE_NOOP
+#define QT_TRANSLATE_NOOP(scope, x) x
+#endif
+
 struct formula_help_row {
     const char *name;    /* NULL on a section heading */
     /* What the call takes, in order: "a; b" for two, "seed; size" where the

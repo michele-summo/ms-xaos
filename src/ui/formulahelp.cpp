@@ -147,7 +147,7 @@ static QWidget *buildTable(const struct formula_help_row *rows,
          r++, row++) {
         if (r->section != NULL) {
             QTableWidgetItem *item =
-                new QTableWidgetItem(QObject::tr(r->section));
+                new QTableWidgetItem(QCoreApplication::translate("FormulaHelp", r->section));
             QFont bold = item->font();
             bold.setBold(true);
             item->setFont(bold);
@@ -166,7 +166,7 @@ static QWidget *buildTable(const struct formula_help_row *rows,
             table->setItem(row, 1, args);
         }
         table->setItem(row, columns - 1,
-                       new QTableWidgetItem(QObject::tr(r->summary)));
+                       new QTableWidgetItem(QCoreApplication::translate("FormulaHelp", r->summary)));
     }
     table->resizeRowsToContents();
     return table;
@@ -221,7 +221,8 @@ static QWidget *buildTilings()
          * icon with the highlight, and the colours of the tiling with it. */
         QIcon icon(picture);
         icon.addPixmap(picture, QIcon::Selected);
-        const QString what = QObject::tr(rows[k - 1].summary);
+        const QString what =
+            QCoreApplication::translate("FormulaHelp", rows[k - 1].summary);
         QListWidgetItem *item = new QListWidgetItem(
             icon, QString("%1  %2").arg(k).arg(what), list);
         item->setData(Qt::UserRole, k);

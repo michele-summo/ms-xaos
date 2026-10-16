@@ -259,5 +259,5 @@ static void convertdown(struct filter *f, int *x, int *y)
 }
 
 const struct filteraction threed_filter = {
-    "Pseudo 3d", "threed",   0,         getinstance, destroyinstance, doit,
+    QT_TRANSLATE_NOOP("Filter", "Pseudo 3d"), "threed",   0,         getinstance, destroyinstance, doit,
     requirement, initialize, convertup, convertdown, myremove};

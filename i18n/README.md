@@ -12,11 +12,27 @@ please run the following command from the XaoS top level directory to update the
 .ts files with changes from the source code:
 
 ```
-lupdate -tr-function-alias QT_TRANSLATE_NOOP=TR XaoS.pro
+lupdate -tr-function-alias QT_TRANSLATE_NOOP+=TR src -ts i18n/XaoS_*.ts
 ```
 
 The function alias is very important so Qt can find the TR macros used
-by XaoS.
+by XaoS. It is `+=`, not `=`, so that `QT_TRANSLATE_NOOP` itself is still
+found: the user formula reference (Help -> User formula reference) marks its
+descriptions and section headings with it, in the `FormulaHelp` context, in
+`src/ui/formulahelp_data.cpp`. Function names and argument lists there are
+syntax and are not translated.
+
+The sources are scanned directly rather than through XaoS.pro, whose file
+lists do not name every source the CMake build compiles.
+
+lupdate finds only a text written as a literal inside the call. A text that
+reaches the screen through a variable, a table or a macro argument -- the
+names of the palette algorithms, the bailout shapes passed to a macro, the
+choices of a dialog -- is marked with `QT_TRANSLATE_NOOP` where it is
+written, in the context that translates it, and left as it is in the
+program: some of those words are also keywords of a saved position. The
+choices of every dialog are shown through `TR("Dialog", ...)`, so a choice
+list that is marked is translated and one that is not stays English.
 
 ## Adding a new language
 
@@ -77,7 +93,8 @@ UIH_LANG_SV to UIH_LANG_LL, accordingly (as defined in step 4).
 ## Testing your changes
 
 After compilation you can try a translation out by starting XaoS
-in the bin folder and change the language in the View menu.
+in the bin folder and change the language in the View menu (View > Set
+Language).
 
 Alternatively, if the option View > Set Language > System default is set, the following command
 can set the language directly (on Linux or Mac):

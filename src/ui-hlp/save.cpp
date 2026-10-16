@@ -11,6 +11,7 @@
 #include "config.h"
 #include "xmenu.h"
 #include "play.h"
+#include "i18n.h"
 
 #ifdef USE_FLOAT128
 #include <quadmath.h>
@@ -23,11 +24,21 @@
 static int first;
 static int changed;
 static int last;
-const char *const save_fastmode[] = {"zero", "never",   "animation",
-                                     "new",  "always", NULL};
+/* Keywords of a saved position, and the choices of their dialogs, which show
+ * them translated in the "Dialog" context. */
+const char *const save_fastmode[] = {QT_TRANSLATE_NOOP("Dialog", "zero"),
+                                     QT_TRANSLATE_NOOP("Dialog", "never"),
+                                     QT_TRANSLATE_NOOP("Dialog", "animation"),
+                                     QT_TRANSLATE_NOOP("Dialog", "new"),
+                                     QT_TRANSLATE_NOOP("Dialog", "always"),
+                                     NULL};
 
-const char *const xtextposnames[] = {"left", "center", "right", NULL};
-const char *const ytextposnames[] = {"top", "middle", "bottom", NULL};
+const char *const xtextposnames[] = {QT_TRANSLATE_NOOP("Dialog", "left"),
+                                     QT_TRANSLATE_NOOP("Dialog", "center"),
+                                     QT_TRANSLATE_NOOP("Dialog", "right"), NULL};
+const char *const ytextposnames[] = {QT_TRANSLATE_NOOP("Dialog", "top"),
+                                     QT_TRANSLATE_NOOP("Dialog", "middle"),
+                                     QT_TRANSLATE_NOOP("Dialog", "bottom"), NULL};
 
 static void outputerror(struct uih_context *uih)
 {
@@ -759,19 +770,19 @@ int uih_save_enable(struct uih_context *uih, xio_file f, int mode)
     int i;
     last = 0;
     if (uih->save) {
-        uih_error(uih, "Recording is already enabled");
+        uih_error(uih, TR("Error", "Recording is already enabled"));
         return 0;
     }
     s = (struct uih_savedcontext *)calloc(1, sizeof(*s));
     if (f == NULL || s == NULL) {
-        uih_error(uih, "File could not be opended or out of memory");
+        uih_error(uih, TR("Error", "File could not be opened or out of memory"));
         return 0;
     }
     uih->savec = s;
     s->fcontext = make_fractalc(1, uih->image->pixelwidth * uih->image->width,
                                 uih->image->pixelheight * uih->image->height);
     if (s->fcontext == NULL) {
-        uih_error(uih, "File could not be opended or out of memory");
+        uih_error(uih, TR("Error", "File could not be opened or out of memory"));
         return 0;
     }
     s->mode = mode;

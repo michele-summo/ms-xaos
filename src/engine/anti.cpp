@@ -101,7 +101,7 @@ static struct filter *getinstance(const struct filteraction *a)
     struct antidata *i = (struct antidata *)calloc(1, sizeof(*i));
     f->childimage = NULL;
     f->data = i;
-    f->name = "Antialiasing";
+    f->name = QT_TRANSLATE_NOOP("Filter", "Antialiasing");
     return (f);
 }
 

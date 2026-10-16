@@ -85,7 +85,7 @@ static struct filter *getinstance(const struct filteraction *a)
         createpalette(0, 256, C256, 0, 256, NULL, mysetcolor, NULL, NULL, NULL);
     f->childimage = NULL;
     f->data = i;
-    f->name = "Palette emulator";
+    f->name = QT_TRANSLATE_NOOP("Filter", "Palette emulator");
     return (f);
 }
 
