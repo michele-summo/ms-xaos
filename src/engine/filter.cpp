@@ -73,20 +73,6 @@ int initqueue(struct queue *q)
     return 1;
 }
 
-int reqimage(struct filter *f, struct requirements *req, int supportedmask,
-             int flags)
-{
-    f->req = *req;
-    req->supportedmask &= supportedmask;
-    if (!req->supportedmask)
-        return 0;
-    if (flags & TOUCHIMAGE && req->flags & IMAGEDATA) {
-        req->flags = flags;
-    } else
-        req->flags &= flags;
-    return 1;
-}
-
 /* An function helping to filter create new image.
  * It should be called by filter in initialization. Filter passes
  * width, height, pixelwidth, pixelheight

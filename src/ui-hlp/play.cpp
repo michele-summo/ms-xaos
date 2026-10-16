@@ -810,8 +810,6 @@ void uih_playjulia(struct uih_context *uih, int julia)
     }
 }
 
-void uih_playcalculate(struct uih_context *uih) { uih_newimage(uih); }
-
 void uih_playzoom(struct uih_context *uih) { uih->zoomactive = 1; }
 
 void uih_playunzoom(struct uih_context *uih) { uih->zoomactive = -1; }

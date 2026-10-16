@@ -38,7 +38,6 @@
 #define TUTORIALPATH DATAPATH "/tutorial/"
 #define EXAMPLESPATH DATAPATH "/examples/"
 #define CATALOGSPATH DATAPATH "/catalogs/"
-#define HELPPATH DATAPATH "/help/xaos.hlp"
 
 // Config file name
 #ifdef _WIN32

@@ -40,65 +40,6 @@ char *xio_fixpath(const char *c)
     return mystrdup(c);
 }
 
-int xio_getfiles(xio_constpath path1, char ***names, char ***dirs, int *nnames2,
-                 int *ndirs2)
-{
-    char *path = xio_fixpath(path1);
-    int maxnames = 200, maxdirs = 200;
-    int nnames = 0, ndirs = 0;
-    DIR *dir = opendir(path);
-    struct stat buf;
-    char buff[4096];
-    int pathlen;
-    struct dirent *e;
-    if (dir == NULL)
-        return 0;
-    *nnames2 = 0;
-    *ndirs2 = 0;
-    e = readdir(dir);
-    strcpy(buff, path);
-    pathlen = (int)strlen(path);
-    if (buff[pathlen - 1] != XIO_PATHSEP)
-        buff[pathlen] = XIO_PATHSEP;
-    else
-        pathlen--;
-    *names = (char **)malloc(maxnames * sizeof(**names));
-    *dirs = (char **)malloc(maxdirs * sizeof(**dirs));
-    free(path);
-    while (e != NULL) {
-        char *n = mystrdup(e->d_name);
-        strcpy(buff + pathlen + 1, e->d_name);
-        stat(buff, &buf);
-        if (S_ISDIR(buf.st_mode)) {
-            if (ndirs == maxdirs)
-                maxdirs *= 2,
-                    *dirs = (char **)realloc(*dirs, maxdirs * sizeof(**dirs));
-            (*dirs)[ndirs] = n;
-            ndirs++;
-        } else {
-            if (nnames == maxnames)
-                maxnames *= 2,
-                    *names =
-                        (char **)realloc(*names, maxnames * sizeof(**names));
-            (*names)[nnames] = n;
-            nnames++;
-        }
-        e = readdir(dir);
-    }
-    if (nnames)
-        *names = (char **)realloc(*names, nnames * sizeof(**names));
-    else
-        free(*names), *names = NULL;
-    if (ndirs)
-        *dirs = (char **)realloc(*dirs, ndirs * sizeof(**dirs));
-    else
-        free(*dirs), *dirs = NULL;
-    *nnames2 = nnames;
-    *ndirs2 = ndirs;
-    closedir(dir);
-    return 1;
-}
-
 xio_path xio_getdirectory(xio_constpath filename)
 {
     int i;
@@ -286,32 +227,6 @@ xio_file xio_getcatalog(const char *name)
     return (f);
 }
 
-xio_file xio_gethelp(void)
-{
-    static const xio_constpath paths[] = {
-        /*Where help should be located? */
-        HELPPATH, /*Data path when XaoS is properly installed */
-        "\01" XIO_PATHSEPSTR "help" XIO_PATHSEPSTR "xaos.hlp",
-        "\01" XIO_PATHSEPSTR ".." XIO_PATHSEPSTR "help" XIO_PATHSEPSTR
-        "xaos.hlp",
-        "." XIO_PATHSEPSTR "help" XIO_PATHSEPSTR "xaos.hlp",
-        /*XaoS was started from root of source tree */
-        ".." XIO_PATHSEPSTR "help" XIO_PATHSEPSTR "xaos.hlp",
-        /*XaoS was started from bin directory in source tree */
-        "." XIO_PATHSEPSTR "xaos.hlp",
-        /*Oops...it's not. Try current directory */
-    };
-    int i;
-    xio_file f = XIO_FAILED;
-    for (i = 0; i < (int)(sizeof(paths) / sizeof(char *)) && f == XIO_FAILED;
-         i++) {
-        char *p = xio_fixpath(paths[i]);
-        f = xio_ropen(p);
-        free(p);
-    }
-    return (f);
-}
-
 xio_file xio_gettutorial(const char *name, xio_path tmp)
 {
     int i;
@@ -339,12 +254,6 @@ xio_file xio_gettutorial(const char *name, xio_path tmp)
         free(p);
     }
     return (f);
-}
-
-int xio_exist(xio_constpath name)
-{
-    struct stat buf;
-    return (!stat(name, &buf));
 }
 
 static int sputc(int c, xio_file f) { return putc(c, (FILE *)f->data); }

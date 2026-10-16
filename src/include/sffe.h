@@ -285,17 +285,10 @@ int sffe_reads(sffe *const parser, const sfNumber *value);
 // void *sffe_regvar(sffe ** parser, sfNumber * vptrs, char vchars);
 sfvariable *sffe_regvar(sffe **parser, sfNumber *vptrs, const char *name);
 
-/* multiple variables */
-void sffe_regvars(sffe **parser, unsigned int cN, sfNumber **vptrs,
-                  char *const *names);
-
 // sffunction *sffe_function_alloc(char *name, sffptr function_pointer, unsigned
 // char paramsCount, void *payload);
 
 // void sffe_function_free(sffunction* function);
-
-/* set 'vptrs' as 'vchars' variable  */
-sfNumber *sffe_setvar(sffe **parser, sfNumber vptrs, const char *name);
 
 #ifdef SFFE_CMPLX_ASM
 #include "sffe_cmplx_asm.h"

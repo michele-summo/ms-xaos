@@ -459,14 +459,6 @@ void uih_disablejulia(uih_context *c)
     }
 }
 
-int uih_setjuliamode(uih_context *c, int mode)
-{
-    if (mode)
-        return uih_enablejulia(c);
-    uih_disablejulia(c);
-    return 1;
-}
-
 void uih_rotationspeed(uih_context *c, number_t speed)
 {
     c->rotationspeed = speed;
@@ -906,14 +898,6 @@ int uih_cycling_on(struct uih_context *c)
     }
     uih_updatemenus(c, "cycling");
     uih_updatemenus(c, "rcycling");
-    return 1;
-}
-
-int uih_cycling(struct uih_context *uih, int mode)
-{
-    if (mode)
-        return (uih_cycling_on(uih));
-    uih_cycling_off(uih);
     return 1;
 }
 
@@ -2525,13 +2509,6 @@ void uih_setperbutation(uih_context *c, number_t zre, number_t zim)
     }
 }
 
-void uih_perbutation(uih_context *c, int mousex, int mousey)
-{
-    number_t r, i;
-    uih_getcoord(c, mousex, mousey, &r, &i);
-    uih_setperbutation(c, r, i);
-}
-
 void uih_setjuliaseed(uih_context *c, number_t zre, number_t zim)
 {
     if (c->fcontext->pre != zre || c->fcontext->pim != zim) {
@@ -2696,8 +2673,6 @@ void uih_interrupt(uih_context *c)
         c->interrupt = 1;
 }
 
-void uih_stopzooming(uih_context *c) { c->speed = 0; }
-
 int uih_updateimage(uih_context *c, struct image *image)
 {
     /*exit(); */
@@ -2835,23 +2810,6 @@ void uih_restorepalette(uih_context *uih)
     }
     uih->palette2 = NULL;
     uih_finishpalette(uih);
-}
-
-void uih_loadpalette(uih_context *c, struct palette *palette)
-{
-    if (c->palette2)
-        destroypalette(c->palette2);
-    c->palette2 = clonepalette(palette);
-    uih_restorepalette(c);
-    uih_palettechg(c);
-}
-
-struct palette *uih_clonepalette(uih_context *c)
-{
-    if (c->zengine->fractalc->palette != NULL)
-        return clonepalette(c->zengine->fractalc->palette);
-    // I hope this is OK:
-    return NULL;
 }
 
 void uih_setformula(uih_context *c, int num)

@@ -473,29 +473,6 @@ sfvariable *sffe_regvar(sffe **parser, sfNumber *vptrs, const char *name)
     return var;
 }
 
-void sffe_regvars(sffe **parser, unsigned int cN, sfNumber **vptrs,
-                  char *const *names)
-{
-    while (cN > 0) {
-        cN -= 1;
-        sffe_regvar(parser, (vptrs ? vptrs[cN] : NULL), names[cN]);
-    }
-}
-
-sfNumber *sffe_setvar(sffe **parser, sfNumber vptrs, const char *name)
-{
-    sfNumber *value;
-    sffe *parser_ = *parser;
-    sfvariable *var = sffe_var(parser_, name);
-    if (!var) {
-        var = sffe_regvar(parser, NULL, name);
-    }
-
-    value = var->value;
-    memcpy(value, &vptrs, sizeof(sfNumber));
-    return value;
-}
-
 void *sffe_regfunc(sffe **parser, const char *vname, unsigned int parcnt,
                    sffptr funptr)
 {

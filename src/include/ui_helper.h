@@ -397,7 +397,6 @@ void uih_mkdefaultpalette(uih_context *c);
 void uih_mkpalette(uih_context *c);
 void uih_savepalette(uih_context *c);
 void uih_restorepalette(uih_context *c);
-void uih_loadpalette(uih_context *c, struct palette *palette);
 
 /*autopilot handling */
 void uih_autopilot_on(uih_context *c);
@@ -411,7 +410,6 @@ double uih_displayed(uih_context *c);
 void uih_do_fractal(uih_context *c);
 void uih_prepare_image(uih_context *c);
 void uih_interrupt(uih_context *c);
-void uih_stopzooming(uih_context *c);
 void uih_setspeedup(uih_context *c, number_t speed);
 void uih_setmaxstep(uih_context *c, number_t speed);
 void uih_setcomplettehandler(uih_context *c, void(h)(void *), void *d);
@@ -426,12 +424,10 @@ void uih_cycling_stop(struct uih_context *c);
 void uih_cycling_continue(struct uih_context *c);
 void uih_setcycling(struct uih_context *c, int speed);
 int uih_cycling_on(struct uih_context *c);
-int uih_cycling(struct uih_context *c, int mode);
 
 /*fractal context manipulation routines */
 void uih_setformula(uih_context *c, int formula);
 void uih_setperbutation(uih_context *c, number_t re, number_t im);
-void uih_perbutation(uih_context *c, int mousex, int mousey);
 void uih_setmaxiter(uih_context *c, int maxiter);
 void uih_setbailout(uih_context *c, number_t bailout);
 void uih_setincoloringmode(uih_context *c, int mode);
@@ -477,7 +473,6 @@ void uih_setperiodicity(uih_context *c, int periodicity);
 void uih_display(uih_context *c);
 void uih_disablejulia(uih_context *c);
 int uih_enablejulia(uih_context *c);
-int uih_setjuliamode(uih_context *c, int mode);
 void uih_setjuliaseed(uih_context *c, number_t zre, number_t zim);
 
 /*filter manipulation */
@@ -599,9 +594,6 @@ int uih_renderanimation(struct uih_context *gc, const char *basename,
                         float pixelwidth, float pixelheight, int frametime,
                         int type, int antialiasing, int slowmode,
                         int letterspersec, const char *catalog);
-int uih_renderimage(struct uih_context *gc1, xio_file af, xio_constpath path,
-                    struct image *img, int antialias, const char *catalog,
-                    int noise);
 
 void uih_initmessages(uih_context *c);
 void uih_destroymessages(uih_context *c);

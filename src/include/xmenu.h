@@ -441,10 +441,8 @@ See ui/ui.c, ui_registermenus_i18n() for further details. */
                               : (m)->dialog(context))
 
 void menu_add(const menuitem *item, int n);
-void menu_insert(const menuitem *item, const char *before, int n);
 const menuitem *menu_findkey(const char *key, const char *root);
 const menuitem *menu_findcommand(const char *name);
-const char *menu_fullname(const char *menu);
 const menuitem *menu_item(const char *menu, int n);
 void menu_delete(const menuitem *items, int n);
 int menu_enabled(const menuitem *item, struct uih_context *c);

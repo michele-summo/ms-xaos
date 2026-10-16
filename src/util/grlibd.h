@@ -29,14 +29,6 @@ static inline void vline(struct image *img, int x, int y, int length,
     }
 }
 
-static inline void rectangle(struct image *img, int x, int y, int width,
-                             int height, int fgcolor)
-{
-    height += y;
-    while (y < height)
-        hline(img, x, y, width - 1, fgcolor), y++;
-}
-
 static inline char *savevline(struct image *img, int x, int y, int length)
 {
     cpixel_t *saved = (cpixel_t *)malloc(length * bpp + bpp), *s = saved;
@@ -278,7 +270,6 @@ static inline void line(struct image *img, int x, int y, int x2, int y2,
 #undef drawchar
 #undef hline
 #undef vline
-#undef rectangle
 #undef line
 #undef restoreline
 #undef saveline

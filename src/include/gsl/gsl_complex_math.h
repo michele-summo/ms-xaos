@@ -75,11 +75,6 @@ gsl_complex gsl_complex_sub_real (gsl_complex a, number_t x);  /* r=a-x */
 gsl_complex gsl_complex_mul_real (gsl_complex a, number_t x);  /* r=a*x */
 gsl_complex gsl_complex_div_real (gsl_complex a, number_t x);  /* r=a/x */
 
-gsl_complex gsl_complex_add_imag (gsl_complex a, number_t y);  /* r=a+iy */
-gsl_complex gsl_complex_sub_imag (gsl_complex a, number_t y);  /* r=a-iy */
-gsl_complex gsl_complex_mul_imag (gsl_complex a, number_t y);  /* r=a*iy */
-gsl_complex gsl_complex_div_imag (gsl_complex a, number_t y);  /* r=a/iy */
-
 gsl_complex gsl_complex_conjugate (gsl_complex z);  /* r=conj(z) */
 gsl_complex gsl_complex_inverse (gsl_complex a);    /* r=1/a */
 gsl_complex gsl_complex_negative (gsl_complex a);    /* r=-a */
@@ -87,7 +82,6 @@ gsl_complex gsl_complex_negative (gsl_complex a);    /* r=-a */
 /* Elementary Complex Functions */
 
 gsl_complex gsl_complex_sqrt (gsl_complex z);  /* r=nsqrt(z) */
-gsl_complex gsl_complex_sqrt_real (number_t x);  /* r=nsqrt(x) (x<0 ok) */
 
 gsl_complex gsl_complex_pow (gsl_complex a, gsl_complex b);  /* r=a^b */
 gsl_complex gsl_complex_pow_real (gsl_complex a, number_t b);  /* r=a^b */
@@ -101,8 +95,6 @@ gsl_complex gsl_complex_log_b (gsl_complex a, gsl_complex b);   /* r=log_b(a) (b
 
 gsl_complex gsl_complex_sin (gsl_complex a);  /* r=nsin(a) */
 gsl_complex gsl_complex_cos (gsl_complex a);  /* r=ncos(a) */
-gsl_complex gsl_complex_sec (gsl_complex a);  /* r=sec(a) */
-gsl_complex gsl_complex_csc (gsl_complex a);  /* r=csc(a) */
 gsl_complex gsl_complex_tan (gsl_complex a);  /* r=ntan(a) */
 gsl_complex gsl_complex_cot (gsl_complex a);  /* r=cot(a) */
 
@@ -112,10 +104,6 @@ gsl_complex gsl_complex_arcsin (gsl_complex a);  /* r=arcsin(a) */
 gsl_complex gsl_complex_arcsin_real (number_t a);  /* r=arcsin(a) */
 gsl_complex gsl_complex_arccos (gsl_complex a);  /* r=arccos(a) */
 gsl_complex gsl_complex_arccos_real (number_t a);  /* r=arccos(a) */
-gsl_complex gsl_complex_arcsec (gsl_complex a);  /* r=arcsec(a) */
-gsl_complex gsl_complex_arcsec_real (number_t a);  /* r=arcsec(a) */
-gsl_complex gsl_complex_arccsc (gsl_complex a);  /* r=arccsc(a) */
-gsl_complex gsl_complex_arccsc_real (number_t a);  /* r=arccsc(a) */
 gsl_complex gsl_complex_arctan (gsl_complex a);  /* r=arctan(a) */
 gsl_complex gsl_complex_arccot (gsl_complex a);  /* r=arccot(a) */
 
@@ -123,21 +111,10 @@ gsl_complex gsl_complex_arccot (gsl_complex a);  /* r=arccot(a) */
 
 gsl_complex gsl_complex_sinh (gsl_complex a);  /* r=nsinh(a) */
 gsl_complex gsl_complex_cosh (gsl_complex a);  /* r=coshh(a) */
-gsl_complex gsl_complex_sech (gsl_complex a);  /* r=sech(a) */
-gsl_complex gsl_complex_csch (gsl_complex a);  /* r=csch(a) */
 gsl_complex gsl_complex_tanh (gsl_complex a);  /* r=ntanh(a) */
 gsl_complex gsl_complex_coth (gsl_complex a);  /* r=coth(a) */
 
 /* Inverse Complex Hyperbolic Functions */
-
-gsl_complex gsl_complex_arcsinh (gsl_complex a);  /* r=arcsinh(a) */
-gsl_complex gsl_complex_arccosh (gsl_complex a);  /* r=arccosh(a) */
-gsl_complex gsl_complex_arccosh_real (number_t a);  /* r=arccosh(a) */
-gsl_complex gsl_complex_arcsech (gsl_complex a);  /* r=arcsech(a) */
-gsl_complex gsl_complex_arccsch (gsl_complex a);  /* r=arccsch(a) */
-gsl_complex gsl_complex_arctanh (gsl_complex a);  /* r=arctanh(a) */
-gsl_complex gsl_complex_arctanh_real (number_t a);  /* r=arctanh(a) */
-gsl_complex gsl_complex_arccoth (gsl_complex a);  /* r=arccoth(a) */
 
 __END_DECLS
 

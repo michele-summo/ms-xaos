@@ -250,8 +250,6 @@ void addfilter(struct filter *f1, struct filter *f2);
 int initqueue(struct queue *q);
 
 /*Filter utility functions */
-int reqimage(struct filter *f, struct requirements *req, int supportedmask,
-             int flags);
 int inherimage(struct filter *f, struct initdata *data, int flags, int width,
                int height, struct palette *palette, float pixelwidth,
                float pixelheight);
@@ -303,7 +301,6 @@ int mkstereogrampalette(struct palette *palette);
 int mkstarfieldpalette(struct palette *palette);
 int mkblurpalette(struct palette *palette);
 int mkgraypalette(struct palette *palette);
-int mkrgb(struct palette *palette);
 int mkpalette(struct palette *palette, int seed, int algorithm);
 int shiftpalette(struct palette *palette, int n);
 void preallocpalette(struct palette *pal);

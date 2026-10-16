@@ -33,7 +33,6 @@ void uih_playstop(struct uih_context *uih);
 void uih_playmorph(struct uih_context *uih, dialogparam *p);
 void uih_playmove(struct uih_context *uih, number_t x, number_t y);
 void uih_playtextpos(struct uih_context *uih, dialogparam *p);
-void uih_playcalculate(struct uih_context *uih);
 void uih_playmorphjulia(struct uih_context *uih, number_t x, number_t y);
 void uih_playmorphangle(struct uih_context *uih, number_t angle);
 void uih_playautorotate(struct uih_context *uih, int mode);

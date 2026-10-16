@@ -131,13 +131,6 @@ gsl_complex gsl_complex_add_real(gsl_complex a, number_t x)
     return z;
 }
 
-gsl_complex gsl_complex_add_imag(gsl_complex a, number_t y)
-{ /* z=a+iy */
-    gsl_complex z;
-    GSL_SET_COMPLEX(&z, GSL_REAL(a), GSL_IMAG(a) + y);
-    return z;
-}
-
 gsl_complex gsl_complex_sub(gsl_complex a, gsl_complex b)
 { /* z=a-b */
     number_t ar = GSL_REAL(a), ai = GSL_IMAG(a);
@@ -155,13 +148,6 @@ gsl_complex gsl_complex_sub_real(gsl_complex a, number_t x)
     return z;
 }
 
-gsl_complex gsl_complex_sub_imag(gsl_complex a, number_t y)
-{ /* z=a-iy */
-    gsl_complex z;
-    GSL_SET_COMPLEX(&z, GSL_REAL(a), GSL_IMAG(a) - y);
-    return z;
-}
-
 gsl_complex gsl_complex_mul(gsl_complex a, gsl_complex b)
 { /* z=a*b */
     number_t ar = GSL_REAL(a), ai = GSL_IMAG(a);
@@ -176,13 +162,6 @@ gsl_complex gsl_complex_mul_real(gsl_complex a, number_t x)
 { /* z=a*x */
     gsl_complex z;
     GSL_SET_COMPLEX(&z, x * GSL_REAL(a), x * GSL_IMAG(a));
-    return z;
-}
-
-gsl_complex gsl_complex_mul_imag(gsl_complex a, number_t y)
-{ /* z=a*iy */
-    gsl_complex z;
-    GSL_SET_COMPLEX(&z, -y * GSL_IMAG(a), y * GSL_REAL(a));
     return z;
 }
 
@@ -208,13 +187,6 @@ gsl_complex gsl_complex_div_real(gsl_complex a, number_t x)
 { /* z=a/x */
     gsl_complex z;
     GSL_SET_COMPLEX(&z, GSL_REAL(a) / x, GSL_IMAG(a) / x);
-    return z;
-}
-
-gsl_complex gsl_complex_div_imag(gsl_complex a, number_t y)
-{ /* z=a/(iy) */
-    gsl_complex z;
-    GSL_SET_COMPLEX(&z, GSL_IMAG(a) / y, -GSL_REAL(a) / y);
     return z;
 }
 
@@ -272,19 +244,6 @@ gsl_complex gsl_complex_sqrt(gsl_complex a)
             number_t vi = (ai >= 0) ? w : -w;
             GSL_SET_COMPLEX(&z, ai / (2.0 * vi), vi);
         }
-    }
-
-    return z;
-}
-
-gsl_complex gsl_complex_sqrt_real(number_t x)
-{ /* z=nsqrt(x) */
-    gsl_complex z;
-
-    if (x >= 0) {
-        GSL_SET_COMPLEX(&z, nsqrt(x), 0.0);
-    } else {
-        GSL_SET_COMPLEX(&z, 0.0, nsqrt(-x));
     }
 
     return z;
@@ -426,18 +385,6 @@ gsl_complex gsl_complex_tan(gsl_complex a)
     }
 
     return z;
-}
-
-gsl_complex gsl_complex_sec(gsl_complex a)
-{ /* z = sec(a) */
-    gsl_complex z = gsl_complex_cos(a);
-    return gsl_complex_inverse(z);
-}
-
-gsl_complex gsl_complex_csc(gsl_complex a)
-{ /* z = csc(a) */
-    gsl_complex z = gsl_complex_sin(a);
-    return gsl_complex_inverse(z);
 }
 
 gsl_complex gsl_complex_cot(gsl_complex a)
@@ -632,52 +579,6 @@ gsl_complex gsl_complex_arctan(gsl_complex a)
     return z;
 }
 
-gsl_complex gsl_complex_arcsec(gsl_complex a)
-{ /* z = arcsec(a) */
-    gsl_complex z = gsl_complex_inverse(a);
-    return gsl_complex_arccos(z);
-}
-
-gsl_complex gsl_complex_arcsec_real(number_t a)
-{ /* z = arcsec(a) */
-    gsl_complex z;
-
-    if (a <= -1.0 || a >= 1.0) {
-        GSL_SET_COMPLEX(&z, nacos(1 / a), 0.0);
-    } else {
-        if (a >= 0.0) {
-            GSL_SET_COMPLEX(&z, 0, nacosh(1 / a));
-        } else {
-            GSL_SET_COMPLEX(&z, N_PI, -nacosh(-1 / a));
-        }
-    }
-
-    return z;
-}
-
-gsl_complex gsl_complex_arccsc(gsl_complex a)
-{ /* z = arccsc(a) */
-    gsl_complex z = gsl_complex_inverse(a);
-    return gsl_complex_arcsin(z);
-}
-
-gsl_complex gsl_complex_arccsc_real(number_t a)
-{ /* z = arccsc(a) */
-    gsl_complex z;
-
-    if (a <= -1.0 || a >= 1.0) {
-        GSL_SET_COMPLEX(&z, nasin(1 / a), 0.0);
-    } else {
-        if (a >= 0.0) {
-            GSL_SET_COMPLEX(&z, N_PI_2, -nacosh(1 / a));
-        } else {
-            GSL_SET_COMPLEX(&z, -N_PI_2, nacosh(-1 / a));
-        }
-    }
-
-    return z;
-}
-
 gsl_complex gsl_complex_arccot(gsl_complex a)
 { /* z = arccot(a) */
     gsl_complex z;
@@ -734,18 +635,6 @@ gsl_complex gsl_complex_tanh(gsl_complex a)
     return z;
 }
 
-gsl_complex gsl_complex_sech(gsl_complex a)
-{ /* z = sech(a) */
-    gsl_complex z = gsl_complex_cosh(a);
-    return gsl_complex_inverse(z);
-}
-
-gsl_complex gsl_complex_csch(gsl_complex a)
-{ /* z = csch(a) */
-    gsl_complex z = gsl_complex_sinh(a);
-    return gsl_complex_inverse(z);
-}
-
 gsl_complex gsl_complex_coth(gsl_complex a)
 { /* z = coth(a) */
     gsl_complex z = gsl_complex_tanh(a);
@@ -755,78 +644,3 @@ gsl_complex gsl_complex_coth(gsl_complex a)
 /**********************************************************************
  * Inverse Complex Hyperbolic Functions
  **********************************************************************/
-
-gsl_complex gsl_complex_arcsinh(gsl_complex a)
-{ /* z = arcsinh(a) */
-    gsl_complex z = gsl_complex_mul_imag(a, 1.0);
-    z = gsl_complex_arcsin(z);
-    z = gsl_complex_mul_imag(z, -1.0);
-    return z;
-}
-
-gsl_complex gsl_complex_arccosh(gsl_complex a)
-{ /* z = arccosh(a) */
-    gsl_complex z = gsl_complex_arccos(a);
-    z = gsl_complex_mul_imag(z, GSL_IMAG(z) > 0 ? -1.0 : 1.0);
-    return z;
-}
-
-gsl_complex gsl_complex_arccosh_real(number_t a)
-{ /* z = arccosh(a) */
-    gsl_complex z;
-
-    if (a >= 1) {
-        GSL_SET_COMPLEX(&z, nacosh(a), 0);
-    } else {
-        if (a >= -1.0) {
-            GSL_SET_COMPLEX(&z, 0, nacos(a));
-        } else {
-            GSL_SET_COMPLEX(&z, nacosh(-a), N_PI);
-        }
-    }
-
-    return z;
-}
-
-gsl_complex gsl_complex_arctanh(gsl_complex a)
-{ /* z = arctanh(a) */
-    if (GSL_IMAG(a) == 0.0) {
-        return gsl_complex_arctanh_real(GSL_REAL(a));
-    } else {
-        gsl_complex z = gsl_complex_mul_imag(a, 1.0);
-        z = gsl_complex_arctan(z);
-        z = gsl_complex_mul_imag(z, -1.0);
-        return z;
-    }
-}
-
-gsl_complex gsl_complex_arctanh_real(number_t a)
-{ /* z = arctanh(a) */
-    gsl_complex z;
-
-    if (a > -1.0 && a < 1.0) {
-        GSL_SET_COMPLEX(&z, natanh(a), 0);
-    } else {
-        GSL_SET_COMPLEX(&z, natanh(1 / a), (a < 0) ? N_PI_2 : -N_PI_2);
-    }
-
-    return z;
-}
-
-gsl_complex gsl_complex_arcsech(gsl_complex a)
-{ /* z = arcsech(a); */
-    gsl_complex t = gsl_complex_inverse(a);
-    return gsl_complex_arccosh(t);
-}
-
-gsl_complex gsl_complex_arccsch(gsl_complex a)
-{ /* z = arccsch(a) */
-    gsl_complex t = gsl_complex_inverse(a);
-    return gsl_complex_arcsinh(t);
-}
-
-gsl_complex gsl_complex_arccoth(gsl_complex a)
-{ /* z = arccoth(a) */
-    gsl_complex t = gsl_complex_inverse(a);
-    return gsl_complex_arctanh(t);
-}

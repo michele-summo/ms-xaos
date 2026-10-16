@@ -261,7 +261,6 @@ void clear_image(struct image *img)
 #define drawchar drawchar8
 #define hline hline8
 #define vline vline8
-#define rectangle rectangle8
 #define savevline savevline8
 #define restorevline restorevline8
 #define line line8
@@ -272,7 +271,6 @@ void clear_image(struct image *img)
 #define drawchar drawchar16
 #define hline hline16
 #define vline vline16
-#define rectangle rectangle16
 #define savevline savevline16
 #define restorevline restorevline16
 #define line line16
@@ -283,7 +281,6 @@ void clear_image(struct image *img)
 #define drawchar drawchar24
 #define hline hline24
 #define vline vline24
-#define rectangle rectangle24
 #define savevline savevline24
 #define restorevline restorevline24
 #define line line24
@@ -294,129 +291,12 @@ void clear_image(struct image *img)
 #define drawchar drawchar32
 #define hline hline32
 #define vline vline32
-#define rectangle rectangle32
 #define savevline savevline32
 #define restorevline restorevline32
 #define line line32
 #define saveline saveline32
 #define restoreline restoreline32
 #include "grlibd.h"
-
-void xhline(struct image *image, int x, int y, int width, int fgcolor)
-{
-    /*Do some clipping */
-    if (x + width < 0 || y < 0 || y >= image->height || x >= image->width)
-        return;
-    if (x + width >= image->width - 1)
-        width = image->width - x - 2;
-    if (x < 0)
-        width += x, x = 0;
-    if (width < 0)
-        return;
-    switch (image->bytesperpixel) {
-#ifdef SBITMAPS
-        case 0:
-            hline1(image, x, y, width, fgcolor);
-            break;
-#endif
-        case 1:
-            hline8(image, x, y, width, fgcolor);
-            break;
-#ifdef SUPPORT16
-        case 2:
-            hline16(image, x, y, width, fgcolor);
-            break;
-#endif
-#ifdef STRUECOLOR24
-        case 3:
-            hline24(image, x, y, width, fgcolor);
-            break;
-#endif
-        case 4:
-            hline32(image, x, y, width, fgcolor);
-            break;
-    }
-}
-
-void xvline(struct image *image, int x, int y, int height, int fgcolor)
-{
-    /*Do some clipping */
-    if (x < 0 || y + height < 0 || y >= image->height || x >= image->width)
-        return;
-    if (y + height >= image->height - 1)
-        height = image->height - y - 2;
-    if (y < 0)
-        height += y, y = 0;
-    if (height < 0)
-        return;
-    switch (image->bytesperpixel) {
-#ifdef SBITMAPS
-        case 0:
-            vline1(image, x, y, height, fgcolor);
-            break;
-#endif
-        case 1:
-            vline8(image, x, y, height, fgcolor);
-            break;
-#ifdef SUPPORT16
-        case 2:
-            vline16(image, x, y, height, fgcolor);
-            break;
-#endif
-#ifdef STRUECOLOR24
-        case 3:
-            vline24(image, x, y, height, fgcolor);
-            break;
-#endif
-        case 4:
-            vline32(image, x, y, height, fgcolor);
-            break;
-    }
-}
-
-void xrectangle(struct image *image, int x, int y, int width, int height,
-                int fgcolor)
-{
-    /*Do some clipping */
-    if (x + width < 0 || y + height < 0 || y >= image->height ||
-        x >= image->width)
-        return;
-    if (x + width >= image->width)
-        width = image->width - x;
-    if (x < 0)
-        width += x, x = 0;
-    if (width < 0)
-        return;
-    if (y + height >= image->height)
-        height = image->height - y;
-    if (y < 0)
-        height += y, y = 0;
-    if (height < 0)
-        return;
-    switch (image->bytesperpixel) {
-#ifdef SBITMAPS
-        case 0:
-            rectangle1(image, x, y, width, height, fgcolor);
-            break;
-#endif
-        case 1:
-            rectangle8(image, x, y, width, height, fgcolor);
-            break;
-#ifdef SUPPORT16
-        case 2:
-            rectangle16(image, x, y, width, height, fgcolor);
-            break;
-#endif
-#ifdef STRUECOLOR24
-        case 3:
-            rectangle24(image, x, y, width, height, fgcolor);
-            break;
-#endif
-        case 4:
-            rectangle32(image, x, y, width, height, fgcolor);
-            break;
-    }
-}
 
 static inline char *savehline(struct image *i, int x1, int y, int x2)
 {

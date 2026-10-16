@@ -73,16 +73,12 @@ xio_file xio_strwopen(void);
 char *xio_getstring(xio_file f);
 xio_path xio_getdirectory(xio_constpath name);
 xio_path xio_getfilename(const char *base, const char *extension);
-xio_file xio_getrandomexample(xio_path name);
-xio_file xio_getcatalog(const char *name);
-xio_file xio_gethelp(void);
-xio_file xio_gettutorial(const char *name, xio_path result);
-
 /*look through directory with examples, choose one file, open it (and return
  *descriptor+put name into name parameter*/
-int xio_exist(xio_constpath name);
-int xio_getfiles(xio_constpath path, char ***names, char ***dirs, int *nnames,
-                 int *ndirs);
+xio_file xio_getrandomexample(xio_path name);
+xio_file xio_getcatalog(const char *name);
+xio_file xio_gettutorial(const char *name, xio_path result);
+
 void xio_init(const char *c);
 void xio_uninit(void);
 

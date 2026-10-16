@@ -86,17 +86,6 @@ static void x_menu_insert(const menuitem *item, struct entry *iitem, int n)
 
 void menu_add(const menuitem *item, int n) { x_menu_insert(item, NULL, n); }
 
-void menu_insert(const menuitem *item, const char *before, int n)
-{
-    struct entry *e = firstitem;
-    while (e != NULL) {
-        if (!strcmp(e->item->shortname, before))
-            break;
-        e = e->next;
-    }
-    x_menu_insert(item, e, n);
-}
-
 void menu_delete(const menuitem *items, int n)
 {
     int d = 0, i;
@@ -235,19 +224,6 @@ int menu_available(const menuitem *item, const char *root)
 {
     finditem = item;
     return (menu_rfind(cmpfunction2, root) != NULL);
-}
-
-const char *menu_fullname(const char *menu)
-{
-    struct entry *item = firstitem;
-    while (item != NULL) {
-        if (item->item->type == MENU_SUBMENU &&
-            !strcmp(menu, item->item->shortname)) {
-            return (item->item->name);
-        }
-        item = item->next;
-    }
-    return NULL;
 }
 
 const menuitem *menu_item(const char *menu, int n)
