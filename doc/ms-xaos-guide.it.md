@@ -659,9 +659,9 @@ ce n'è già uno con cui comporla: `parchment(z, sectors)` ripiega l'angolo di
 `fbm(parchmenta(z,6),7)` lo dice, e lo dice dove chi legge la formula può
 vederlo.
 
-Le modalità di colorazione sotto **Frattale → Colorazione esterna → Altra
-modalità di colorazione → Moto browniano frazionario** applicano lo stesso moto
-a un colore. Questa lo mette dove una formula può usarlo.
+Le modalità di colorazione sotto **Frattale → Colorazione esterna → Moto
+browniano frazionario...** applicano lo stesso moto a un colore. Questa lo
+mette dove una formula può usarlo.
 
 | | |
 | --- | --- |
@@ -1354,9 +1354,16 @@ precedente.
 
 ## Moto browniano frazionario
 
-Un menu proprio su ogni lato — **Frattale → Colorazione interna → Moto
-browniano frazionario** e lo stesso sotto Colorazione esterna — che contiene
-tre modalità e i cinque numeri da cui sono disegnate.
+Un dialogo su ogni lato — **Frattale → Colorazione interna → Moto browniano
+frazionario...** e lo stesso sotto Colorazione esterna — che contiene le tre
+modalità che offre e i cinque numeri da cui sono disegnate. Era un sottomenu,
+con le tre modalità come voci a scelta esclusiva e i numeri dietro un dialogo
+Impostazioni sotto di esse; ora è un dialogo unico, spuntato quando una delle
+tre modalità è in uso, e OK imposta la modalità e i numeri insieme come un solo
+passo dell'annullamento. Una posizione salva ancora la modalità come
+`(incoloring N)` o `(outcoloring N)` e i numeri a parte, come `(infbmset ...)`
+o `(outfbmset ...)`, quindi un file di una versione precedente si apre
+invariato.
 
 Ciò che fa è rendere **usata** una colorazione pulita: le bande mantengono la
 loro forma e il loro ordine e smettono di essere perfette, come se la cosa
@@ -1407,8 +1414,7 @@ numeri, la sua scala e la sua forza e **disegna segni diversi**.
 
 ### I cinque numeri
 
-Un dialogo per lato, sotto **Impostazioni** nello stesso menu. Sono salvati con
-la posizione.
+Lo stesso dialogo della modalità, sotto di essa. Sono salvati con la posizione.
 
 | | |
 | --- | --- |

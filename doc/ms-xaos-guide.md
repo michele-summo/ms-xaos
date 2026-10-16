@@ -625,9 +625,9 @@ of `z` into `|sectors|` sectors and `parchmenta` mirrors the alternate halves, s
 `fbm(parchmenta(z,6),7)` says it, and says it where the reader of the formula
 can see it.
 
-The colouring modes under **Fractal → Outcoloring mode → Other coloring mode →
-Fractional Brownian Motion** apply the same motion to a colour. This one puts it
-where a formula can use it.
+The colouring modes under **Fractal → Outcoloring mode → Fractional Brownian
+Motion...** apply the same motion to a colour. This one puts it where a
+formula can use it.
 
 | | |
 | --- | --- |
@@ -1274,9 +1274,15 @@ does not ask for a shape stays loadable by any earlier version.
 
 ## Fractional Brownian Motion
 
-A menu of its own on each side — **Fractal → Incoloring mode → Fractional
-Brownian Motion** and the same under Outcoloring mode — holding three modes and
-the five numbers they are drawn from.
+One dialog on each side — **Fractal → Incoloring mode → Fractional Brownian
+Motion...** and the same under Outcoloring mode — holding the three modes it
+offers and the five numbers they are drawn from. It used to be a submenu, the
+three modes as radio entries and the numbers behind a Settings dialog below
+them; now it is a single dialog, ticked whenever one of the three modes is in
+use, and OK sets the mode and the numbers together as one step of undo. A
+position still saves the mode as `(incoloring N)` or `(outcoloring N)` and the
+numbers apart, as `(infbmset ...)` or `(outfbmset ...)`, so a file from an
+earlier version opens unchanged.
 
 What it does is make a clean colouring look **used**: the bands keep their shape
 and their order and stop being perfect, as though the thing had been left out in
@@ -1323,8 +1329,7 @@ numbers, its scale and its strength and **draws different marks**.
 
 ### The five numbers
 
-One dialog a side, under **Settings** in the same menu. They are saved with the
-position.
+The same dialog as the mode, below it. They are saved with the position.
 
 | | |
 | --- | --- |

@@ -260,6 +260,15 @@ typedef struct menuitem {
         (void (*)(void))function, 0, NULL, NULL,                                \
        (const menudialog *(*)(struct uih_context *))param                       \
 }
+/* As MENUCDIALOG, with a control function, so the item is checkable: pass
+ * MENUFLAG_RADIO or MENUFLAG_CHECKBOX in flags for it to be ticked. */
+#define MENUCDIALOGCB(menuname, key, name, shortname, flags, function,         \
+                     control, param)                                           \
+{                                                                               \
+       menuname, key, name, shortname, MENU_CUSTOMDIALOG, flags,                \
+        (void (*)(void))function, 0, NULL, (int (*)(void))control,              \
+       (const menudialog *(*)(struct uih_context *))param                       \
+}
 /* Definitions for internationalized menus. All of them must be defined
 dynamically because TR() cannot be used within a static
 variable. Usage (example):

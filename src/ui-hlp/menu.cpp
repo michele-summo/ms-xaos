@@ -55,6 +55,20 @@ const char *const uih_colornames[] = {QT_TRANSLATE_NOOP("Dialog", "white"),
                                       QT_TRANSLATE_NOOP("Dialog", "black"),
                                       QT_TRANSLATE_NOOP("Dialog", "red"), NULL};
 
+/* The fractional Brownian motion's modes, one dialog a side: what the inside
+ * reads is the noise alone, zmag worn by it or the decomposition worn by it;
+ * what the outside reads is the smooth count worn, the banded count worn, or
+ * the noise with no count in it at all -- so the same word "fbm" names a
+ * different thing on each side, last in one and first in the other, as the
+ * modes themselves are numbered. */
+static const char *const infbmmodes[] = {QT_TRANSLATE_NOOP("Dialog", "fbm"),
+                                         QT_TRANSLATE_NOOP("Dialog", "fbm + zmag"),
+                                         QT_TRANSLATE_NOOP("Dialog", "fbm + decomposition"),
+                                         NULL};
+static const char *const outfbmmodes[] = {QT_TRANSLATE_NOOP("Dialog", "fbm + smooth"),
+                                          QT_TRANSLATE_NOOP("Dialog", "fbm + iter"),
+                                          QT_TRANSLATE_NOOP("Dialog", "fbm"), NULL};
+
 /* Registering internationalized dialogs.
  *
  * The method we are internationalizing dialogs is similar to
@@ -94,6 +108,7 @@ static menudialog *uih_perturbationdialog, *uih_juliadialog,
     *uih_textposdialog, *uih_fastmodedialog, *uih_timedialog, *uih_numdialog,
     *uih_fpdialog, *palettedialog, *uih_cyclingdialog, *palettegradientdialog,
     *uih_infbmdialog, *uih_outfbmdialog,
+    *uih_incolorfbmdialog, *uih_outcolorfbmdialog,
     *uih_incolorfundialog, *uih_outcolorfundialog,
     *uih_incolorchangedialog, *uih_outcolorchangedialog,
     *uih_incolorlegacydialog, *uih_outcolorlegacydialog,
@@ -299,7 +314,12 @@ void uih_registermenudialogs_i18n(void)
 
     /* The five numbers a fractional Brownian motion is made of, one dialog a
      * side. Together, because they only mean anything together: an intensity
-     * without a frequency says nothing about what will be drawn. */
+     * without a frequency says nothing about what will be drawn.
+     *
+     * Not shown on its own any more -- Fractional Brownian Motion... below
+     * has the mode with them -- but still what infbmset/outfbmset read: a
+     * position saves the mode as (incoloring N)/(outcoloring N) and these five
+     * numbers apart, and an old file holds them this way. */
     Register(uih_infbmdialog);
     DIALOGFLOAT_I(TR("Dialog", "Intensity (colour bands):"), 4);
     DIALOGFLOAT_I(TR("Dialog", "Frequency (cells per unit):"), 8);
@@ -309,6 +329,27 @@ void uih_registermenudialogs_i18n(void)
     NULL_I();
 
     Register(uih_outfbmdialog);
+    DIALOGFLOAT_I(TR("Dialog", "Intensity (colour bands):"), 4);
+    DIALOGFLOAT_I(TR("Dialog", "Frequency (cells per unit):"), 8);
+    DIALOGINT_I(TR("Dialog", "Octaves:"), 4);
+    DIALOGFLOAT_I(TR("Dialog", "Roughness:"), 0.5);
+    DIALOGINT_I(TR("Dialog", "Seed:"), 1);
+    NULL_I();
+
+    /* The mode -- which of the three a side has -- and the same five numbers,
+     * in the one dialog Fractional Brownian Motion... opens, at the top of
+     * Incoloring mode and Outcoloring mode. */
+    Register(uih_incolorfbmdialog);
+    DIALOGCHOICE_I(TR("Dialog", "Mode:"), infbmmodes, 0);
+    DIALOGFLOAT_I(TR("Dialog", "Intensity (colour bands):"), 4);
+    DIALOGFLOAT_I(TR("Dialog", "Frequency (cells per unit):"), 8);
+    DIALOGINT_I(TR("Dialog", "Octaves:"), 4);
+    DIALOGFLOAT_I(TR("Dialog", "Roughness:"), 0.5);
+    DIALOGINT_I(TR("Dialog", "Seed:"), 1);
+    NULL_I();
+
+    Register(uih_outcolorfbmdialog);
+    DIALOGCHOICE_I(TR("Dialog", "Mode:"), outfbmmodes, 0);
     DIALOGFLOAT_I(TR("Dialog", "Intensity (colour bands):"), 4);
     DIALOGFLOAT_I(TR("Dialog", "Frequency (cells per unit):"), 8);
     DIALOGINT_I(TR("Dialog", "Octaves:"), 4);
@@ -800,6 +841,54 @@ static menudialog *uih_getoutcolorspeeddialog(struct uih_context *c)
     return (uih_fpdialog);
 }
 
+/* The fbm mode currently chosen, as an index into infbmmodes/outfbmmodes --
+ * or, where the inside or outside is not drawn by one, the first of them, so
+ * the dialog opens on a mode rather than none. */
+static int uih_selectedincolorfbm(struct uih_context *c)
+{
+    switch (c ? c->fcontext->incoloringmode : -1) {
+        case INCOLORING_FBM_ZMAG:
+            return 1;
+        case INCOLORING_FBM_DECOMP:
+            return 2;
+        default:
+            return 0;
+    }
+}
+static int uih_selectedoutcolorfbm(struct uih_context *c)
+{
+    switch (c ? c->fcontext->coloringmode.AsInt() : -1) {
+        case OutColormodeType::ColOut_fbm_iter:
+            return 1;
+        case OutColormodeType::ColOut_fbm:
+            return 2;
+        default:
+            return 0;
+    }
+}
+
+/* Whether the inside, or the outside, is drawn by one of the three fbm modes
+ * at all -- what ticks the menu item that opens this dialog. */
+static int uih_isincolorfbm(struct uih_context *c)
+{
+    if (c == NULL)
+        return 0;
+    const int m = c->fcontext->incoloringmode;
+    return m == INCOLORING_FBM || m == INCOLORING_FBM_ZMAG ||
+          m == INCOLORING_FBM_DECOMP;
+}
+static int uih_isoutcolorfbm(struct uih_context *c)
+{
+    if (c == NULL)
+        return 0;
+    const int m = c->fcontext->coloringmode.AsInt();
+    return m == OutColormodeType::ColOut_fbm_smooth ||
+          m == OutColormodeType::ColOut_fbm_iter ||
+          m == OutColormodeType::ColOut_fbm;
+}
+
+/* infbmset/outfbmset, the five numbers alone, as a position still saves and
+ * loads them. */
 static menudialog *uih_getinfbmdialog(struct uih_context *c)
 {
     if (c != NULL) {
@@ -822,6 +911,33 @@ static menudialog *uih_getoutfbmdialog(struct uih_context *c)
         uih_outfbmdialog[4].defint = c->fcontext->outfbmseed;
     }
     return (uih_outfbmdialog);
+}
+
+/* Fractional Brownian Motion..., the mode with the same five numbers. */
+static menudialog *uih_getincolorfbmdialog(struct uih_context *c)
+{
+    if (c != NULL) {
+        uih_incolorfbmdialog[0].defint = uih_selectedincolorfbm(c);
+        uih_incolorfbmdialog[1].deffloat = c->fcontext->infbmintensity;
+        uih_incolorfbmdialog[2].deffloat = c->fcontext->infbmfrequency;
+        uih_incolorfbmdialog[3].defint = c->fcontext->infbmoctaves;
+        uih_incolorfbmdialog[4].deffloat = c->fcontext->infbmroughness;
+        uih_incolorfbmdialog[5].defint = c->fcontext->infbmseed;
+    }
+    return (uih_incolorfbmdialog);
+}
+
+static menudialog *uih_getoutcolorfbmdialog(struct uih_context *c)
+{
+    if (c != NULL) {
+        uih_outcolorfbmdialog[0].defint = uih_selectedoutcolorfbm(c);
+        uih_outcolorfbmdialog[1].deffloat = c->fcontext->outfbmintensity;
+        uih_outcolorfbmdialog[2].deffloat = c->fcontext->outfbmfrequency;
+        uih_outcolorfbmdialog[3].defint = c->fcontext->outfbmoctaves;
+        uih_outcolorfbmdialog[4].deffloat = c->fcontext->outfbmroughness;
+        uih_outcolorfbmdialog[5].defint = c->fcontext->outfbmseed;
+    }
+    return (uih_outcolorfbmdialog);
 }
 
 static menudialog *uih_getincolorfundialog(struct uih_context *c)
@@ -1128,7 +1244,8 @@ static void uih_palettecolors(struct uih_context *uih, dialogparam *p){
 /* The five numbers the fractional Brownian motion is made of, taken from one
  * dialog rather than five: they are read together and they only mean anything
  * together -- an intensity without a frequency says nothing about what will be
- * drawn.
+ * drawn. Below infbmset/outfbmset, the command a position saves and loads
+ * them as.
  *
  * The picture is redrawn only if something moved, which is what every other
  * setting here does: a dialog closed on the values it opened with should cost
@@ -1142,6 +1259,34 @@ static void uih_setfbm(uih_context *c, dialogparam *p, int inset)
 
 static void uih_setinfbm(uih_context *c, dialogparam *p) { uih_setfbm(c, p, 1); }
 static void uih_setoutfbm(uih_context *c, dialogparam *p) { uih_setfbm(c, p, 0); }
+
+/* Fractional Brownian Motion..., the mode and the same five numbers, from the
+ * one dialog the menu opens now: the mode belongs with them there, since
+ * choosing one is choosing what the numbers are read by. */
+static void uih_setcolorfbm(uih_context *c, dialogparam *p, int inset)
+{
+    static const int inmode[3] = {INCOLORING_FBM, INCOLORING_FBM_ZMAG,
+                                  INCOLORING_FBM_DECOMP};
+    static const int outmode[3] = {OutColormodeType::ColOut_fbm_smooth,
+                                   OutColormodeType::ColOut_fbm_iter,
+                                   OutColormodeType::ColOut_fbm};
+    int mode = p[0].dint;
+    if (mode < 0 || mode > 2)
+        mode = 0;
+    if (inset)
+        uih_setincoloringmode(c, inmode[mode]);
+    else
+        uih_setoutcoloringmode(c, outmode[mode]);
+    uih_setfbm(c, p + 1, inset);
+}
+static void uih_setincolorfbm(uih_context *c, dialogparam *p)
+{
+    uih_setcolorfbm(c, p, 1);
+}
+static void uih_setoutcolorfbm(uih_context *c, dialogparam *p)
+{
+    uih_setcolorfbm(c, p, 0);
+}
 
 /* The speed change after ITER, from its dialog; the mode is the index of the
  * choice. */
@@ -2150,6 +2295,31 @@ static menuitem menuitems2[] = {
     SUBMENU("mincoloring", NULL, QT_TRANSLATE_NOOP("Menu", "True-color incoloring mode"), "tincoloring"),
     SUBMENU("moutcoloring", NULL, QT_TRANSLATE_NOOP("Menu", "True-color outcoloring mode"),
             "toutcoloring"),
+    /* The fractional Brownian motion's mode and its five numbers, in one
+     * dialog a side, at the same level as the modes themselves: it used to be
+     * a submenu of Other coloring mode, three radio entries and a Settings
+     * dialog below them. Ticked, through uih_isincolorfbm/uih_isoutcolorfbm,
+     * whenever one of the three is the mode in use. */
+    MENUCDIALOGCB("mincoloring", NULL,
+                 QT_TRANSLATE_NOOP("Menu", "Fractional Brownian Motion"),
+                 "mincolorfbm", UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
+                 uih_setincolorfbm, uih_isincolorfbm, uih_getincolorfbmdialog),
+    MENUCDIALOGCB("moutcoloring", NULL,
+                 QT_TRANSLATE_NOOP("Menu", "Fractional Brownian Motion"),
+                 "moutcolorfbm", UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
+                 uih_setoutcolorfbm, uih_isoutcolorfbm, uih_getoutcolorfbmdialog),
+    /* infbmset/outfbmset: the five numbers alone, out of the menu, as a
+     * position still saves and loads them -- the mode is the separate
+     * (incoloring N)/(outcoloring N) command, saved and read as it always
+     * was. */
+    MENUCDIALOG("mincoloring", NULL,
+               QT_TRANSLATE_NOOP("Menu", "Fractional Brownian Motion"),
+               "infbmset", MENUFLAG_INTERRUPT | MENUFLAG_NOMENU, uih_setinfbm,
+               uih_getinfbmdialog),
+    MENUCDIALOG("moutcoloring", NULL,
+               QT_TRANSLATE_NOOP("Menu", "Fractional Brownian Motion"),
+               "outfbmset", MENUFLAG_INTERRUPT | MENUFLAG_NOMENU, uih_setoutfbm,
+               uih_getoutfbmdialog),
     /* The function, the speed, the shift and the speed change after ITER, in
      * one dialog a side. */
     MENUCDIALOG("mincoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Coloring speed"),
@@ -2258,10 +2428,6 @@ static void uih_filtersw(struct uih_context *c, int n)
 
 static menuitem *formulaitems;
 static menuitem *filteritems;
-/* The fbm submenus, one on each side; out here so that uih_unregistermenus can
- * take them out again. */
-static menuitem fbmitems[10];
-static int nfbmitems;
 /* The commands of the speed change after ITER, all kept out of the menu now
  * that the Coloring speed dialog holds it: its own dialog, and the ones the
  * positions of each version saved it with. */
@@ -2333,79 +2499,6 @@ void uih_registermenus(void)
     menu_genernumbered(TCOLOR - 1, "toutcoloring", tcolornames, NULL, MENU_INT,
                        UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
                        uih_setouttruecolor, uih_selectedouttcoloring, "outt");
-
-    /* The fractional Brownian motion, at the foot of Other coloring mode on
-     * each side: the three modes that read it and the five numbers it is made
-     * of.
-     *
-     * Built here rather than among the other translated items because those
-     * are all added to the menus before any of these, and the modes above were
-     * generated a moment ago -- registered there, this would come out at the
-     * head of the list instead of the end of it.
-     *
-     * The shortnames are the ones uih_setincoloringmode and
-     * uih_setoutcoloringmode build when they tell the menus which mode is
-     * chosen -- "in23", "out18" -- so these tick and untick with the rest. */
-    {
-        int n = 0;
-        static const struct {
-            const char *menu;
-            const char *sub;
-        } sides[2] = {{"mothincoloring", "mincolorfbm"},
-                      {"mothoutcoloring", "moutcolorfbm"}};
-        static const int modes[2][3] = {
-            {INCOLORING_FBM, INCOLORING_FBM_ZMAG, INCOLORING_FBM_DECOMP},
-            {OutColormodeType::ColOut_fbm_smooth,
-             OutColormodeType::ColOut_fbm_iter, OutColormodeType::ColOut_fbm}};
-        static const char *shorts[2][3] = {{"in23", "in24", "in25"},
-                                           {"out18", "out19", "out20"}};
-        const char *names[2][3] = {
-            {TR("Menu", "fbm"), TR("Menu", "fbm + zmag"),
-             TR("Menu", "fbm + decomposition")},
-            {TR("Menu", "fbm + smooth"), TR("Menu", "fbm + iter"),
-             TR("Menu", "fbm")}};
-
-        for (int side = 0; side < 2; side++) {
-            fbmitems[n].menuname = sides[side].menu;
-            fbmitems[n].key = NULL;
-            fbmitems[n].name = TR("Menu", "Fractional Brownian Motion");
-            fbmitems[n].shortname = sides[side].sub;
-            fbmitems[n].type = MENU_SUBMENU;
-            fbmitems[n].flags = 0;
-            n++;
-            for (int k = 0; k < 3; k++) {
-                fbmitems[n].menuname = sides[side].sub;
-                fbmitems[n].key = NULL;
-                fbmitems[n].name = names[side][k];
-                fbmitems[n].shortname = shorts[side][k];
-                fbmitems[n].type = MENU_INT;
-                fbmitems[n].flags =
-                    UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT;
-                fbmitems[n].iparam = modes[side][k];
-                fbmitems[n].function =
-                    (void (*)(void))(side ? uih_setoutcoloringmode
-                                          : uih_setincoloringmode);
-                fbmitems[n].control =
-                    (int (*)(void))(side ? uih_selectedoutcoloring
-                                         : uih_selectedincoloring);
-                n++;
-            }
-            fbmitems[n].menuname = sides[side].sub;
-            fbmitems[n].key = NULL;
-            fbmitems[n].name = TR("Menu", "Settings");
-            fbmitems[n].shortname = side ? "outfbmset" : "infbmset";
-            fbmitems[n].type = MENU_CUSTOMDIALOG;
-            fbmitems[n].flags = MENUFLAG_INTERRUPT;
-            fbmitems[n].function =
-                (void (*)(void))(side ? uih_setoutfbm : uih_setinfbm);
-            fbmitems[n].dialog =
-                (const menudialog *(*)(struct uih_context *))(
-                    side ? uih_getoutfbmdialog : uih_getinfbmdialog);
-            n++;
-        }
-        nfbmitems = n;
-        menu_add(fbmitems, nfbmitems);
-    }
 
     /* The speed functions one command apiece, as the menu offered them before
      * the Coloring speed dialog took them in; out of the menu now, and still
@@ -2540,8 +2633,6 @@ void uih_unregistermenus(void)
     menu_delnumbered("int");
     menu_delnumbered("out");
     menu_delnumbered("outt");
-
-    menu_delete(fbmitems, nfbmitems);
 
     menu_delete(colorfunitems, 10);
     menu_delnumbered("infun");

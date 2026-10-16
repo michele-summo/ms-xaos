@@ -646,9 +646,9 @@ existe um com que compô-la: `parchment(z, sectors)` dobra o ângulo de `z` em
 `|sectors|` setores e `parchmenta` espelha as metades alternadas, por isso
 `fbm(parchmenta(z,6),7)` di-lo, e di-lo onde quem lê a fórmula o pode ver.
 
-Os modos de coloração em **Fractal → Coloração exterior → Outro modo de
-coloração → Movimento browniano fracionário** aplicam o mesmo movimento a uma
-cor. Esta põe-no onde uma fórmula o pode usar.
+Os modos de coloração em **Fractal → Coloração exterior → Movimento browniano
+fracionário...** aplicam o mesmo movimento a uma cor. Esta põe-no onde uma
+fórmula o pode usar.
 
 | | |
 | --- | --- |
@@ -1315,9 +1315,16 @@ anterior.
 
 ## Movimento browniano fracionário
 
-Um menu próprio de cada lado — **Fractal → Coloração interior → Movimento
-browniano fracionário** e o mesmo em Coloração exterior — com três modos e os
-cinco números a partir dos quais são desenhados.
+Um diálogo de cada lado — **Fractal → Coloração interior → Movimento browniano
+fracionário...** e o mesmo em Coloração exterior — com os três modos que
+oferece e os cinco números a partir dos quais são desenhados. Era um submenu,
+os três modos como entradas de escolha e os números atrás de um diálogo
+Definições abaixo deles; agora é um único diálogo, assinalado sempre que um dos
+três modos está em uso, e OK define o modo e os números juntos como um único
+passo de anular. Uma posição continua a guardar o modo como `(incoloring N)` ou
+`(outcoloring N)` e os números à parte, como `(infbmset ...)` ou
+`(outfbmset ...)`, por isso um ficheiro de uma versão anterior abre sem
+alterações.
 
 O que faz é dar a uma coloração limpa um ar **usado**: as faixas mantêm a sua
 forma e a sua ordem e deixam de ser perfeitas, como se a coisa tivesse ficado
@@ -1367,8 +1374,7 @@ guardada com um modo fbm mantém os seus números, a sua escala e a sua força e
 
 ### Os cinco números
 
-Um diálogo de cada lado, em **Definições** no mesmo menu. São guardados com a
-posição.
+O mesmo diálogo do modo, abaixo dele. São guardados com a posição.
 
 | | |
 | --- | --- |

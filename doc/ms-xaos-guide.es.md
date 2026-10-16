@@ -657,9 +657,9 @@ ya hay uno con el que componerla: `parchment(z, sectors)` pliega el ángulo de
 que `fbm(parchmenta(z,6),7)` lo dice, y lo dice donde quien lee la fórmula
 puede verlo.
 
-Los modos de coloreado de **Fractal → Coloreado exterior → Otro modo de
-coloreado → Movimiento browniano fraccionario** aplican el mismo movimiento a
-un color. Esta lo pone donde una fórmula puede usarlo.
+Los modos de coloreado de **Fractal → Coloreado exterior → Movimiento browniano
+fraccionario...** aplican el mismo movimiento a un color. Esta lo pone donde
+una fórmula puede usarlo.
 
 | | |
 | --- | --- |
@@ -1351,9 +1351,15 @@ anterior.
 
 ## Movimiento browniano fraccionario
 
-Un menú propio a cada lado — **Fractal → Coloreado interior → Movimiento
-browniano fraccionario** y lo mismo bajo Coloreado exterior — con tres modos y
-los cinco números con que se dibujan.
+Un diálogo a cada lado — **Fractal → Coloreado interior → Movimiento browniano
+fraccionario...** y lo mismo bajo Coloreado exterior — con los tres modos que
+ofrece y los cinco números con que se dibujan. Era un submenú, los tres modos
+como entradas de elección y los números detrás de un diálogo Ajustes debajo de
+ellos; ahora es un único diálogo, marcado cuando uno de los tres modos está en
+uso, y Aceptar fija el modo y los números juntos como un solo paso de deshacer.
+Una posición sigue guardando el modo como `(incoloring N)` o `(outcoloring N)`
+y los números aparte, como `(infbmset ...)` o `(outfbmset ...)`, así que un
+archivo de una versión anterior se abre sin cambios.
 
 Lo que hace es que un coloreado limpio parezca **usado**: las bandas conservan
 su forma y su orden y dejan de ser perfectas, como si la cosa se hubiera dejado
@@ -1404,8 +1410,7 @@ fuerza y **dibuja marcas distintas**.
 
 ### Los cinco números
 
-Un diálogo por lado, bajo **Ajustes** en el mismo menú. Se guardan con la
-posición.
+El mismo diálogo que el modo, debajo de él. Se guardan con la posición.
 
 | | |
 | --- | --- |

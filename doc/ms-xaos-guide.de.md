@@ -683,9 +683,9 @@ faltet den Winkel von `z` in `|sectors|` Sektoren, und `parchmenta` spiegelt
 die abwechselnden Hälften, also sagt `fbm(parchmenta(z,6),7)` es, und zwar
 dort, wo der Leser der Formel es sehen kann.
 
-Die Färbungsmodi unter **Fraktal → Äußere Färbung → Anderer Färbungsmodus →
-Fraktionale Brownsche Bewegung** wenden dieselbe Bewegung auf eine Farbe an.
-Dies hier legt sie dahin, wo eine Formel sie benutzen kann.
+Die Färbungsmodi unter **Fraktal → Äußere Färbung → Fraktionale Brownsche
+Bewegung...** wenden dieselbe Bewegung auf eine Farbe an. Dies hier legt sie
+dahin, wo eine Formel sie benutzen kann.
 
 | | |
 | --- | --- |
@@ -1403,9 +1403,16 @@ früheren Version ladbar.
 
 ## Fraktionale Brownsche Bewegung
 
-Ein eigenes Menü auf jeder Seite — **Fraktal → Innere Färbung → Fraktionale
-Brownsche Bewegung** und dasselbe unter Äußere Färbung —, mit drei Modi und den
-fünf Zahlen, aus denen sie gezeichnet werden.
+Ein Dialog auf jeder Seite — **Fraktal → Innere Färbung → Fraktionale Brownsche
+Bewegung...** und dasselbe unter Äußere Färbung —, mit den drei Modi, die er
+bietet, und den fünf Zahlen, aus denen sie gezeichnet werden. Es war ein
+Untermenü, die drei Modi als Auswahleinträge und die Zahlen hinter einem
+Einstellungen-Dialog darunter; jetzt ist es ein einziger Dialog, angehakt, wann
+immer einer der drei Modi in Gebrauch ist, und OK setzt den Modus und die
+Zahlen zusammen als einen Rückgängig-Schritt. Eine Position speichert den Modus
+weiterhin als `(incoloring N)` oder `(outcoloring N)` und die Zahlen getrennt,
+als `(infbmset ...)` oder `(outfbmset ...)`, sodass eine Datei aus einer
+früheren Version unverändert öffnet.
 
 Sie lässt eine saubere Färbung **gebraucht** aussehen: die Bänder behalten Form
 und Reihenfolge und hören auf, perfekt zu sein, als hätte man das Ding draußen
@@ -1456,8 +1463,8 @@ andere Spuren**.
 
 ### Die fünf Zahlen
 
-Ein Dialog pro Seite, unter **Einstellungen** im selben Menü. Sie werden mit
-der Position gespeichert.
+Derselbe Dialog wie der Modus, darunter. Sie werden mit der Position
+gespeichert.
 
 | | |
 | --- | --- |

@@ -674,9 +674,9 @@ replie l'angle de `z` en `|sectors|` secteurs et `parchmenta` reflète une
 moitié sur deux, donc `fbm(parchmenta(z,6),7)` le dit, et le dit là où le
 lecteur de la formule peut le voir.
 
-Les modes de coloration sous **Fractale → Coloriage extérieur → Autre mode de
-coloration → Mouvement brownien fractionnaire** appliquent le même mouvement à
-une couleur. Celui-ci le place là où une formule peut s'en servir.
+Les modes de coloration sous **Fractale → Coloriage extérieur → Mouvement
+brownien fractionnaire...** appliquent le même mouvement à une couleur.
+Celui-ci le place là où une formule peut s'en servir.
 
 | | |
 | --- | --- |
@@ -1376,9 +1376,17 @@ toute version antérieure.
 
 ## Mouvement brownien fractionnaire
 
-Un menu à lui de chaque côté — **Fractale → Coloriage intérieur → Mouvement
-brownien fractionnaire** et le même sous Coloriage extérieur — contenant trois
-modes et les cinq nombres d'après lesquels ils sont tracés.
+Une boîte de dialogue à lui de chaque côté — **Fractale → Coloriage intérieur →
+Mouvement brownien fractionnaire...** et la même sous Coloriage extérieur —
+contenant les trois modes qu'elle offre et les cinq nombres d'après lesquels
+ils sont tracés. C'était un sous-menu, les trois modes en entrées de choix et
+les nombres derrière une boîte de dialogue Paramètres en dessous ; c'est
+maintenant une seule boîte de dialogue, cochée dès que l'un des trois modes est
+utilisé, et OK règle le mode et les nombres ensemble en une seule étape
+d'annulation. Une position enregistre toujours le mode comme `(incoloring N)`
+ou `(outcoloring N)` et les nombres à part, comme `(infbmset ...)` ou
+`(outfbmset ...)`, de sorte qu'un fichier d'une version antérieure s'ouvre sans
+changement.
 
 Ce qu'il fait, c'est donner à une coloration propre un air **usé** : les bandes
 gardent leur forme et leur ordre et cessent d'être parfaites, comme si la chose
@@ -1428,8 +1436,8 @@ ses nombres, son échelle et sa force et **trace d'autres marques**.
 
 ### Les cinq nombres
 
-Une boîte de dialogue par côté, sous **Paramètres** dans le même menu. Ils sont
-enregistrés avec la position.
+La même boîte de dialogue que le mode, en dessous. Ils sont enregistrés avec la
+position.
 
 | | |
 | --- | --- |
