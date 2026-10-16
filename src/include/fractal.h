@@ -254,6 +254,11 @@ struct fractal_context {
     number_t incolorspeed, outcolorspeed;
     int incolorfun, outcolorfun;
     int incolorshift, outcolorshift;
+    /* How often the inside modes that repeat do so: what the argument of
+     * their periodic part is multiplied by -- the sines and cosines, the
+     * squares, the contours of frac(mag). One, the default, draws them as
+     * they always were, to the bit; the other modes never read it. */
+    number_t incolorfrequency;
     /* The speed change after ITER, a side at a time as the speed is: the
      * count handed to the speed function is cut at up to two ITERs and each
      * stretch driven by an exponent of its own, so that the colours speed up

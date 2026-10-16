@@ -2323,6 +2323,16 @@ void uih_setincolorshift(uih_context *c, int shift) {
     }
 }
 
+/* How often the inside modes that repeat do so; see incolorfrequency. */
+void uih_setincolorfrequency(uih_context *c, number_t frequency)
+{
+    if (c->fcontext->incolorfrequency != frequency) {
+        c->fcontext->incolorfrequency = frequency;
+        c->fcontext->version++;
+        uih_newimage(c);
+    }
+}
+
 void uih_setoutcolorspeed(uih_context *c, number_t speed){
     if (c->fcontext->outcolorspeed != (number_t)speed) {
         c->fcontext->outcolorspeed = speed;
@@ -2882,6 +2892,7 @@ void uih_initstate(struct uih_context *uih)
     uih_setincolorspeed(uih, 1.0);
     uih_setincolorfun(uih, 0);
     uih_setincolorshift(uih, 0);
+    uih_setincolorfrequency(uih, 1);
     uih_setoutcolorspeed(uih, 1.0);
     uih_setoutcolorfun(uih, 0);
     uih_setoutcolorshift(uih, 0);

@@ -1357,6 +1357,9 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
                                    number_t pim, unsigned int iter)
 {
     number_t i_f = iter;
+    /* How often the modes that repeat do so, multiplying the argument of
+     * what repeats; at one, a multiplication that changes nothing. */
+    const number_t f = cfractalc.incolorfrequency;
     if (cfractalc.coloringmode.ColorMode) {
         color_f_normalize(zre);
         color_f_normalize(zim);
@@ -1406,24 +1409,24 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
         i_f += (myabs(pre - zre) * 256 * 64);
         i_f += (myabs(pim - zim) * 256 * 64);
         break;
-    case 5:
-        if (((int)((zre * zre + zim * zim) * 10)) % 2)
-            i_f = (cosl((zre * zim * pre * pim)) * 256 * 256);
+    case 5: /* the bands that choose between the two as well as the two */
+        if (((int)((zre * zre + zim * zim) * 10 * f)) % 2)
+            i_f = (cosl(f * (zre * zim * pre * pim)) * 256 * 256);
         else
-            i_f = (sinl((zre * zim * pre * pim)) * 256 * 256);
+            i_f = (sinl(f * (zre * zim * pre * pim)) * 256 * 256);
         break;
     case 6:
-        i_f = ((zre * zre + zim * zim) * cosl((zre * zre)) * 256 *
+        i_f = ((zre * zre + zim * zim) * cosl(f * (zre * zre)) * 256 *
                256);
         break;
     case 7:
-        i_f = (sinl((zre * zre - zim * zim)) * 256 * 256);
+        i_f = (sinl(f * (zre * zre - zim * zim)) * 256 * 256);
         break;
     case 8:
         i_f = (atanl((zre * zim * pre * pim)) * 256 * 64);
         break;
-    case 9:
-        if ((abs((int)(zre * 40)) % 2) ^ (abs((int)(zim * 40)) % 2))
+    case 9: /* squares a fortieth of a unit on a side, at a frequency of one */
+        if ((abs((int)(zre * 40 * f)) % 2) ^ (abs((int)(zim * 40 * f)) % 2))
             i_f = ((
                 (atan2l(zre, zim) / (M_PI + M_PI) + 0.75) *
                 20000));
@@ -1472,15 +1475,16 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
         i_f = (zre * zim * (number_t)cfractalc.maxiter * SMUL + SMUL);
         break;
     case 18: /* sin(real)*sin(imag): a grid laid over where the orbit settled */
-        i_f = ((nsin(zre) * nsin(zim) + 1) * 20000);
+        i_f = ((nsin(f * zre) * nsin(f * zim) + 1) * 20000);
         break;
     case 19: /* sign(imag): two flat tones. A decomposition of the inside,
               * where binary decomposition does the same to the outside. */
         i_f = (zim > 0 ? 20000 : 45000);
         break;
-    case 20: /* frac(mag): contours at every eighth of the modulus */
+    case 20: /* frac(mag): contours at every eighth of the modulus, at a
+              * frequency of one */
         {
-            number_t bands = nsqrt(zre * zre + zim * zim) * 8;
+            number_t bands = nsqrt(zre * zre + zim * zim) * 8 * f;
             i_f = ((bands - nfloor(bands)) * 60000);
         }
         break;

@@ -1491,6 +1491,19 @@ final et `c` disent quelque chose :
 | `frac(mag)` | des courbes de niveau à chaque huitième du module |
 | `log(mag)` | `zmag` avec le contraste reporté sur les petites valeurs, où une orbite attirée passe son temps |
 
+Six des modes intérieurs se répètent — `cos(mag)`, `mag*cos(real^2)`,
+`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)` et `frac(mag)` — et
+**Fréquence (modes périodiques)**, le premier champ de la boîte de dialogue
+Vitesse de coloration du côté intérieur, dit à quelle fréquence. Elle multiplie
+l'argument de ce qui se répète, donc à 2 les sinus tournent deux fois plus
+vite, `squares` trace des carrés deux fois plus petits et `frac(mag)` seize
+contours par unité du module là où il en traçait huit. Dans `cos(mag)` elle
+resserre aussi les bandes qui choisissent entre le sinus et le cosinus. À un,
+où elle commence, ils tracent comme ils l'ont toujours fait, au bit près, et
+les autres modes ne la lisent jamais. Une position l'enregistre comme
+`(incolorfrequency 2)` seulement quand elle n'est pas un, donc une position qui
+n'y touche pas s'ouvre toujours dans les versions antérieures.
+
 **À l'extérieur**, où ce qu'il y a, c'est le compte et le point de sortie :
 
 | mode | |
@@ -1557,11 +1570,13 @@ la valeur que transmet un mode de coloration à une place dans la palette. La
 et le **décalage** de coloration soient appliqués : la palette est lue à
 `f(v) × speed + shift`. Sous un titre à lui, plus bas, se trouve le [changement
 de vitesse après ITER](#changement-de-vitesse-après-iter), qui agit sur la
-valeur avant que la fonction la reçoive. OK règle le tout en une seule étape
-d'annulation. Pour les modes qui comptent — iter, smooth et les autres — `v`
-est le nombre d'itérations lui-même, donc une fonction peut se penser en
-itérations. Toutes sont impaires, `f(−v) = −f(v)`, donc une grandeur qui change
-de signe le garde.
+valeur avant que la fonction la reçoive. Celle du côté intérieur commence par
+la fréquence des modes qui se répètent, qui agit sur le mode lui-même ; voir
+[Plus de modes de coloration](#plus-de-modes-de-coloration). OK règle le tout
+en une seule étape d'annulation. Pour les modes qui comptent — iter, smooth et
+les autres — `v` est le nombre d'itérations lui-même, donc une fonction peut se
+penser en itérations. Toutes sont impaires, `f(−v) = −f(v)`, donc une grandeur
+qui change de signe le garde.
 
 C'étaient quatre entrées du menu : la vitesse, le décalage, un sous-menu des
 fonctions et la boîte de dialogue propre au changement de vitesse. Une position

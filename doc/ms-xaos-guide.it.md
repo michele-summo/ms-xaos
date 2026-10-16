@@ -1470,6 +1470,18 @@ dicono qualcosa:
 | `frac(mag)` | curve di livello a ogni ottavo del modulo |
 | `log(mag)` | `zmag` con il contrasto spostato sui valori piccoli, dove passa il suo tempo un'orbita attratta |
 
+Sei delle modalità interne si ripetono — `cos(mag)`, `mag*cos(real^2)`,
+`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)` e `frac(mag)` — e
+**Frequenza (modalità periodiche)**, il primo campo del dialogo Velocità della
+colorazione interno, dice quanto spesso. Moltiplica l'argomento di ciò che si
+ripete, quindi a 2 i seni girano il doppio più in fretta, `squares` disegna
+quadrati grandi la metà e `frac(mag)` sedici contorni per unità del modulo dove
+ne disegnava otto. In `cos(mag)` restringe anche le bande che scelgono tra il
+seno e il coseno. A uno, dove parte, disegnano come hanno sempre fatto, bit per
+bit, e le altre modalità non lo leggono mai. Una posizione lo salva come
+`(incolorfrequency 2)` solo quando non è uno, quindi una posizione che non lo
+tocca si apre ancora nelle versioni precedenti.
+
 **All'esterno**, dove ciò che c'è sono il conteggio e il punto di uscita:
 
 | modalità | |
@@ -1534,11 +1546,13 @@ consegnato da una modalità di colorazione a un posto nella tavolozza. La
 **velocità** e lo **spostamento** della colorazione: la tavolozza viene letta a
 `f(v) × speed + shift`. Sotto un titolo proprio, più in basso, c'è il [cambio
 di velocità dopo ITER](#cambio-di-velocità-dopo-iter), che agisce sul valore
-prima che la funzione lo riceva. OK imposta tutto come un solo passo
-dell'annullamento. Per le modalità che contano — iter, smooth e le altre — `v`
-è il conteggio delle iterazioni stesso, quindi una funzione si può pensare in
-iterazioni. Ognuna è dispari, `f(−v) = −f(v)`, quindi una grandezza che cambia
-segno lo conserva.
+prima che la funzione lo riceva. Quello interno si apre con la frequenza delle
+modalità che si ripetono, che agisce sulla modalità stessa; vedi [Altre
+modalità di colorazione](#altre-modalità-di-colorazione). OK imposta tutto come
+un solo passo dell'annullamento. Per le modalità che contano — iter, smooth e
+le altre — `v` è il conteggio delle iterazioni stesso, quindi una funzione si
+può pensare in iterazioni. Ognuna è dispari, `f(−v) = −f(v)`, quindi una
+grandezza che cambia segno lo conserva.
 
 Erano quattro voci del menu: la velocità, lo spostamento, un sottomenu delle
 funzioni e il dialogo proprio del cambio di velocità. Una posizione viene

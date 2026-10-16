@@ -1467,6 +1467,18 @@ algo:
 | `frac(mag)` | curvas de nivel en cada octavo del módulo |
 | `log(mag)` | `zmag` con el contraste llevado a los valores pequeños, donde pasa su tiempo una órbita atraída |
 
+Seis de los modos interiores se repiten — `cos(mag)`, `mag*cos(real^2)`,
+`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)` y `frac(mag)` — y
+**Frecuencia (modos periódicos)**, el primer campo del diálogo Velocidad del
+coloreado interior, dice cada cuánto. Multiplica el argumento de lo que se
+repite, así que a 2 los senos giran el doble de rápido, `squares` dibuja
+cuadrados de la mitad de tamaño y `frac(mag)` dieciséis contornos por unidad
+del módulo donde dibujaba ocho. En `cos(mag)` estrecha también las bandas que
+eligen entre el seno y el coseno. En uno, donde empieza, dibujan como siempre,
+bit a bit, y los demás modos nunca lo leen. Una posición lo guarda como
+`(incolorfrequency 2)` solo cuando no es uno, así que una posición que no lo
+toca sigue abriéndose en versiones anteriores.
+
 **Por fuera**, donde lo que hay es el recuento y el punto de escape:
 
 | modo | |
@@ -1532,10 +1544,13 @@ de una lista, dobla el valor antes de que se apliquen la **velocidad** y el
 **desplazamiento** del coloreado: la paleta se lee en `f(v) × speed + shift`.
 Bajo un título propio, más abajo, está el [cambio de velocidad tras
 ITER](#cambio-de-velocidad-tras-iter), que actúa sobre el valor antes de que lo
-reciba la función. Aceptar lo fija todo como un solo paso de deshacer. Para los
-modos que cuentan — iter, smooth y los demás — `v` es el propio recuento de
-iteraciones, así que una función se puede pensar en iteraciones. Todas son
-impares, `f(−v) = −f(v)`, así que una magnitud que cambia de signo lo conserva.
+reciba la función. El interior empieza con la frecuencia de los modos que se
+repiten, que actúa sobre el propio modo; véase [Más modos de
+coloreado](#más-modos-de-coloreado). Aceptar lo fija todo como un solo paso de
+deshacer. Para los modos que cuentan — iter, smooth y los demás — `v` es el
+propio recuento de iteraciones, así que una función se puede pensar en
+iteraciones. Todas son impares, `f(−v) = −f(v)`, así que una magnitud que
+cambia de signo lo conserva.
 
 Eran cuatro entradas del menú: la velocidad, el desplazamiento, un submenú de
 las funciones y el diálogo propio del cambio de velocidad. Una posición se

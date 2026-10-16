@@ -217,6 +217,18 @@ foreach(prec ${XAOS_TEST_PRECISIONS})
                               PRIVATE ${CMAKE_SOURCE_DIR}/src/engine)
    add_test(NAME colorfun_${suffix} COMMAND colorfun_${suffix})
 
+   # --- the frequency of the inside modes that repeat -----------------------
+   # At one the six it reaches unchanged to the bit; away from one the same as
+   # z scaled by it, where they read z alone; and the other modes never moved.
+   xaos_add_test_binary(incolor_frequency_${suffix} ${prec}
+                        incolor_frequency_test.cpp
+                        ${CMAKE_SOURCE_DIR}/src/engine/phist.cpp
+                        ${SFFE_SOURCES})
+   target_include_directories(incolor_frequency_${suffix}
+                              PRIVATE ${CMAKE_SOURCE_DIR}/src/engine)
+   add_test(NAME incolor_frequency_${suffix}
+            COMMAND incolor_frequency_${suffix})
+
    # --- the iteration loops ------------------------------------------------
    # The formula table exposes every loop as an iterationfunc, so they can be
    # driven directly over a grid without going through the renderer; the

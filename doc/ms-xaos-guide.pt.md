@@ -1428,6 +1428,18 @@ coisa:
 | `frac(mag)` | curvas de nível a cada oitavo do módulo |
 | `log(mag)` | `zmag` com o contraste levado para os valores pequenos, onde uma órbita atraída passa o seu tempo |
 
+Seis dos modos interiores repetem-se — `cos(mag)`, `mag*cos(real^2)`,
+`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)` e `frac(mag)` — e
+**Frequência (modos periódicos)**, o primeiro campo do diálogo Velocidade da
+coloração do interior, diz com que frequência. Multiplica o argumento do que se
+repete, por isso a 2 os senos rodam ao dobro da velocidade, `squares` desenha
+quadrados com metade do tamanho e `frac(mag)` dezasseis contornos por unidade
+do módulo onde desenhava oito. Em `cos(mag)` estreita também as bandas que
+escolhem entre o seno e o cosseno. A um, onde começa, desenham como sempre
+desenharam, bit a bit, e os outros modos nunca a leem. Uma posição guarda-a
+como `(incolorfrequency 2)` só quando não é um, por isso uma posição que não
+lhe mexe continua a abrir nas versões anteriores.
+
 **No exterior**, onde o que há é a contagem e o ponto de fuga:
 
 | modo | |
@@ -1491,10 +1503,13 @@ lista, dobra o valor antes de se aplicarem a **velocidade** e o
 **deslocamento** da coloração: a paleta é lida em `f(v) × speed + shift`. Sob
 um título próprio, mais abaixo, está a [mudança de velocidade após
 ITER](#mudança-de-velocidade-após-iter), que age sobre o valor antes de a
-função o receber. OK define tudo como um único passo de anular. Para os modos
-que contam — iter, smooth e os restantes — `v` é a própria contagem de
-iterações, por isso uma função pode ser pensada em iterações. Todas são
-ímpares, `f(−v) = −f(v)`, por isso uma grandeza que muda de sinal mantém-no.
+função o receber. O do interior começa pela frequência dos modos que se
+repetem, que age sobre o próprio modo; ver [Mais modos de
+coloração](#mais-modos-de-coloração). OK define tudo como um único passo de
+anular. Para os modos que contam — iter, smooth e os restantes — `v` é a
+própria contagem de iterações, por isso uma função pode ser pensada em
+iterações. Todas são ímpares, `f(−v) = −f(v)`, por isso uma grandeza que muda
+de sinal mantém-no.
 
 Eram quatro entradas do menu: a velocidade, o deslocamento, um submenu das
 funções e o diálogo próprio da mudança de velocidade. Uma posição é escrita e

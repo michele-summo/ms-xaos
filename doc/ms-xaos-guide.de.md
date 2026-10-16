@@ -1520,6 +1520,19 @@ Echtfarb-Untermenüs.
 | `frac(mag)` | Höhenlinien bei jedem Achtel des Betrags |
 | `log(mag)` | `zmag` mit dem Kontrast auf die kleinen Werte verlegt, wo ein angezogener Orbit seine Zeit verbringt |
 
+Sechs der inneren Modi wiederholen sich — `cos(mag)`, `mag*cos(real^2)`,
+`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)` und `frac(mag)` —, und
+**Frequenz (periodische Modi)**, das erste Feld des inneren Dialogs
+Färbungsgeschwindigkeit, sagt, wie oft. Sie multipliziert das Argument dessen,
+was sich wiederholt, also drehen sich bei 2 die Sinusse doppelt so schnell,
+`squares` zeichnet halb so große Quadrate und `frac(mag)` sechzehn Konturen pro
+Einheit des Betrags, wo es acht zeichnete. In `cos(mag)` verengt sie auch die
+Bänder, die zwischen Sinus und Kosinus wählen. Bei eins, wo sie anfängt,
+zeichnen sie wie immer, bitgenau, und die anderen Modi lesen sie nie. Eine
+Position speichert sie als `(incolorfrequency 2)` nur, wenn sie nicht eins ist,
+also öffnet sich eine Position, die sie nicht anrührt, weiterhin in früheren
+Versionen.
+
 **Außen**, wo die Zählung und der Austrittspunkt das sind, was es gibt:
 
 | Modus | |
@@ -1586,7 +1599,9 @@ aus einer Liste gewählt, biegt den Wert, bevor **Färbungsgeschwindigkeit** und
 **-verschiebung** angewandt werden: die Palette wird bei `f(v) × speed + shift`
 gelesen. Unter einer eigenen Überschrift darunter steht der
 [Geschwindigkeitswechsel nach ITER](#geschwindigkeitswechsel-nach-iter), der
-auf den Wert wirkt, bevor die Funktion ihn bekommt. OK setzt alles als einen
+auf den Wert wirkt, bevor die Funktion ihn bekommt. Der innere beginnt mit der
+Frequenz der Modi, die sich wiederholen, die auf den Modus selbst wirkt; siehe
+[Weitere Färbungsmodi](#weitere-färbungsmodi). OK setzt alles als einen
 einzigen Rückgängig-Schritt. Für die Modi, die zählen — iter, smooth und die
 übrigen —, ist `v` die Iterationszahl selbst, also kann man eine Funktion in
 Iterationen denken. Jede ist ungerade, `f(−v) = −f(v)`, also behält eine Größe,

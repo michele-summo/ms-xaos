@@ -442,6 +442,7 @@ void uih_setouttcolor(uih_context *c, int mode);
 void uih_setincolorspeed(uih_context *c, number_t speed);
 void uih_setincolorfun(uih_context *c, int func);
 void uih_setincolorshift(uih_context *c, int shift);
+void uih_setincolorfrequency(uih_context *c, number_t frequency);
 void uih_setoutcolorspeed(uih_context *c, number_t speed);
 void uih_setoutcolorfun(uih_context *c, int func);
 void uih_setoutcolorshift(uih_context *c, int shift);

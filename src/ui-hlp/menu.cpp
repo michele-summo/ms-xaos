@@ -441,12 +441,16 @@ void uih_registermenudialogs_i18n(void)
      * from the list, the speed it is multiplied by and the shift it is moved
      * along; and under a heading the speed change after ITER, which acts on
      * the value before the function has it, field for field as its own
-     * dialog above has it. */
+     * dialog above has it. The inside's starts with how often the modes that
+     * repeat do so, which comes before all of it. */
     for (int side = 0; side < 2; side++) {
         if (side)
             Register(uih_outcoloringspeeddialog);
         else
             Register(uih_incoloringspeeddialog);
+        if (!side) {
+            DIALOGFLOAT_I(TR("Dialog", "Frequency (periodic modes):"), 1);
+        }
         DIALOGCHOICE_I(TR("Dialog", "Function:"), colorfun, 0);
         DIALOGFLOAT_I(TR("Dialog", "Coloring speed:"), 1);
         DIALOGINT_I(TR("Dialog", "Coloring shift:"), 0);
@@ -1174,16 +1178,20 @@ static void uih_setoutcolorfungroups(uih_context *c, dialogparam *p)
     uih_setcolorfungroupsfrom(c, 0, p);
 }
 
-/* The one dialog the colouring menus open: the function, the speed and the
- * shift, then the speed change after ITER as the dialog above takes it. Each
- * is set as it would be on its own, and so redraws only what has moved. */
+/* The one dialog the colouring menus open: on the inside the frequency, then
+ * the function, the speed and the shift, then the speed change after ITER as
+ * the dialog above takes it. Each is set as it would be on its own, and so
+ * redraws only what has moved. */
 static menudialog *uih_getcoloringspeeddialog(struct uih_context *c,
                                               int inset)
 {
-    menudialog *d =
+    menudialog *dialog =
         inset ? uih_incoloringspeeddialog : uih_outcoloringspeeddialog;
     if (c != NULL) {
         fractal_context *f = c->fcontext;
+        menudialog *d = dialog;
+        if (inset)
+            d++->deffloat = f->incolorfrequency;
         d[0].defint = inset ? f->incolorfun : f->outcolorfun;
         d[1].deffloat = inset ? f->incolorspeed : f->outcolorspeed;
         d[2].defint = inset ? f->incolorshift : f->outcolorshift;
@@ -1194,7 +1202,7 @@ static menudialog *uih_getcoloringspeeddialog(struct uih_context *c,
             d[3 + i].deffloat = change[i].deffloat;
         }
     }
-    return d;
+    return dialog;
 }
 static menudialog *uih_getincoloringspeeddialog(struct uih_context *c)
 {
@@ -1207,6 +1215,8 @@ static menudialog *uih_getoutcoloringspeeddialog(struct uih_context *c)
 
 static void uih_setincoloringspeed(uih_context *c, dialogparam *p)
 {
+    uih_setincolorfrequency(c, (number_t)p[0].number);
+    p++;
     uih_setincolorfun(c, p[0].dint);
     uih_setincolorspeed(c, (number_t)p[1].number);
     uih_setincolorshift(c, p[2].dint);
@@ -1914,6 +1924,11 @@ void uih_registermenus_i18n(void)
     MENUDIALOG_I("fractal", NULL, TR("Menu", "Outside coloring shift"),
                  "outcolorshift", MENUFLAG_NOMENU | MENUFLAG_INTERRUPT,
                  uih_setoutcolorshift, uih_numdialog);
+    /* Hidden: the one a saved file names. The menu sets it in the inside
+     * Coloring speed dialog. */
+    MENUDIALOG_I("fractal", NULL, TR("Menu", "Inside coloring frequency"),
+                 "incolorfrequency", MENUFLAG_NOMENU | MENUFLAG_INTERRUPT,
+                 uih_setincolorfrequency, uih_fpdialog);
     MENUDIALOG_I("fractal", NULL, TR("Menu", "Julia seed"), "juliaseed",
                  MENUFLAG_NOMENU | MENUFLAG_INTERRUPT, uih_setjuliaseed,
                  uih_coorddialog);

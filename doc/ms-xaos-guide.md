@@ -1385,6 +1385,17 @@ anything:
 | `frac(mag)` | contours at every eighth of the modulus |
 | `log(mag)` | `zmag` with the contrast moved onto the small values, where an attracting orbit spends its time |
 
+Six of the inside modes repeat — `cos(mag)`, `mag*cos(real^2)`,
+`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)` and `frac(mag)` — and
+**Frequency (periodic modes)**, the first field of the inside Coloring speed
+dialog, says how often. It multiplies the argument of what repeats, so at 2 the
+sines turn twice as fast, `squares` draws squares half the size and `frac(mag)`
+sixteen contours to a unit of the modulus where it drew eight. In `cos(mag)` it
+narrows as well the bands that choose between the sine and the cosine. At one,
+where it starts, they draw as they always did, to the bit, and the other modes
+never read it. A position saves it as `(incolorfrequency 2)` only when it is
+not one, so a position that leaves it alone still opens in earlier versions.
+
 **Outside**, where the count and the escape point are what there is:
 
 | mode | |
@@ -1447,7 +1458,10 @@ a place in the palette. The **function**, chosen from a list, bends the value
 before the **colouring speed** and **shift** are applied: the palette is read at
 `f(v) × speed + shift`. Under its own heading below them is the
 [speed change after ITER](#speed-change-after-iter), which acts on the value
-before the function has it. OK sets the lot as one step of the undo history.
+before the function has it. The inside's opens with the frequency of the modes
+that repeat, which acts on the mode itself; see
+[More colouring modes](#more-colouring-modes). OK sets the lot as one step of
+the undo history.
 For the modes that count — iter, smooth and the rest — `v` is the iteration
 count itself, so a function can be thought of in iterations. Every one is odd,
 `f(−v) = −f(v)`, so a quantity that changes sign keeps it.

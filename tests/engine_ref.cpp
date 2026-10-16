@@ -75,6 +75,7 @@ int main(int argc, char **argv)
      * the shift entirely. */
     cfractalc.incolorspeed = 1.0f;
     cfractalc.outcolorspeed = 1.0f;
+    cfractalc.incolorfrequency = 1;
     cfractalc.newtonconvergence = 1E-6;
     cfractalc.periodicity_limit = 1e-8;
     cfractalc.periodicity = 1;
