@@ -1484,13 +1484,29 @@ vez disso.
 
 ## Funções de velocidade da coloração
 
-**Fractal → Coloração interior → Funções de velocidade da coloração**, e o
-mesmo no exterior, dobram o valor que um modo de coloração entrega antes de se
-aplicarem a velocidade e o deslocamento da coloração: a paleta é lida em
-`f(v) × speed + shift`. Para os modos que contam — iter, smooth e os restantes
-— `v` é a própria contagem de iterações, por isso uma função pode ser pensada
-em iterações. Todas são ímpares, `f(−v) = −f(v)`, por isso uma grandeza que
-muda de sinal mantém-no.
+**Fractal → Coloração interior → Velocidade da coloração**, e o mesmo em
+Coloração exterior, é um único diálogo para tudo o que leva o valor que um modo
+de coloração entrega a um lugar na paleta. A **função**, escolhida de uma
+lista, dobra o valor antes de se aplicarem a **velocidade** e o
+**deslocamento** da coloração: a paleta é lida em `f(v) × speed + shift`. Sob
+um título próprio, mais abaixo, está a [mudança de velocidade após
+ITER](#mudança-de-velocidade-após-iter), que age sobre o valor antes de a
+função o receber. OK define tudo como um único passo de anular. Para os modos
+que contam — iter, smooth e os restantes — `v` é a própria contagem de
+iterações, por isso uma função pode ser pensada em iterações. Todas são
+ímpares, `f(−v) = −f(v)`, por isso uma grandeza que muda de sinal mantém-no.
+
+Eram quatro entradas do menu: a velocidade, o deslocamento, um submenu das
+funções e o diálogo próprio da mudança de velocidade. Uma posição é escrita e
+lida exatamente como antes, e os comandos que essas entradas executavam
+continuam lá para um script.
+
+`sin`, `cos` e `triangle` dão voltas: a velocidade da coloração, aplicada
+depois delas, diz quantas entradas da paleta uma volta abrange, e deixa como
+estava a frequência com que volta. Isso faz a **velocidade inicial** da mudança
+de velocidade, aplicada antes: com os dois grupos desligados e o expoente
+inicial a um a função recebe `s0·v`, por isso 2 junta as voltas para o dobro e
+0,5 afasta-as para o dobro.
 
 | | |
 | --- | --- |
@@ -1504,14 +1520,14 @@ contém continua a designar o que designava.
 
 ### Mudança de velocidade após ITER
 
-A última entrada do mesmo menu não é uma função mas uma alteração à função que
-estiver escolhida: até uma iteração que indique, a função continua exatamente
-como era; a partir daí, a contagem que recebe corre mais depressa ou mais
-devagar, por isso as cores aceleram ou abrandam dali em diante e não antes. Com
-`square root` escolhida e ITER a 40, as cores são as da raiz quadrada até 40
-iterações e a raiz quadrada de uma contagem que vai ganhando ritmo depois. O
-diálogo contém, um lado de cada vez, um expoente e uma velocidade iniciais e
-depois dois grupos, cada um separado por uma linha:
+A parte de baixo do mesmo diálogo não é uma função mas uma alteração à função
+que estiver escolhida: até uma iteração que indique, a função continua
+exatamente como era; a partir daí, a contagem que recebe corre mais depressa ou
+mais devagar, por isso as cores aceleram ou abrandam dali em diante e não
+antes. Com `square root` escolhida e ITER a 40, as cores são as da raiz
+quadrada até 40 iterações e a raiz quadrada de uma contagem que vai ganhando
+ritmo depois. Contém um expoente e uma velocidade iniciais e depois dois
+grupos, cada um separado por uma linha:
 
 | | |
 | --- | --- |
@@ -1610,8 +1626,9 @@ resto é guardado como a 2.0 o guardava, na ordem do diálogo sem as velocidades
 `(outcolorspeedchange 1 40 1.5 'smooth 10 50 2 'off 10)`; e as velocidades, só
 onde alguma não é um, à parte como `(outcolorspeedlinear 1 3 1)` — a velocidade
 inicial e as dos dois grupos — para que uma posição que não as use continue a
-abrir na 2.0. O próprio diálogo é o comando `outcolorspeedgroups`, com os seus
-doze campos pela sua ordem.
+abrir na 2.0. A mudança de velocidade sozinha, como o seu próprio diálogo a
+tinha, é o comando `outcolorspeedgroups`, com os seus doze campos pela sua
+ordem.
 
 ### Para lá do fim de um int
 

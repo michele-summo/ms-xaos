@@ -1441,12 +1441,28 @@ and `stripe` in a user formula do it instead.
 
 ## Colouring speed functions
 
-**Fractal → Incoloring mode → Coloring speed functions**, and the same on the
-outside, bend the value a colouring mode hands over before the colouring speed
-and shift are applied: the palette is read at `f(v) × speed + shift`. For the
-modes that count — iter, smooth and the rest — `v` is the iteration count
-itself, so a function can be thought of in iterations. Every one is odd,
+**Fractal → Incoloring mode → Coloring speed**, and the same under Outcoloring
+mode, is one dialog for all that takes the value a colouring mode hands over to
+a place in the palette. The **function**, chosen from a list, bends the value
+before the **colouring speed** and **shift** are applied: the palette is read at
+`f(v) × speed + shift`. Under its own heading below them is the
+[speed change after ITER](#speed-change-after-iter), which acts on the value
+before the function has it. OK sets the lot as one step of the undo history.
+For the modes that count — iter, smooth and the rest — `v` is the iteration
+count itself, so a function can be thought of in iterations. Every one is odd,
 `f(−v) = −f(v)`, so a quantity that changes sign keeps it.
+
+These were four entries of the menu: the speed, the shift, a submenu of the
+functions and the speed change's own dialog. A position is written and read
+exactly as it was, and the commands those entries ran are still there for a
+script.
+
+`sin`, `cos` and `triangle` go round: the colouring speed, applied after them,
+says how many palette entries one turn spans, and leaves how often it comes
+round as it was. That is the **initial speed** of the speed change, applied
+before them: with both groups off and the initial exponent at one the function
+is handed `s0·v`, so 2 brings the turns twice as close together and 0.5 sets
+them twice as far apart.
 
 | | |
 | --- | --- |
@@ -1460,14 +1476,13 @@ names what it named.
 
 ### Speed change after ITER
 
-The last entry of the same menu is not a function but a change to whichever
+The lower part of the same dialog is not a function but a change to whichever
 function is chosen: up to an iteration you name, the function goes on exactly as
 it was; past it, the count it is handed runs faster or slower, so the colours
 speed up or slow down from there and not before. With `square root` chosen and
 ITER at 40, the colours are the square root's up to 40 iterations and the square
-root of a count that is gathering pace after that. The dialog holds, a side at
-a time, an initial exponent and speed and then two groups, each set apart by a
-rule:
+root of a count that is gathering pace after that. It holds an initial exponent
+and speed and then two groups, each set apart by a rule:
 
 | | |
 | --- | --- |
@@ -1565,8 +1580,8 @@ it, in the order of the dialog without the speeds,
 `(outcolorspeedchange 1 40 1.5 'smooth 10 50 2 'off 10)`; and the speeds, only
 where one of them is not one, apart as `(outcolorspeedlinear 1 3 1)` — the
 initial speed and the two groups' — so that a position that does not use them
-still opens in 2.0. The dialog itself is the command `outcolorspeedgroups`,
-with its twelve fields in their order.
+still opens in 2.0. The speed change alone, as its own dialog had it, is the
+command `outcolorspeedgroups`, with its twelve fields in their order.
 
 ### Past the end of an int
 

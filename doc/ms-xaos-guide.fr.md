@@ -1550,13 +1550,30 @@ utilisateur le font à la place.
 
 ## Fonctions de vitesse de coloration
 
-**Fractale → Coloriage intérieur → Fonctions de vitesse de coloration**, et la
-même chose à l'extérieur, courbent la valeur que transmet un mode de coloration
-avant que la vitesse et le décalage de coloration soient appliqués : la palette
-est lue à `f(v) × speed + shift`. Pour les modes qui comptent — iter, smooth et
-les autres — `v` est le nombre d'itérations lui-même, donc une fonction peut se
-penser en itérations. Toutes sont impaires, `f(−v) = −f(v)`, donc une grandeur
-qui change de signe le garde.
+**Fractale → Coloriage intérieur → Vitesse de coloration**, et la même chose
+sous Coloriage extérieur, est une seule boîte de dialogue pour tout ce qui mène
+la valeur que transmet un mode de coloration à une place dans la palette. La
+**fonction**, choisie dans une liste, courbe la valeur avant que la **vitesse**
+et le **décalage** de coloration soient appliqués : la palette est lue à
+`f(v) × speed + shift`. Sous un titre à lui, plus bas, se trouve le [changement
+de vitesse après ITER](#changement-de-vitesse-après-iter), qui agit sur la
+valeur avant que la fonction la reçoive. OK règle le tout en une seule étape
+d'annulation. Pour les modes qui comptent — iter, smooth et les autres — `v`
+est le nombre d'itérations lui-même, donc une fonction peut se penser en
+itérations. Toutes sont impaires, `f(−v) = −f(v)`, donc une grandeur qui change
+de signe le garde.
+
+C'étaient quatre entrées du menu : la vitesse, le décalage, un sous-menu des
+fonctions et la boîte de dialogue propre au changement de vitesse. Une position
+est écrite et lue exactement comme avant, et les commandes que ces entrées
+lançaient sont toujours là pour un script.
+
+`sin`, `cos` et `triangle` tournent : la vitesse de coloration, appliquée après
+elles, dit combien d'entrées de la palette couvre un tour, et laisse tel quel
+la fréquence à laquelle il revient. C'est le rôle de la **vitesse initiale** du
+changement de vitesse, appliquée avant : avec les deux groupes éteints et
+l'exposant initial à un, la fonction reçoit `s0·v`, donc 2 rapproche les tours
+deux fois plus et 0,5 les écarte deux fois plus.
 
 | | |
 | --- | --- |
@@ -1570,15 +1587,15 @@ position enregistrée nomme toujours ce qu'il nommait.
 
 ### Changement de vitesse après ITER
 
-La dernière entrée du même menu n'est pas une fonction mais une modification de
-la fonction choisie : jusqu'à une itération que vous indiquez, la fonction
-continue exactement comme elle était ; au-delà, le compte qu'elle reçoit court
-plus vite ou plus lentement, donc les couleurs accélèrent ou ralentissent à
-partir de là et pas avant. Avec `square root` choisie et ITER à 40, les
-couleurs sont celles de la racine carrée jusqu'à 40 itérations, et ensuite la
-racine carrée d'un compte qui prend de la vitesse. La boîte de dialogue
-contient, un côté à la fois, un exposant et une vitesse initiaux puis deux
-groupes, chacun séparé par un trait :
+La partie inférieure de la même boîte de dialogue n'est pas une fonction mais
+une modification de la fonction choisie : jusqu'à une itération que vous
+indiquez, la fonction continue exactement comme elle était ; au-delà, le compte
+qu'elle reçoit court plus vite ou plus lentement, donc les couleurs accélèrent
+ou ralentissent à partir de là et pas avant. Avec `square root` choisie et ITER
+à 40, les couleurs sont celles de la racine carrée jusqu'à 40 itérations, et
+ensuite la racine carrée d'un compte qui prend de la vitesse. Elle contient un
+exposant et une vitesse initiaux puis deux groupes, chacun séparé par un trait
+:
 
 | | |
 | --- | --- |
@@ -1681,9 +1698,9 @@ l'enregistrait la 2.0, dans l'ordre de la boîte de dialogue sans les vitesses,
 `(outcolorspeedchange 1 40 1.5 'smooth 10 50 2 'off 10)` ; et les vitesses,
 seulement quand l'une d'elles n'est pas un, à part comme
 `(outcolorspeedlinear 1 3 1)` — la vitesse initiale et celles des deux groupes
-— pour qu'une position qui ne s'en sert pas s'ouvre toujours dans la 2.0. La
-boîte de dialogue elle-même est la commande `outcolorspeedgroups`, avec ses
-douze champs dans leur ordre.
+— pour qu'une position qui ne s'en sert pas s'ouvre toujours dans la 2.0. Le
+changement de vitesse seul, tel que l'avait sa propre boîte de dialogue, est la
+commande `outcolorspeedgroups`, avec ses douze champs dans leur ordre.
 
 ### Au-delà de la fin d'un int
 

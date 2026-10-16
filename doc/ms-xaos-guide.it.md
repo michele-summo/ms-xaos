@@ -1527,13 +1527,30 @@ motore significa una seconda copia compilata di ogni ciclo di calcolo. `trap` e
 
 ## Funzioni di velocità della colorazione
 
-**Frattale → Colorazione interna → Funzioni di velocità della colorazione**, e
-lo stesso all'esterno, piegano il valore che una modalità di colorazione
-consegna prima che si applichino la velocità e lo spostamento della
-colorazione: la tavolozza viene letta a `f(v) × speed + shift`. Per le modalità
-che contano — iter, smooth e le altre — `v` è il conteggio delle iterazioni
-stesso, quindi una funzione si può pensare in iterazioni. Ognuna è dispari,
-`f(−v) = −f(v)`, quindi una grandezza che cambia segno lo conserva.
+**Frattale → Colorazione interna → Velocità della colorazione**, e lo stesso
+sotto Colorazione esterna, è un unico dialogo per tutto ciò che porta il valore
+consegnato da una modalità di colorazione a un posto nella tavolozza. La
+**funzione**, scelta da un elenco, piega il valore prima che si applichino la
+**velocità** e lo **spostamento** della colorazione: la tavolozza viene letta a
+`f(v) × speed + shift`. Sotto un titolo proprio, più in basso, c'è il [cambio
+di velocità dopo ITER](#cambio-di-velocità-dopo-iter), che agisce sul valore
+prima che la funzione lo riceva. OK imposta tutto come un solo passo
+dell'annullamento. Per le modalità che contano — iter, smooth e le altre — `v`
+è il conteggio delle iterazioni stesso, quindi una funzione si può pensare in
+iterazioni. Ognuna è dispari, `f(−v) = −f(v)`, quindi una grandezza che cambia
+segno lo conserva.
+
+Erano quattro voci del menu: la velocità, lo spostamento, un sottomenu delle
+funzioni e il dialogo proprio del cambio di velocità. Una posizione viene
+scritta e letta esattamente come prima, e i comandi che quelle voci eseguivano
+ci sono ancora per uno script.
+
+`sin`, `cos` e `triangle` girano: la velocità della colorazione, applicata dopo
+di esse, dice quante voci della tavolozza copre un giro, e lascia com'era
+quanto spesso il giro ritorna. Questo lo fa la **velocità iniziale** del cambio
+di velocità, applicata prima: con entrambi i gruppi spenti e l'esponente
+iniziale a uno la funzione riceve `s0·v`, quindi 2 avvicina i giri il doppio e
+0,5 li allontana il doppio.
 
 | | |
 | --- | --- |
@@ -1547,14 +1564,14 @@ contiene nomina ancora ciò che nominava.
 
 ### Cambio di velocità dopo ITER
 
-L'ultima voce dello stesso menu non è una funzione ma una modifica a qualunque
-funzione sia scelta: fino a un'iterazione che indichi, la funzione continua
-esattamente com'era; oltre, il conteggio che riceve corre più veloce o più
-lento, quindi i colori accelerano o rallentano da lì e non prima. Con
+La parte inferiore dello stesso dialogo non è una funzione ma una modifica a
+qualunque funzione sia scelta: fino a un'iterazione che indichi, la funzione
+continua esattamente com'era; oltre, il conteggio che riceve corre più veloce o
+più lento, quindi i colori accelerano o rallentano da lì e non prima. Con
 `square root` scelta e ITER a 40, i colori sono quelli della radice quadrata
 fino a 40 iterazioni e la radice quadrata di un conteggio che prende velocità
-dopo. Il dialogo contiene, un lato alla volta, un esponente e una velocità
-iniziali e poi due gruppi, ognuno separato da una linea:
+dopo. Contiene un esponente e una velocità iniziali e poi due gruppi, ognuno
+separato da una linea:
 
 | | |
 | --- | --- |
@@ -1654,8 +1671,9 @@ dialogo senza le velocità,
 `(outcolorspeedchange 1 40 1.5 'smooth 10 50 2 'off 10)`; e le velocità, solo
 dove una di esse non è uno, a parte come `(outcolorspeedlinear 1 3 1)` — la
 velocità iniziale e quelle dei due gruppi — così che una posizione che non le
-usa si apra ancora nella 2.0. Il dialogo stesso è il comando
-`outcolorspeedgroups`, con i suoi dodici campi nel loro ordine.
+usa si apra ancora nella 2.0. Il solo cambio di velocità, come lo aveva il suo
+dialogo, è il comando `outcolorspeedgroups`, con i suoi dodici campi nel loro
+ordine.
 
 ### Oltre la fine di un int
 

@@ -99,6 +99,7 @@ static menudialog *uih_perturbationdialog, *uih_juliadialog,
     *uih_incolorlegacydialog, *uih_outcolorlegacydialog,
     *uih_incolorgroupsdialog, *uih_outcolorgroupsdialog,
     *uih_incolorlineardialog, *uih_outcolorlineardialog,
+    *uih_incoloringspeeddialog, *uih_outcoloringspeeddialog,
     *uih_renderimgdialog, *palettepickerdialog, *loadgpldialog, *savegpldialog,
     *uih_palettecolorsdialog
 #ifdef USE_SFFE
@@ -434,6 +435,40 @@ void uih_registermenudialogs_i18n(void)
     DIALOGFLOAT_I(TR("Dialog", "Exponent:"), COLORFUN2_EXP);
     DIALOGCHOICE_I(TR("Dialog", "Mode:"), colorfun_after_modes, 0);
     NULL_I();
+
+    /* Everything that takes a side's colouring value to a place in the
+     * palette, in the one dialog the menu opens: the speed function, chosen
+     * from the list, the speed it is multiplied by and the shift it is moved
+     * along; and under a heading the speed change after ITER, which acts on
+     * the value before the function has it, field for field as its own
+     * dialog above has it. */
+    for (int side = 0; side < 2; side++) {
+        if (side)
+            Register(uih_outcoloringspeeddialog);
+        else
+            Register(uih_incoloringspeeddialog);
+        DIALOGCHOICE_I(TR("Dialog", "Function:"), colorfun, 0);
+        DIALOGFLOAT_I(TR("Dialog", "Coloring speed:"), 1);
+        DIALOGINT_I(TR("Dialog", "Coloring shift:"), 0);
+        DIALOGHEADING_I(TR("Dialog", "Speed change after ITER"));
+        DIALOGFLOAT_I(TR("Dialog", "Initial exponent:"), 1);
+        DIALOGFLOAT_I(TR("Dialog", "Initial speed:"), 1);
+        DIALOGRULE_I();
+        DIALOGFLOAT_I(TR("Dialog", "ITER:"), COLORFUN_ITER);
+        DIALOGFLOAT_I(TR("Dialog", "Exponent:"), COLORFUN_EXP);
+        DIALOGFLOAT_I(TR("Dialog", "Speed:"), 1);
+        DIALOGCHOICE_I(TR("Dialog", "Mode:"), colorfun_modes, 0);
+        DIALOGWHEN_I(1, 2);
+        DIALOGFLOAT_I(TR("Dialog", "Radius:"), COLORFUN_RADIUS);
+        DIALOGRULE_I();
+        DIALOGFLOAT_I(TR("Dialog", "ITER:"), COLORFUN2_ITER);
+        DIALOGFLOAT_I(TR("Dialog", "Exponent:"), COLORFUN2_EXP);
+        DIALOGFLOAT_I(TR("Dialog", "Speed:"), 1);
+        DIALOGCHOICE_I(TR("Dialog", "Mode:"), colorfun_modes, 0);
+        DIALOGWHEN_I(1, 2);
+        DIALOGFLOAT_I(TR("Dialog", "Radius:"), COLORFUN2_RADIUS);
+        NULL_I();
+    }
 
     Register(palettedialog);
     DIALOGINT_I(TR("Dialog", "Algorithm number:"), 0);
@@ -1137,6 +1172,52 @@ static void uih_setincolorfungroups(uih_context *c, dialogparam *p)
 static void uih_setoutcolorfungroups(uih_context *c, dialogparam *p)
 {
     uih_setcolorfungroupsfrom(c, 0, p);
+}
+
+/* The one dialog the colouring menus open: the function, the speed and the
+ * shift, then the speed change after ITER as the dialog above takes it. Each
+ * is set as it would be on its own, and so redraws only what has moved. */
+static menudialog *uih_getcoloringspeeddialog(struct uih_context *c,
+                                              int inset)
+{
+    menudialog *d =
+        inset ? uih_incoloringspeeddialog : uih_outcoloringspeeddialog;
+    if (c != NULL) {
+        fractal_context *f = c->fcontext;
+        d[0].defint = inset ? f->incolorfun : f->outcolorfun;
+        d[1].deffloat = inset ? f->incolorspeed : f->outcolorspeed;
+        d[2].defint = inset ? f->incolorshift : f->outcolorshift;
+        const menudialog *change = inset ? uih_getincolorchangedialog(c)
+                                         : uih_getoutcolorchangedialog(c);
+        for (int i = 0; change[i].question; i++) {
+            d[3 + i].defint = change[i].defint;
+            d[3 + i].deffloat = change[i].deffloat;
+        }
+    }
+    return d;
+}
+static menudialog *uih_getincoloringspeeddialog(struct uih_context *c)
+{
+    return uih_getcoloringspeeddialog(c, 1);
+}
+static menudialog *uih_getoutcoloringspeeddialog(struct uih_context *c)
+{
+    return uih_getcoloringspeeddialog(c, 0);
+}
+
+static void uih_setincoloringspeed(uih_context *c, dialogparam *p)
+{
+    uih_setincolorfun(c, p[0].dint);
+    uih_setincolorspeed(c, (number_t)p[1].number);
+    uih_setincolorshift(c, p[2].dint);
+    uih_setcolorfungroupsfrom(c, 1, p + 3);
+}
+static void uih_setoutcoloringspeed(uih_context *c, dialogparam *p)
+{
+    uih_setoutcolorfun(c, p[0].dint);
+    uih_setoutcolorspeed(c, (number_t)p[1].number);
+    uih_setoutcolorshift(c, p[2].dint);
+    uih_setcolorfungroupsfrom(c, 0, p + 3);
 }
 
 /* The groups as a position saves them, without the speeds, which it saves
@@ -2054,22 +2135,28 @@ static menuitem menuitems2[] = {
     SUBMENU("mincoloring", NULL, QT_TRANSLATE_NOOP("Menu", "True-color incoloring mode"), "tincoloring"),
     SUBMENU("moutcoloring", NULL, QT_TRANSLATE_NOOP("Menu", "True-color outcoloring mode"),
             "toutcoloring"),
+    /* The function, the speed, the shift and the speed change after ITER, in
+     * one dialog a side. */
+    MENUCDIALOG("mincoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Coloring speed"),
+                "incolorspeeddialog", MENUFLAG_INTERRUPT,
+                uih_setincoloringspeed, uih_getincoloringspeeddialog),
+    MENUCDIALOG("moutcoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Coloring speed"),
+                "outcolorspeeddialog", MENUFLAG_INTERRUPT,
+                uih_setoutcoloringspeed, uih_getoutcoloringspeeddialog),
+    /* What the menu had before that dialog, a dialog for the speed and one
+     * for the shift; out of the menu, and still commands a script may name. */
     MENUCDIALOG("mincoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Coloring speed"), "mincolorspeed",
-                MENUFLAG_INTERRUPT,
+                MENUFLAG_INTERRUPT | MENUFLAG_NOMENU,
                 uih_setincolorspeed, uih_getincolorspeeddialog),
     MENUCDIALOG("moutcoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Coloring speed"), "moutcolorspeed",
-                MENUFLAG_INTERRUPT,
+                MENUFLAG_INTERRUPT | MENUFLAG_NOMENU,
                 uih_setoutcolorspeed, uih_getoutcolorspeeddialog),
     MENUCDIALOG("mincoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Coloring shift"), "mincolorshift",
-                MENUFLAG_INTERRUPT,
+                MENUFLAG_INTERRUPT | MENUFLAG_NOMENU,
                 uih_setincolorshift, uih_getincolorshiftdialog),
     MENUCDIALOG("moutcoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Coloring shift"), "moutcolorshift",
-                MENUFLAG_INTERRUPT,
-                uih_setoutcolorshift, uih_getoutcolorshiftdialog),
-    SUBMENU("mincoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Coloring speed functions"),
-            "mincolorfun"),
-    SUBMENU("moutcoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Coloring speed functions"),
-            "moutcolorfun")};
+                MENUFLAG_INTERRUPT | MENUFLAG_NOMENU,
+                uih_setoutcolorshift, uih_getoutcolorshiftdialog)};
 
 static int uih_selectedformula(struct uih_context *c, int n)
 {
@@ -2160,9 +2247,9 @@ static menuitem *filteritems;
  * take them out again. */
 static menuitem fbmitems[10];
 static int nfbmitems;
-/* The speed change after ITER, one entry in each speed function menu, after
- * the functions themselves: it acts on whichever of them is chosen. And the
- * command 1.8.0 saved it with, a side, kept out of the menu. */
+/* The commands of the speed change after ITER, all kept out of the menu now
+ * that the Coloring speed dialog holds it: its own dialog, and the ones the
+ * positions of each version saved it with. */
 static menuitem colorfunitems[10];
 void uih_registermenus(void)
 {
@@ -2305,17 +2392,23 @@ void uih_registermenus(void)
         menu_add(fbmitems, nfbmitems);
     }
 
+    /* The speed functions one command apiece, as the menu offered them before
+     * the Coloring speed dialog took them in; out of the menu now, and still
+     * commands a script may name. */
     menu_genernumbered(COLORFUN - 1, "mincolorfun", colorfun, NULL, MENU_INT,
-                       UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
+                       UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT |
+                           MENUFLAG_NOMENU,
                        uih_setincolorfun, uih_selectedincolorfun, "infun");
 
     menu_genernumbered(COLORFUN - 1, "moutcolorfun", colorfun, NULL, MENU_INT,
-                       UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
+                       UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT |
+                           MENUFLAG_NOMENU,
                        uih_setoutcolorfun, uih_selectedoutcolorfun, "outfun");
 
-    /* Registered after the functions, so that it comes after them in the
-     * menu: incolorspeedgroups, the whole dialog. A position saves what it
-     * sets as infbmset is for the fbm's, with commands kept out of the menu:
+    /* incolorspeedgroups, the speed change after ITER's own dialog, which the
+     * menu opened until the Coloring speed dialog took it in; a command still,
+     * with its twelve fields. A position saves what it sets as infbmset is for
+     * the fbm's, with commands kept out of the menu:
      * incolorspeedchange with both groups and their radii, as 2.0 saved them,
      * and incolorspeedlinear with the speeds; incolorfunafter with the three
      * 1.8.0 had -- still what a position that uses no more is saved with --
@@ -2328,7 +2421,7 @@ void uih_registermenus(void)
         m->name = TR("Menu", "Speed change after ITER");
         m->shortname = side ? "outcolorspeedgroups" : "incolorspeedgroups";
         m->type = MENU_CUSTOMDIALOG;
-        m->flags = MENUFLAG_INTERRUPT;
+        m->flags = MENUFLAG_INTERRUPT | MENUFLAG_NOMENU;
         m->function = (void (*)(void))(side ? uih_setoutcolorfungroups
                                             : uih_setincolorfungroups);
         m->dialog = (const menudialog *(*)(struct uih_context *))(

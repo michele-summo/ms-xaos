@@ -35,6 +35,9 @@ typedef struct dialog {
      * fill in the two fields, and take no parameter, as a rule takes none.
      * Nought, as every field is unless told, has no tools. */
     int viewtools;
+    /* A title on the rule above this field, naming what the fields from here
+     * on are for. The dialog's alone, as the rule is. NULL has none. */
+    const char *heading;
 } menudialog;
 
 typedef char *(*tokenfunc)(struct uih_context *c);
@@ -202,6 +205,11 @@ typedef char *(*tokenfunc)(struct uih_context *c);
 
 /* A rule above the field defined next; see menudialog's separated. */
 #define DIALOGRULE_I()                                                             menudialogs_i18n[no_menudialogs_i18n].separated = 1;
+
+/* And a rule with a title on it; see menudialog's heading. */
+#define DIALOGHEADING_I(_heading)                                              \
+    menudialogs_i18n[no_menudialogs_i18n].separated = 1;                       \
+    menudialogs_i18n[no_menudialogs_i18n].heading = _heading;
 
 /* The View dialog's tools under the angle defined next, the center being
  * _back fields before it; see menudialog's viewtools. */

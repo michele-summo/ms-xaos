@@ -1579,13 +1579,31 @@ Benutzerformel tun es stattdessen.
 
 ## Geschwindigkeitsfunktionen der Färbung
 
-**Fraktal → Innere Färbung → Geschwindigkeitsfunktionen der Färbung**, und
-dasselbe außen, biegen den Wert, den ein Färbungsmodus übergibt, bevor
-Färbungsgeschwindigkeit und -verschiebung angewandt werden: die Palette wird
-bei `f(v) × speed + shift` gelesen. Für die Modi, die zählen — iter, smooth und
-die übrigen —, ist `v` die Iterationszahl selbst, also kann man eine Funktion
-in Iterationen denken. Jede ist ungerade, `f(−v) = −f(v)`, also behält eine
-Größe, die ihr Vorzeichen wechselt, es.
+**Fraktal → Innere Färbung → Färbungsgeschwindigkeit**, und dasselbe unter
+Äußere Färbung, ist ein einziger Dialog für alles, was den Wert, den ein
+Färbungsmodus übergibt, an einen Platz in der Palette bringt. Die **Funktion**,
+aus einer Liste gewählt, biegt den Wert, bevor **Färbungsgeschwindigkeit** und
+**-verschiebung** angewandt werden: die Palette wird bei `f(v) × speed + shift`
+gelesen. Unter einer eigenen Überschrift darunter steht der
+[Geschwindigkeitswechsel nach ITER](#geschwindigkeitswechsel-nach-iter), der
+auf den Wert wirkt, bevor die Funktion ihn bekommt. OK setzt alles als einen
+einzigen Rückgängig-Schritt. Für die Modi, die zählen — iter, smooth und die
+übrigen —, ist `v` die Iterationszahl selbst, also kann man eine Funktion in
+Iterationen denken. Jede ist ungerade, `f(−v) = −f(v)`, also behält eine Größe,
+die ihr Vorzeichen wechselt, es.
+
+Das waren vier Einträge des Menüs: die Geschwindigkeit, die Verschiebung, ein
+Untermenü der Funktionen und der eigene Dialog des Geschwindigkeitswechsels.
+Eine Position wird genau wie bisher geschrieben und gelesen, und die Befehle,
+die diese Einträge ausführten, gibt es für ein Skript weiterhin.
+
+`sin`, `cos` und `triangle` laufen im Kreis: die Färbungsgeschwindigkeit, nach
+ihnen angewandt, sagt, wie viele Paletteneinträge eine Runde umfasst, und
+lässt, wie oft sie wiederkehrt, wie es war. Das macht die
+**Anfangsgeschwindigkeit** des Geschwindigkeitswechsels, vor ihnen angewandt:
+mit beiden Gruppen aus und dem Anfangsexponenten bei eins bekommt die Funktion
+`s0·v`, also rückt 2 die Runden doppelt so dicht zusammen und 0,5 doppelt so
+weit auseinander.
 
 | | |
 | --- | --- |
@@ -1599,15 +1617,15 @@ Position enthält, weiter, was sie nannte.
 
 ### Geschwindigkeitswechsel nach ITER
 
-Der letzte Eintrag desselben Menüs ist keine Funktion, sondern eine Änderung an
+Der untere Teil desselben Dialogs ist keine Funktion, sondern eine Änderung an
 der gewählten Funktion: bis zu einer Iteration, die Sie nennen, läuft die
 Funktion genau weiter wie bisher; danach läuft die Zählung, die sie bekommt,
 schneller oder langsamer, also werden die Farben von dort an schneller oder
 langsamer und nicht vorher. Mit `square root` gewählt und ITER bei 40 sind die
 Farben bis 40 Iterationen die der Quadratwurzel und danach die Quadratwurzel
-einer Zählung, die an Tempo gewinnt. Der Dialog enthält, eine Seite nach der
-anderen, einen Anfangsexponenten und eine Anfangsgeschwindigkeit und dann zwei
-Gruppen, jede durch eine Linie abgesetzt:
+einer Zählung, die an Tempo gewinnt. Er enthält einen Anfangsexponenten und
+eine Anfangsgeschwindigkeit und dann zwei Gruppen, jede durch eine Linie
+abgesetzt:
 
 | | |
 | --- | --- |
@@ -1716,8 +1734,9 @@ Reihenfolge des Dialogs ohne die Geschwindigkeiten,
 Geschwindigkeiten, nur wo eine davon nicht eins ist, getrennt als
 `(outcolorspeedlinear 1 3 1)` — die Anfangsgeschwindigkeit und die der beiden
 Gruppen —, sodass eine Position, die sie nicht benutzt, sich weiterhin in 2.0
-öffnet. Der Dialog selbst ist der Befehl `outcolorspeedgroups` mit seinen zwölf
-Feldern in ihrer Reihenfolge.
+öffnet. Der Geschwindigkeitswechsel allein, wie ihn sein eigener Dialog hatte,
+ist der Befehl `outcolorspeedgroups` mit seinen zwölf Feldern in ihrer
+Reihenfolge.
 
 ### Jenseits des Endes eines int
 

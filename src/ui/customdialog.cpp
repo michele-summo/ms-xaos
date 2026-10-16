@@ -117,6 +117,13 @@ CustomDialog::CustomDialog(struct uih_context *uih, const menuitem *item,
             rule->setFrameShape(QFrame::HLine);
             rule->setFrameShadow(QFrame::Sunken);
             formLayout->addRow(rule);
+            if (dialog[i].heading) {
+                QLabel *heading = new QLabel(dialog[i].heading, this);
+                QFont bold = heading->font();
+                bold.setBold(true);
+                heading->setFont(bold);
+                formLayout->addRow(heading);
+            }
         }
         if (dialog[i].type == DIALOG_COORD) {
 
