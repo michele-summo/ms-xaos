@@ -444,6 +444,8 @@ void uih_replaydisable(struct uih_context *uih)
         uih_clear_lines(uih);
         free(uih->playc->directory);
         free(uih->playc);
+        /* uih_initstate and the morph dialog test playc rather than play. */
+        uih->playc = NULL;
         uih_display(uih);
     }
 }
