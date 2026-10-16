@@ -24,7 +24,12 @@
 // is not in the upstream wiki and reporting it there would be a nuisance to
 // people who cannot act on it. Fractal types, the web site and the forum are
 // upstream's and still describe what they describe.
-#define HELP_URL "https://github.com/michele-summo/ms-xaos/blob/master/doc/ms-xaos-guide.md"
+#define HELP_URL_BASE "https://github.com/michele-summo/ms-xaos/blob/master/doc/ms-xaos-guide"
+#define HELP_URL HELP_URL_BASE ".md"
+// The languages the guide has been translated into, each as
+// doc/ms-xaos-guide.LL.md beside the English one. Help and About open the
+// guide in the language XaoS is in, and the English one where there is none.
+#define HELP_LANGUAGES "de", "es", "fr", "it", "pt", "ru"
 #define WEB_URL "http://xaos.sourceforge.net/"
 #define DOWNLOAD_URL "https://github.com/michele-summo/ms-xaos/releases"
 #define FEEDBACK_URL "https://github.com/michele-summo/ms-xaos/issues"

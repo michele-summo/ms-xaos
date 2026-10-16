@@ -283,9 +283,20 @@ void ui_quit(int i)
     exit(i);
 }
 
+/* The guide in the language XaoS is in, where it has been translated. */
+static QString helpUrl()
+{
+    static const char *const translated[] = {HELP_LANGUAGES};
+    const QString language = QString(getLanguage()).left(2);
+    for (const char *t : translated)
+        if (language == t)
+            return QString(HELP_URL_BASE ".%1.md").arg(language);
+    return HELP_URL;
+}
+
 static void ui_help(struct uih_context */*uih*/)
 {
-    QDesktopServices::openUrl(QUrl(HELP_URL));
+    QDesktopServices::openUrl(QUrl(helpUrl()));
 }
 
 static void ui_download(struct uih_context */*uih*/)
@@ -345,7 +356,7 @@ static void ui_about(struct uih_context *uih)
             "A fork of <a href=\"https://github.com/xaos-project/XaoS\">XaoS</a> 4.3.3, with "
             "128-bit deep zoom, coherent noise in user formulas, selectable "
             "bailout shapes and rectangle zoom. "
-            "<a href=\"https://github.com/michele-summo/ms-xaos/blob/master/doc/ms-xaos-guide.md\">What is new</a>.<br><br>"
+            "<a href=\"" + helpUrl() + "\">What is new</a>.<br><br>"
             "Original Authors: Jan Hubička and Thomas Marsh<br>"
             "Copyright © 1996-2024 <a href=\"https://github.com/xaos-project/XaoS/blob/master/CREDITS.md\">XaoS Contributors</a><br>"
             "<br>"

@@ -1838,6 +1838,25 @@ values are not proportional to light. This converts to linear light, averages
 there, and converts back, so an edge keeps the brightness of what it is
 between.
 
+## Languages
+
+View → Set Language switches XaoS to another language, after a restart. Six
+are complete: German, Spanish, French, Italian, Portuguese and Russian — the
+menus, the dialogs and the messages, the user formula reference, and the OK,
+Cancel, file and colour dialogs that come from Qt itself. Those last are now
+built in, where they used to be looked for where Qt is installed and in the
+system's language whatever had been chosen. The other languages XaoS
+inherited go as far as their translators took them, and are English beyond.
+
+In the user formula reference the descriptions are translated and the names
+and argument lists are not: they are the syntax a formula is written in.
+
+This guide is translated into the same six languages, beside this file as
+`ms-xaos-guide.de.md`, `.es.md`, `.fr.md`, `.it.md`, `.pt.md` and `.ru.md`, and
+Help opens the one for the language XaoS is in. Each says which version of
+the English guide it was made from; where they differ, this one is the
+reference.
+
 ## Building
 
     cmake -B build -DCMAKE_BUILD_TYPE=Release

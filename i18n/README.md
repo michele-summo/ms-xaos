@@ -45,6 +45,15 @@ Brazilian `qtbase_pt_BR.qm`. They are kept in the repository, past the
 `*.qm` of .gitignore, because the build does not make them and not every
 Qt installation carries them.
 
+## The guide
+
+The guide, doc/ms-xaos-guide.md, is translated as doc/ms-xaos-guide.LL.md
+for the same six languages; Help opens the one for the language XaoS is in
+(HELP_LANGUAGES in src/include/config.h). Each translation says at its top
+which version of the English guide it was made from. When the English guide
+changes, the translations need the same change, or that line updated to say
+how far behind they are.
+
 ## Adding a new language
 
 To add a new translation, do the following:
