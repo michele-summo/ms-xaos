@@ -889,7 +889,7 @@ void uih_save_disable(struct uih_context *uih)
         if (xio_close(uih->savec->file))
             outputerror(uih);
         uih->save = 0;
-        free(uih->savec->fcontext);
+        free_fractalc(uih->savec->fcontext);
         tl_free_timer(uih->savec->timer);
         tl_free_timer(uih->savec->synctimer);
         free(uih->savec);
