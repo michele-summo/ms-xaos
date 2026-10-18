@@ -46,6 +46,8 @@ jobs:
 
   # macos-latest is Apple Silicon. Apple's clang has no __float128, so only
   # XaoS is built there, without XaoS-quad, and its long double is a double.
+  # Its Xcode 26 SDK has no AGL framework and a __yield Qt 6.8 does not
+  # expect, so Qt is 6.10 there.
   mac-cmake:
     runs-on: macos-latest
     steps:
@@ -53,7 +55,7 @@ jobs:
     - name: install-qt
       uses: jurplel/install-qt-action@v4
       with:
-        version: '6.8.*'
+        version: '6.10.*'
         cache: true
     - name: cmake
       run: cmake -S . -B cbuild -DMACDEPLOYQT_ARGS=-dmg
@@ -77,7 +79,7 @@ jobs:
     - name: install-qt
       uses: jurplel/install-qt-action@v4
       with:
-        version: '6.8.*'
+        version: '6.10.*'
         cache: true
     - name: qmake
       run: qmake

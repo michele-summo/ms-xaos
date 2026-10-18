@@ -69,7 +69,7 @@
 #   cmake -S . -B build -DCMAKE_PREFIX_PATH=$(brew --prefix qt) && \
 #   cmake --build build -j`sysctl -n hw.ncpu`
 #
-#   (with the online installer, CMAKE_PREFIX_PATH is <PATH_TO_QT_SDK>/Qt/6.8.3/macos).
+#   (with the online installer, CMAKE_PREFIX_PATH is <PATH_TO_QT_SDK>/Qt/6.10.0/macos).
 #
 # * The result is bin/XaoS.app, with the catalogs, the tutorial and the
 #   examples already inside it. "open bin/XaoS.app" starts it.
