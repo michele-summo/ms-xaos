@@ -1,0 +1,6 @@
+(initstate)
+(formula 'mandel)
+(maxiter 200)
+(incoloring 30)
+(intessellation 39)
+(view -0.4 0 1.6 1.6)

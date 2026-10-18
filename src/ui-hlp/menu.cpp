@@ -116,6 +116,8 @@ static menudialog *uih_perturbationdialog, *uih_juliadialog,
     *uih_incolorlineardialog, *uih_outcolorlineardialog,
     *uih_incoloringspeeddialog, *uih_outcoloringspeeddialog,
     *uih_indecompdialog, *uih_outdecompdialog,
+    *uih_fbmscaledialog, *uih_tessellationdialog,
+    *uih_intessellationdialog,
     *uih_renderimgdialog, *palettepickerdialog, *loadgpldialog, *savegpldialog,
     *uih_palettecolorsdialog
 #ifdef USE_SFFE
@@ -356,6 +358,28 @@ void uih_registermenudialogs_i18n(void)
     DIALOGINT_I(TR("Dialog", "Octaves:"), 4);
     DIALOGFLOAT_I(TR("Dialog", "Roughness:"), 0.5);
     DIALOGINT_I(TR("Dialog", "Seed:"), 1);
+    /* and, the outside alone having a count to go by, how the marks are
+     * sized: by the frequency alone, or raised with the count; see
+     * outfbmscaling */
+    DIALOGRULE_I();
+    DIALOGCHOICE_I(TR("Dialog", "Noise scaling:"), fbm_scalings, 0);
+    DIALOGFLOAT_I(TR("Dialog", "Scaling factor (doublings per 10 iterations):"), 1);
+    NULL_I();
+
+    /* The same two alone, the command a position saves them as. */
+    Register(uih_fbmscaledialog);
+    DIALOGCHOICE_I(TR("Dialog", "Noise scaling:"), fbm_scalings, 0);
+    DIALOGFLOAT_I(TR("Dialog", "Scaling factor (doublings per 10 iterations):"), 1);
+    NULL_I();
+
+    /* The tiling the inside's tessellation mode lays over z: the dialog the
+     * menu opens, which chooses the mode too, and the number alone, the
+     * command a position saves it as. */
+    Register(uih_tessellationdialog);
+    DIALOGINT_I(TR("Dialog", "Tiling (1-45, as randsctile):"), 3);
+    NULL_I();
+    Register(uih_intessellationdialog);
+    DIALOGINT_I(TR("Dialog", "Tiling (1-45, as randsctile):"), 3);
     NULL_I();
 
     /* The speed change after ITER as 1.8.0 had it: where the exponent begins
@@ -966,6 +990,8 @@ static menudialog *uih_getoutcolorfbmdialog(struct uih_context *c)
         uih_outcolorfbmdialog[3].defint = c->fcontext->outfbmoctaves;
         uih_outcolorfbmdialog[4].deffloat = c->fcontext->outfbmroughness;
         uih_outcolorfbmdialog[5].defint = c->fcontext->outfbmseed;
+        uih_outcolorfbmdialog[6].defint = c->fcontext->outfbmscaling;
+        uih_outcolorfbmdialog[7].deffloat = c->fcontext->outfbmfactor;
     }
     return (uih_outcolorfbmdialog);
 }
@@ -1316,6 +1342,47 @@ static void uih_setincolorfbm(uih_context *c, dialogparam *p)
 static void uih_setoutcolorfbm(uih_context *c, dialogparam *p)
 {
     uih_setcolorfbm(c, p, 0);
+    uih_setfbmscaling(c, p[6].dint, (number_t)p[7].number);
+}
+
+/* outfbmscale, the sizing of the outside's marks alone. */
+static menudialog *uih_getfbmscaledialog(struct uih_context *c)
+{
+    if (c != NULL) {
+        uih_fbmscaledialog[0].defint = c->fcontext->outfbmscaling;
+        uih_fbmscaledialog[1].deffloat = c->fcontext->outfbmfactor;
+    }
+    return uih_fbmscaledialog;
+}
+static void uih_setfbmscale(uih_context *c, dialogparam *p)
+{
+    uih_setfbmscaling(c, p[0].dint, (number_t)p[1].number);
+}
+
+/* Tessellation..., the mode and its tiling from one dialog, as Fractional
+ * Brownian Motion... is; and intessellation, the tiling alone. */
+static int uih_isintessellation(struct uih_context *c)
+{
+    return c != NULL && c->fcontext->incoloringmode == INCOLORING_TESSELLATION;
+}
+static menudialog *uih_gettessellationdialog(struct uih_context *c)
+{
+    if (c != NULL)
+        uih_tessellationdialog[0].defint = c->fcontext->intessellation;
+    return uih_tessellationdialog;
+}
+static menudialog *uih_getintessellationdialog(struct uih_context *c)
+{
+    if (c != NULL)
+        uih_intessellationdialog[0].defint = c->fcontext->intessellation;
+    return uih_intessellationdialog;
+}
+/* A dialog of one field hands its value over as it is, not in a
+ * dialogparam: see menu_activate. */
+static void uih_setcolortessellation(uih_context *c, int tiling)
+{
+    uih_setincoloringmode(c, INCOLORING_TESSELLATION);
+    uih_settessellation(c, tiling);
 }
 
 /* The speed change after ITER, from its dialog; the mode is the index of the
@@ -2397,6 +2464,23 @@ static menuitem menuitems2[] = {
                QT_TRANSLATE_NOOP("Menu", "Fractional Brownian Motion"),
                "outfbmset", MENUFLAG_INTERRUPT | MENUFLAG_NOMENU, uih_setoutfbm,
                uih_getoutfbmdialog),
+    /* outfbmscale: how the outside's marks are sized, as a position saves
+     * it apart from the five numbers, which older releases read alone. */
+    MENUCDIALOG("moutcoloring", NULL,
+               QT_TRANSLATE_NOOP("Menu", "Fractional Brownian Motion"),
+               "outfbmscale", MENUFLAG_INTERRUPT | MENUFLAG_NOMENU,
+               uih_setfbmscale, uih_getfbmscaledialog),
+    /* The tiles of one of randsctile's tilings inside, the mode and the
+     * tiling in one dialog, ticked while it is the mode in use; the tiling
+     * alone, out of the menu, is the command a position saves. */
+    MENUCDIALOGCB("mincoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Tessellation"),
+                 "mincolortessellation",
+                 UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
+                 uih_setcolortessellation, uih_isintessellation,
+                 uih_gettessellationdialog),
+    MENUCDIALOG("mincoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Tessellation"),
+               "intessellation", MENUFLAG_INTERRUPT | MENUFLAG_NOMENU,
+               uih_settessellation, uih_getintessellationdialog),
     /* The function, the speed, the shift and the speed change after ITER, in
      * one dialog a side. */
     MENUCDIALOG("mincoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Coloring speed"),
@@ -2553,13 +2637,14 @@ void uih_registermenus(void)
     /* The ten the program has always had stay in the menu itself; the ones
      * added since go to a submenu, so that the list does not run off the
      * screen. The numbers do not move: they are what a saved position holds.
-     * True colour and the fbm modes have menus of their own, and are left
-     * out by their missing names; the modes written after them come last in
-     * the submenu. */
+     * True colour, the fbm modes and tessellation have menus of their own,
+     * and are left out by their missing names; the modes written after them
+     * come last in the submenu. */
     static const char *inlisted[INCOLORING];
     for (i = 0; i < INCOLORING; i++)
         inlisted[i] = (i == INCOLORING_TRUECOLOR ||
-                       (i >= INCOLORING_FBM && i <= INCOLORING_FBM_DECOMP))
+                       (i >= INCOLORING_FBM && i <= INCOLORING_FBM_DECOMP) ||
+                       i == INCOLORING_TESSELLATION)
                           ? NULL
                           : incolorname[i];
     menu_genernumberedsplit(INCOLORING, "mincoloring", 10,

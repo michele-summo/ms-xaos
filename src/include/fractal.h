@@ -48,7 +48,13 @@
 #define INCOLORING_HEXAGONS 27
 #define INCOLORING_SPIRAL 28
 #define INCOLORING_COS_ABS_ZC 29
-#define INCOLORING_HEXAGON_TILES 30
+/* The tiles of one of randsctile's tilings, which took the place of hexagon
+ * tiles before that was ever released: its number is free to take. */
+#define INCOLORING_TESSELLATION 30
+/* The ways the outside's fbm marks can be sized; see outfbmscaling. */
+#define FBM_SCALE_FIXED 0
+#define FBM_SCALE_ITER 1
+#define FBM_SCALE_SMOOTH 2
 #define OUTCOLORING (OutColormodeClass::ColOut_MAXMode + 1)
 /* How many of them the flat list in the menu offers: the ones up to true
  * colour, which has a submenu of its own. The fbm modes are not among them --
@@ -380,6 +386,19 @@ struct fractal_context {
     number_t infbmroughness, outfbmroughness;
     int infbmoctaves, outfbmoctaves;
     int infbmseed, outfbmseed;
+    /* How the marks of the outside's motion are sized: by the frequency
+     * alone (FBM_SCALE_FIXED, where it starts and what every position saved
+     * before there was a choice draws), or by the frequency raised with the
+     * count, whole (FBM_SCALE_ITER) or smooth (FBM_SCALE_SMOOTH), so that
+     * the marks grow finer where the orbit took longer to leave. factor is
+     * how many times the frequency doubles over ten iterations; at nought
+     * the count changes nothing. The inside has no count to go by -- every
+     * point of it ran to maxiter -- and so has neither. */
+    int outfbmscaling;
+    number_t outfbmfactor;
+    /* Which of randsctile's tilings, 1 to 45, the inside's tessellation mode
+     * lays over z; hexagons where it starts. */
+    int intessellation;
     //MSUMMO HACK 20220409
     int pndefault;
     int newtonmodesffe;

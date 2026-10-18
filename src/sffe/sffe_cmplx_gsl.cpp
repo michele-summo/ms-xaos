@@ -21,6 +21,7 @@
 #include "number_math.h"
 #include "fbm_noise.h"
 #include "randsctile_tables.h"
+#include "randsctile.h"
 
 /* Every entry is {implementation, argument count, name}, optionally followed by
  * a selector that marks the arguments as lazily evaluated.
@@ -3678,7 +3679,7 @@ sfarg *sfrandsct(sfarg *const p)
  * of the tile was further from the edge than that and read nought. The
  * rosette turns about the tile's middle, in the tile's own frame.
  */
-#define RANDSCTILE_KINDS 45
+#define RANDSCTILE_KINDS RANDSCTILE_TILINGS
 #define RANDSCTILE_SALT 0x3C6EF372FE94F82BULL
 
 /* past this many cells from the origin a tiling that does not repeat is flat */
@@ -4329,6 +4330,56 @@ static sfarg *randsctile_at(sfarg *const p, unsigned int pass,
 sfarg *sfrandsctile(sfarg *const p)
 {
     return randsc_run(p, 1, randsctile_at);
+}
+
+/* The tile alone, for the inside's tessellation mode; see randsctile.h. The
+ * same search randsctile_at makes, with no seed, size or skew around it: a
+ * salt of its own for each tiling, so that two of them name their tiles
+ * apart, and nothing asked of the tile but which it is. */
+int randsctile_name(int kind, number_t x, number_t y, uint64_t *name)
+{
+    if (kind < 1 || kind > RANDSCTILE_KINDS)
+        return 0;
+    int64_t cx, cy;
+    number_t u, v;
+    if (!randsc_cell(x, &cx, &u) || !randsc_cell(y, &cy, &v))
+        return 0;
+    uint64_t salt = RANDSCTILE_SALT ^ (uint64_t)kind * 0x9E3779B97F4A7C15ULL;
+    number_t X = (number_t)cx + u, Y = (number_t)cy + v;
+    double lx = (double)X, ly = (double)Y;
+    int how = RANDSCTILE_KIND[kind - 1].how, which = RANDSCTILE_KIND[kind - 1].which;
+    if (how != RANDSCTILE_TABLE && how != RANDSCTILE_VORONOI &&
+        !(fabs(lx) < RANDSCTILE_FAR && fabs(ly) < RANDSCTILE_FAR))
+        return 0;
+    struct randsctile_hit hit = {0, 0, 0, 0};
+    int found = 0;
+    switch (how) {
+        case RANDSCTILE_TABLE:
+            found = randsctile_table(which, X, Y, salt, 0, &hit);
+            break;
+        case RANDSCTILE_VORONOI: {
+            number_t pout, pbx, pby;
+            hit.name = randsc_remix(
+                randscp_nearest(cx, cy, u, v, salt, 0, &pout, &pbx, &pby));
+            found = 1;
+            break;
+        }
+        case RANDSCTILE_GRID_OF:
+            found = randsctile_grid(which, lx, ly, salt, 0, &hit);
+            break;
+        case RANDSCTILE_KITES:
+            found = randsctile_kites(lx, ly, salt, 0, &hit);
+            break;
+        case RANDSCTILE_PINWHEEL:
+            found = randsctile_pinwheel(lx, ly, salt, 0, &hit);
+            break;
+        case RANDSCTILE_CHAIR:
+            found = randsctile_chair(lx, ly, salt, 0, &hit);
+            break;
+    }
+    if (found)
+        *name = hit.name;
+    return found;
 }
 
 sfarg *sfgamma(sfarg *const p)

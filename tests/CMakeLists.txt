@@ -257,6 +257,18 @@ foreach(prec ${XAOS_TEST_PRECISIONS})
                               PRIVATE ${CMAKE_SOURCE_DIR}/src/engine)
    add_test(NAME decomposition_${suffix} COMMAND decomposition_${suffix})
 
+   # --- the sizing of the outside's fbm marks, and the tessellation -------
+   # Fixed, what there was, to the bit; a factor of nought is fixed; the
+   # doublings exact; nothing but the outside's fbm modes moves; and a tile
+   # for every point of every tiling.
+   xaos_add_test_binary(fbm_scaling_${suffix} ${prec}
+                        fbm_scaling_test.cpp
+                        ${CMAKE_SOURCE_DIR}/src/engine/phist.cpp
+                        ${SFFE_SOURCES})
+   target_include_directories(fbm_scaling_${suffix}
+                              PRIVATE ${CMAKE_SOURCE_DIR}/src/engine)
+   add_test(NAME fbm_scaling_${suffix} COMMAND fbm_scaling_${suffix})
+
    # --- the iteration loops ------------------------------------------------
    # The formula table exposes every loop as an iterationfunc, so they can be
    # driven directly over a grid without going through the renderer; the

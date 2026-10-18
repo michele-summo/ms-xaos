@@ -42,6 +42,7 @@
 #include "config.h"
 #include "number_math.h"
 #include "fbm_noise.h"
+#include "randsctile.h"
 #include "phist.h"
 #include "cmplx.h"
 #include "filter.h"
@@ -87,7 +88,7 @@ const char *const incolorname[] = {"0",
                                    "hexagons",
                                    "spiral",
                                    "cos(|z-c|)",
-                                   "hexagon tiles",
+                                   "tessellation",
                                    NULL};
 
 
@@ -162,6 +163,14 @@ const char *const decomp_of[] = {"z", "z-c", "z*c", NULL};
 const char *const decomp_ways[] = {QT_TRANSLATE_NOOP("Dialog", "right"),
                                    QT_TRANSLATE_NOOP("Dialog", "left"),
                                    QT_TRANSLATE_NOOP("Dialog", "both"), NULL};
+
+/* How the outside's fbm marks are sized, by the number outfbmscaling
+ * holds: the names the dialog offers and a position saves -- one word each,
+ * since a keyword is, and "smooth" for the smooth count. */
+const char *const fbm_scalings[] = {QT_TRANSLATE_NOOP("Dialog", "fixed"),
+                                    QT_TRANSLATE_NOOP("Dialog", "iteration"),
+                                    QT_TRANSLATE_NOOP("Dialog", "smooth"),
+                                    NULL};
 
 /* And the four 1.8.0 had, which a position from then names: read, and turned
  * into the two by uih_setcolorfunlegacy, but no longer offered. */
@@ -413,6 +422,16 @@ static inline int smooth_count_far(unsigned int done, number_t s, number_t m,
             smoothed = smooth_count_near(cfractalc.maxiter - iter, szmag,      \
                                          zre, SMOOTHTHRESHOLD);                \
         }                                                                      \
+        /* fbm + iter and fbm, here only because their marks are sized by    \
+         * the smooth count: that handed on, and the rest drawn by            \
+         * color_output as ever. They read neither zre nor zim, which the     \
+         * passes past the bailout have moved. */                             \
+        if (cfractalc.coloringmode == OutColormodeClass::ColOut_fbm_iter ||    \
+            cfractalc.coloringmode == OutColormodeClass::ColOut_fbm) {         \
+            color_smooth = smoothed;                                           \
+            color_smooth_held = 1;                                             \
+            return (color_output(zre, zim, cfractalc.maxiter - iter));         \
+        }                                                                      \
         if (cfractalc.coloringmode == OutColormodeClass::ColOut_smooth_log) {  \
             smoothed = nlog(smoothed) * ((cpalette.size - 1)) /                \
                            nlog((number_t)(cfractalc.maxiter * 256)) +         \
@@ -446,7 +465,10 @@ static inline int smooth_count_far(unsigned int done, number_t s, number_t m,
              * already written for. */                                          \
             if (cfractalc.coloringmode ==                                      \
                 OutColormodeClass::ColOut_fbm_smooth)                          \
-                smoothed = fbm_fold(smoothed + fbm_at_pixel(0) * 256);         \
+                smoothed = fbm_fold(smoothed +                                 \
+                                    fbm_at_pixel(0, fbm_count(                 \
+                                        cfractalc.maxiter - iter,              \
+                                        smoothed)) * 256);                     \
             int cycle = (int)(((unsigned int)(cpalette.size - 1)) << 8);       \
             color_precalc(smoothed, 0);                                        \
             iter = color_wrap(smoothed, (unsigned int)cycle);                  \
@@ -471,6 +493,12 @@ static inline int smooth_count_far(unsigned int done, number_t s, number_t m,
 /* Where the pixel being coloured stands; see fractal.h. Written once a pixel
  * by calculate(), read by the fbm modes. */
 thread_local number_t color_px = 0, color_py = 0;
+
+/* The smooth count, in 256ths, that SMOOTHOUTPUT hands color_output for
+ * fbm + iter and fbm when their marks are sized by it; held says it is there
+ * for the pixel being coloured, and color_output takes it down again. */
+static thread_local number_t color_smooth = 0;
+static thread_local int color_smooth_held = 0;
 
 /* --- a fractional Brownian motion, for the colouring modes that want the
  * picture to look used rather than clean ----------------------------------
@@ -519,7 +547,33 @@ thread_local number_t color_px = 0, color_py = 0;
  * meets itself there. */
 static inline number_t fbm_fold(number_t v) { return v < 0 ? -v : v; }
 
-static number_t fbm_at_pixel(int inset)
+/* The count the outside's marks are sized by, in iterations: the whole one
+ * or the smooth one, given in 256ths, as outfbmscaling says. */
+static inline number_t fbm_count(unsigned int whole, number_t smooth)
+{
+    return cfractalc.outfbmscaling == FBM_SCALE_SMOOTH ? smooth / 256
+                                                       : (number_t)whole;
+}
+
+/* The motion at the pixel, its marks sized by count when the outside asks
+ * for it.
+ *
+ * Fixed, or at a factor of nought, it is the motion as it always was, and
+ * the code that drew it runs as it did. Otherwise the frequency is doubled
+ * factor times every ten iterations of the count. Laid over the pixel's
+ * place as it stands, a frequency that changes from one pixel to the next
+ * stretches the field -- the further from the origin, the more -- so it is
+ * not: the motion is read at the two powers of two either side, each a
+ * field of its own at a fixed frequency, and the two are blended by where
+ * between them the count stands, as a texture is between its mipmaps. Two
+ * fields blended half and half swing only seven tenths as far as either, so
+ * the blend is taken back to the swing of one, and held within nought to
+ * one, which it leaves only at the rarest extremes.
+ *
+ * With the whole count the place between is the same for a whole band, and
+ * the marks change size at its edges; with the smooth count they change as
+ * it does, without a seam. */
+static number_t fbm_at_pixel(int inset, number_t count = 0)
 {
     number_t freq = inset ? cfractalc.infbmfrequency : cfractalc.outfbmfrequency;
     number_t rough = inset ? cfractalc.infbmroughness : cfractalc.outfbmroughness;
@@ -527,9 +581,34 @@ static number_t fbm_at_pixel(int inset)
     int octaves = inset ? cfractalc.infbmoctaves : cfractalc.outfbmoctaves;
     int seed = inset ? cfractalc.infbmseed : cfractalc.outfbmseed;
 
-    return fbm_noise(color_px * freq, color_py * freq,
-                     (uint64_t)(int64_t)seed, octaves, rough) *
-           much;
+    if (inset || cfractalc.outfbmscaling == FBM_SCALE_FIXED ||
+        !(cfractalc.outfbmfactor != 0))
+        return fbm_noise(color_px * freq, color_py * freq,
+                         (uint64_t)(int64_t)seed, octaves, rough) *
+               much;
+
+    number_t doublings = cfractalc.outfbmfactor * count / 10;
+    /* past a thousand doublings either way the marks are long gone below a
+     * pixel or above the picture, and the power of two has to fit an int */
+    if (!(doublings > -1000))
+        doublings = -1000;
+    if (doublings > 1000)
+        doublings = 1000;
+    number_t whole = nfloor(doublings);
+    double between = (double)(doublings - whole);
+    number_t f = nldexp(freq, (int)whole);
+    number_t a = fbm_noise(color_px * f, color_py * f, (uint64_t)(int64_t)seed,
+                           octaves, rough);
+    if (between == 0)
+        return a * much;
+    f *= 2;
+    number_t b = fbm_noise(color_px * f, color_py * f, (uint64_t)(int64_t)seed,
+                           octaves, rough);
+    double m = (1 - between) * (double)a + between * (double)b;
+    m = 0.5 + (m - 0.5) / sqrt((1 - between) * (1 - between) +
+                               between * between);
+    m = m < 0 ? 0 : (m > 1 ? 1 : m);
+    return (number_t)m * much;
 }
 
 /* 2021-02-09 MSUMMO calculate color functions */
@@ -1359,6 +1438,11 @@ static unsigned int color_output(number_t zre, number_t zim, unsigned int iter);
 static unsigned int color_output(number_t zre, number_t zim, unsigned int iter)
 {
     number_t i_f;
+    /* The smooth count SMOOTHOUTPUT handed on, or, where none was worked
+     * out, the whole one in its place. */
+    const number_t smooth =
+        color_smooth_held ? color_smooth : (number_t)iter * 256;
+    color_smooth_held = 0;
     iter <<= SHIFT;
     i_f = iter;
     if (cfractalc.coloringmode.ColorMode != OutColormodeType::ColOut_iter) {
@@ -1459,12 +1543,15 @@ static unsigned int color_output(number_t zre, number_t zim, unsigned int iter)
         case OutColormodeType::ColOut_fbm_iter:
             /* the plain count worn, for a formula or a taste that does not
              * want the smoothing */
-            i_f = fbm_fold(iter + fbm_at_pixel(0) * SMUL);
+            i_f = fbm_fold(iter + fbm_at_pixel(0, fbm_count(iter >> SHIFT,
+                                                            smooth)) *
+                                      SMUL);
             break;
         case OutColormodeType::ColOut_fbm:
             /* the motion alone: no count at all, so what is drawn outside the
-             * set is the noise itself */
-            i_f = fbm_fold(fbm_at_pixel(0) * SMUL);
+             * set is the noise itself -- though its marks may be sized by one */
+            i_f = fbm_fold(fbm_at_pixel(0, fbm_count(iter >> SHIFT, smooth)) *
+                           SMUL);
             break;
         case OutColormodeType::ColOut_abs_real_minus_abs_imag:
             /* how lopsided the escape point is, with no count: the level sets
@@ -1725,41 +1812,25 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
                 1) *
                20000);
         break;
-    case INCOLORING_HEXAGON_TILES:
-        /* hexagon tiles: squares with hexagons for squares. A honeycomb
-         * of hexagons a fortieth of a unit across, flat side to flat side,
-         * as squares' squares are on a side; and since a hexagon has six
-         * neighbours, three kinds of tile where squares has two: its two,
-         * the angle of z read either way, and the first half a turn on. No
-         * two tiles of a kind touch. */
+    case INCOLORING_TESSELLATION:
+        /* tessellation: the tiles of one of randsctile's tilings, laid over z
+         * forty to a unit as squares' squares are, each showing the angle of
+         * z turned by an amount of its own, so that every tile stands apart
+         * from its neighbours whatever their number and shape. A point no
+         * tile is to be had for -- past the reach of a tiling that never
+         * repeats -- shows the angle unturned. */
         {
-            static const number_t s3 =
-                (number_t)1.73205080756887729352744634150587L;
-            number_t x = periodic(zre) * 40, y = periodic(zim) * 40;
-            /* the cube coordinates of the tile, with hexagons whose
-             * inradius is a half, rounded to the nearest centre */
-            number_t fq = x - y * s3 / 3, fr = 2 * y * s3 / 3;
-            number_t fs = -fq - fr;
-            number_t rq = nfloor(fq + (number_t)0.5),
-                     rr = nfloor(fr + (number_t)0.5),
-                     rs = nfloor(fs + (number_t)0.5);
-            number_t dq = nfabs(rq - fq), dr = nfabs(rr - fr),
-                     ds = nfabs(rs - fs);
-            if (dq > dr && dq > ds)
-                rq = -rr - rs;
-            else if (dr > ds)
-                rr = -rq - rs;
-            /* which of the three kinds: q - r taken round three, which
-             * differs between any two neighbours */
-            number_t m = rq - rr;
-            m -= 3 * nfloor(m / 3);
-            int kind = (m == m && m >= 0 && m < 3) ? (int)m : 0;
-            if (kind == 1)
-                i_f = ((atan2l(zim, zre) / (M_PI + M_PI) + 0.75) * 20000);
-            else
-                i_f = ((atan2l(zre, zim) / (M_PI + M_PI) + 0.75 +
-                        (kind == 2 ? 0.5 : 0)) *
-                       20000);
+            uint64_t name;
+            number_t turn = 0;
+#ifdef USE_SFFE
+            if (randsctile_name(cfractalc.intessellation, periodic(zre) * 40,
+                                periodic(zim) * 40, &name))
+                turn = (number_t)(name >> 11) /
+                       (number_t)((uint64_t)1 << 53);
+#else
+            (void)name;
+#endif
+            i_f = ((atan2l(zre, zim) / (M_PI + M_PI) + 0.75 + turn) * 20000);
         }
         break;
     case 21: /* log(mag): zmag with the contrast moved onto the small values,

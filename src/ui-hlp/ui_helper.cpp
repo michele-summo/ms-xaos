@@ -28,6 +28,7 @@
 #include "grlib.h"
 #include "play.h"
 #include "formulahelp.h"
+#include "randsctile.h"
 
 #include <string>
 #include <vector>
@@ -2545,6 +2546,36 @@ void uih_setfbmparams(uih_context *c, int inset, number_t intensity,
     }
 }
 
+/* How the outside's fbm marks are sized, and by how much; see
+ * outfbmscaling. */
+void uih_setfbmscaling(uih_context *c, int scaling, number_t factor)
+{
+    fractal_context *f = c->fcontext;
+    if (scaling < FBM_SCALE_FIXED || scaling > FBM_SCALE_SMOOTH)
+        scaling = FBM_SCALE_FIXED;
+    if (!(factor == factor))
+        factor = 1;
+    if (f->outfbmscaling != scaling || f->outfbmfactor != factor) {
+        f->outfbmscaling = scaling;
+        f->outfbmfactor = factor;
+        f->version++;
+        uih_newimage(c);
+    }
+}
+
+/* Which tiling the inside's tessellation mode lays over z. */
+void uih_settessellation(uih_context *c, int tiling)
+{
+    fractal_context *f = c->fcontext;
+    if (tiling < 1 || tiling > RANDSCTILE_TILINGS)
+        tiling = 3;
+    if (f->intessellation != tiling) {
+        f->intessellation = tiling;
+        f->version++;
+        uih_newimage(c);
+    }
+}
+
 void uih_setpndefault(uih_context *c, int value) {
     if (c->fcontext->pndefault != (int)value) {
         c->fcontext->pndefault = value;
@@ -2971,6 +3002,8 @@ void uih_initstate(struct uih_context *uih)
         uih_setfbmparams(uih, inset, 4, 8, 4, (number_t)1 / 2, 1);
         uih_setdecomposition(uih, inset, 0, 0, 0, 0, 1, 0, 1);
     }
+    uih_setfbmscaling(uih, FBM_SCALE_FIXED, 1);
+    uih_settessellation(uih, 3);
     uih_setpndefault(uih, 0);
     uih_setnewtonmodesffe(uih, 0);
     uih_setnewtonconvergence(uih, 1E-6);

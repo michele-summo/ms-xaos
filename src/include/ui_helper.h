@@ -467,6 +467,8 @@ void uih_setcolorfunlegacy(uih_context *c, int inset, number_t initial,
 void uih_setfbmparams(uih_context *c, int inset, number_t intensity,
                       number_t frequency, int octaves, number_t roughness,
                       int seed);
+void uih_setfbmscaling(uih_context *c, int scaling, number_t factor);
+void uih_settessellation(uih_context *c, int tiling);
 void uih_setpndefault(uih_context *c, int periodicity);
 void uih_setnewtonmodesffe(uih_context *c, int periodicity);
 void uih_setnewtonconvergence(uih_context *c, number_t periodicity);
