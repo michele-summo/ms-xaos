@@ -125,20 +125,28 @@ int main()
 
     /* --- where it starts, what there was -------------------------------- */
     {
+        /* the same at 64 and 113 bits; with a long double that is double, as
+         * on Apple Silicon, tiling 18 puts a few points in other tiles, and
+         * its sum there was taken from the old code built with double */
         static const struct {
             int tiling;
-            unsigned long long sum;
-        } was[] = {{1, 0x70a351df50f5f5fdULL},  {3, 0x2058fe816d9e4bfeULL},
-                   {18, 0x5c9a2116d7ecbaa6ULL}, {38, 0xc651db659223f3dcULL},
-                   {39, 0x2f13603e2dfffa57ULL}, {44, 0x856e53e54aeb74cdULL},
-                   {45, 0xc9cd6499a83fb957ULL}};
+            unsigned long long sum, sum53;
+        } was[] = {{1, 0x70a351df50f5f5fdULL, 0x70a351df50f5f5fdULL},
+                   {3, 0x2058fe816d9e4bfeULL, 0x2058fe816d9e4bfeULL},
+                   {18, 0x5c9a2116d7ecbaa6ULL, 0x14dd02c8e49acd02ULL},
+                   {38, 0xc651db659223f3dcULL, 0xc651db659223f3dcULL},
+                   {39, 0x2f13603e2dfffa57ULL, 0x2f13603e2dfffa57ULL},
+                   {44, 0x856e53e54aeb74cdULL, 0x856e53e54aeb74cdULL},
+                   {45, 0xc9cd6499a83fb957ULL, 0xc9cd6499a83fb957ULL}};
         int same = 1;
         for (const auto &w : was) {
             cfractalc.intessellation = w.tiling;
             unsigned long long now = inside();
-            if (now != w.sum) {
+            const unsigned long long sum =
+                NUMBER_MANTISSA_BITS == 53 ? w.sum53 : w.sum;
+            if (now != sum) {
                 printf("       tiling %d: %016llx, was %016llx\n", w.tiling,
-                       now, w.sum);
+                       now, sum);
                 same = 0;
             }
         }
