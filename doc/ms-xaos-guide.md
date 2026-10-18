@@ -1368,8 +1368,8 @@ position already holds still means what it meant.
 
 Calculation is not what decides the colour of a pixel: the colour comes from a
 formula in the final `z`, the parameter `c` and the iteration count, and there
-is one such formula per mode. Eighteen more of them, in a submenu of their own
-under Fractal → Incoloring mode and Fractal → Outcoloring mode, above the
+is one such formula per mode. Twenty-three more of them, in a submenu of their
+own under Fractal → Incoloring mode and Fractal → Outcoloring mode, above the
 true-colour submenus.
 
 **Inside**, where the orbit never escaped and only the final `z` and `c` say
@@ -1389,17 +1389,41 @@ anything:
 | `sign(imag)` | two flat tones: a decomposition of the inside, as binary decomposition does to the outside |
 | `frac(mag)` | contours at every eighth of the modulus |
 | `log(mag)` | `zmag` with the contrast moved onto the small values, where an attracting orbit spends its time |
+| `cos(\|z\|)` | rings about where the orbit settled, eight to a unit of the modulus |
+| `hexagons` | three waves a third of a turn apart, which add up to a lattice of hexagons |
+| `spiral` | five arms about where the orbit settled, wound once to every factor of e in the modulus |
+| `cos(\|z-c\|)` | rings about the parameter, which tell the bulbs apart as `\|z-c\|` does |
+| `hexagon tiles` | `squares` with hexagons: a honeycomb of tiles a fortieth of a unit across, of three kinds since a hexagon has six neighbours — the two of `squares` and the first half a turn on |
 
-Six of the inside modes repeat — `cos(mag)`, `mag*cos(real^2)`,
-`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)` and `frac(mag)` — and
-**Frequency (periodic modes)**, the first field of the inside Coloring speed
-dialog, says how often. It multiplies the argument of what repeats, so at 2 the
-sines turn twice as fast, `squares` draws squares half the size and `frac(mag)`
-sixteen contours to a unit of the modulus where it drew eight. In `cos(mag)` it
-narrows as well the bands that choose between the sine and the cosine. At one,
-where it starts, they draw as they always did, to the bit, and the other modes
-never read it. A position saves it as `(incolorfrequency 2)` only when it is
-not one, so a position that leaves it alone still opens in earlier versions.
+Eleven of the inside modes repeat — `cos(mag)`, `mag*cos(real^2)`,
+`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)`, `frac(mag)` and the
+five at the foot of the table — and **Frequency (periodic modes)**, the first
+field of the inside Coloring speed dialog, says how often. It multiplies the
+argument of what repeats, so at 2 the sines turn twice as fast, `squares` draws
+squares half the size and `frac(mag)` sixteen contours to a unit of the modulus
+where it drew eight. In `cos(mag)` it narrows as well the bands that choose
+between the sine and the cosine. At one, where it starts, they draw as they
+always did, to the bit, and the other modes never read it. A position saves it
+as `(incolorfrequency 2)` only when it is not one, so a position that leaves it
+alone still opens in earlier versions.
+
+**Function (periodic modes)**, under it, bends the argument by one of the
+[colouring speed functions](#colouring-speed-functions) before the frequency
+multiplies it, so that the bands come round faster where the function climbs
+steeply and slower where it flattens: `square` and `cube` crowd them towards
+the edge and spread them out about nought, `log` and `atan` the other way, and
+`sin`, `cos` and `triangle` fold the argument back on itself, so that the bands
+turn and come back. It reaches every periodic function of the eleven, whose
+argument `a` goes in as `k·f(a)`, `k` being the frequency: the sines and
+cosines, the modulus of `frac(mag)`, the real and imaginary parts whose stripes
+make the squares of `squares` and the hexagons of `hexagon tiles`, and in
+`cos(mag)` the bands that choose between the sine and the cosine as well. In
+`spiral` the five arms stay five, since a number of turns that is not whole
+would leave a seam where the angle wraps: the frequency and the function act on
+the winding. A periodic function inside the argument of another would have its
+own argument bent too. At `ident`, where it starts, nothing changes. A position
+saves it as `(incolorperiodicfun 6)`, by the function's place in the list
+counting from nought, only when it is not ident.
 
 **Outside**, where the count and the escape point are what there is:
 
@@ -1455,16 +1479,42 @@ estimation. Those need a value carried from one iteration to the next, which
 in this engine means a second compiled copy of every calculation loop. `trap`
 and `stripe` in a user formula do it instead.
 
+### Decomposition settings
+
+**Fractal → Incoloring mode → Decomposition**, and the same under Outcoloring
+mode, sets how the decompositions cut the turn: binary decomposition and color
+decomposition outside, `sign(imag)`, `Decomposition-like` and
+`fbm + decomposition` inside. With every field where it starts — nought, and
+one, right and one for the last three — they draw as they always did, to the
+bit.
+
+| field | |
+| --- | --- |
+| **Sectors** | how many each repetition of the turn is cut into. Nought is the mode's own: the two half-planes of the binary ones, the unbroken turn of the others. The binary ones colour alternate sectors, so an odd number is taken up to the even one above it — two sectors of a colour would meet. The colour ones become that many flat steps |
+| **Rotation** | the degrees the sectors are turned by, anticlockwise |
+| **Angle of** | inside only: the angle of `z`, of `z-c` or of `z*c`. `z-c` centres the sectors on the parameter, and `z*c` turns them by the parameter's angle |
+| **Rings per unit** (inside) | rings of the modulus of what the angle is of, alternate ones told apart: the binary ones become a polar chequerboard. They go through `k·f(a)` as every periodic argument of the inside does, so the frequency and the function of the periodic modes reach them |
+| **Iterations per band** (outside) | bands of that many iterations across the sectors: with binary decomposition, the grid of external rays and equipotentials |
+| **Repetitions** | how many times the turn repeats: its sectors, and for the colour ones the palette, start again in each. Any number, though a part of one leaves a seam where the angle wraps |
+| **Direction** | right, the way they always went; left, the other way round; both, forwards and back again in each repetition — a mirror, with no seam when the repetitions are whole |
+| **Speed** | for the colour ones, how much of the palette a repetition spans: above one, more colours in each, not more repetitions. For the binary ones, how far apart the colours of alternate sectors are: at one as they always were, at nought one colour, at two twice as far — binary decomposition moves the odd sectors from the count towards the count backwards, `sign(imag)` its second tone from the first |
+
+A position saves them as `(indecomposition 8 22.5 'z-c 6 2.5 'both 1.5)` and
+`(outdecomposition 6 30 2 3 'left 2)` only when they have moved, so a position
+that leaves them alone still opens in 2.5. Moved, a decomposition is no longer
+symmetric about the real axis, and XaoS stops drawing one half as the mirror of
+the other.
+
 ## Colouring speed functions
 
 **Fractal → Incoloring mode → Coloring speed**, and the same under Outcoloring
 mode, is one dialog for all that takes the value a colouring mode hands over to
 a place in the palette. The **function**, chosen from a list, bends the value
 before the **colouring speed** and **shift** are applied: the palette is read at
-`f(v) × speed + shift`. Under its own heading below them is the
+`f(v) × speed + shift`. In a column of its own beside them is the
 [speed change after ITER](#speed-change-after-iter), which acts on the value
-before the function has it. The inside's opens with the frequency of the modes
-that repeat, which acts on the mode itself; see
+before the function has it. The inside's opens with the frequency and the
+function of the modes that repeat, which act on the mode itself; see
 [More colouring modes](#more-colouring-modes). OK sets the lot as one step of
 the undo history.
 For the modes that count — iter, smooth and the rest — `v` is the iteration

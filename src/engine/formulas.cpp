@@ -83,6 +83,11 @@ const char *const incolorname[] = {"0",
                                    "fbm",
                                    "fbm + zmag",
                                    "fbm + decomposition",
+                                   "cos(|z|)",
+                                   "hexagons",
+                                   "spiral",
+                                   "cos(|z-c|)",
+                                   "hexagon tiles",
                                    NULL};
 
 
@@ -147,6 +152,16 @@ const char *const colorfun[] = {
 /* The speed change after ITER, by the number fractal_context holds: off, and
  * the two ways of joining a stretch to the one before it. See color_change. */
 const char *const colorfun_modes[] = {"off", "jump", "smooth", NULL};
+
+/* Whose angle an inside decomposition reads, by the number indecompof holds.
+ * Formulas, and so the same in every language, as the mode names are. */
+const char *const decomp_of[] = {"z", "z-c", "z*c", NULL};
+
+/* Which way a colour decomposition walks the palette round a turn, by the
+ * number decompway holds; see indecompway. */
+const char *const decomp_ways[] = {QT_TRANSLATE_NOOP("Dialog", "right"),
+                                   QT_TRANSLATE_NOOP("Dialog", "left"),
+                                   QT_TRANSLATE_NOOP("Dialog", "both"), NULL};
 
 /* And the four 1.8.0 had, which a position from then names: read, and turned
  * into the two by uih_setcolorfunlegacy, but no longer offered. */
@@ -829,19 +844,11 @@ static number_t color_change(number_t v, const colorfun_plan &plan)
     return v < 0 ? -r : r;
 }
 
-static number_t color_f_func(number_t v, const float speed, const int func,
-                             const int shift, const int inset)
+/* v bent by speed function func, as colorfun[] names them; held is set when
+ * a value had to be held within V_MAX on the way. Ident hands v back as it
+ * came. */
+static number_t color_f_bend(number_t v, const int func, int &held)
 {
-    int held = color_f_normalize(v);
-    /* The speed change after ITER, on the value before the function has it.
-     * Off -- the default -- or with every exponent at one, nothing at all is
-     * done to it, so that the value goes on to the function to the bit as it
-     * did before there was such a thing. */
-    const colorfun_plan &plan = inset ? cfractalc.inplan : cfractalc.outplan;
-    if (plan.kind) {
-        v = color_change(v, plan);
-        held |= color_f_normalize(v);
-    }
     switch (func) {
     case 1:
         // LOG
@@ -919,6 +926,23 @@ static number_t color_f_func(number_t v, const float speed, const int func,
         break;
     }
     }
+    return v;
+}
+
+static number_t color_f_func(number_t v, const float speed, const int func,
+                             const int shift, const int inset)
+{
+    int held = color_f_normalize(v);
+    /* The speed change after ITER, on the value before the function has it.
+     * Off -- the default -- or with every exponent at one, nothing at all is
+     * done to it, so that the value goes on to the function to the bit as it
+     * did before there was such a thing. */
+    const colorfun_plan &plan = inset ? cfractalc.inplan : cfractalc.outplan;
+    if (plan.kind) {
+        v = color_change(v, plan);
+        held |= color_f_normalize(v);
+    }
+    v = color_f_bend(v, func, held);
     v = v * speed;
     v += shift;
     held |= color_f_normalize(v);
@@ -1243,6 +1267,94 @@ static unsigned int truecolor_output(number_t zre, number_t zim, number_t pre,
     return cpalette.pixels[inset];
 }
 
+/* --- the decompositions -----------------------------------------------------
+ *
+ * Where in a turn the angle of (re, im) lies, measured as the decompositions
+ * always have -- atan2(re, im), from the imaginary axis, a quarter turn on --
+ * and turned by rotation degrees: in turns, with any whole number of them
+ * over. */
+static number_t decomp_turn(number_t re, number_t im, number_t rotation)
+{
+    return natan2(re, im) / (N_PI + N_PI) + (number_t)0.75 + rotation / 360;
+}
+
+/* The walk round a turn: where in its repeat a place v in the turn, from
+ * nought to one, lies, also from nought to one -- that many repeats of the
+ * turn, each walked right, left, or right and back again. */
+static number_t decomp_walk(number_t v, number_t repeats, int way)
+{
+    number_t x = v * repeats;
+    number_t w = x - nfloor(x);
+    if (way == 1)
+        w = 1 - w;
+    else if (way == 2)
+        w = 1 - nfabs(2 * w - 1);
+    return w;
+}
+
+/* Which of n sectors a place in a repeat, from nought to one, falls in. One
+ * itself, where walking left starts, is in the last. */
+static int decomp_index(number_t w, int n)
+{
+    int s = (int)(w * n);
+    if (s < 0)
+        s = 0;
+    return s < n ? s : n - 1;
+}
+
+/* The parity of a band number, which may be past what an int holds. */
+static int decomp_odd(number_t band)
+{
+    band = nfloor(band);
+    if (!(band > -(number_t)1e18 && band < (number_t)1e18))
+        return 0;
+    return (int)((long long)band & 1);
+}
+
+/* What an odd band is moved along the palette by: half a cycle of it, in
+ * 256ths, which sets it as far from its neighbours as the palette goes. */
+static number_t decomp_half(void)
+{
+    return (number_t)(((unsigned int)(cpalette.size - 1)) << 8) / 2;
+}
+
+/* A colour decomposition's value, for a turn.
+ *
+ * Where in the turn it lies, from the seam the mode has always had, a quarter
+ * turn on from where decomp_turn counts; walked round its repeats; the
+ * sector of the repeat it falls in, if there are sectors; and spread over
+ * speed times the palette a turn has always taken, 20000, from the quarter of
+ * it on that the mode has always started at. At one, right, one, it is the
+ * turn as it was. */
+static number_t decomp_colour(number_t turn, int sectors, number_t repeats,
+                              int way, number_t speed)
+{
+    number_t u = turn - (number_t)0.25;
+    u -= nfloor(u);
+    number_t w = decomp_walk(u, repeats, way);
+    if (sectors > 0)
+        w = (number_t)decomp_index(w, sectors) / sectors;
+    return ((number_t)0.25 + speed * w) * 20000;
+}
+
+/* The binary decompositions colour alternate sectors, so the number is
+ * even: two, the half-planes, where nothing is said. */
+static int decomp_binary_sectors(int sectors)
+{
+    return sectors > 0 ? sectors + (sectors & 1) : 2;
+}
+
+/* Whether a turn falls in an odd sector of a binary decomposition: walked
+ * round its repeats from where decomp_turn counts, which puts the two
+ * half-planes on either side of the real axis as they always were. */
+static int decomp_binary_odd(number_t turn, int sectors, number_t repeats,
+                             int way)
+{
+    return decomp_index(decomp_walk(turn - nfloor(turn), repeats, way),
+                        decomp_binary_sectors(sectors)) &
+           1;
+}
+
 static unsigned int color_output(number_t zre, number_t zim, unsigned int iter);
 static unsigned int color_output(number_t zre, number_t zim, unsigned int iter)
 {
@@ -1271,8 +1383,28 @@ static unsigned int color_output(number_t zre, number_t zim, unsigned int iter)
             i_f = (iter + (zre + zim + zre / zim) * SMUL);
             break;
         case OutColormodeType::ColOut_binary_decomposition:
-            if (zim > 0)
-                i_f = ((cfractalc.maxiter << SHIFT) - iter);
+            if (decomp_plain(&cfractalc, 0)) {
+                if (zim > 0)
+                    i_f = ((cfractalc.maxiter << SHIFT) - iter);
+                break;
+            }
+            {
+                /* sectors of the repeats, and bands of so many iterations
+                 * across them; the odd ones moved from the count towards the
+                 * count backwards by the speed -- all the way at one, as they
+                 * always were, not at all at nought, twice as far at two */
+                int odd = decomp_binary_odd(
+                    decomp_turn(zre, zim, cfractalc.outdecomprotation),
+                    cfractalc.outdecompsectors, cfractalc.outdecomprepeats,
+                    cfractalc.outdecompway);
+                if (cfractalc.outdecompradial > 0)
+                    odd ^= ((iter >> SHIFT) / cfractalc.outdecompradial) & 1;
+                if (odd) {
+                    number_t back = (number_t)(cfractalc.maxiter << SHIFT) -
+                                    (number_t)iter;
+                    i_f = iter + cfractalc.outdecompspeed * (back - iter);
+                }
+            }
             break;
         case OutColormodeType::ColOut_biomorphs:
             if (myabs(zim) < 2.0 || myabs(zre) < 2.0)
@@ -1283,8 +1415,20 @@ static unsigned int color_output(number_t zre, number_t zim, unsigned int iter)
             i_f = (sqrtl(logl(zre) / i_f) * 256 * 256);
             break;
         case OutColormodeType::ColOut_color_decomposition:
-            i_f = ((atan2l(zre, zim) / (M_PI + M_PI) + 0.75) *
-                   20000);
+            if (decomp_plain(&cfractalc, 0)) {
+                i_f = ((atan2l(zre, zim) / (M_PI + M_PI) + 0.75) *
+                       20000);
+                break;
+            }
+            i_f = decomp_colour(decomp_turn(zre, zim,
+                                            cfractalc.outdecomprotation),
+                                cfractalc.outdecompsectors,
+                                cfractalc.outdecomprepeats,
+                                cfractalc.outdecompway,
+                                cfractalc.outdecompspeed);
+            if (cfractalc.outdecompradial > 0 &&
+                ((iter >> SHIFT) / cfractalc.outdecompradial) & 1)
+                i_f += decomp_half();
             break;
         case OutColormodeType::ColOut_iter_plus_angle:
             /* the angle it left by, blended into the count: the bands acquire
@@ -1357,15 +1501,50 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
                                    number_t pim, unsigned int iter)
 {
     number_t i_f = iter;
-    /* How often the modes that repeat do so, multiplying the argument of
-     * what repeats; at one, a multiplication that changes nothing. */
-    const number_t f = cfractalc.incolorfrequency;
+    /* The argument a of every periodic function a mode uses -- a sine, a
+     * cosine, frac, the parity of a stripe -- goes in as k*f(a): bent by the
+     * speed function f the inside periodic function names, so that it comes
+     * round faster in some places than in others, and multiplied by the
+     * frequency k, how often it comes round. A periodic function inside the
+     * argument of another has its own argument made k*f(a) as well. The
+     * constant of a period written into a mode -- the eighth of frac(mag),
+     * the fortieth of squares -- belongs to the function, and stays outside.
+     * At ident and one, k*f(a) is a, to the bit. */
+    const number_t k = cfractalc.incolorfrequency;
+    const int g = cfractalc.incolorperiodicfun;
+    auto periodic = [k, g](number_t a) {
+        int held = 0;
+        return k * (g ? color_f_bend(a, g, held) : a);
+    };
     if (cfractalc.coloringmode.ColorMode) {
         color_f_normalize(zre);
         color_f_normalize(zim);
         color_f_normalize(pre);
         color_f_normalize(pim);
     }
+    /* The decompositions with their settings moved: the angle of z, z-c or
+     * z*c, turned and cut into sectors, and rings of its modulus across
+     * them, through k*f. Only where the settings are not where they start,
+     * which keeps the modes' own code below to the bit. */
+    const int plain = decomp_plain(&cfractalc, 1);
+    number_t qre = zre, qim = zim;
+    if (cfractalc.indecompof == 1)
+        qre = zre - pre, qim = zim - pim;
+    else if (cfractalc.indecompof == 2)
+        qre = zre * pre - zim * pim, qim = zre * pim + zim * pre;
+    auto ring_odd = [&]() {
+        return cfractalc.indecompradial > 0
+                   ? decomp_odd(cfractalc.indecompradial *
+                                periodic(nsqrt(qre * qre + qim * qim)))
+                   : 0;
+    };
+    auto decomposition = [&]() {
+        number_t v = decomp_colour(
+            decomp_turn(qre, qim, cfractalc.indecomprotation),
+            cfractalc.indecompsectors, cfractalc.indecomprepeats,
+            cfractalc.indecompway, cfractalc.indecompspeed);
+        return ring_odd() ? v + decomp_half() : v;
+    };
 
     switch (cfractalc.incoloringmode) {
     case INCOLORING_FBM:
@@ -1383,8 +1562,11 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
         break;
     case INCOLORING_FBM_DECOMP:
         /* and the same over the decomposition */
-        i_f = fbm_fold(((atan2l(zre, zim) / (M_PI + M_PI) + 0.75) * 20000) +
-                       fbm_at_pixel(1) * SMUL);
+        if (plain)
+            i_f = fbm_fold(((atan2l(zre, zim) / (M_PI + M_PI) + 0.75) * 20000) +
+                           fbm_at_pixel(1) * SMUL);
+        else
+            i_f = fbm_fold(decomposition() + fbm_at_pixel(1) * SMUL);
         break;
     case 1: /* zmag */
         i_f = (((zre * zre + zim * zim) *
@@ -1392,6 +1574,10 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
                 SMUL));
         break;
     case 2: /* real */
+        if (!plain) {
+            i_f = decomposition();
+            break;
+        }
         i_f = ((
             (atan2l(zre, zim) / (M_PI + M_PI) + 0.75) *
             20000));
@@ -1410,23 +1596,24 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
         i_f += (myabs(pim - zim) * 256 * 64);
         break;
     case 5: /* the bands that choose between the two as well as the two */
-        if (((int)((zre * zre + zim * zim) * 10 * f)) % 2)
-            i_f = (cosl(f * (zre * zim * pre * pim)) * 256 * 256);
+        if (((int)(periodic(zre * zre + zim * zim) * 10)) % 2)
+            i_f = (cosl(periodic(zre * zim * pre * pim)) * 256 * 256);
         else
-            i_f = (sinl(f * (zre * zim * pre * pim)) * 256 * 256);
+            i_f = (sinl(periodic(zre * zim * pre * pim)) * 256 * 256);
         break;
     case 6:
-        i_f = ((zre * zre + zim * zim) * cosl(f * (zre * zre)) * 256 *
+        i_f = ((zre * zre + zim * zim) * cosl(periodic(zre * zre)) * 256 *
                256);
         break;
     case 7:
-        i_f = (sinl(f * (zre * zre - zim * zim)) * 256 * 256);
+        i_f = (sinl(periodic(zre * zre - zim * zim)) * 256 * 256);
         break;
     case 8:
         i_f = (atanl((zre * zim * pre * pim)) * 256 * 64);
         break;
     case 9: /* squares a fortieth of a unit on a side, at a frequency of one */
-        if ((abs((int)(zre * 40 * f)) % 2) ^ (abs((int)(zim * 40 * f)) % 2))
+        if ((abs((int)(periodic(zre) * 40)) % 2) ^
+            (abs((int)(periodic(zim) * 40)) % 2))
             i_f = ((
                 (atan2l(zre, zim) / (M_PI + M_PI) + 0.75) *
                 20000));
@@ -1475,17 +1662,104 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
         i_f = (zre * zim * (number_t)cfractalc.maxiter * SMUL + SMUL);
         break;
     case 18: /* sin(real)*sin(imag): a grid laid over where the orbit settled */
-        i_f = ((nsin(f * zre) * nsin(f * zim) + 1) * 20000);
+        i_f = ((nsin(periodic(zre)) * nsin(periodic(zim)) + 1) * 20000);
         break;
     case 19: /* sign(imag): two flat tones. A decomposition of the inside,
               * where binary decomposition does the same to the outside. */
-        i_f = (zim > 0 ? 20000 : 45000);
+        if (plain) {
+            i_f = (zim > 0 ? 20000 : 45000);
+            break;
+        }
+        /* the two tones as far apart as the speed says: at one the 25000 of
+         * 20000 and 45000, at nought one tone */
+        i_f = (decomp_binary_odd(
+                   decomp_turn(qre, qim, cfractalc.indecomprotation),
+                   cfractalc.indecompsectors, cfractalc.indecomprepeats,
+                   cfractalc.indecompway) ^
+               ring_odd())
+                  ? 20000
+                  : 20000 + cfractalc.indecompspeed * 25000;
         break;
     case 20: /* frac(mag): contours at every eighth of the modulus, at a
               * frequency of one */
         {
-            number_t bands = nsqrt(zre * zre + zim * zim) * 8 * f;
+            number_t bands = periodic(nsqrt(zre * zre + zim * zim)) * 8;
             i_f = ((bands - nfloor(bands)) * 60000);
+        }
+        break;
+    case INCOLORING_COS_ABS:
+        /* cos(|z|): rings about where the orbit settled, eight to a unit of
+         * the modulus at a frequency of one */
+        i_f = ((ncos(periodic(nsqrt(zre * zre + zim * zim)) * 16 * N_PI) + 1) *
+               20000);
+        break;
+    case INCOLORING_HEXAGONS:
+        /* hexagons: three waves a third of a turn apart, six to a unit, which
+         * add up to a lattice of hexagons */
+        {
+            static const number_t h = (number_t)0.86602540378443864676372317L;
+            number_t s = ncos(periodic(zim) * 12 * N_PI) +
+                         ncos(periodic(-h * zre - zim / 2) * 12 * N_PI) +
+                         ncos(periodic(h * zre - zim / 2) * 12 * N_PI);
+            i_f = ((s + (number_t)1.5) / (number_t)4.5 * 40000);
+        }
+        break;
+    case INCOLORING_SPIRAL:
+        /* spiral: five arms, wound once to every factor of e in the modulus.
+         * The five stay five -- a number of turns that is not whole would
+         * leave a seam where the angle wraps -- and the frequency and the
+         * function act on the winding. */
+        i_f = ((nsin(5 * natan2(zim, zre) +
+                     periodic(nlog(zre * zre + zim * zim +
+                                   (number_t)1e-30) / 2) *
+                         2 * N_PI) +
+                1) *
+               20000);
+        break;
+    case INCOLORING_COS_ABS_ZC:
+        /* cos(|z-c|): rings about the parameter, which tell the bulbs
+         * apart as |z-c| does */
+        i_f = ((ncos(periodic(nsqrt((zre - pre) * (zre - pre) +
+                                    (zim - pim) * (zim - pim))) *
+                     16 * N_PI) +
+                1) *
+               20000);
+        break;
+    case INCOLORING_HEXAGON_TILES:
+        /* hexagon tiles: squares with hexagons for squares. A honeycomb
+         * of hexagons a fortieth of a unit across, flat side to flat side,
+         * as squares' squares are on a side; and since a hexagon has six
+         * neighbours, three kinds of tile where squares has two: its two,
+         * the angle of z read either way, and the first half a turn on. No
+         * two tiles of a kind touch. */
+        {
+            static const number_t s3 =
+                (number_t)1.73205080756887729352744634150587L;
+            number_t x = periodic(zre) * 40, y = periodic(zim) * 40;
+            /* the cube coordinates of the tile, with hexagons whose
+             * inradius is a half, rounded to the nearest centre */
+            number_t fq = x - y * s3 / 3, fr = 2 * y * s3 / 3;
+            number_t fs = -fq - fr;
+            number_t rq = nfloor(fq + (number_t)0.5),
+                     rr = nfloor(fr + (number_t)0.5),
+                     rs = nfloor(fs + (number_t)0.5);
+            number_t dq = nfabs(rq - fq), dr = nfabs(rr - fr),
+                     ds = nfabs(rs - fs);
+            if (dq > dr && dq > ds)
+                rq = -rr - rs;
+            else if (dr > ds)
+                rr = -rq - rs;
+            /* which of the three kinds: q - r taken round three, which
+             * differs between any two neighbours */
+            number_t m = rq - rr;
+            m -= 3 * nfloor(m / 3);
+            int kind = (m == m && m >= 0 && m < 3) ? (int)m : 0;
+            if (kind == 1)
+                i_f = ((atan2l(zim, zre) / (M_PI + M_PI) + 0.75) * 20000);
+            else
+                i_f = ((atan2l(zre, zim) / (M_PI + M_PI) + 0.75 +
+                        (kind == 2 ? 0.5 : 0)) *
+                       20000);
         }
         break;
     case 21: /* log(mag): zmag with the contrast moved onto the small values,

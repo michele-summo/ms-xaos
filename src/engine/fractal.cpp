@@ -115,6 +115,18 @@ combine_methods(void)
                                                 cfractalc.coloringmode.AsInt());
     const struct symmetryinfo *s2 =
         insymmetry(cfractalc.currentformula, cfractalc.incoloringmode);
+    /* A decomposition with its settings moved -- sectors turned, a number
+     * the half-planes are not, the angle of z-c -- is no longer what its row
+     * of the table describes, and the mirror it promises would draw the wrong
+     * half. None is always safe. */
+    if (!decomp_plain(&cfractalc, 0) &&
+        (cfractalc.coloringmode ==
+             OutColormodeType::ColOut_binary_decomposition ||
+         cfractalc.coloringmode ==
+             OutColormodeType::ColOut_color_decomposition))
+        s1 = &nosymmetry;
+    if (!decomp_plain(&cfractalc, 1) && cfractalc.incoloringmode == 2)
+        s2 = &nosymmetry;
     if (angle < 0) {
         angle = 360 - ((-angle) % 360);
     } else
@@ -476,6 +488,11 @@ fractal_context *make_fractalc(const int formula, float wi, float he)
     new_ctxt->incolorspeed = 1.0f;
     new_ctxt->incolorshift = 0;
     new_ctxt->incolorfrequency = 1;
+    new_ctxt->incolorperiodicfun = 0;
+    /* The decompositions' cut at nought, as calloc leaves it, and their walk
+     * along the palette at one, right, one: where they start. */
+    new_ctxt->indecomprepeats = new_ctxt->outdecomprepeats = 1;
+    new_ctxt->indecompspeed = new_ctxt->outdecompspeed = 1;
     new_ctxt->outcolorfun = 0;
     new_ctxt->outcolorspeed = 1.0f;
     new_ctxt->outcolorshift = 0;

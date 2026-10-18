@@ -1454,7 +1454,7 @@ significava.
 
 Non è il calcolo a decidere il colore di un pixel: il colore viene da una
 formula nella `z` finale, nel parametro `c` e nel conteggio delle iterazioni, e
-c'è una formula del genere per ogni modalità. Diciotto in più, in un sottomenu
+c'è una formula del genere per ogni modalità. Ventitré in più, in un sottomenu
 proprio sotto Frattale → Colorazione interna e Frattale → Colorazione esterna,
 sopra i sottomenu a colori reali.
 
@@ -1475,18 +1475,42 @@ dicono qualcosa:
 | `sign(imag)` | due toni piatti: una decomposizione dell'interno, come la decomposizione binaria fa con l'esterno |
 | `frac(mag)` | curve di livello a ogni ottavo del modulo |
 | `log(mag)` | `zmag` con il contrasto spostato sui valori piccoli, dove passa il suo tempo un'orbita attratta |
+| `cos(\|z\|)` | anelli attorno a dove si è fermata l'orbita, otto per unità del modulo |
+| `hexagons` | tre onde a un terzo di giro l'una dall'altra, che sommate danno un reticolo di esagoni |
+| `spiral` | cinque bracci attorno a dove si è fermata l'orbita, avvolti una volta a ogni fattore e del modulo |
+| `cos(\|z-c\|)` | anelli attorno al parametro, che distinguono i bulbi come fa `\|z-c\|` |
+| `hexagon tiles` | `squares` con gli esagoni: un nido d'ape di tessere larghe un quarantesimo di unità, di tre tipi perché un esagono ha sei vicini — i due di `squares` e il primo spostato di mezzo giro |
 
-Sei delle modalità interne si ripetono — `cos(mag)`, `mag*cos(real^2)`,
-`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)` e `frac(mag)` — e
-**Frequenza (modalità periodiche)**, il primo campo del dialogo Velocità della
-colorazione interno, dice quanto spesso. Moltiplica l'argomento di ciò che si
-ripete, quindi a 2 i seni girano il doppio più in fretta, `squares` disegna
-quadrati grandi la metà e `frac(mag)` sedici contorni per unità del modulo dove
-ne disegnava otto. In `cos(mag)` restringe anche le bande che scelgono tra il
-seno e il coseno. A uno, dove parte, disegnano come hanno sempre fatto, bit per
-bit, e le altre modalità non lo leggono mai. Una posizione lo salva come
-`(incolorfrequency 2)` solo quando non è uno, quindi una posizione che non lo
-tocca si apre ancora nelle versioni precedenti.
+Undici delle modalità interne si ripetono — `cos(mag)`, `mag*cos(real^2)`,
+`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)`, `frac(mag)` e le cinque
+in fondo alla tabella — e **Frequenza (modalità periodiche)**, il primo campo
+del dialogo Velocità della colorazione interno, dice quanto spesso. Moltiplica
+l'argomento di ciò che si ripete, quindi a 2 i seni girano il doppio più in
+fretta, `squares` disegna quadrati grandi la metà e `frac(mag)` sedici contorni
+per unità del modulo dove ne disegnava otto. In `cos(mag)` restringe anche le
+bande che scelgono tra il seno e il coseno. A uno, dove parte, disegnano come
+hanno sempre fatto, bit per bit, e le altre modalità non lo leggono mai. Una
+posizione lo salva come `(incolorfrequency 2)` solo quando non è uno, quindi
+una posizione che non lo tocca si apre ancora nelle versioni precedenti.
+
+**Funzione (modalità periodiche)**, sotto di essa, piega l'argomento con una
+delle [funzioni di velocità della
+colorazione](#funzioni-di-velocità-della-colorazione) prima che la frequenza lo
+moltiplichi, così che le bande girino più in fretta dove la funzione sale
+ripida e più piano dove si appiattisce: `square` e `cube` le addensano verso il
+bordo e le diradano attorno allo zero, `log` e `atan` al contrario, e `sin`,
+`cos` e `triangle` ripiegano l'argomento su se stesso, così che le bande
+tornino indietro. Raggiunge ogni funzione periodica delle undici, il cui
+argomento `a` entra come `k·f(a)`, dove `k` è la frequenza: i seni e i coseni,
+il modulo di `frac(mag)`, la parte reale e quella immaginaria le cui strisce
+fanno i quadrati di `squares` e gli esagoni di `hexagon tiles`, e in `cos(mag)`
+anche le bande che scelgono tra il seno e il coseno. In `spiral` i cinque
+bracci restano cinque, perché un numero di giri non intero lascerebbe una
+cucitura dove l'angolo si chiude: la frequenza e la funzione agiscono
+sull'avvolgimento. Una funzione periodica dentro l'argomento di un'altra
+avrebbe piegato anche il proprio. A `ident`, dove parte, non cambia nulla. Una
+posizione la salva come `(incolorperiodicfun 6)`, con il posto della funzione
+nell'elenco contando da zero, solo quando non è ident.
 
 **All'esterno**, dove ciò che c'è sono il conteggio e il punto di uscita:
 
@@ -1543,6 +1567,32 @@ bisogno di un valore portato da un'iterazione alla successiva, il che in questo
 motore significa una seconda copia compilata di ogni ciclo di calcolo. `trap` e
 `stripe` in una formula utente lo fanno invece.
 
+### Impostazioni delle decomposizioni
+
+**Frattale → Colorazione interna → Decomposizione**, e lo stesso sotto
+Colorazione esterna, imposta come le decomposizioni tagliano il giro: binary
+decomposition e color decomposition all'esterno, `sign(imag)`,
+`Decomposition-like` e `fbm + decomposition` all'interno. Con ogni campo dove
+parte — zero, e uno, destra e uno gli ultimi tre — disegnano come hanno sempre
+fatto, bit per bit.
+
+| campo | |
+| --- | --- |
+| **Settori** | in quanti settori si taglia ogni ripetizione del giro. Zero è quello della modalità: i due semipiani di quelle binarie, il giro intero delle altre. Quelle binarie colorano settori alterni, quindi un numero dispari passa al pari successivo — due settori dello stesso colore si toccherebbero. Quelle a colori diventano altrettanti gradini piatti |
+| **Rotazione** | di quanti gradi i settori sono ruotati, in senso antiorario |
+| **Angolo di** | solo all'interno: l'angolo di `z`, di `z-c` o di `z*c`. `z-c` centra i settori sul parametro, `z*c` li ruota dell'angolo del parametro |
+| **Anelli per unità** (interno) | anelli del modulo di ciò di cui si prende l'angolo, distinti uno sì e uno no: quelle binarie diventano una scacchiera polare. Passano per `k·f(a)` come ogni argomento periodico dell'interno, quindi li raggiungono la frequenza e la funzione delle modalità periodiche |
+| **Iterazioni per fascia** (esterno) | fasce di tante iterazioni attraverso i settori: con la binary decomposition, la griglia di raggi esterni ed equipotenziali |
+| **Ripetizioni** | quante volte si ripete il giro: i settori, e per quelle a colori la tavolozza, ricominciano in ognuna. Un numero qualsiasi, ma una parte di ripetizione lascia una cucitura dove l'angolo si chiude |
+| **Verso** | destra, come sono sempre andate; sinistra, al contrario; ambidestro, avanti e poi indietro in ogni ripetizione — uno specchio, senza cucitura quando le ripetizioni sono intere |
+| **Velocità** | per quelle a colori, quanta tavolozza attraversa una ripetizione: sopra uno, più colori in ciascuna, non più ripetizioni. Per quelle binarie, il distacco fra i colori dei settori alterni: a uno come sono sempre stati, a zero un colore solo, a due il doppio — la binary decomposition sposta i settori dispari dal conteggio verso il conteggio rovesciato, `sign(imag)` la seconda tinta dalla prima |
+
+Una posizione le salva come `(indecomposition 8 22.5 'z-c 6 2.5 'both 1.5)` e
+`(outdecomposition 6 30 2 3 'left 2)` solo quando sono cambiate, quindi una
+posizione che non le tocca si apre ancora nella 2.5. Cambiate, una
+decomposizione non è più simmetrica rispetto all'asse reale, e XaoS smette di
+disegnarne una metà come specchio dell'altra.
+
 ## Funzioni di velocità della colorazione
 
 **Frattale → Colorazione interna → Velocità della colorazione**, e lo stesso
@@ -1550,15 +1600,15 @@ sotto Colorazione esterna, è un unico dialogo per tutto ciò che porta il valor
 consegnato da una modalità di colorazione a un posto nella tavolozza. La
 **funzione**, scelta da un elenco, piega il valore prima che si applichino la
 **velocità** e lo **spostamento** della colorazione: la tavolozza viene letta a
-`f(v) × speed + shift`. Sotto un titolo proprio, più in basso, c'è il [cambio
-di velocità dopo ITER](#cambio-di-velocità-dopo-iter), che agisce sul valore
-prima che la funzione lo riceva. Quello interno si apre con la frequenza delle
-modalità che si ripetono, che agisce sulla modalità stessa; vedi [Altre
-modalità di colorazione](#altre-modalità-di-colorazione). OK imposta tutto come
-un solo passo dell'annullamento. Per le modalità che contano — iter, smooth e
-le altre — `v` è il conteggio delle iterazioni stesso, quindi una funzione si
-può pensare in iterazioni. Ognuna è dispari, `f(−v) = −f(v)`, quindi una
-grandezza che cambia segno lo conserva.
+`f(v) × speed + shift`. In una colonna propria, accanto, c'è il [cambio di
+velocità dopo ITER](#cambio-di-velocità-dopo-iter), che agisce sul valore prima
+che la funzione lo riceva. Quello interno si apre con la frequenza e la
+funzione delle modalità che si ripetono, che agiscono sulla modalità stessa;
+vedi [Altre modalità di colorazione](#altre-modalità-di-colorazione). OK
+imposta tutto come un solo passo dell'annullamento. Per le modalità che contano
+— iter, smooth e le altre — `v` è il conteggio delle iterazioni stesso, quindi
+una funzione si può pensare in iterazioni. Ognuna è dispari, `f(−v) = −f(v)`,
+quindi una grandezza che cambia segno lo conserva.
 
 Erano quattro voci del menu: la velocità, lo spostamento, un sottomenu delle
 funzioni e il dialogo proprio del cambio di velocità. Una posizione viene

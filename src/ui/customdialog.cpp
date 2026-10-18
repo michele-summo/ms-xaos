@@ -107,16 +107,41 @@ CustomDialog::CustomDialog(struct uih_context *uih, const menuitem *item,
     setWindowTitle(item->name);
 
     QBoxLayout *dialogLayout = new QBoxLayout(QBoxLayout::TopToBottom, this);
-    QFormLayout *formLayout = new QFormLayout();
+    /* The columns side by side, each a form held to the top; most dialogs
+     * have the one. See menudialog's column. */
+    QBoxLayout *columnsLayout = new QBoxLayout(QBoxLayout::LeftToRight);
+    QFormLayout *formLayout = NULL;
+    /* The form each field went into, for the fields shown only with a
+     * choice, which are hidden and shown in their own form. */
+    QList<QFormLayout *> fieldForm;
+    auto addColumn = [this, columnsLayout, &formLayout]() {
+        if (formLayout != NULL) {
+            QFrame *rule = new QFrame(this);
+            rule->setFrameShape(QFrame::VLine);
+            rule->setFrameShadow(QFrame::Sunken);
+            columnsLayout->addWidget(rule);
+        }
+        formLayout = new QFormLayout();
+        QBoxLayout *column = new QBoxLayout(QBoxLayout::TopToBottom);
+        column->addLayout(formLayout);
+        column->addStretch();
+        columnsLayout->addLayout(column);
+    };
+    addColumn();
 
     for (int i = 0; dialog[i].question; i++) {
         QString label(dialog[i].question);
         const QString name = fieldName(i);
+        if (dialog[i].column && i > 0)
+            addColumn();
+        fieldForm.append(formLayout);
         if (dialog[i].separated) {
-            QFrame *rule = new QFrame(this);
-            rule->setFrameShape(QFrame::HLine);
-            rule->setFrameShadow(QFrame::Sunken);
-            formLayout->addRow(rule);
+            if (!dialog[i].column) {
+                QFrame *rule = new QFrame(this);
+                rule->setFrameShape(QFrame::HLine);
+                rule->setFrameShadow(QFrame::Sunken);
+                formLayout->addRow(rule);
+            }
             if (dialog[i].heading) {
                 QLabel *heading = new QLabel(dialog[i].heading, this);
                 QFont bold = heading->font();
@@ -358,15 +383,16 @@ CustomDialog::CustomDialog(struct uih_context *uih, const menuitem *item,
         if (choice == NULL || field == NULL)
             continue;
         const int at = dialog[i].shownat;
-        auto follow = [this, formLayout, field, at](int index) {
-            formLayout->setRowVisible(field, index == at);
+        QFormLayout *form = fieldForm[i];
+        auto follow = [this, form, field, at](int index) {
+            form->setRowVisible(field, index == at);
             adjustSize();
         };
         follow(choice->currentIndex());
         connect(choice, &QComboBox::currentIndexChanged, this, follow);
     }
 
-    dialogLayout->addLayout(formLayout);
+    dialogLayout->addLayout(columnsLayout);
 
     QDialogButtonBox *buttonBox =
         new QDialogButtonBox((QDialogButtonBox::Ok | QDialogButtonBox::Cancel),

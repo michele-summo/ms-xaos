@@ -31,20 +31,24 @@
  * true colour sits: last, which three places used to spell as the number 10
  * and would have gone on spelling as 10 after modes were added in front of
  * it. */
-#define INCOLORING 26
+#define INCOLORING 31
 /* True colour used to be the last inside mode and was found by counting from
  * the end. The three fractional Brownian motion modes are written after it so
  * that every number already saved in a position still means what it meant, so
  * where it stands is now written down rather than counted. */
 #define INCOLORING_TRUECOLOR 22
-/* How many of them the flat list in the menu offers: the ones up to true
- * colour, which has a submenu of its own. The fbm modes are not among them --
- * they live in a submenu of their own with the settings they take. */
-#define INCOLORING_LISTED 22
-/* The three, in the order they are written in incolorname. */
+/* The fbm modes, which the flat list in the menu leaves out as it leaves out
+ * true colour: they have a dialog of their own with the settings they take.
+ * The three, in the order they are written in incolorname. */
 #define INCOLORING_FBM 23
 #define INCOLORING_FBM_ZMAG 24
 #define INCOLORING_FBM_DECOMP 25
+/* And the periodic ones written after them, for the same reason. */
+#define INCOLORING_COS_ABS 26
+#define INCOLORING_HEXAGONS 27
+#define INCOLORING_SPIRAL 28
+#define INCOLORING_COS_ABS_ZC 29
+#define INCOLORING_HEXAGON_TILES 30
 #define OUTCOLORING (OutColormodeClass::ColOut_MAXMode + 1)
 /* How many of them the flat list in the menu offers: the ones up to true
  * colour, which has a submenu of its own. The fbm modes are not among them --
@@ -259,6 +263,52 @@ struct fractal_context {
      * squares, the contours of frac(mag). One, the default, draws them as
      * they always were, to the bit; the other modes never read it. */
     number_t incolorfrequency;
+    /* And the speed function, by its number in colorfun[], that the argument
+     * of every periodic function they use -- the sines and cosines, frac, the
+     * parity of the squares and of the bands of cos(mag) -- is bent by before
+     * the frequency multiplies it: k*f(a). Nought, ident, leaves it as it
+     * was; the modes that do not repeat never read it. */
+    int incolorperiodicfun;
+    /* The decompositions' settings, a side at a time: binary decomposition
+     * and color decomposition outside, sign(imag), Decomposition-like and
+     * fbm + decomposition inside.
+     *
+     * sectors   how many each repeat of the turn is cut into. Nought, where
+     *           it starts, is the mode's own: the two half-planes of the
+     *           binary ones, the unbroken turn of the others. The binary ones colour alternate
+     *           sectors, so an odd number is taken up to the even one above
+     *           it: two sectors of a colour would meet.
+     * rotation  the degrees the sectors are turned by, anticlockwise.
+     * of        inside only, whose angle: z, z-c or z*c.
+     * radial    bands across the sectors, alternate ones told apart. Outside
+     *           a band is that many iterations; inside that many rings to a
+     *           unit of the modulus of what the angle is of, which goes
+     *           through k*f as the argument of every periodic function of
+     *           the inside does. Nought, none.
+     *
+     * And how the turn is walked:
+     *
+     * repeats   how many times the turn repeats, the sectors in each and the
+     *           palette across each; any number, a part of one leaving a seam
+     *           where the angle wraps.
+     * way       0 right, as it always went; 1 left, the other way round; 2 both,
+     *           forwards and back again in each repeat, a mirror with no seam
+     *           where repeats is whole.
+     * speed     for the colour ones, how much of the palette a repeat spans:
+     *           more colours in each, not more of them. For the binary ones,
+     *           how far apart the colours of alternate sectors are: one as
+     *           they always were, nought none, two twice.
+     *
+     * The cut at nought and the walk at one, right, one, the modes draw as they
+     * always did, to the bit. */
+#define DECOMP_MAXSECTORS 3600
+    int indecompsectors, outdecompsectors;
+    number_t indecomprotation, outdecomprotation;
+    int indecompof;
+    int indecompradial, outdecompradial;
+    number_t indecomprepeats, outdecomprepeats;
+    int indecompway, outdecompway;
+    number_t indecompspeed, outdecompspeed;
     /* The speed change after ITER, a side at a time as the speed is: the
      * count handed to the speed function is cut at up to two ITERs and each
      * stretch driven by an exponent of its own, so that the colours speed up
@@ -350,6 +400,21 @@ struct fractal_context {
     struct palette *palette; /*fractal's palette */
 };
 typedef struct fractal_context fractal_context;
+
+/* Whether a side's decomposition settings are where they start, and the
+ * decompositions draw as they always did: the old code, to the bit, and the
+ * symmetry their rows of the formula tables describe. */
+static inline int decomp_plain(const fractal_context *f, int inset)
+{
+    if (inset)
+        return !f->indecompsectors && f->indecomprotation == 0 &&
+               !f->indecompof && !f->indecompradial &&
+               f->indecomprepeats == 1 && !f->indecompway &&
+               f->indecompspeed == 1;
+    return !f->outdecompsectors && f->outdecomprotation == 0 &&
+           !f->outdecompradial && f->outdecomprepeats == 1 &&
+           !f->outdecompway && f->outdecompspeed == 1;
+}
 typedef struct {
     double y0, k, kk, y0k;
 } symmetry2;

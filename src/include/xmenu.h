@@ -38,6 +38,11 @@ typedef struct dialog {
     /* A title on the rule above this field, naming what the fields from here
      * on are for. The dialog's alone, as the rule is. NULL has none. */
     const char *heading;
+    /* The dialog goes on in a new column, beside what came before, from
+     * this field down. The dialog's alone, as the rule is: the fields keep
+     * their places in the command. A rule at the head of a column is left
+     * out, a heading kept. */
+    int column;
 } menudialog;
 
 typedef char *(*tokenfunc)(struct uih_context *c);
@@ -210,6 +215,9 @@ typedef char *(*tokenfunc)(struct uih_context *c);
 #define DIALOGHEADING_I(_heading)                                              \
     menudialogs_i18n[no_menudialogs_i18n].separated = 1;                       \
     menudialogs_i18n[no_menudialogs_i18n].heading = _heading;
+
+/* A new column from the field defined next; see menudialog's column. */
+#define DIALOGCOLUMN_I() menudialogs_i18n[no_menudialogs_i18n].column = 1;
 
 /* The View dialog's tools under the angle defined next, the center being
  * _back fields before it; see menudialog's viewtools. */

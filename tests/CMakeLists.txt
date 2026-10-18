@@ -229,6 +229,17 @@ foreach(prec ${XAOS_TEST_PRECISIONS})
    add_test(NAME incolor_frequency_${suffix}
             COMMAND incolor_frequency_${suffix})
 
+   # --- the settings of the decompositions ---------------------------------
+   # Where they start, what there was, to the bit; away from it, what each
+   # setting says, and the rings of the inside through k*f.
+   xaos_add_test_binary(decomposition_${suffix} ${prec}
+                        decomposition_test.cpp
+                        ${CMAKE_SOURCE_DIR}/src/engine/phist.cpp
+                        ${SFFE_SOURCES})
+   target_include_directories(decomposition_${suffix}
+                              PRIVATE ${CMAKE_SOURCE_DIR}/src/engine)
+   add_test(NAME decomposition_${suffix} COMMAND decomposition_${suffix})
+
    # --- the iteration loops ------------------------------------------------
    # The formula table exposes every loop as an iterationfunc, so they can be
    # driven directly over a grid without going through the renderer; the

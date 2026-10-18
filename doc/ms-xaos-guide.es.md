@@ -1450,9 +1450,9 @@ significaba.
 
 No es el cálculo lo que decide el color de un píxel: el color sale de una
 fórmula en la `z` final, el parámetro `c` y el recuento de iteraciones, y hay
-una fórmula así por cada modo. Dieciocho más, en un submenú propio bajo Fractal
-→ Coloreado interior y Fractal → Coloreado exterior, por encima de los submenús
-de color real.
+una fórmula así por cada modo. Veintitrés más, en un submenú propio bajo
+Fractal → Coloreado interior y Fractal → Coloreado exterior, por encima de los
+submenús de color real.
 
 **Por dentro**, donde la órbita nunca escapó y solo la `z` final y `c` dicen
 algo:
@@ -1471,18 +1471,42 @@ algo:
 | `sign(imag)` | dos tonos planos: una descomposición del interior, como la descomposición binaria hace con el exterior |
 | `frac(mag)` | curvas de nivel en cada octavo del módulo |
 | `log(mag)` | `zmag` con el contraste llevado a los valores pequeños, donde pasa su tiempo una órbita atraída |
+| `cos(\|z\|)` | anillos alrededor de donde se asentó la órbita, ocho por unidad del módulo |
+| `hexagons` | tres ondas separadas un tercio de vuelta, que sumadas dan una red de hexágonos |
+| `spiral` | cinco brazos alrededor de donde se asentó la órbita, enrollados una vez por cada factor e del módulo |
+| `cos(\|z-c\|)` | anillos alrededor del parámetro, que distinguen los bulbos como hace `\|z-c\|` |
+| `hexagon tiles` | `squares` con hexágonos: un panal de baldosas de un cuarentavo de unidad de ancho, de tres clases porque un hexágono tiene seis vecinos — las dos de `squares` y la primera media vuelta más allá |
 
-Seis de los modos interiores se repiten — `cos(mag)`, `mag*cos(real^2)`,
-`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)` y `frac(mag)` — y
-**Frecuencia (modos periódicos)**, el primer campo del diálogo Velocidad del
-coloreado interior, dice cada cuánto. Multiplica el argumento de lo que se
-repite, así que a 2 los senos giran el doble de rápido, `squares` dibuja
-cuadrados de la mitad de tamaño y `frac(mag)` dieciséis contornos por unidad
-del módulo donde dibujaba ocho. En `cos(mag)` estrecha también las bandas que
-eligen entre el seno y el coseno. En uno, donde empieza, dibujan como siempre,
-bit a bit, y los demás modos nunca lo leen. Una posición lo guarda como
-`(incolorfrequency 2)` solo cuando no es uno, así que una posición que no lo
-toca sigue abriéndose en versiones anteriores.
+Once de los modos interiores se repiten — `cos(mag)`, `mag*cos(real^2)`,
+`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)`, `frac(mag)` y los cinco
+al pie de la tabla — y **Frecuencia (modos periódicos)**, el primer campo del
+diálogo Velocidad del coloreado interior, dice cada cuánto. Multiplica el
+argumento de lo que se repite, así que a 2 los senos giran el doble de rápido,
+`squares` dibuja cuadrados de la mitad de tamaño y `frac(mag)` dieciséis
+contornos por unidad del módulo donde dibujaba ocho. En `cos(mag)` estrecha
+también las bandas que eligen entre el seno y el coseno. En uno, donde empieza,
+dibujan como siempre, bit a bit, y los demás modos nunca lo leen. Una posición
+lo guarda como `(incolorfrequency 2)` solo cuando no es uno, así que una
+posición que no lo toca sigue abriéndose en versiones anteriores.
+
+**Función (modos periódicos)**, debajo de ella, dobla el argumento con una de
+las [funciones de velocidad del
+coloreado](#funciones-de-velocidad-del-coloreado) antes de que la frecuencia lo
+multiplique, de modo que las bandas giran más deprisa donde la función sube
+empinada y más despacio donde se aplana: `square` y `cube` las apiñan hacia el
+borde y las espacian alrededor de cero, `log` y `atan` al revés, y `sin`, `cos`
+y `triangle` repliegan el argumento sobre sí mismo, de modo que las bandas dan
+la vuelta y regresan. Alcanza cada función periódica de los once, cuyo
+argumento `a` entra como `k·f(a)`, siendo `k` la frecuencia: los senos y
+cosenos, el módulo de `frac(mag)`, la parte real y la imaginaria cuyas franjas
+forman los cuadrados de `squares` y los hexágonos de `hexagon tiles`, y en
+`cos(mag)` también las bandas que eligen entre el seno y el coseno. En `spiral`
+los cinco brazos siguen siendo cinco, porque un número de vueltas no entero
+dejaría una costura donde el ángulo se cierra: la frecuencia y la función
+actúan sobre el enrollamiento. Una función periódica dentro del argumento de
+otra tendría también el suyo doblado. En `ident`, donde empieza, nada cambia.
+Una posición la guarda como `(incolorperiodicfun 6)`, por el lugar de la
+función en la lista contando desde cero, solo cuando no es ident.
 
 **Por fuera**, donde lo que hay es el recuento y el punto de escape:
 
@@ -1540,6 +1564,31 @@ a la siguiente, lo que en este motor significa una segunda copia compilada de
 cada bucle de cálculo. `trap` y `stripe` en una fórmula de usuario lo hacen en
 su lugar.
 
+### Ajustes de las descomposiciones
+
+**Fractal → Coloreado interior → Descomposición**, y lo mismo bajo Coloreado
+exterior, fija cómo cortan la vuelta las descomposiciones: binary decomposition
+y color decomposition en el exterior, `sign(imag)`, `Decomposition-like` y
+`fbm + decomposition` en el interior. Con cada campo donde empieza — cero, y
+uno, derecha y uno los tres últimos — dibujan como siempre, bit a bit.
+
+| campo | |
+| --- | --- |
+| **Sectores** | en cuántos se corta cada repetición de la vuelta. Cero es lo del modo: los dos semiplanos de las binarias, la vuelta entera de las demás. Las binarias colorean sectores alternos, así que un número impar pasa al par siguiente — dos sectores del mismo color se tocarían. Las de color se convierten en otros tantos escalones planos |
+| **Rotación** | cuántos grados se giran los sectores, en sentido antihorario |
+| **Ángulo de** | solo en el interior: el ángulo de `z`, de `z-c` o de `z*c`. `z-c` centra los sectores en el parámetro, y `z*c` los gira el ángulo del parámetro |
+| **Anillos por unidad** (interior) | anillos del módulo de aquello cuyo ángulo se toma, uno sí y uno no distinguidos: las binarias se vuelven un tablero de ajedrez polar. Pasan por `k·f(a)` como todo argumento periódico del interior, así que los alcanzan la frecuencia y la función de los modos periódicos |
+| **Iteraciones por franja** (exterior) | franjas de tantas iteraciones a través de los sectores: con la binary decomposition, la cuadrícula de rayos externos y equipotenciales |
+| **Repeticiones** | cuántas veces se repite la vuelta: los sectores, y en las de color la paleta, vuelven a empezar en cada una. Cualquier número, aunque una parte de repetición deja una costura donde el ángulo se cierra |
+| **Sentido** | derecha, como fueron siempre; izquierda, al revés; ambidiestro, adelante y atrás en cada repetición — un espejo, sin costura cuando las repeticiones son enteras |
+| **Velocidad** | en las de color, cuánta paleta abarca una repetición: por encima de uno, más colores en cada una, no más repeticiones. En las binarias, la separación entre los colores de sectores alternos: en uno como siempre, en cero un solo color, en dos el doble — la binary decomposition lleva los sectores impares del recuento hacia el recuento al revés, `sign(imag)` su segundo tono desde el primero |
+
+Una posición los guarda como `(indecomposition 8 22.5 'z-c 6 2.5 'both 1.5)` y
+`(outdecomposition 6 30 2 3 'left 2)` solo cuando han cambiado, así que una
+posición que no los toca sigue abriéndose en 2.5. Cambiados, una descomposición
+ya no es simétrica respecto al eje real, y XaoS deja de dibujar una mitad como
+espejo de la otra.
+
 ## Funciones de velocidad del coloreado
 
 **Fractal → Coloreado interior → Velocidad del coloreado**, y lo mismo bajo
@@ -1547,10 +1596,10 @@ Coloreado exterior, es un único diálogo para todo lo que lleva el valor que
 entrega un modo de coloreado a un lugar de la paleta. La **función**, elegida
 de una lista, dobla el valor antes de que se apliquen la **velocidad** y el
 **desplazamiento** del coloreado: la paleta se lee en `f(v) × speed + shift`.
-Bajo un título propio, más abajo, está el [cambio de velocidad tras
+En una columna propia, al lado, está el [cambio de velocidad tras
 ITER](#cambio-de-velocidad-tras-iter), que actúa sobre el valor antes de que lo
-reciba la función. El interior empieza con la frecuencia de los modos que se
-repiten, que actúa sobre el propio modo; véase [Más modos de
+reciba la función. El interior empieza con la frecuencia y la función de los
+modos que se repiten, que actúan sobre el propio modo; véase [Más modos de
 coloreado](#más-modos-de-coloreado). Aceptar lo fija todo como un solo paso de
 deshacer. Para los modos que cuentan — iter, smooth y los demás — `v` es el
 propio recuento de iteraciones, así que una función se puede pensar en

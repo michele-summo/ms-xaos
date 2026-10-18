@@ -30,6 +30,8 @@
 #define FORMULAMAGIC 1121
 
 extern const char *const incolorname[];
+extern const char *const decomp_of[];
+extern const char *const decomp_ways[];
 extern const struct formula formulas[];
 extern const char *const outcolorname[];
 extern const char *const tcolorname[];

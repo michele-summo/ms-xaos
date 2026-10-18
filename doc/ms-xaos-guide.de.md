@@ -1506,9 +1506,9 @@ bedeutete.
 
 Nicht die Berechnung entscheidet über die Farbe eines Pixels: die Farbe kommt
 aus einer Formel im letzten `z`, im Parameter `c` und in der Iterationszahl,
-und es gibt eine solche Formel pro Modus. Achtzehn weitere, in einem eigenen
-Untermenü unter Fraktal → Innere Färbung und Fraktal → Äußere Färbung, über den
-Echtfarb-Untermenüs.
+und es gibt eine solche Formel pro Modus. Dreiundzwanzig weitere, in einem
+eigenen Untermenü unter Fraktal → Innere Färbung und Fraktal → Äußere Färbung,
+über den Echtfarb-Untermenüs.
 
 **Innen**, wo der Orbit nie austrat und nur das letzte `z` und `c` etwas sagen:
 
@@ -1526,19 +1526,44 @@ Echtfarb-Untermenüs.
 | `sign(imag)` | zwei flache Töne: eine Zerlegung des Inneren, wie die binäre Zerlegung sie dem Äußeren antut |
 | `frac(mag)` | Höhenlinien bei jedem Achtel des Betrags |
 | `log(mag)` | `zmag` mit dem Kontrast auf die kleinen Werte verlegt, wo ein angezogener Orbit seine Zeit verbringt |
+| `cos(\|z\|)` | Ringe um den Punkt, an dem sich der Orbit niedergelassen hat, acht pro Einheit des Betrags |
+| `hexagons` | drei Wellen, eine Dritteldrehung voneinander, die zusammen ein Sechseckgitter ergeben |
+| `spiral` | fünf Arme um den Punkt, an dem sich der Orbit niedergelassen hat, einmal gewunden pro Faktor e im Betrag |
+| `cos(\|z-c\|)` | Ringe um den Parameter, die die Knospen unterscheiden, wie es `\|z-c\|` tut |
+| `hexagon tiles` | `squares` mit Sechsecken: eine Wabe aus Kacheln, ein Vierzigstel einer Einheit breit, in drei Arten, weil ein Sechseck sechs Nachbarn hat — die zwei von `squares` und die erste um eine halbe Drehung versetzt |
 
-Sechs der inneren Modi wiederholen sich — `cos(mag)`, `mag*cos(real^2)`,
-`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)` und `frac(mag)` —, und
-**Frequenz (periodische Modi)**, das erste Feld des inneren Dialogs
-Färbungsgeschwindigkeit, sagt, wie oft. Sie multipliziert das Argument dessen,
-was sich wiederholt, also drehen sich bei 2 die Sinusse doppelt so schnell,
-`squares` zeichnet halb so große Quadrate und `frac(mag)` sechzehn Konturen pro
-Einheit des Betrags, wo es acht zeichnete. In `cos(mag)` verengt sie auch die
-Bänder, die zwischen Sinus und Kosinus wählen. Bei eins, wo sie anfängt,
-zeichnen sie wie immer, bitgenau, und die anderen Modi lesen sie nie. Eine
-Position speichert sie als `(incolorfrequency 2)` nur, wenn sie nicht eins ist,
-also öffnet sich eine Position, die sie nicht anrührt, weiterhin in früheren
-Versionen.
+Elf der inneren Modi wiederholen sich — `cos(mag)`, `mag*cos(real^2)`,
+`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)`, `frac(mag)` und die
+fünf am Fuß der Tabelle —, und **Frequenz (periodische Modi)**, das erste Feld
+des inneren Dialogs Färbungsgeschwindigkeit, sagt, wie oft. Sie multipliziert
+das Argument dessen, was sich wiederholt, also drehen sich bei 2 die Sinusse
+doppelt so schnell, `squares` zeichnet halb so große Quadrate und `frac(mag)`
+sechzehn Konturen pro Einheit des Betrags, wo es acht zeichnete. In `cos(mag)`
+verengt sie auch die Bänder, die zwischen Sinus und Kosinus wählen. Bei eins,
+wo sie anfängt, zeichnen sie wie immer, bitgenau, und die anderen Modi lesen
+sie nie. Eine Position speichert sie als `(incolorfrequency 2)` nur, wenn sie
+nicht eins ist, also öffnet sich eine Position, die sie nicht anrührt,
+weiterhin in früheren Versionen.
+
+**Funktion (periodische Modi)**, darunter, biegt das Argument mit einer der
+[Geschwindigkeitsfunktionen der
+Färbung](#geschwindigkeitsfunktionen-der-färbung), bevor die Frequenz es
+multipliziert, sodass die Bänder schneller umlaufen, wo die Funktion steil
+ansteigt, und langsamer, wo sie flach wird: `square` und `cube` drängen sie zum
+Rand hin und ziehen sie um null auseinander, `log` und `atan` umgekehrt, und
+`sin`, `cos` und `triangle` falten das Argument auf sich selbst zurück, sodass
+die Bänder umkehren und zurückkommen. Sie erreicht jede periodische Funktion
+der elf, deren Argument `a` als `k·f(a)` eingeht, wobei `k` die Frequenz ist:
+die Sinus und Kosinus, den Betrag von `frac(mag)`, Real- und Imaginärteil,
+deren Streifen die Quadrate von `squares` und die Sechsecke von `hexagon tiles`
+bilden, und in `cos(mag)` auch die Bänder, die zwischen Sinus und Kosinus
+wählen. In `spiral` bleiben die fünf Arme fünf, denn eine nicht ganze Zahl von
+Umläufen hinterließe eine Naht, wo sich der Winkel schließt: Frequenz und
+Funktion wirken auf die Windung. Eine periodische Funktion im Argument einer
+anderen bekäme ihr eigenes Argument ebenso gebogen. Bei `ident`, wo sie
+beginnt, ändert sich nichts. Eine Position speichert sie als
+`(incolorperiodicfun 6)`, mit dem Platz der Funktion in der Liste von null an
+gezählt, nur wenn sie nicht ident ist.
 
 **Außen**, wo die Zählung und der Austrittspunkt das sind, was es gibt:
 
@@ -1597,6 +1622,31 @@ nächsten mitgetragen wird, und das heißt in dieser Engine eine zweite
 kompilierte Kopie jeder Berechnungsschleife. `trap` und `stripe` in einer
 Benutzerformel tun es stattdessen.
 
+### Einstellungen der Zerlegungen
+
+**Fraktal → Innere Färbung → Zerlegung**, und dasselbe unter Äußere Färbung,
+legt fest, wie die Zerlegungen die Drehung schneiden: binary decomposition und
+color decomposition außen, `sign(imag)`, `Decomposition-like` und
+`fbm + decomposition` innen. Mit jedem Feld, wo es beginnt — null, und eins,
+rechts und eins bei den letzten drei —, zeichnen sie wie immer, bitgenau.
+
+| Feld | |
+| --- | --- |
+| **Sektoren** | in wie viele jede Wiederholung der Drehung geschnitten wird. Null ist die des Modus: die zwei Halbebenen der binären, die ungeteilte Drehung der übrigen. Die binären färben abwechselnde Sektoren, also wird eine ungerade Zahl zur nächsten geraden aufgerundet — zwei Sektoren einer Farbe würden sich berühren. Die farbigen werden zu ebenso vielen flachen Stufen |
+| **Drehung** | um wie viele Grad die Sektoren gedreht werden, gegen den Uhrzeigersinn |
+| **Winkel von** | nur innen: der Winkel von `z`, von `z-c` oder von `z*c`. `z-c` zentriert die Sektoren auf den Parameter, `z*c` dreht sie um den Winkel des Parameters |
+| **Ringe pro Einheit** (innen) | Ringe des Betrags dessen, dessen Winkel genommen wird, abwechselnd unterschieden: die binären werden zu einem polaren Schachbrett. Sie gehen durch `k·f(a)` wie jedes periodische Argument des Inneren, also erreichen sie Frequenz und Funktion der periodischen Modi |
+| **Iterationen pro Band** (außen) | Bänder aus so vielen Iterationen quer über die Sektoren: mit der binary decomposition das Gitter aus äußeren Strahlen und Äquipotentiallinien |
+| **Wiederholungen** | wie oft sich die Drehung wiederholt: die Sektoren, und bei den farbigen die Palette, beginnen in jeder von vorn. Jede Zahl, doch ein Bruchteil hinterlässt eine Naht, wo sich der Winkel schließt |
+| **Richtung** | rechts, wie sie immer liefen; links, andersherum; beidseitig, in jeder Wiederholung vor und wieder zurück — ein Spiegel, ohne Naht, wenn die Wiederholungen ganz sind |
+| **Geschwindigkeit** | bei den farbigen, wie viel der Palette eine Wiederholung überspannt: über eins mehr Farben in jeder, nicht mehr Wiederholungen. Bei den binären der Abstand zwischen den Farben abwechselnder Sektoren: bei eins wie immer, bei null eine einzige Farbe, bei zwei doppelt so weit — binary decomposition rückt die ungeraden Sektoren von der Zählung zur rückwärts gezählten, `sign(imag)` seinen zweiten Ton vom ersten |
+
+Eine Position speichert sie als `(indecomposition 8 22.5 'z-c 6 2.5 'both 1.5)`
+und `(outdecomposition 6 30 2 3 'left 2)` nur, wenn sie verändert sind, also
+öffnet sich eine Position, die sie nicht anrührt, weiterhin in 2.5. Verändert
+ist eine Zerlegung nicht mehr symmetrisch zur reellen Achse, und XaoS hört auf,
+eine Hälfte als Spiegelbild der anderen zu zeichnen.
+
 ## Geschwindigkeitsfunktionen der Färbung
 
 **Fraktal → Innere Färbung → Färbungsgeschwindigkeit**, und dasselbe unter
@@ -1604,15 +1654,15 @@ Benutzerformel tun es stattdessen.
 Färbungsmodus übergibt, an einen Platz in der Palette bringt. Die **Funktion**,
 aus einer Liste gewählt, biegt den Wert, bevor **Färbungsgeschwindigkeit** und
 **-verschiebung** angewandt werden: die Palette wird bei `f(v) × speed + shift`
-gelesen. Unter einer eigenen Überschrift darunter steht der
-[Geschwindigkeitswechsel nach ITER](#geschwindigkeitswechsel-nach-iter), der
-auf den Wert wirkt, bevor die Funktion ihn bekommt. Der innere beginnt mit der
-Frequenz der Modi, die sich wiederholen, die auf den Modus selbst wirkt; siehe
-[Weitere Färbungsmodi](#weitere-färbungsmodi). OK setzt alles als einen
-einzigen Rückgängig-Schritt. Für die Modi, die zählen — iter, smooth und die
-übrigen —, ist `v` die Iterationszahl selbst, also kann man eine Funktion in
-Iterationen denken. Jede ist ungerade, `f(−v) = −f(v)`, also behält eine Größe,
-die ihr Vorzeichen wechselt, es.
+gelesen. In einer eigenen Spalte daneben steht der [Geschwindigkeitswechsel
+nach ITER](#geschwindigkeitswechsel-nach-iter), der auf den Wert wirkt, bevor
+die Funktion ihn bekommt. Der innere beginnt mit der Frequenz und der Funktion
+der Modi, die sich wiederholen, die auf den Modus selbst wirken; siehe [Weitere
+Färbungsmodi](#weitere-färbungsmodi). OK setzt alles als einen einzigen
+Rückgängig-Schritt. Für die Modi, die zählen — iter, smooth und die übrigen —,
+ist `v` die Iterationszahl selbst, also kann man eine Funktion in Iterationen
+denken. Jede ist ungerade, `f(−v) = −f(v)`, also behält eine Größe, die ihr
+Vorzeichen wechselt, es.
 
 Das waren vier Einträge des Menüs: die Geschwindigkeit, die Verschiebung, ein
 Untermenü der Funktionen und der eigene Dialog des Geschwindigkeitswechsels.

@@ -1,0 +1,8 @@
+(initstate)
+(formula 'mandel)
+(maxiter 300)
+(incoloring 2)
+(indecomposition 8 22.5 'z-c 6 2.5 'both 1.5)
+(outcoloring 8)
+(outdecomposition 6 30 2 3 'left 2)
+(view -0.75 0.1 2.4 2.4)

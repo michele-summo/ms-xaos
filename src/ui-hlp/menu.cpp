@@ -115,6 +115,7 @@ static menudialog *uih_perturbationdialog, *uih_juliadialog,
     *uih_incolorgroupsdialog, *uih_outcolorgroupsdialog,
     *uih_incolorlineardialog, *uih_outcolorlineardialog,
     *uih_incoloringspeeddialog, *uih_outcoloringspeeddialog,
+    *uih_indecompdialog, *uih_outdecompdialog,
     *uih_renderimgdialog, *palettepickerdialog, *loadgpldialog, *savegpldialog,
     *uih_palettecolorsdialog
 #ifdef USE_SFFE
@@ -483,7 +484,9 @@ void uih_registermenudialogs_i18n(void)
      * along; and under a heading the speed change after ITER, which acts on
      * the value before the function has it, field for field as its own
      * dialog above has it. The inside's starts with how often the modes that
-     * repeat do so, which comes before all of it. */
+     * repeat do so and the function they bend their argument by, which come
+     * before all of it. The speed change is a column of its own beside the
+     * rest, which made the dialog taller than a screen. */
     for (int side = 0; side < 2; side++) {
         if (side)
             Register(uih_outcoloringspeeddialog);
@@ -491,10 +494,14 @@ void uih_registermenudialogs_i18n(void)
             Register(uih_incoloringspeeddialog);
         if (!side) {
             DIALOGFLOAT_I(TR("Dialog", "Frequency (periodic modes):"), 1);
+            DIALOGCHOICE_I(TR("Dialog", "Function (periodic modes):"),
+                           colorfun, 0);
+            DIALOGRULE_I();
         }
         DIALOGCHOICE_I(TR("Dialog", "Function:"), colorfun, 0);
         DIALOGFLOAT_I(TR("Dialog", "Coloring speed:"), 1);
         DIALOGINT_I(TR("Dialog", "Coloring shift:"), 0);
+        DIALOGCOLUMN_I();
         DIALOGHEADING_I(TR("Dialog", "Speed change after ITER"));
         DIALOGFLOAT_I(TR("Dialog", "Initial exponent:"), 1);
         DIALOGFLOAT_I(TR("Dialog", "Initial speed:"), 1);
@@ -514,6 +521,29 @@ void uih_registermenudialogs_i18n(void)
         DIALOGFLOAT_I(TR("Dialog", "Radius:"), COLORFUN2_RADIUS);
         NULL_I();
     }
+
+    /* The decompositions' settings, one dialog a side, which is also the
+     * command a position saves them as; see indecompsectors. */
+    Register(uih_indecompdialog);
+    DIALOGINT_I(TR("Dialog", "Sectors (0 = the mode's own):"), 0);
+    DIALOGFLOAT_I(TR("Dialog", "Rotation (degrees):"), 0);
+    DIALOGCHOICE_I(TR("Dialog", "Angle of:"), decomp_of, 0);
+    DIALOGINT_I(TR("Dialog", "Rings per unit (0 = none):"), 0);
+    DIALOGRULE_I();
+    DIALOGFLOAT_I(TR("Dialog", "Repetitions:"), 1);
+    DIALOGCHOICE_I(TR("Dialog", "Direction:"), decomp_ways, 0);
+    DIALOGFLOAT_I(TR("Dialog", "Speed (binary: separation):"), 1);
+    NULL_I();
+
+    Register(uih_outdecompdialog);
+    DIALOGINT_I(TR("Dialog", "Sectors (0 = the mode's own):"), 0);
+    DIALOGFLOAT_I(TR("Dialog", "Rotation (degrees):"), 0);
+    DIALOGINT_I(TR("Dialog", "Iterations per band (0 = none):"), 0);
+    DIALOGRULE_I();
+    DIALOGFLOAT_I(TR("Dialog", "Repetitions:"), 1);
+    DIALOGCHOICE_I(TR("Dialog", "Direction:"), decomp_ways, 0);
+    DIALOGFLOAT_I(TR("Dialog", "Speed (binary: separation):"), 1);
+    NULL_I();
 
     Register(palettedialog);
     DIALOGINT_I(TR("Dialog", "Algorithm number:"), 0);
@@ -1323,9 +1353,9 @@ static void uih_setoutcolorfungroups(uih_context *c, dialogparam *p)
     uih_setcolorfungroupsfrom(c, 0, p);
 }
 
-/* The one dialog the colouring menus open: on the inside the frequency, then
- * the function, the speed and the shift, then the speed change after ITER as
- * the dialog above takes it. Each is set as it would be on its own, and so
+/* The one dialog the colouring menus open: on the inside the frequency and
+ * the function of the modes that repeat, then the function, the speed and the
+ * shift, then the speed change after ITER as the dialog above takes it. Each is set as it would be on its own, and so
  * redraws only what has moved. */
 static menudialog *uih_getcoloringspeeddialog(struct uih_context *c,
                                               int inset)
@@ -1335,8 +1365,10 @@ static menudialog *uih_getcoloringspeeddialog(struct uih_context *c,
     if (c != NULL) {
         fractal_context *f = c->fcontext;
         menudialog *d = dialog;
-        if (inset)
+        if (inset) {
             d++->deffloat = f->incolorfrequency;
+            d++->defint = f->incolorperiodicfun;
+        }
         d[0].defint = inset ? f->incolorfun : f->outcolorfun;
         d[1].deffloat = inset ? f->incolorspeed : f->outcolorspeed;
         d[2].defint = inset ? f->incolorshift : f->outcolorshift;
@@ -1358,10 +1390,51 @@ static menudialog *uih_getoutcoloringspeeddialog(struct uih_context *c)
     return uih_getcoloringspeeddialog(c, 0);
 }
 
+/* The decompositions' settings, as the dialog holds them and a position
+ * saves them. */
+static menudialog *uih_getindecompdialog(struct uih_context *c)
+{
+    if (c != NULL) {
+        uih_indecompdialog[0].defint = c->fcontext->indecompsectors;
+        uih_indecompdialog[1].deffloat = c->fcontext->indecomprotation;
+        uih_indecompdialog[2].defint = c->fcontext->indecompof;
+        uih_indecompdialog[3].defint = c->fcontext->indecompradial;
+        uih_indecompdialog[4].deffloat = c->fcontext->indecomprepeats;
+        uih_indecompdialog[5].defint = c->fcontext->indecompway;
+        uih_indecompdialog[6].deffloat = c->fcontext->indecompspeed;
+    }
+    return uih_indecompdialog;
+}
+static menudialog *uih_getoutdecompdialog(struct uih_context *c)
+{
+    if (c != NULL) {
+        uih_outdecompdialog[0].defint = c->fcontext->outdecompsectors;
+        uih_outdecompdialog[1].deffloat = c->fcontext->outdecomprotation;
+        uih_outdecompdialog[2].defint = c->fcontext->outdecompradial;
+        uih_outdecompdialog[3].deffloat = c->fcontext->outdecomprepeats;
+        uih_outdecompdialog[4].defint = c->fcontext->outdecompway;
+        uih_outdecompdialog[5].deffloat = c->fcontext->outdecompspeed;
+    }
+    return uih_outdecompdialog;
+}
+static void uih_setindecomp(uih_context *c, dialogparam *p)
+{
+    uih_setdecomposition(c, 1, p[0].dint, (number_t)p[1].number, p[2].dint,
+                         p[3].dint, (number_t)p[4].number, p[5].dint,
+                         (number_t)p[6].number);
+}
+static void uih_setoutdecomp(uih_context *c, dialogparam *p)
+{
+    uih_setdecomposition(c, 0, p[0].dint, (number_t)p[1].number, 0,
+                         p[2].dint, (number_t)p[3].number, p[4].dint,
+                         (number_t)p[5].number);
+}
+
 static void uih_setincoloringspeed(uih_context *c, dialogparam *p)
 {
     uih_setincolorfrequency(c, (number_t)p[0].number);
-    p++;
+    uih_setincolorperiodicfun(c, p[1].dint);
+    p += 2;
     uih_setincolorfun(c, p[0].dint);
     uih_setincolorspeed(c, (number_t)p[1].number);
     uih_setincolorshift(c, p[2].dint);
@@ -2074,6 +2147,10 @@ void uih_registermenus_i18n(void)
     MENUDIALOG_I("fractal", NULL, TR("Menu", "Inside coloring frequency"),
                  "incolorfrequency", MENUFLAG_NOMENU | MENUFLAG_INTERRUPT,
                  uih_setincolorfrequency, uih_fpdialog);
+    MENUDIALOG_I("fractal", NULL,
+                 TR("Menu", "Inside coloring periodic function"),
+                 "incolorperiodicfun", MENUFLAG_NOMENU | MENUFLAG_INTERRUPT,
+                 uih_setincolorperiodicfun, uih_numdialog);
     MENUDIALOG_I("fractal", NULL, TR("Menu", "Julia seed"), "juliaseed",
                  MENUFLAG_NOMENU | MENUFLAG_INTERRUPT, uih_setjuliaseed,
                  uih_coorddialog);
@@ -2328,6 +2405,13 @@ static menuitem menuitems2[] = {
     MENUCDIALOG("moutcoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Coloring speed"),
                 "outcolorspeeddialog", MENUFLAG_INTERRUPT,
                 uih_setoutcoloringspeed, uih_getoutcoloringspeeddialog),
+    /* The decompositions' settings, a dialog a side beside the speed. */
+    MENUCDIALOG("mincoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Decomposition"),
+                "indecomposition", MENUFLAG_INTERRUPT, uih_setindecomp,
+                uih_getindecompdialog),
+    MENUCDIALOG("moutcoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Decomposition"),
+                "outdecomposition", MENUFLAG_INTERRUPT, uih_setoutdecomp,
+                uih_getoutdecompdialog),
     /* What the menu had before that dialog, a dialog for the speed and one
      * for the shift; out of the menu, and still commands a script may name. */
     MENUCDIALOG("mincoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Coloring speed"), "mincolorspeed",
@@ -2468,9 +2552,18 @@ void uih_registermenus(void)
 
     /* The ten the program has always had stay in the menu itself; the ones
      * added since go to a submenu, so that the list does not run off the
-     * screen. The numbers do not move: they are what a saved position holds. */
-    menu_genernumberedsplit(INCOLORING_LISTED, "mincoloring", 10,
-                            "mothincoloring", incolorname, NULL, MENU_INT,
+     * screen. The numbers do not move: they are what a saved position holds.
+     * True colour and the fbm modes have menus of their own, and are left
+     * out by their missing names; the modes written after them come last in
+     * the submenu. */
+    static const char *inlisted[INCOLORING];
+    for (i = 0; i < INCOLORING; i++)
+        inlisted[i] = (i == INCOLORING_TRUECOLOR ||
+                       (i >= INCOLORING_FBM && i <= INCOLORING_FBM_DECOMP))
+                          ? NULL
+                          : incolorname[i];
+    menu_genernumberedsplit(INCOLORING, "mincoloring", 10,
+                            "mothincoloring", inlisted, NULL, MENU_INT,
                             UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
                             uih_setincoloringmode, uih_selectedincoloring,
                             "in");

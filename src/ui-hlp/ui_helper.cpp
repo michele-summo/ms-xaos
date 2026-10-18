@@ -2239,8 +2239,10 @@ void uih_setincoloringmode(uih_context *c, int mode)
 {
     if (mode < 0)
         mode = rand() % INCOLORING;
-    if (mode > INCOLORING)
-        mode = INCOLORING;
+    /* INCOLORING is how many there are, so the last is one below it: this
+     * let one past the end through, which drew as the count. */
+    if (mode > INCOLORING - 1)
+        mode = INCOLORING - 1;
     if (c->fcontext->incoloringmode != mode) {
         char str[10];
         c->fcontext->incoloringmode = mode;
@@ -2329,6 +2331,69 @@ void uih_setincolorfrequency(uih_context *c, number_t frequency)
     if (c->fcontext->incolorfrequency != frequency) {
         c->fcontext->incolorfrequency = frequency;
         c->fcontext->version++;
+        uih_newimage(c);
+    }
+}
+
+/* And the speed function they bend the argument by; see incolorperiodicfun.
+ * Held within the functions there are, as the speed function is, but with no
+ * random one for a number below them: it is set by the dialog and by a
+ * position, never by the random choices. */
+void uih_setincolorperiodicfun(uih_context *c, int func)
+{
+    if (func < 0)
+        func = 0;
+    if (func > COLORFUN - 2)
+        func = COLORFUN - 2;
+    if (c->fcontext->incolorperiodicfun != func) {
+        c->fcontext->incolorperiodicfun = func;
+        c->fcontext->version++;
+        uih_newimage(c);
+    }
+}
+
+/* The decompositions' settings of a side; see indecompsectors. Held where
+ * they mean something: no fewer than no sectors or bands, and the angle of
+ * one of the three things there are, z alone outside. */
+void uih_setdecomposition(uih_context *c, int inset, int sectors,
+                          number_t rotation, int of, int radial,
+                          number_t repeats, int way, number_t speed)
+{
+    fractal_context *f = c->fcontext;
+    if (!(repeats == repeats))
+        repeats = 1;
+    if (!(speed == speed))
+        speed = 1;
+    if (way < 0 || way > 2)
+        way = 0;
+    if (sectors < 0)
+        sectors = 0;
+    if (sectors > DECOMP_MAXSECTORS)
+        sectors = DECOMP_MAXSECTORS;
+    if (radial < 0)
+        radial = 0;
+    if (!inset || of < 0 || of > 2)
+        of = 0;
+    if (!(rotation == rotation))
+        rotation = 0;
+    int *se = inset ? &f->indecompsectors : &f->outdecompsectors;
+    number_t *ro = inset ? &f->indecomprotation : &f->outdecomprotation;
+    int *ra = inset ? &f->indecompradial : &f->outdecompradial;
+    number_t *re = inset ? &f->indecomprepeats : &f->outdecomprepeats;
+    int *wa = inset ? &f->indecompway : &f->outdecompway;
+    number_t *sp = inset ? &f->indecompspeed : &f->outdecompspeed;
+    if (*se != sectors || *ro != rotation || *ra != radial ||
+        (inset && f->indecompof != of) || *re != repeats || *wa != way ||
+        *sp != speed) {
+        *se = sectors;
+        *ro = rotation;
+        *ra = radial;
+        *re = repeats;
+        *wa = way;
+        *sp = speed;
+        if (inset)
+            f->indecompof = of;
+        f->version++;
         uih_newimage(c);
     }
 }
@@ -2893,6 +2958,7 @@ void uih_initstate(struct uih_context *uih)
     uih_setincolorfun(uih, 0);
     uih_setincolorshift(uih, 0);
     uih_setincolorfrequency(uih, 1);
+    uih_setincolorperiodicfun(uih, 0);
     uih_setoutcolorspeed(uih, 1.0);
     uih_setoutcolorfun(uih, 0);
     uih_setoutcolorshift(uih, 0);
@@ -2903,6 +2969,7 @@ void uih_initstate(struct uih_context *uih)
     for (int inset = 0; inset < 2; inset++) {
         uih_setcolorfunafter(uih, inset, COLORFUN_ITER, COLORFUN_EXP, 0);
         uih_setfbmparams(uih, inset, 4, 8, 4, (number_t)1 / 2, 1);
+        uih_setdecomposition(uih, inset, 0, 0, 0, 0, 1, 0, 1);
     }
     uih_setpndefault(uih, 0);
     uih_setnewtonmodesffe(uih, 0);

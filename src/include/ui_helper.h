@@ -443,6 +443,10 @@ void uih_setincolorspeed(uih_context *c, number_t speed);
 void uih_setincolorfun(uih_context *c, int func);
 void uih_setincolorshift(uih_context *c, int shift);
 void uih_setincolorfrequency(uih_context *c, number_t frequency);
+void uih_setincolorperiodicfun(uih_context *c, int func);
+void uih_setdecomposition(uih_context *c, int inset, int sectors,
+                          number_t rotation, int of, int radial,
+                          number_t repeats, int way, number_t speed);
 void uih_setoutcolorspeed(uih_context *c, number_t speed);
 void uih_setoutcolorfun(uih_context *c, int func);
 void uih_setoutcolorshift(uih_context *c, int shift);

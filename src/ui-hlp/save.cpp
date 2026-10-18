@@ -651,6 +651,55 @@ void uih_saveframe(struct uih_context *uih)
             s->fcontext->outfbmoctaves = uih->fcontext->outfbmoctaves;
             s->fcontext->outfbmseed = uih->fcontext->outfbmseed;
         }
+        /* The decompositions' settings, one command a side, written only
+         * when one of them has moved: a position that leaves them alone
+         * opens in 2.5, which knows nothing of them. */
+        if (s->fcontext->indecompsectors != uih->fcontext->indecompsectors ||
+            s->fcontext->indecomprotation != uih->fcontext->indecomprotation ||
+            s->fcontext->indecompof != uih->fcontext->indecompof ||
+            s->fcontext->indecompradial != uih->fcontext->indecompradial ||
+            s->fcontext->indecomprepeats != uih->fcontext->indecomprepeats ||
+            s->fcontext->indecompway != uih->fcontext->indecompway ||
+            s->fcontext->indecompspeed != uih->fcontext->indecompspeed) {
+            start_save(uih, "indecomposition");
+            save_int(uih, uih->fcontext->indecompsectors);
+            save_float(uih, uih->fcontext->indecomprotation);
+            save_nstring(uih, uih->fcontext->indecompof, decomp_of);
+            save_int(uih, uih->fcontext->indecompradial);
+            save_float(uih, uih->fcontext->indecomprepeats);
+            save_nstring(uih, uih->fcontext->indecompway, decomp_ways);
+            save_float(uih, uih->fcontext->indecompspeed);
+            stop_save(uih);
+            s->fcontext->indecomprepeats = uih->fcontext->indecomprepeats;
+            s->fcontext->indecompway = uih->fcontext->indecompway;
+            s->fcontext->indecompspeed = uih->fcontext->indecompspeed;
+            s->fcontext->indecompsectors = uih->fcontext->indecompsectors;
+            s->fcontext->indecomprotation = uih->fcontext->indecomprotation;
+            s->fcontext->indecompof = uih->fcontext->indecompof;
+            s->fcontext->indecompradial = uih->fcontext->indecompradial;
+        }
+        if (s->fcontext->outdecompsectors != uih->fcontext->outdecompsectors ||
+            s->fcontext->outdecomprotation !=
+                uih->fcontext->outdecomprotation ||
+            s->fcontext->outdecompradial != uih->fcontext->outdecompradial ||
+            s->fcontext->outdecomprepeats != uih->fcontext->outdecomprepeats ||
+            s->fcontext->outdecompway != uih->fcontext->outdecompway ||
+            s->fcontext->outdecompspeed != uih->fcontext->outdecompspeed) {
+            start_save(uih, "outdecomposition");
+            save_int(uih, uih->fcontext->outdecompsectors);
+            save_float(uih, uih->fcontext->outdecomprotation);
+            save_int(uih, uih->fcontext->outdecompradial);
+            save_float(uih, uih->fcontext->outdecomprepeats);
+            save_nstring(uih, uih->fcontext->outdecompway, decomp_ways);
+            save_float(uih, uih->fcontext->outdecompspeed);
+            stop_save(uih);
+            s->fcontext->outdecomprepeats = uih->fcontext->outdecomprepeats;
+            s->fcontext->outdecompway = uih->fcontext->outdecompway;
+            s->fcontext->outdecompspeed = uih->fcontext->outdecompspeed;
+            s->fcontext->outdecompsectors = uih->fcontext->outdecompsectors;
+            s->fcontext->outdecomprotation = uih->fcontext->outdecomprotation;
+            s->fcontext->outdecompradial = uih->fcontext->outdecompradial;
+        }
         if ((s->fcontext->incoloringmode == INCOLORING_TRUECOLOR || s->mode >= UIH_SAVEALL) &&
             s->fcontext->intcolor != uih->fcontext->intcolor)
             save_intc(uih, "intcoloring", uih->fcontext->intcolor),
@@ -674,6 +723,11 @@ void uih_saveframe(struct uih_context *uih)
         if (s->fcontext->incolorfrequency != uih->fcontext->incolorfrequency)
             save_floatc(uih, "incolorfrequency", uih->fcontext->incolorfrequency),
                 s->fcontext->incolorfrequency = uih->fcontext->incolorfrequency;
+        if (s->fcontext->incolorperiodicfun != uih->fcontext->incolorperiodicfun)
+            save_intc(uih, "incolorperiodicfun",
+                      uih->fcontext->incolorperiodicfun),
+                s->fcontext->incolorperiodicfun =
+                    uih->fcontext->incolorperiodicfun;
         if (s->fcontext->outcolorfun != uih->fcontext->outcolorfun)
             save_intc(uih, "outcolorfun", uih->fcontext->outcolorfun),
                 s->fcontext->outcolorfun = uih->fcontext->outcolorfun;
@@ -820,6 +874,14 @@ int uih_save_enable(struct uih_context *uih, xio_file f, int mode)
     s->fcontext->incolorspeed = 1.0f;
     s->fcontext->incolorshift = 0;
     s->fcontext->incolorfrequency = 1;
+    s->fcontext->incolorperiodicfun = 0;
+    s->fcontext->indecompsectors = s->fcontext->outdecompsectors = 0;
+    s->fcontext->indecomprotation = s->fcontext->outdecomprotation = 0;
+    s->fcontext->indecompof = 0;
+    s->fcontext->indecompradial = s->fcontext->outdecompradial = 0;
+    s->fcontext->indecomprepeats = s->fcontext->outdecomprepeats = 1;
+    s->fcontext->indecompway = s->fcontext->outdecompway = 0;
+    s->fcontext->indecompspeed = s->fcontext->outdecompspeed = 1;
     s->fcontext->outcolorfun = 0;
     s->fcontext->outcolorspeed = 1.0f;
     s->fcontext->outcolorshift = 0;

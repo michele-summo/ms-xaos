@@ -462,7 +462,12 @@ menu_genernumbered(int n, const char *menuname, const char *const *const names,
  * entry, so one block can feed both.
  *
  * The block holds one entry more than it registers, left zeroed: no shortname
- * marks its end for menu_delnumbered. */
+ * marks its end for menu_delnumbered.
+ *
+ * An entry whose name is NULL is left out, and the block closed up over it:
+ * a gap would end it there for menu_delnumbered. The others keep their own
+ * numbers, as parameter and in the shortname. The first must be there, since
+ * menu_delnumbered finds the block by it. */
 const menuitem *
 menu_genernumberedsplit(int n, const char *menuname, int split,
                         const char *submenu, const char *const *const names,
@@ -472,33 +477,36 @@ menu_genernumberedsplit(int n, const char *menuname, int split,
                         const char *prefix)
 {
     int l = keys != NULL ? (int)strlen(keys) : -1;
-    int i;
+    int i, m = 0;
     menuitem *item = (menuitem *)calloc(n + 1, sizeof(menuitem));
     if (item == NULL)
         return NULL;
     for (i = 0; i < n; i++) {
-        item[i].menuname = (submenu != NULL && i >= split) ? submenu : menuname;
+        if (names[i] == NULL)
+            continue;
+        item[m].menuname = (submenu != NULL && i >= split) ? submenu : menuname;
         if (i < l) {
             char *key = (char *)malloc(2);
-            item[i].key = key;
+            item[m].key = key;
             key[0] = keys[i];
             key[1] = 0;
         } else
-            item[i].key = 0;
-        item[i].type = type;
-        item[i].flags = flags;
-        item[i].iparam = i;
-        item[i].name = names[i];
-        item[i].shortname = names[i];
+            item[m].key = 0;
+        item[m].type = type;
+        item[m].flags = flags;
+        item[m].iparam = i;
+        item[m].name = names[i];
+        item[m].shortname = names[i];
         if (prefix != NULL) {
-            char *shortname = (char *)malloc(strlen(prefix) + 4);
-            item[i].shortname = shortname;
+            char *shortname = (char *)malloc(strlen(prefix) + 12);
+            item[m].shortname = shortname;
             sprintf(shortname, "%s%i", prefix, i);
         }
-        item[i].function = (void (*)(void))function;
-        item[i].control = (int (*)(void))control;
+        item[m].function = (void (*)(void))function;
+        item[m].control = (int (*)(void))control;
+        m++;
     }
-    menu_add(item, n);
+    menu_add(item, m);
     return (item);
 }
 

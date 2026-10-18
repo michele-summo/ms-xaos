@@ -1477,8 +1477,8 @@ voulait dire.
 
 Ce n'est pas le calcul qui décide de la couleur d'un pixel : la couleur vient
 d'une formule portant sur le `z` final, le paramètre `c` et le nombre
-d'itérations, et il y a une telle formule par mode. Dix-huit de plus, dans un
-sous-menu à eux sous Fractale → Coloriage intérieur et Fractale → Coloriage
+d'itérations, et il y a une telle formule par mode. Vingt-trois de plus, dans
+un sous-menu à eux sous Fractale → Coloriage intérieur et Fractale → Coloriage
 extérieur, au-dessus des sous-menus en vraies couleurs.
 
 **À l'intérieur**, où l'orbite ne s'est jamais échappée et où seuls le `z`
@@ -1498,19 +1498,44 @@ final et `c` disent quelque chose :
 | `sign(imag)` | deux tons plats : une décomposition de l'intérieur, comme la décomposition binaire le fait pour l'extérieur |
 | `frac(mag)` | des courbes de niveau à chaque huitième du module |
 | `log(mag)` | `zmag` avec le contraste reporté sur les petites valeurs, où une orbite attirée passe son temps |
+| `cos(\|z\|)` | des anneaux autour de l'endroit où l'orbite s'est posée, huit par unité du module |
+| `hexagons` | trois ondes à un tiers de tour l'une de l'autre, qui s'additionnent en un réseau d'hexagones |
+| `spiral` | cinq bras autour de l'endroit où l'orbite s'est posée, enroulés une fois par facteur e du module |
+| `cos(\|z-c\|)` | des anneaux autour du paramètre, qui distinguent les bulbes comme le fait `\|z-c\|` |
+| `hexagon tiles` | `squares` avec des hexagones : un nid d'abeilles de tuiles larges d'un quarantième d'unité, de trois sortes car un hexagone a six voisins — les deux de `squares` et la première décalée d'un demi-tour |
 
-Six des modes intérieurs se répètent — `cos(mag)`, `mag*cos(real^2)`,
-`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)` et `frac(mag)` — et
-**Fréquence (modes périodiques)**, le premier champ de la boîte de dialogue
-Vitesse de coloration du côté intérieur, dit à quelle fréquence. Elle multiplie
-l'argument de ce qui se répète, donc à 2 les sinus tournent deux fois plus
-vite, `squares` trace des carrés deux fois plus petits et `frac(mag)` seize
-contours par unité du module là où il en traçait huit. Dans `cos(mag)` elle
-resserre aussi les bandes qui choisissent entre le sinus et le cosinus. À un,
-où elle commence, ils tracent comme ils l'ont toujours fait, au bit près, et
-les autres modes ne la lisent jamais. Une position l'enregistre comme
-`(incolorfrequency 2)` seulement quand elle n'est pas un, donc une position qui
-n'y touche pas s'ouvre toujours dans les versions antérieures.
+Onze des modes intérieurs se répètent — `cos(mag)`, `mag*cos(real^2)`,
+`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)`, `frac(mag)` et les cinq
+au bas du tableau — et **Fréquence (modes périodiques)**, le premier champ de
+la boîte de dialogue Vitesse de coloration du côté intérieur, dit à quelle
+fréquence. Elle multiplie l'argument de ce qui se répète, donc à 2 les sinus
+tournent deux fois plus vite, `squares` trace des carrés deux fois plus petits
+et `frac(mag)` seize contours par unité du module là où il en traçait huit.
+Dans `cos(mag)` elle resserre aussi les bandes qui choisissent entre le sinus
+et le cosinus. À un, où elle commence, ils tracent comme ils l'ont toujours
+fait, au bit près, et les autres modes ne la lisent jamais. Une position
+l'enregistre comme `(incolorfrequency 2)` seulement quand elle n'est pas un,
+donc une position qui n'y touche pas s'ouvre toujours dans les versions
+antérieures.
+
+**Fonction (modes périodiques)**, en dessous, courbe l'argument par l'une des
+[fonctions de vitesse de coloration](#fonctions-de-vitesse-de-coloration) avant
+que la fréquence le multiplie, de sorte que les bandes reviennent plus vite là
+où la fonction monte raide et plus lentement là où elle s'aplatit : `square` et
+`cube` les serrent vers le bord et les écartent autour de zéro, `log` et `atan`
+à l'inverse, et `sin`, `cos` et `triangle` replient l'argument sur lui-même, de
+sorte que les bandes font demi-tour et reviennent. Elle atteint chaque fonction
+périodique des onze, dont l'argument `a` entre comme `k·f(a)`, `k` étant la
+fréquence : les sinus et cosinus, le module de `frac(mag)`, les parties réelle
+et imaginaire dont les bandes font les carrés de `squares` et les hexagones de
+`hexagon tiles`, et dans `cos(mag)` aussi les bandes qui choisissent entre le
+sinus et le cosinus. Dans `spiral` les cinq bras restent cinq, car un nombre de
+tours non entier laisserait une couture là où l'angle se referme : la fréquence
+et la fonction agissent sur l'enroulement. Une fonction périodique dans
+l'argument d'une autre aurait aussi le sien courbé. À `ident`, où elle
+commence, rien ne change. Une position l'enregistre comme
+`(incolorperiodicfun 6)`, par la place de la fonction dans la liste en comptant
+à partir de zéro, seulement quand elle n'est pas ident.
 
 **À l'extérieur**, où ce qu'il y a, c'est le compte et le point de sortie :
 
@@ -1569,6 +1594,33 @@ itération à la suivante, ce qui dans ce moteur veut dire une seconde copie
 compilée de chaque boucle de calcul. `trap` et `stripe` dans une formule
 utilisateur le font à la place.
 
+### Réglages des décompositions
+
+**Fractale → Coloriage intérieur → Décomposition**, et de même sous Coloriage
+extérieur, règle la façon dont les décompositions découpent le tour : binary
+decomposition et color decomposition à l'extérieur, `sign(imag)`,
+`Decomposition-like` et `fbm + decomposition` à l'intérieur. Avec chaque champ
+là où il commence — zéro, et un, droite et un pour les trois derniers —, elles
+dessinent comme elles l'ont toujours fait, au bit près.
+
+| champ | |
+| --- | --- |
+| **Secteurs** | en combien chaque répétition du tour est découpée. Zéro est celui du mode : les deux demi-plans des binaires, le tour entier des autres. Les binaires colorent des secteurs alternés, donc un nombre impair passe au pair suivant — deux secteurs d'une même couleur se toucheraient. Celles en couleur deviennent autant de paliers plats |
+| **Rotation** | de combien de degrés les secteurs sont tournés, dans le sens antihoraire |
+| **Angle de** | à l'intérieur seulement : l'angle de `z`, de `z-c` ou de `z*c`. `z-c` centre les secteurs sur le paramètre, et `z*c` les tourne de l'angle du paramètre |
+| **Anneaux par unité** (intérieur) | des anneaux du module de ce dont on prend l'angle, un sur deux distingué : les binaires deviennent un damier polaire. Ils passent par `k·f(a)` comme tout argument périodique de l'intérieur, donc la fréquence et la fonction des modes périodiques les atteignent |
+| **Itérations par bande** (extérieur) | des bandes d'autant d'itérations à travers les secteurs : avec la binary decomposition, la grille de rayons externes et d'équipotentielles |
+| **Répétitions** | combien de fois le tour se répète : les secteurs, et pour celles en couleurs la palette, recommencent dans chacune. N'importe quel nombre, mais une fraction laisse une couture là où l'angle se referme |
+| **Sens** | droite, comme elles allaient toujours ; gauche, dans l'autre sens ; ambidextre, aller et retour dans chaque répétition — un miroir, sans couture quand les répétitions sont entières |
+| **Vitesse** | pour celles en couleurs, quelle part de la palette couvre une répétition : au-dessus de un, plus de couleurs dans chacune, pas plus de répétitions. Pour les binaires, l'écart entre les couleurs de secteurs alternés : à un comme toujours, à zéro une seule couleur, à deux le double — la binary decomposition porte les secteurs impairs du compte vers le compte à rebours, `sign(imag)` sa deuxième teinte depuis la première |
+
+Une position les enregistre comme
+`(indecomposition 8 22.5 'z-c 6 2.5 'both 1.5)` et
+`(outdecomposition 6 30 2 3 'left 2)` seulement quand ils ont changé, donc une
+position qui n'y touche pas s'ouvre toujours dans 2.5. Changés, une
+décomposition n'est plus symétrique par rapport à l'axe réel, et XaoS cesse de
+dessiner une moitié comme le miroir de l'autre.
+
 ## Fonctions de vitesse de coloration
 
 **Fractale → Coloriage intérieur → Vitesse de coloration**, et la même chose
@@ -1576,15 +1628,16 @@ sous Coloriage extérieur, est une seule boîte de dialogue pour tout ce qui mè
 la valeur que transmet un mode de coloration à une place dans la palette. La
 **fonction**, choisie dans une liste, courbe la valeur avant que la **vitesse**
 et le **décalage** de coloration soient appliqués : la palette est lue à
-`f(v) × speed + shift`. Sous un titre à lui, plus bas, se trouve le [changement
-de vitesse après ITER](#changement-de-vitesse-après-iter), qui agit sur la
-valeur avant que la fonction la reçoive. Celle du côté intérieur commence par
-la fréquence des modes qui se répètent, qui agit sur le mode lui-même ; voir
-[Plus de modes de coloration](#plus-de-modes-de-coloration). OK règle le tout
-en une seule étape d'annulation. Pour les modes qui comptent — iter, smooth et
-les autres — `v` est le nombre d'itérations lui-même, donc une fonction peut se
-penser en itérations. Toutes sont impaires, `f(−v) = −f(v)`, donc une grandeur
-qui change de signe le garde.
+`f(v) × speed + shift`. Dans une colonne à lui, à côté, se trouve le
+[changement de vitesse après ITER](#changement-de-vitesse-après-iter), qui agit
+sur la valeur avant que la fonction la reçoive. Celle du côté intérieur
+commence par la fréquence et la fonction des modes qui se répètent, qui
+agissent sur le mode lui-même ; voir [Plus de modes de
+coloration](#plus-de-modes-de-coloration). OK règle le tout en une seule étape
+d'annulation. Pour les modes qui comptent — iter, smooth et les autres — `v`
+est le nombre d'itérations lui-même, donc une fonction peut se penser en
+itérations. Toutes sont impaires, `f(−v) = −f(v)`, donc une grandeur qui change
+de signe le garde.
 
 C'étaient quatre entrées du menu : la vitesse, le décalage, un sous-menu des
 fonctions et la boîte de dialogue propre au changement de vitesse. Une position

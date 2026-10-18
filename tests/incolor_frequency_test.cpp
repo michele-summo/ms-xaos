@@ -1,11 +1,18 @@
 /* The frequency of the inside modes that repeat.
  *
- * At one, the six modes it reaches must give what they gave before there was
- * such a thing, to the bit, since every position saved until now draws at
- * one. Away from one it must do what it says -- make what repeats repeat that
- * much faster -- which for the modes that read z alone is the same as drawing
- * them at z times the frequency, exactly. And the modes that do not repeat
- * must never read it.
+ * At one, the six modes that repeated before it must give what they gave
+ * before there was such a thing, to the bit, since every position saved
+ * until now draws at one. Away from one it must do what it says -- make what
+ * repeats repeat that much faster -- which for the modes that read z alone is
+ * the same as drawing them at z times the frequency, exactly; the five written
+ * since are held to that too, where they read z alone. And the modes that do
+ * not repeat must never read it.
+ *
+ * The same for the speed function they bend the argument of every periodic
+ * function by: ident, where it starts, changes nothing; another bends the
+ * argument before the frequency multiplies it, k*f(a), in all eleven -- which
+ * for sin(real)*sin(imag) is the same as drawing it at z bent -- and the
+ * modes that do not repeat never read it.
  *
  * formulas.cpp is included rather than linked, since incolor_output is its own
  * and static.
@@ -40,21 +47,49 @@ static void check(int ok, const char *text)
         failures++;
 }
 
-/* The six that repeat, by their numbers in incolorname. */
+/* The six that repeated before the frequency, by their numbers in
+ * incolorname, and with the five written since, all that repeat. */
 static const int periodic[6] = {5, 6, 7, 9, 18, 20};
+static const int repeating[11] = {5,
+                                  6,
+                                  7,
+                                  9,
+                                  18,
+                                  20,
+                                  INCOLORING_COS_ABS,
+                                  INCOLORING_HEXAGONS,
+                                  INCOLORING_SPIRAL,
+                                  INCOLORING_COS_ABS_ZC,
+                                  INCOLORING_HEXAGON_TILES};
 
-/* What mode m gives at frequency f over a grid of orbits, z scaled by s. */
-static unsigned long long sweep(int m, number_t f, number_t s)
+/* Neither repeats nor is drawn by incolor_output's palette: true colour and
+ * the fbm modes, whose noise is not a periodic function. */
+static int set_apart(int m)
+{
+    return m == INCOLORING_TRUECOLOR ||
+           (m >= INCOLORING_FBM && m <= INCOLORING_FBM_DECOMP);
+}
+
+/* What mode m gives at frequency f and periodic function g over a grid of
+ * orbits, z scaled by s and then, if there is one, put through map. */
+static unsigned long long sweep(int m, number_t f, number_t s, int g = 0,
+                                number_t (*map)(number_t) = NULL)
 {
     cfractalc.incoloringmode = m;
     cfractalc.incolorfrequency = f;
+    cfractalc.incolorperiodicfun = g;
     unsigned long long h = 1469598103934665603ULL;
     for (int iy = -60; iy <= 60; iy++)
         for (int ix = -60; ix <= 60; ix++) {
             number_t zre = (number_t)ix / 23, zim = (number_t)iy / 29;
             number_t pre = (number_t)0.3 + zre / 7;
             number_t pim = (number_t)-0.4 + zim / 5;
-            unsigned int r = incolor_output(zre * s, zim * s, pre, pim, 100);
+            number_t wre = zre * s, wim = zim * s;
+            if (map != NULL) {
+                wre = map(wre);
+                wim = map(wim);
+            }
+            unsigned int r = incolor_output(wre, wim, pre, pim, 100);
             h ^= r;
             h *= 1099511628211ULL;
         }
@@ -76,6 +111,8 @@ int main(void)
     cfractalc.incolorspeed = 1;
     cfractalc.incolorfuninitial = cfractalc.incolorfuninitialspeed = 1;
     cfractalc.incolorfunspeed = cfractalc.incolorfun2speed = 1;
+    cfractalc.indecomprepeats = cfractalc.outdecomprepeats = 1;
+    cfractalc.indecompspeed = cfractalc.outdecompspeed = 1;
     color_change_prepare(&cfractalc);
 
     /* --- at one, what there was ---------------------------------------
@@ -104,13 +141,21 @@ int main(void)
      * at frequency one and z scaled by f -- exactly, since the frequencies
      * here are powers of two and the scaling is exact in binary. For
      * sin(real^2-imag^2) the argument is z squared, so a frequency of four is
-     * z twice as far. */
+     * z twice as far. cos(|z|) and hexagons read the modulus and the
+     * projections of z, which scale with it, and hexagon tiles its parts,
+     * as squares does. */
     {
         struct {
             int mode;
             number_t f, s;
-        } same[4] = {{7, 4, 2}, {9, 2, 2}, {18, 2, 2}, {20, 2, 2}};
-        for (int k = 0; k < 4; k++) {
+        } same[7] = {{7, 4, 2},
+                     {9, 2, 2},
+                     {18, 2, 2},
+                     {20, 2, 2},
+                     {INCOLORING_COS_ABS, 2, 2},
+                     {INCOLORING_HEXAGONS, 2, 2},
+                     {INCOLORING_HEXAGON_TILES, 2, 2}};
+        for (int k = 0; k < 7; k++) {
             sprintf(what,
                     "%s at a frequency of %g is the picture at one with z "
                     "%g times as far",
@@ -120,8 +165,9 @@ int main(void)
                       sweep(same[k].mode, 1, same[k].s),
                   what);
         }
-        /* and the two that read c as well: something else than at one */
-        for (int m : {5, 6}) {
+        /* and the ones that read c as well, or the logarithm of the modulus:
+         * something else than at one */
+        for (int m : {5, 6, INCOLORING_SPIRAL, INCOLORING_COS_ABS_ZC}) {
             sprintf(what, "%s at a frequency of two is not what it is at one",
                     incolorname[m]);
             check(sweep(m, 2, 1) != sweep(m, 1, 1), what);
@@ -133,10 +179,10 @@ int main(void)
         int untouched = 1;
         for (int m = 0; m < INCOLORING; m++) {
             int repeats = 0;
-            for (int k = 0; k < 6; k++)
-                if (periodic[k] == m)
+            for (int k = 0; k < 11; k++)
+                if (repeating[k] == m)
                     repeats = 1;
-            if (repeats || m == INCOLORING_TRUECOLOR || m >= INCOLORING_FBM)
+            if (repeats || set_apart(m))
                 continue;
             if (sweep(m, 3, 1) != sweep(m, 1, 1)) {
                 printf("       %s moved\n", incolorname[m]);
@@ -145,6 +191,58 @@ int main(void)
         }
         check(untouched, "the modes that do not repeat draw the same at any "
                          "frequency");
+    }
+
+    /* --- the function they bend the argument by ------------------------- */
+    {
+        /* It reaches every mode that repeats -- squares and the bands of
+         * cos(mag) as well as the sines and frac(mag). */
+        int moved = 1;
+        for (int k = 0; k < 11; k++)
+            for (int g = 1; g < COLORFUN - 1; g++)
+                if (sweep(repeating[k], 1, 1, g) ==
+                    sweep(repeating[k], 1, 1)) {
+                    printf("       %s under %s did not move\n",
+                           incolorname[repeating[k]], colorfun[g]);
+                    moved = 0;
+                }
+        check(moved, "every function but ident moves each of the modes that "
+                     "repeat");
+
+        /* sin(real)*sin(imag) reads z alone, a part at a time: bent by a
+         * function, it is the picture with each part of z bent by it,
+         * exactly, as the test does the arithmetic the function does. */
+        check(sweep(18, 1, 1, 6) ==
+                  sweep(18, 1, 1, 0, [](number_t x) { return x * x * x; }),
+              "sin(real)*sin(imag) under cube is the picture at z cubed");
+        check(sweep(18, 1, 1, 5) ==
+                  sweep(18, 1, 1, 0,
+                        [](number_t x) { return x > 0 ? x * x : -(x * x); }),
+              "sin(real)*sin(imag) under square is the picture at z squared "
+              "with its sign");
+        /* and the frequency multiplies what the function gave */
+        check(sweep(18, 2, 1, 6) ==
+                  sweep(18, 1, 1, 0,
+                        [](number_t x) { return 2 * (x * x * x); }),
+              "at a frequency of two, twice the cube");
+
+        int untouched = 1;
+        for (int m = 0; m < INCOLORING; m++) {
+            int reached = 0;
+            for (int k = 0; k < 11; k++)
+                if (repeating[k] == m)
+                    reached = 1;
+            if (reached || set_apart(m))
+                continue;
+            for (int g = 1; g < COLORFUN - 1; g++)
+                if (sweep(m, 1, 1, g) != sweep(m, 1, 1)) {
+                    printf("       %s moved under %s\n", incolorname[m],
+                           colorfun[g]);
+                    untouched = 0;
+                }
+        }
+        check(untouched, "the modes that do not repeat draw the same under any "
+                         "function");
     }
 
     if (failures)
