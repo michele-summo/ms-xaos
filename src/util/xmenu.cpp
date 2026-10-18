@@ -245,7 +245,14 @@ int menu_havedialog(const menuitem *item, struct uih_context *c)
 {
     if (item->type != MENU_DIALOG && item->type != MENU_CUSTOMDIALOG)
         return 0;
-    if (!(item->type & MENUFLAG_RADIO) || c == NULL)
+    /* Only a ticked checkbox goes without its dialog: clicking it turns it
+     * off. A radio choice cannot be turned off by clicking it again, so it
+     * always opens its dialog, ticked or not -- that is how the settings of
+     * the mode already chosen are changed. This tested item->type for the
+     * radio flag, which every dialog type matches, and so a ticked radio
+     * choice did nothing at all when clicked. */
+    if (c == NULL || !(item->flags & MENUFLAG_CHECKBOX) ||
+        (item->flags & MENUFLAG_RADIO))
         return 1;
     if (item->flags & MENUFLAG_DIALOGATDISABLE)
         return (menu_enabled(item, c));
