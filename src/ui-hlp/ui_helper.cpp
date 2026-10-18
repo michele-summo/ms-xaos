@@ -2576,6 +2576,23 @@ void uih_settessellation(uih_context *c, int tiling)
     }
 }
 
+/* What the inside's tessellation mode colours by, and how its tiles stand
+ * apart; see intessellcolor. */
+void uih_settessellationstyle(uih_context *c, int colour, int fill)
+{
+    fractal_context *f = c->fcontext;
+    if (colour < TESSELL_ANGLE || colour > TESSELL_NONE)
+        colour = TESSELL_ANGLE;
+    if (fill < TESSELL_TURNED || fill > TESSELL_FLAT)
+        fill = TESSELL_TURNED;
+    if (f->intessellcolor != colour || f->intessellfill != fill) {
+        f->intessellcolor = colour;
+        f->intessellfill = fill;
+        f->version++;
+        uih_newimage(c);
+    }
+}
+
 void uih_setpndefault(uih_context *c, int value) {
     if (c->fcontext->pndefault != (int)value) {
         c->fcontext->pndefault = value;
@@ -3004,6 +3021,7 @@ void uih_initstate(struct uih_context *uih)
     }
     uih_setfbmscaling(uih, FBM_SCALE_FIXED, 1);
     uih_settessellation(uih, 3);
+    uih_settessellationstyle(uih, TESSELL_ANGLE, TESSELL_TURNED);
     uih_setpndefault(uih, 0);
     uih_setnewtonmodesffe(uih, 0);
     uih_setnewtonconvergence(uih, 1E-6);

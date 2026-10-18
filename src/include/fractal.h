@@ -51,6 +51,17 @@
 /* The tiles of one of randsctile's tilings, which took the place of hexagon
  * tiles before that was ever released: its number is free to take. */
 #define INCOLORING_TESSELLATION 30
+/* What it colours by, and how its tiles stand apart; see intessellcolor. */
+#define TESSELL_ANGLE 0
+#define TESSELL_MIDDLE 1
+#define TESSELL_ZMAG 2
+#define TESSELL_NONE 3
+#define TESSELL_TURNED 0
+#define TESSELL_SHADED 1
+#define TESSELL_EDGED 2
+#define TESSELL_FLAT 3
+/* How far out of its middle, nought to one, an edged tile's edge begins. */
+#define TESSELL_EDGE 0.85
 /* The ways the outside's fbm marks can be sized; see outfbmscaling. */
 #define FBM_SCALE_FIXED 0
 #define FBM_SCALE_ITER 1
@@ -399,6 +410,29 @@ struct fractal_context {
     /* Which of randsctile's tilings, 1 to 45, the inside's tessellation mode
      * lays over z; hexagons where it starts. */
     int intessellation;
+    /* And how it colours them: what the colour comes from, all over --
+     *
+     * TESSELL_ANGLE   the angle of z, cut and walked as the inside's
+     *                 decomposition settings say, as the decompositions are
+     * TESSELL_MIDDLE  the angle about the middle of the tile the point is in,
+     *                 cut and walked the same way, its rings following the
+     *                 tile's shape
+     * TESSELL_ZMAG    zmag's value
+     * TESSELL_NONE    nothing, the tiles alone
+     *
+     * -- and how each tile stands apart from its neighbours:
+     *
+     * TESSELL_TURNED  moved along the palette by an amount of its own
+     * TESSELL_SHADED  the same, and moved on a little more from its middle
+     *                 to its edge, a bevel
+     * TESSELL_EDGED   the same, and its edge drawn in the other half of the
+     *                 palette
+     * TESSELL_FLAT    one colour of its own, whatever the colour comes from
+     *
+     * The angle of z, turned, where they start, is what the mode drew when it
+     * had no choice: with the decomposition settings where they start, the
+     * old code, to the bit. */
+    int intessellcolor, intessellfill;
     //MSUMMO HACK 20220409
     int pndefault;
     int newtonmodesffe;

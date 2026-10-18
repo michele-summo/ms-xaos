@@ -269,6 +269,19 @@ foreach(prec ${XAOS_TEST_PRECISIONS})
                               PRIVATE ${CMAKE_SOURCE_DIR}/src/engine)
    add_test(NAME fbm_scaling_${suffix} COMMAND fbm_scaling_${suffix})
 
+   # --- how the tessellation colours its tiles ------------------------------
+   # Where it starts, what there was, to the bit; where a point stands in its
+   # tile; the decomposition settings reach the angles and nothing else; a
+   # flat tile is the same whatever it is coloured by; the frequency scales
+   # the tiles exactly.
+   xaos_add_test_binary(tessellation_${suffix} ${prec}
+                        tessellation_test.cpp
+                        ${CMAKE_SOURCE_DIR}/src/engine/phist.cpp
+                        ${SFFE_SOURCES})
+   target_include_directories(tessellation_${suffix}
+                              PRIVATE ${CMAKE_SOURCE_DIR}/src/engine)
+   add_test(NAME tessellation_${suffix} COMMAND tessellation_${suffix})
+
    # --- the iteration loops ------------------------------------------------
    # The formula table exposes every loop as an iterationfunc, so they can be
    # driven directly over a grid without going through the renderer; the

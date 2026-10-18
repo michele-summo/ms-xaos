@@ -1488,23 +1488,55 @@ significava.
 ## Tassellazione
 
 **Frattale → Colorazione interna → Tassellazione...** colora l'interno con le
-tessere di una delle quarantacinque tassellature di `randsctile`: il suo unico
-campo, **Tassellazione**, prende lo stesso numero del primo argomento di
-`randsctile`, `3`, gli esagoni, dove parte, e la scheda Tassellature di Aiuto →
-Riferimento delle formule utente ha un'immagine di ciascuna. Le tessere sono
-posate sulla `z` finale, quaranta per unità come i quadrati di `squares`, e
-ciascuna mostra l'angolo di `z` ruotato di una quantità sua, così che ogni
-tessera si stacca dalle vicine qualunque siano il loro numero e la loro forma.
-**Frequenza (modalità periodiche)** e **Funzione (modalità periodiche)** la
-raggiungono come raggiungono le altre modalità che si ripetono. Le tassellature
-che non si ripetono mai diventano piatte, con l'angolo non ruotato, oltre
-quattro miliardi di tessere dall'origine.
+tessere di una delle quarantacinque tassellature di `randsctile`, posate sulla
+`z` finale, quaranta per unità come i quadrati di `squares`. Il suo dialogo ha
+tre campi.
+
+| campo | |
+| --- | --- |
+| **Tassellazione** | quale tassellatura, con il numero con cui la conosce `randsctile` e il suo nome: **3: esagoni**, dove parte. La scheda Tassellature di Aiuto → Riferimento delle formule utente ha un'immagine di ciascuna |
+| **Colorazione** | da cosa viene il colore, dappertutto: **angolo di z**, dove parte; **angolo attorno al centro della tessera**, quello della tessera in cui cade il punto, che fa di ogni tessera una piccola ruota di colore; **zmag**, il valore della modalità con quel nome; **nessuna**, solo le tessere |
+| **Tessere** | come ogni tessera si stacca dalle vicine: **ognuna spostata di un tanto proprio**, lungo la tavolozza, dove parte; **sfumate dal centro al bordo**, lo stesso, e spostata di un ottavo dei colori di un giro in più dal centro al bordo, come una smussatura; **con il bordo marcato**, lo stesso, e la parte esterna della tessera disegnata nell'altra metà della tavolozza; **un colore pieno ciascuna**, un colore suo, da qualunque cosa venga il colore |
+
+La modalità sta tra le modalità che si ripetono e le decomposizioni, e le
+impostazioni di entrambe la raggiungono. **Frequenza (modalità periodiche)** e
+**Funzione (modalità periodiche)** raggiungono le tessere come raggiungono ogni
+argomento periodico dell'interno: a frequenza 2 le tessere sono grandi la metà.
+Le [impostazioni delle decomposizioni](#impostazioni-delle-decomposizioni)
+dell'interno raggiungono i due angoli, che sono tagliati e percorsi come quelli
+delle decomposizioni. **Settori**, **Rotazione**, **Ripetizioni**, **Verso** e
+**Velocità** raggiungono entrambi; **Angolo di** raggiunge solo l'angolo di
+`z`, perché quello attorno al centro della tessera non sa che farsene; **Anelli
+per unità** fa anelli del modulo per l'angolo di `z`, attraverso la frequenza e
+la funzione come per le decomposizioni, e per l'angolo attorno al centro
+altrettanti anelli dal centro al bordo, che seguono la forma della tessera.
+**zmag**, **nessuna** e una tessera piena non ne leggono nessuna.
+
+La quantità propria di una tessera viene dall'hash che le dà il nome. Per un
+angolo copre tanta tavolozza quanta ne copre un giro dell'angolo, così
+un'impostazione della decomposizione spostata lascia i colori delle tessere
+dove erano; per **zmag**, **nessuna** e una tessera piena copre tutta la
+tavolozza, così **nessuna** con **ognuna spostata di un tanto proprio** è lo
+stesso di **un colore pieno ciascuna**. **angolo attorno al centro della
+tessera** mette un giro intero di colori in ogni tessera, che alla grandezza
+delle tessere sono moltissimi colori in pochi pixel: una **Velocità** sotto
+uno, o una frequenza sotto uno, rende leggibili le ruote.
+
+Con **Colorazione** a **angolo di z**, **Tessere** a **ognuna spostata di un
+tanto proprio** e le impostazioni delle decomposizioni dove partono, la
+modalità disegna quello che disegnava prima di avere una scelta, bit per bit.
+Le tassellature che non si ripetono mai diventano piatte, senza una quantità
+propria, oltre quattro miliardi di tessere dall'origine.
 
 Le tassellature periodiche costano circa quanto le altre modalità interne, da
 120 a 210 ns per pixel; quelle che non si ripetono mai, che vengono localizzate
-da capo in ogni punto, da 250 a 490. Una posizione salva la modalità come
-`(incoloring 30)` e la tassellazione come `(intessellation 39)`, la
-tassellazione solo quando non è quella degli esagoni.
+da capo in ogni punto, da 250 a 490. **angolo attorno al centro della
+tessera**, **sfumate dal centro al bordo** e **con il bordo marcato** misurano
+dove sta il punto nella sua tessera, il che costa fino a due terzi in più sulle
+tassellature periodiche e poco di più sulle altre. Una posizione salva la
+modalità come `(incoloring 30)`, la tassellazione come `(intessellation 39)`,
+solo quando non è quella degli esagoni, e la colorazione come
+`(intessellstyle 'tile-angle 'edged)`, solo quando è stata spostata.
 
 ## Altre modalità di colorazione
 
@@ -1628,9 +1660,9 @@ motore significa una seconda copia compilata di ogni ciclo di calcolo. `trap` e
 **Frattale → Colorazione interna → Decomposizione**, e lo stesso sotto
 Colorazione esterna, imposta come le decomposizioni tagliano il giro: binary
 decomposition e color decomposition all'esterno, `sign(imag)`,
-`Decomposition-like` e `fbm + decomposition` all'interno. Con ogni campo dove
-parte — zero, e uno, destra e uno gli ultimi tre — disegnano come hanno sempre
-fatto, bit per bit.
+`Decomposition-like` e `fbm + decomposition` all'interno, e gli angoli di
+`tessellation`. Con ogni campo dove parte — zero, e uno, destra e uno gli
+ultimi tre — disegnano come hanno sempre fatto, bit per bit.
 
 | campo | |
 | --- | --- |

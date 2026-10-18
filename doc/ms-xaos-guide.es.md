@@ -1484,23 +1484,55 @@ significaba.
 ## Teselado
 
 **Fractal → Coloreado interior → Teselado...** colorea el interior según las
-baldosas de uno de los cuarenta y cinco teselados de `randsctile`: su único
-campo, **Teselado**, toma el mismo número que el primer argumento de
-`randsctile`, `3`, hexágonos, donde empieza, y la pestaña Teselados de Ayuda →
-Referencia de fórmulas de usuario tiene una imagen de cada uno. Las baldosas se
-tienden sobre la `z` final, cuarenta por unidad como los cuadrados de
-`squares`, y cada una muestra el ángulo de `z` girado una cantidad propia, de
-modo que cada baldosa se separa de sus vecinas sean cuales sean su número y su
-forma. **Frecuencia (modos periódicos)** y **Función (modos periódicos)** lo
-alcanzan como alcanzan a los demás modos que se repiten. Los teselados que
-nunca se repiten quedan planos, con el ángulo sin girar, más allá de cuatro mil
-millones de baldosas del origen.
+teselas de uno de los cuarenta y cinco teselados de `randsctile`, tendidas
+sobre la `z` final, cuarenta por unidad como los cuadrados de `squares`. Su
+diálogo tiene tres campos.
+
+| campo | |
+| --- | --- |
+| **Teselado** | qué teselado, con el número con que lo conoce `randsctile` y su nombre: **3: hexágonos**, donde empieza. La pestaña Teselados de Ayuda → Referencia de fórmulas de usuario tiene una imagen de cada uno |
+| **Coloreado** | de dónde viene el color, en todas partes: **ángulo de z**, donde empieza; **ángulo en torno al centro de la tesela**, el de la tesela en la que cae el punto, que hace de cada tesela una pequeña rueda de color; **zmag**, el valor del modo de ese nombre; **ninguno**, nada más que las teselas |
+| **Teselas** | cómo se separa cada tesela de sus vecinas: **cada una desplazada en una cantidad propia**, a lo largo de la paleta, donde empieza; **sombreadas del centro al borde**, lo mismo, y desplazada un octavo más de los colores de una vuelta del centro al borde, como un bisel; **con el borde marcado**, lo mismo, y la parte exterior de la tesela dibujada en la otra mitad de la paleta; **un color liso cada una**, un color propio, venga de donde venga el color |
+
+El modo está entre los modos que se repiten y las descomposiciones, y los
+ajustes de ambos lo alcanzan. **Frecuencia (modos periódicos)** y **Función
+(modos periódicos)** alcanzan las teselas como alcanzan todo argumento
+periódico del interior: a frecuencia 2 las teselas tienen la mitad de tamaño.
+Los [ajustes de las descomposiciones](#ajustes-de-las-descomposiciones) del
+interior alcanzan los dos ángulos, que se cortan y se recorren como los de las
+descomposiciones. **Sectores**, **Rotación**, **Repeticiones**, **Sentido** y
+**Velocidad** alcanzan a ambos; **Ángulo de** alcanza solo el ángulo de `z`,
+porque el de en torno al centro de la tesela no tiene uso para él; **Anillos
+por unidad** hace anillos del módulo para el ángulo de `z`, a través de la
+frecuencia y la función como en las descomposiciones, y para el ángulo en torno
+al centro otros tantos anillos del centro al borde, que siguen la forma de la
+tesela. **zmag**, **ninguno** y una tesela lisa no leen ninguno de ellos.
+
+La cantidad propia de una tesela viene del hash que la nombra. Para un ángulo
+abarca tanta paleta como una vuelta del ángulo, así que un ajuste de la
+descomposición movido deja los colores de las teselas donde estaban; para
+**zmag**, **ninguno** y una tesela lisa abarca la paleta entera, así que
+**ninguno** con **cada una desplazada en una cantidad propia** es lo mismo que
+**un color liso cada una**. **ángulo en torno al centro de la tesela** pone una
+vuelta entera de colores en cada tesela, que al tamaño que tienen las teselas
+son muchísimos colores en pocos píxeles: una **Velocidad** por debajo de uno, o
+una frecuencia por debajo de uno, hace legibles las ruedas.
+
+Con **Coloreado** en **ángulo de z**, **Teselas** en **cada una desplazada en
+una cantidad propia** y los ajustes de las descomposiciones donde empiezan, el
+modo dibuja lo que dibujaba antes de tener elección, bit a bit. Los teselados
+que nunca se repiten quedan planos, sin cantidad propia, más allá de cuatro mil
+millones de teselas del origen.
 
 Los teselados periódicos cuestan más o menos lo que los demás modos interiores,
 de 120 a 210 ns por píxel; los que nunca se repiten, que se localizan de nuevo
-en cada punto, de 250 a 490. Una posición guarda el modo como `(incoloring 30)`
-y el teselado como `(intessellation 39)`, el teselado solo cuando no es el de
-hexágonos.
+en cada punto, de 250 a 490. **ángulo en torno al centro de la tesela**,
+**sombreadas del centro al borde** y **con el borde marcado** miden dónde está
+el punto en su tesela, lo que cuesta hasta dos tercios más en los teselados
+periódicos y poco más en los demás. Una posición guarda el modo como
+`(incoloring 30)`, el teselado como `(intessellation 39)`, solo cuando no es el
+de hexágonos, y el coloreado como `(intessellstyle 'tile-angle 'edged)`, solo
+cuando se ha movido.
 
 ## Más modos de coloreado
 
@@ -1624,8 +1656,9 @@ su lugar.
 **Fractal → Coloreado interior → Descomposición**, y lo mismo bajo Coloreado
 exterior, fija cómo cortan la vuelta las descomposiciones: binary decomposition
 y color decomposition en el exterior, `sign(imag)`, `Decomposition-like` y
-`fbm + decomposition` en el interior. Con cada campo donde empieza — cero, y
-uno, derecha y uno los tres últimos — dibujan como siempre, bit a bit.
+`fbm + decomposition` en el interior, y los ángulos de `tessellation`. Con cada
+campo donde empieza — cero, y uno, derecha y uno los tres últimos — dibujan
+como siempre, bit a bit.
 
 | campo | |
 | --- | --- |

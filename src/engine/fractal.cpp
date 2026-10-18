@@ -529,6 +529,8 @@ fractal_context *make_fractalc(const int formula, float wi, float he)
     new_ctxt->outfbmscaling = FBM_SCALE_FIXED;
     new_ctxt->outfbmfactor = 1;
     new_ctxt->intessellation = 3;
+    new_ctxt->intessellcolor = TESSELL_ANGLE;
+    new_ctxt->intessellfill = TESSELL_TURNED;
     new_ctxt->pndefault = 0;
     new_ctxt->newtonmodesffe = 0;
     new_ctxt->newtonconvergence = 1E-6;

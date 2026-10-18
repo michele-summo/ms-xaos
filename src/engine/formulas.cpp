@@ -172,6 +172,70 @@ const char *const fbm_scalings[] = {QT_TRANSLATE_NOOP("Dialog", "fixed"),
                                     QT_TRANSLATE_NOOP("Dialog", "smooth"),
                                     NULL};
 
+/* What the inside's tessellation mode colours by and how its tiles stand
+ * apart, by the numbers intessellcolor and intessellfill hold: the names the
+ * dialog offers and a position saves. */
+const char *const tessell_colors[] = {QT_TRANSLATE_NOOP("Dialog", "angle"),
+                                      QT_TRANSLATE_NOOP("Dialog", "tile-angle"),
+                                      QT_TRANSLATE_NOOP("Dialog", "zmag"),
+                                      QT_TRANSLATE_NOOP("Dialog", "none"),
+                                      NULL};
+const char *const tessell_fills[] = {QT_TRANSLATE_NOOP("Dialog", "turned"),
+                                     QT_TRANSLATE_NOOP("Dialog", "shaded"),
+                                     QT_TRANSLATE_NOOP("Dialog", "edged"),
+                                     QT_TRANSLATE_NOOP("Dialog", "flat"), NULL};
+/* And its tilings, the first numbered nought: each as the Values tab of the
+ * formula reference names it, after the number randsctile and a position
+ * know it by. Only the dialog shows them; the tiling is saved as its number,
+ * by intessellation. */
+const char *const tessell_tilings[] = {
+    QT_TRANSLATE_NOOP("Dialog", "1: squares"),
+    QT_TRANSLATE_NOOP("Dialog", "2: equilateral triangles"),
+    QT_TRANSLATE_NOOP("Dialog", "3: hexagons"),
+    QT_TRANSLATE_NOOP("Dialog", "4: octagons and squares (4.8.8)"),
+    QT_TRANSLATE_NOOP("Dialog", "5: hexagons and triangles, the trihexagonal (3.6.3.6)"),
+    QT_TRANSLATE_NOOP("Dialog", "6: hexagons, squares and triangles (3.4.6.4)"),
+    QT_TRANSLATE_NOOP("Dialog", "7: dodecagons and triangles (3.12.12)"),
+    QT_TRANSLATE_NOOP("Dialog", "8: dodecagons, hexagons and squares (4.6.12)"),
+    QT_TRANSLATE_NOOP("Dialog", "9: rows of squares and of triangles (3.3.3.4.4)"),
+    QT_TRANSLATE_NOOP("Dialog", "10: the snub square (3.3.4.3.4)"),
+    QT_TRANSLATE_NOOP("Dialog", "11: the snub hexagonal, hexagons in a sea of triangles (3.3.3.3.6)"),
+    QT_TRANSLATE_NOOP("Dialog", "12: tetrakis square: right triangles, eight round a point"),
+    QT_TRANSLATE_NOOP("Dialog", "13: rhombille: rhombi that read as cubes"),
+    QT_TRANSLATE_NOOP("Dialog", "14: deltoidal trihexagonal: kites"),
+    QT_TRANSLATE_NOOP("Dialog", "15: triakis triangular: obtuse triangles"),
+    QT_TRANSLATE_NOOP("Dialog", "16: kisrhombille: half-equilateral triangles, twelve round a point"),
+    QT_TRANSLATE_NOOP("Dialog", "17: prismatic pentagons"),
+    QT_TRANSLATE_NOOP("Dialog", "18: Cairo pentagons"),
+    QT_TRANSLATE_NOOP("Dialog", "19: floret pentagons, six to a flower"),
+    QT_TRANSLATE_NOOP("Dialog", "20: bricks, running bond"),
+    QT_TRANSLATE_NOOP("Dialog", "21: Flemish bond: a brick and a half brick by turns"),
+    QT_TRANSLATE_NOOP("Dialog", "22: herringbone"),
+    QT_TRANSLATE_NOOP("Dialog", "23: basketweave"),
+    QT_TRANSLATE_NOOP("Dialog", "24: Pythagorean: squares of two sizes"),
+    QT_TRANSLATE_NOOP("Dialog", "25: chevrons"),
+    QT_TRANSLATE_NOOP("Dialog", "26: squares and rhombi in alternate rows"),
+    QT_TRANSLATE_NOOP("Dialog", "27: houses: a pentagon, up and hanging by turns"),
+    QT_TRANSLATE_NOOP("Dialog", "28: rows: two of squares, one of triangles"),
+    QT_TRANSLATE_NOOP("Dialog", "29: rows: one of squares, two of triangles"),
+    QT_TRANSLATE_NOOP("Dialog", "30: hexagons among triangles"),
+    QT_TRANSLATE_NOOP("Dialog", "31: Greek crosses"),
+    QT_TRANSLATE_NOOP("Dialog", "32: T tetrominoes"),
+    QT_TRANSLATE_NOOP("Dialog", "33: eight-pointed stars and crosses"),
+    QT_TRANSLATE_NOOP("Dialog", "34: six-pointed stars and hexagons"),
+    QT_TRANSLATE_NOOP("Dialog", "35: eight-pointed stars with four-pointed ones and rhombi"),
+    QT_TRANSLATE_NOOP("Dialog", "36: twelve-pointed stars with three-pointed ones and rhombi"),
+    QT_TRANSLATE_NOOP("Dialog", "37: twelve-pointed stars with notched hexagons and squares"),
+    QT_TRANSLATE_NOOP("Dialog", "38: Voronoi cells, irregular -- randscp's"),
+    QT_TRANSLATE_NOOP("Dialog", "39: Penrose rhombs: never repeats, fivefold"),
+    QT_TRANSLATE_NOOP("Dialog", "40: Penrose kites and darts"),
+    QT_TRANSLATE_NOOP("Dialog", "41: Ammann-Beenker: squares and rhombi, eightfold, never repeats"),
+    QT_TRANSLATE_NOOP("Dialog", "42: rhombi in twelve directions, never repeats"),
+    QT_TRANSLATE_NOOP("Dialog", "43: rhombi in seven directions, never repeats"),
+    QT_TRANSLATE_NOOP("Dialog", "44: the pinwheel: triangles facing every way there is"),
+    QT_TRANSLATE_NOOP("Dialog", "45: the chair: Ls cut into Ls"),
+    NULL};
+
 /* And the four 1.8.0 had, which a position from then names: read, and turned
  * into the two by uih_setcolorfunlegacy, but no longer offered. */
 const char *const colorfun_after_modes[] = {"off", "jump", "continuous",
@@ -1814,23 +1878,78 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
         break;
     case INCOLORING_TESSELLATION:
         /* tessellation: the tiles of one of randsctile's tilings, laid over z
-         * forty to a unit as squares' squares are, each showing the angle of
-         * z turned by an amount of its own, so that every tile stands apart
-         * from its neighbours whatever their number and shape. A point no
-         * tile is to be had for -- past the reach of a tiling that never
-         * repeats -- shows the angle unturned. */
+         * forty to a unit as squares' squares are, through k*f as the
+         * argument of every periodic function of the inside is. Each tile
+         * has an amount of its own, the hash that names it, by which it is
+         * told from its neighbours whatever their number and shape; a point
+         * no tile is to be had for -- past the reach of a tiling that never
+         * repeats -- has nought. See intessellcolor for what is coloured
+         * and how. */
         {
+            const int colour = cfractalc.intessellcolor;
+            const int fill = cfractalc.intessellfill;
             uint64_t name;
             number_t turn = 0;
+            /* where in its tile the point stands, measured only when
+             * something reads it, the edge costing more than the name */
+            double out = 0, rx = 0, ry = 0;
 #ifdef USE_SFFE
-            if (randsctile_name(cfractalc.intessellation, periodic(zre) * 40,
-                                periodic(zim) * 40, &name))
+            const number_t tx = periodic(zre) * 40, ty = periodic(zim) * 40;
+            if (colour == TESSELL_MIDDLE || fill == TESSELL_SHADED ||
+                        fill == TESSELL_EDGED
+                    ? randsctile_place(cfractalc.intessellation, tx, ty, &name,
+                                       &out, &rx, &ry)
+                    : randsctile_name(cfractalc.intessellation, tx, ty, &name))
                 turn = (number_t)(name >> 11) /
                        (number_t)((uint64_t)1 << 53);
 #else
             (void)name;
 #endif
-            i_f = ((atan2l(zre, zim) / (M_PI + M_PI) + 0.75 + turn) * 20000);
+            if (plain && colour == TESSELL_ANGLE && fill == TESSELL_TURNED) {
+                /* what the mode drew before it had a choice, to the bit */
+                i_f = ((atan2l(zre, zim) / (M_PI + M_PI) + 0.75 + turn) *
+                       20000);
+                break;
+            }
+            /* A tile's own amount, along the palette: for an angle as much
+             * of it as the angle's turn has always taken, so that moving a
+             * decomposition setting keeps the tiles' colours where they
+             * were; for the rest, and for a flat tile, the whole cycle. */
+            const number_t cycle = 2 * decomp_half();
+            if (fill == TESSELL_FLAT)
+                i_f = turn * cycle;
+            else if (colour == TESSELL_ANGLE || colour == TESSELL_MIDDLE) {
+                /* the angle, of z or about the tile's middle, cut and walked
+                 * as the decompositions are; the rings, of the modulus for z
+                 * and of how far out of the middle the point stands for the
+                 * tile, which makes them the tile's shape shrunk */
+                const int middle = colour == TESSELL_MIDDLE;
+                i_f = decomp_colour(
+                          decomp_turn(middle ? (number_t)rx : qre,
+                                      middle ? (number_t)ry : qim,
+                                      cfractalc.indecomprotation),
+                          cfractalc.indecompsectors, cfractalc.indecomprepeats,
+                          cfractalc.indecompway, cfractalc.indecompspeed) +
+                      turn * 20000;
+                if (middle ? cfractalc.indecompradial > 0 &&
+                                 decomp_odd(cfractalc.indecompradial *
+                                            (number_t)out)
+                           : ring_odd())
+                    i_f += decomp_half();
+            } else if (colour == TESSELL_ZMAG)
+                i_f = (zre * zre + zim * zim) *
+                          (number_t)(cfractalc.maxiter >> 1) * SMUL +
+                      SMUL + turn * cycle;
+            else
+                i_f = turn * cycle;
+            /* shaded: an eighth of what a turn of the angle takes, from the
+             * middle to the edge -- a bevel and not a rainbow, as the modes'
+             * own spans are, whatever the size of the palette; edged: the
+             * outer part of the tile in the other half of the palette */
+            if (fill == TESSELL_SHADED)
+                i_f += (number_t)out * 2500;
+            else if (fill == TESSELL_EDGED && out > TESSELL_EDGE)
+                i_f += decomp_half();
         }
         break;
     case 21: /* log(mag): zmag with the contrast moved onto the small values,
