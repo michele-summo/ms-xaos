@@ -1,0 +1,7 @@
+(initstate)
+(formula 'mandel)
+(maxiter 400)
+(outcoloring 18)
+(outfbmset 4 8 4 0.5 1)
+(outfbmscale 'smooth 1.5)
+(view -0.7453 0.1127 0.03 0.03)

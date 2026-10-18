@@ -651,6 +651,21 @@ void uih_saveframe(struct uih_context *uih)
             s->fcontext->outfbmoctaves = uih->fcontext->outfbmoctaves;
             s->fcontext->outfbmseed = uih->fcontext->outfbmseed;
         }
+        /* How the outside's fbm marks are sized, and the inside's tiling:
+         * written only when moved, so that a position that leaves them
+         * alone opens in 2.6, which knows nothing of them. */
+        if (s->fcontext->outfbmscaling != uih->fcontext->outfbmscaling ||
+            s->fcontext->outfbmfactor != uih->fcontext->outfbmfactor) {
+            start_save(uih, "outfbmscale");
+            save_nstring(uih, uih->fcontext->outfbmscaling, fbm_scalings);
+            save_float(uih, uih->fcontext->outfbmfactor);
+            stop_save(uih);
+            s->fcontext->outfbmscaling = uih->fcontext->outfbmscaling;
+            s->fcontext->outfbmfactor = uih->fcontext->outfbmfactor;
+        }
+        if (s->fcontext->intessellation != uih->fcontext->intessellation)
+            save_intc(uih, "intessellation", uih->fcontext->intessellation),
+                s->fcontext->intessellation = uih->fcontext->intessellation;
         /* The decompositions' settings, one command a side, written only
          * when one of them has moved: a position that leaves them alone
          * opens in 2.5, which knows nothing of them. */
@@ -902,6 +917,9 @@ int uih_save_enable(struct uih_context *uih, xio_file f, int mode)
     s->fcontext->infbmroughness = s->fcontext->outfbmroughness = (number_t)1 / 2;
     s->fcontext->infbmoctaves = s->fcontext->outfbmoctaves = 4;
     s->fcontext->infbmseed = s->fcontext->outfbmseed = 1;
+    s->fcontext->outfbmscaling = FBM_SCALE_FIXED;
+    s->fcontext->outfbmfactor = 1;
+    s->fcontext->intessellation = 3;
     s->fcontext->pndefault = 0;
     s->fcontext->newtonmodesffe = 0;
     s->fcontext->newtonconvergence = 1E-6;

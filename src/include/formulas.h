@@ -32,6 +32,7 @@
 extern const char *const incolorname[];
 extern const char *const decomp_of[];
 extern const char *const decomp_ways[];
+extern const char *const fbm_scalings[];
 extern const struct formula formulas[];
 extern const char *const outcolorname[];
 extern const char *const tcolorname[];

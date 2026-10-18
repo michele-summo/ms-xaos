@@ -60,7 +60,7 @@ static const int repeating[11] = {5,
                                   INCOLORING_HEXAGONS,
                                   INCOLORING_SPIRAL,
                                   INCOLORING_COS_ABS_ZC,
-                                  INCOLORING_HEXAGON_TILES};
+                                  INCOLORING_TESSELLATION};
 
 /* Neither repeats nor is drawn by incolor_output's palette: true colour and
  * the fbm modes, whose noise is not a periodic function. */
@@ -113,6 +113,7 @@ int main(void)
     cfractalc.incolorfunspeed = cfractalc.incolorfun2speed = 1;
     cfractalc.indecomprepeats = cfractalc.outdecomprepeats = 1;
     cfractalc.indecompspeed = cfractalc.outdecompspeed = 1;
+    cfractalc.intessellation = 3;
     color_change_prepare(&cfractalc);
 
     /* --- at one, what there was ---------------------------------------
@@ -142,7 +143,7 @@ int main(void)
      * here are powers of two and the scaling is exact in binary. For
      * sin(real^2-imag^2) the argument is z squared, so a frequency of four is
      * z twice as far. cos(|z|) and hexagons read the modulus and the
-     * projections of z, which scale with it, and hexagon tiles its parts,
+     * projections of z, which scale with it, and tessellation its parts,
      * as squares does. */
     {
         struct {
@@ -154,7 +155,7 @@ int main(void)
                      {20, 2, 2},
                      {INCOLORING_COS_ABS, 2, 2},
                      {INCOLORING_HEXAGONS, 2, 2},
-                     {INCOLORING_HEXAGON_TILES, 2, 2}};
+                     {INCOLORING_TESSELLATION, 2, 2}};
         for (int k = 0; k < 7; k++) {
             sprintf(what,
                     "%s at a frequency of %g is the picture at one with z "

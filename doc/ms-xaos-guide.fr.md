@@ -1453,6 +1453,43 @@ octaves au-delà de la quatrième ou de la cinquième ne changent rien de visibl
 — mesuré, quatre et dix-huit ont donné la même image. Augmentez la rugosité et
 les octaves fines ont de quoi dépenser, et alors le nombre commence à compter.
 
+### La taille des marques selon le compte
+
+À l'extérieur, deux champs de plus au bas de la boîte de dialogue. **Mise à
+l'échelle du bruit** dit ce qui décide de la taille des marques : **fixe**, où
+elle commence, la fréquence seule, comme ci-dessus ; **itération**, la
+fréquence relevée avec le nombre d'itérations ; **itération lissée**, la
+fréquence relevée avec le compte lissé. **Facteur** dit de combien : la
+fréquence double autant de fois toutes les dix itérations, si bien qu'à `1` les
+marques sont deux fois plus petites là où l'orbite a mis dix itérations de plus
+à sortir, et quatre fois là où elle en a mis vingt. À `0` le compte ne change
+rien. Là où le compte monte, vers le bord de l'ensemble, les marques s'affinent
+et suivent le détail.
+
+Une fréquence qui change d'un pixel au suivant ne peut pas simplement être
+posée sur le plan : le champ s'étirerait, d'autant plus qu'on s'éloigne de
+l'origine. Le mouvement est donc lu aux deux puissances de deux de part et
+d'autre du compte, chacune un champ à part à fréquence fixe, et les deux sont
+mêlés comme une texture entre ses mipmaps, le mélange ramené au contraste d'un
+seul champ. Avec **itération lissée** les marques changent de taille sans
+couture ; avec **itération** elles en changent aux bords des bandes, chaque
+bande avec un grain à elle. À l'intérieur le compte est partout le même, si
+bien que l'intérieur n'a aucun des deux champs.
+
+Entre deux doublements on lit deux champs, et la coloration coûte à peu près le
+double de **fixe** : 248 ns par pixel contre 127, à quatre octaves. Là où le
+compte tombe exactement sur un doublement, comme tout compte entier à un
+facteur de `10`, on lit un seul champ et le coût est celui de **fixe**. Avec
+**itération lissée**, `fbm + iter` et `fbm` sont tracés par la boucle lissée,
+qui fait quelques itérations au-delà du bailout pour calculer le compte lissé.
+Un facteur trop élevé fait passer les marques sous le pixel, où elles
+deviennent du grain.
+
+Avec **fixe** elle trace comme avant, au bit près. Une position enregistre les
+deux sous la forme `(outfbmscale 'smooth 1.5)`, et seulement quand ils ont
+bougé, si bien qu'une position qui n'y touche pas s'ouvre encore dans les
+versions précédentes.
+
 ### Ce que cela coûte, et la seule chose que cela ne fera pas
 
 Le bruit est calculé **une fois par pixel**, dans la coloration, et non une
@@ -1473,12 +1510,34 @@ Les modes sont numérotés **après** ceux en couleurs vraies, donc chaque numé
 de mode que contient déjà une position enregistrée veut toujours dire ce qu'il
 voulait dire.
 
+## Pavage
+
+**Fractale → Coloriage intérieur → Pavage...** colore l'intérieur selon les
+tuiles de l'un des quarante-cinq pavages de `randsctile` : son seul champ,
+**Pavage**, prend le même nombre que le premier argument de `randsctile`, `3`,
+les hexagones, où il commence, et l'onglet Pavages d'Aide → Référence des
+formules utilisateur a une image de chacun. Les tuiles sont posées sur le `z`
+final, quarante par unité comme les carrés de `squares`, et chacune montre
+l'angle de `z` tourné d'une quantité à elle, si bien que chaque tuile se
+détache de ses voisines quels que soient leur nombre et leur forme. **Fréquence
+(modes périodiques)** et **Fonction (modes périodiques)** l'atteignent comme
+elles atteignent les autres modes qui se répètent. Les pavages qui ne se
+répètent jamais deviennent plats, l'angle non tourné, au-delà de quatre
+milliards de tuiles de l'origine.
+
+Les pavages périodiques coûtent à peu près ce que coûtent les autres modes
+intérieurs, de 120 à 210 ns par pixel ; ceux qui ne se répètent jamais,
+localisés à nouveau en chaque point, de 250 à 490. Une position enregistre le
+mode sous la forme `(incoloring 30)` et le pavage sous la forme
+`(intessellation 39)`, le pavage seulement quand ce n'est pas celui des
+hexagones.
+
 ## Plus de modes de coloration
 
 Ce n'est pas le calcul qui décide de la couleur d'un pixel : la couleur vient
 d'une formule portant sur le `z` final, le paramètre `c` et le nombre
-d'itérations, et il y a une telle formule par mode. Vingt-trois de plus, dans
-un sous-menu à eux sous Fractale → Coloriage intérieur et Fractale → Coloriage
+d'itérations, et il y a une telle formule par mode. Vingt-deux de plus, dans un
+sous-menu à eux sous Fractale → Coloriage intérieur et Fractale → Coloriage
 extérieur, au-dessus des sous-menus en vraies couleurs.
 
 **À l'intérieur**, où l'orbite ne s'est jamais échappée et où seuls le `z`
@@ -1502,20 +1561,19 @@ final et `c` disent quelque chose :
 | `hexagons` | trois ondes à un tiers de tour l'une de l'autre, qui s'additionnent en un réseau d'hexagones |
 | `spiral` | cinq bras autour de l'endroit où l'orbite s'est posée, enroulés une fois par facteur e du module |
 | `cos(\|z-c\|)` | des anneaux autour du paramètre, qui distinguent les bulbes comme le fait `\|z-c\|` |
-| `hexagon tiles` | `squares` avec des hexagones : un nid d'abeilles de tuiles larges d'un quarantième d'unité, de trois sortes car un hexagone a six voisins — les deux de `squares` et la première décalée d'un demi-tour |
 
 Onze des modes intérieurs se répètent — `cos(mag)`, `mag*cos(real^2)`,
-`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)`, `frac(mag)` et les cinq
-au bas du tableau — et **Fréquence (modes périodiques)**, le premier champ de
-la boîte de dialogue Vitesse de coloration du côté intérieur, dit à quelle
-fréquence. Elle multiplie l'argument de ce qui se répète, donc à 2 les sinus
-tournent deux fois plus vite, `squares` trace des carrés deux fois plus petits
-et `frac(mag)` seize contours par unité du module là où il en traçait huit.
-Dans `cos(mag)` elle resserre aussi les bandes qui choisissent entre le sinus
-et le cosinus. À un, où elle commence, ils tracent comme ils l'ont toujours
-fait, au bit près, et les autres modes ne la lisent jamais. Une position
-l'enregistre comme `(incolorfrequency 2)` seulement quand elle n'est pas un,
-donc une position qui n'y touche pas s'ouvre toujours dans les versions
+`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)`, `frac(mag)`, les quatre
+au bas du tableau et `tessellation` — et **Fréquence (modes périodiques)**, le
+premier champ de la boîte de dialogue Vitesse de coloration du côté intérieur,
+dit à quelle fréquence. Elle multiplie l'argument de ce qui se répète, donc à 2
+les sinus tournent deux fois plus vite, `squares` trace des carrés deux fois
+plus petits et `frac(mag)` seize contours par unité du module là où il en
+traçait huit. Dans `cos(mag)` elle resserre aussi les bandes qui choisissent
+entre le sinus et le cosinus. À un, où elle commence, ils tracent comme ils
+l'ont toujours fait, au bit près, et les autres modes ne la lisent jamais. Une
+position l'enregistre comme `(incolorfrequency 2)` seulement quand elle n'est
+pas un, donc une position qui n'y touche pas s'ouvre toujours dans les versions
 antérieures.
 
 **Fonction (modes périodiques)**, en dessous, courbe l'argument par l'une des
@@ -1527,8 +1585,8 @@ où la fonction monte raide et plus lentement là où elle s'aplatit : `square` 
 sorte que les bandes font demi-tour et reviennent. Elle atteint chaque fonction
 périodique des onze, dont l'argument `a` entre comme `k·f(a)`, `k` étant la
 fréquence : les sinus et cosinus, le module de `frac(mag)`, les parties réelle
-et imaginaire dont les bandes font les carrés de `squares` et les hexagones de
-`hexagon tiles`, et dans `cos(mag)` aussi les bandes qui choisissent entre le
+et imaginaire dont les bandes font les carrés de `squares` et les tuiles de
+`tessellation`, et dans `cos(mag)` aussi les bandes qui choisissent entre le
 sinus et le cosinus. Dans `spiral` les cinq bras restent cinq, car un nombre de
 tours non entier laisserait une couture là où l'angle se referme : la fréquence
 et la fonction agissent sur l'enroulement. Une fonction périodique dans

@@ -55,7 +55,7 @@ lupdate as unfinished and are left for a translator.
   in English, so a translation never changes a saved file.
 - Not translated: the names of the colouring modes (`incolorname`,
   `outcolorname`; they are formulas, and words such as `squares` or
-  `hexagon tiles` stay with them), choices that are formulas (`decomp_of`:
+  `tessellation` stay with them), choices that are formulas (`decomp_of`:
   `z`, `z-c`, `z*c`), function names and argument lists in the formula
   reference, and commands and keywords.
 - One source text in one context has one translation everywhere it is used.
@@ -138,7 +138,7 @@ version.
 cd build/Desktop_Qt_6_8_0_MinGW_64_bit-Release && ctest -j4
 ```
 
-The suite has 355 tests; say how many when reporting. `randsc_speed` and
+The suite has 357 tests; say how many when reporting. `randsc_speed` and
 `phist_speed` measure ratios of timings and can fail under a loaded machine:
 run them again on their own (`ctest -R randsc_speed`) before treating a
 failure as real.

@@ -1426,6 +1426,41 @@ que las octavas más allá de la cuarta o la quinta no cambian nada visible —
 medido, cuatro y dieciocho dieron la misma imagen. Sube la rugosidad y las
 octavas finas tienen algo que gastar, y entonces el número empieza a importar.
 
+### El tamaño de las marcas según el recuento
+
+Por fuera, dos campos más al pie del diálogo. **Escalado del ruido** dice qué
+decide el tamaño de las marcas: **fijo**, donde empieza, la frecuencia sola,
+como arriba; **iteración**, la frecuencia subida con el recuento de
+iteraciones; **iteración suavizada**, la frecuencia subida con el recuento
+suave. **Factor** dice cuánto: la frecuencia se duplica ese número de veces
+cada diez iteraciones, así que a `1` las marcas son de la mitad de tamaño donde
+la órbita tardó diez iteraciones más en salir, y de un cuarto donde tardó
+veinte. A `0` el recuento no cambia nada. Donde el recuento sube, hacia el
+borde del conjunto, las marcas se hacen más finas y siguen el detalle.
+
+Una frecuencia que cambia de un píxel al siguiente no puede tenderse sin más
+sobre el plano: el campo se estiraría, tanto más cuanto más lejos del origen.
+Así que el movimiento se lee en las dos potencias de dos a cada lado del
+recuento, cada una un campo propio a frecuencia fija, y las dos se mezclan como
+una textura entre sus mipmaps, devolviendo la mezcla al contraste de un solo
+campo. Con **iteración suavizada** las marcas cambian de tamaño sin costuras;
+con **iteración** cambian en los bordes de las bandas, cada banda con un grano
+propio. Por dentro el recuento es el mismo en todas partes, así que el interior
+no tiene ninguno de los dos campos.
+
+Entre dos duplicaciones se leen dos campos, y el coloreado cuesta más o menos
+el doble que con **fijo**: 248 ns por píxel frente a 127, con cuatro octavas.
+Donde el recuento cae justo en una duplicación, como hace todo recuento entero
+con un factor de `10`, se lee un solo campo y el coste es el de **fijo**. Con
+**iteración suavizada**, `fbm + iter` y `fbm` los dibuja el bucle suave, que
+hace unas pocas iteraciones más allá del bailout para calcular el recuento
+suave. Un factor demasiado alto lleva las marcas por debajo de un píxel, donde
+se vuelven grano.
+
+Con **fijo** dibuja como antes, bit a bit. Una posición guarda los dos como
+`(outfbmscale 'smooth 1.5)`, y solo cuando se han movido, así que una posición
+que no los toca sigue abriéndose en versiones anteriores.
+
 ### Lo que cuesta, y lo único que no hará
 
 El ruido se calcula **una vez por píxel**, en el coloreado, no una vez por
@@ -1446,13 +1481,34 @@ Los modos se numeran **después** de los de color real, así que cada número de
 modo que ya contiene una posición guardada sigue significando lo que
 significaba.
 
+## Teselado
+
+**Fractal → Coloreado interior → Teselado...** colorea el interior según las
+baldosas de uno de los cuarenta y cinco teselados de `randsctile`: su único
+campo, **Teselado**, toma el mismo número que el primer argumento de
+`randsctile`, `3`, hexágonos, donde empieza, y la pestaña Teselados de Ayuda →
+Referencia de fórmulas de usuario tiene una imagen de cada uno. Las baldosas se
+tienden sobre la `z` final, cuarenta por unidad como los cuadrados de
+`squares`, y cada una muestra el ángulo de `z` girado una cantidad propia, de
+modo que cada baldosa se separa de sus vecinas sean cuales sean su número y su
+forma. **Frecuencia (modos periódicos)** y **Función (modos periódicos)** lo
+alcanzan como alcanzan a los demás modos que se repiten. Los teselados que
+nunca se repiten quedan planos, con el ángulo sin girar, más allá de cuatro mil
+millones de baldosas del origen.
+
+Los teselados periódicos cuestan más o menos lo que los demás modos interiores,
+de 120 a 210 ns por píxel; los que nunca se repiten, que se localizan de nuevo
+en cada punto, de 250 a 490. Una posición guarda el modo como `(incoloring 30)`
+y el teselado como `(intessellation 39)`, el teselado solo cuando no es el de
+hexágonos.
+
 ## Más modos de coloreado
 
 No es el cálculo lo que decide el color de un píxel: el color sale de una
 fórmula en la `z` final, el parámetro `c` y el recuento de iteraciones, y hay
-una fórmula así por cada modo. Veintitrés más, en un submenú propio bajo
-Fractal → Coloreado interior y Fractal → Coloreado exterior, por encima de los
-submenús de color real.
+una fórmula así por cada modo. Veintidós más, en un submenú propio bajo Fractal
+→ Coloreado interior y Fractal → Coloreado exterior, por encima de los submenús
+de color real.
 
 **Por dentro**, donde la órbita nunca escapó y solo la `z` final y `c` dicen
 algo:
@@ -1475,19 +1531,18 @@ algo:
 | `hexagons` | tres ondas separadas un tercio de vuelta, que sumadas dan una red de hexágonos |
 | `spiral` | cinco brazos alrededor de donde se asentó la órbita, enrollados una vez por cada factor e del módulo |
 | `cos(\|z-c\|)` | anillos alrededor del parámetro, que distinguen los bulbos como hace `\|z-c\|` |
-| `hexagon tiles` | `squares` con hexágonos: un panal de baldosas de un cuarentavo de unidad de ancho, de tres clases porque un hexágono tiene seis vecinos — las dos de `squares` y la primera media vuelta más allá |
 
 Once de los modos interiores se repiten — `cos(mag)`, `mag*cos(real^2)`,
-`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)`, `frac(mag)` y los cinco
-al pie de la tabla — y **Frecuencia (modos periódicos)**, el primer campo del
-diálogo Velocidad del coloreado interior, dice cada cuánto. Multiplica el
-argumento de lo que se repite, así que a 2 los senos giran el doble de rápido,
-`squares` dibuja cuadrados de la mitad de tamaño y `frac(mag)` dieciséis
-contornos por unidad del módulo donde dibujaba ocho. En `cos(mag)` estrecha
-también las bandas que eligen entre el seno y el coseno. En uno, donde empieza,
-dibujan como siempre, bit a bit, y los demás modos nunca lo leen. Una posición
-lo guarda como `(incolorfrequency 2)` solo cuando no es uno, así que una
-posición que no lo toca sigue abriéndose en versiones anteriores.
+`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)`, `frac(mag)`, los cuatro
+al pie de la tabla y `tessellation` — y **Frecuencia (modos periódicos)**, el
+primer campo del diálogo Velocidad del coloreado interior, dice cada cuánto.
+Multiplica el argumento de lo que se repite, así que a 2 los senos giran el
+doble de rápido, `squares` dibuja cuadrados de la mitad de tamaño y `frac(mag)`
+dieciséis contornos por unidad del módulo donde dibujaba ocho. En `cos(mag)`
+estrecha también las bandas que eligen entre el seno y el coseno. En uno, donde
+empieza, dibujan como siempre, bit a bit, y los demás modos nunca lo leen. Una
+posición lo guarda como `(incolorfrequency 2)` solo cuando no es uno, así que
+una posición que no lo toca sigue abriéndose en versiones anteriores.
 
 **Función (modos periódicos)**, debajo de ella, dobla el argumento con una de
 las [funciones de velocidad del
@@ -1499,7 +1554,7 @@ y `triangle` repliegan el argumento sobre sí mismo, de modo que las bandas dan
 la vuelta y regresan. Alcanza cada función periódica de los once, cuyo
 argumento `a` entra como `k·f(a)`, siendo `k` la frecuencia: los senos y
 cosenos, el módulo de `frac(mag)`, la parte real y la imaginaria cuyas franjas
-forman los cuadrados de `squares` y los hexágonos de `hexagon tiles`, y en
+forman los cuadrados de `squares` y las baldosas de `tessellation`, y en
 `cos(mag)` también las bandas que eligen entre el seno y el coseno. En `spiral`
 los cinco brazos siguen siendo cinco, porque un número de vueltas no entero
 dejaría una costura donde el ángulo se cierra: la frecuencia y la función

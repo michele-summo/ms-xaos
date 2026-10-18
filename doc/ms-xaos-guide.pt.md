@@ -1390,6 +1390,40 @@ oitavas para lá da quarta ou da quinta não mudam nada que se veja — medido,
 quatro e dezoito deram a mesma imagem. Suba a rugosidade e as oitavas finas têm
 algo para gastar, e aí o número começa a contar.
 
+### O tamanho das marcas pela contagem
+
+No exterior, mais dois campos no fundo do diálogo. **Escala do ruído** diz o
+que decide o tamanho das marcas: **fixo**, onde começa, só a frequência, como
+acima; **iteração**, a frequência subida com a contagem de iterações;
+**iteração suavizada**, a frequência subida com a contagem suave. **Fator** diz
+quanto: a frequência duplica esse número de vezes a cada dez iterações, por
+isso a `1` as marcas têm metade do tamanho onde a órbita levou mais dez
+iterações a sair, e um quarto onde levou mais vinte. A `0` a contagem não muda
+nada. Onde a contagem sobe, para o bordo do conjunto, as marcas ficam mais
+finas e seguem o pormenor.
+
+Uma frequência que muda de um píxel para o seguinte não pode simplesmente ser
+estendida sobre o plano: o campo esticar-se-ia, tanto mais quanto mais longe da
+origem. Por isso o movimento é lido nas duas potências de dois de cada lado da
+contagem, cada uma um campo próprio de frequência fixa, e as duas são
+misturadas como uma textura entre os seus mipmaps, trazendo a mistura de volta
+ao contraste de um só campo. Com **iteração suavizada** as marcas mudam de
+tamanho sem costuras; com **iteração** mudam nos bordos das faixas, cada faixa
+com um grão próprio. No interior a contagem é a mesma em todo o lado, por isso
+o interior não tem nenhum dos dois campos.
+
+Entre duas duplicações leem-se dois campos, e a coloração custa cerca do dobro
+do que com **fixo**: 248 ns por píxel contra 127, com quatro oitavas. Onde a
+contagem cai exatamente numa duplicação, como faz qualquer contagem inteira com
+um fator de `10`, lê-se um só campo e o custo é o de **fixo**. Com **iteração
+suavizada**, `fbm + iter` e `fbm` são desenhados pelo ciclo suave, que faz
+algumas iterações para lá do bailout para calcular a contagem suave. Um fator
+demasiado alto leva as marcas para baixo de um píxel, onde se tornam grão.
+
+Com **fixo** desenha como antes, bit a bit. Uma posição guarda os dois como
+`(outfbmscale 'smooth 1.5)`, e só quando foram mexidos, por isso uma posição
+que não lhes toca continua a abrir em versões anteriores.
+
 ### O que custa, e a única coisa que não faz
 
 O ruído é calculado **uma vez por píxel**, na coloração, não uma vez por
@@ -1409,11 +1443,32 @@ erradas.
 Os modos são numerados **depois** dos de cor real, por isso cada número de modo
 que uma posição guardada já contém continua a significar o que significava.
 
+## Pavimentação
+
+**Fractal → Coloração interior → Pavimentação...** colore o interior pelos
+mosaicos de uma das quarenta e cinco pavimentações de `randsctile`: o seu único
+campo, **Pavimentação**, leva o mesmo número que o primeiro argumento de
+`randsctile`, `3`, hexágonos, onde começa, e o separador Pavimentações de Ajuda
+→ Referência das fórmulas do utilizador tem uma imagem de cada uma. Os mosaicos
+são estendidos sobre o `z` final, quarenta por unidade como os quadrados de
+`squares`, e cada um mostra o ângulo de `z` rodado de uma quantidade própria,
+de modo que cada mosaico se destaca dos vizinhos, sejam quais forem o seu
+número e a sua forma. **Frequência (modos periódicos)** e **Função (modos
+periódicos)** chegam-lhe como chegam aos outros modos que se repetem. As
+pavimentações que nunca se repetem ficam planas, com o ângulo sem rodar, para
+lá de quatro mil milhões de mosaicos da origem.
+
+As pavimentações periódicas custam mais ou menos o mesmo que os outros modos
+interiores, de 120 a 210 ns por píxel; as que nunca se repetem, que são
+localizadas de novo em cada ponto, de 250 a 490. Uma posição guarda o modo como
+`(incoloring 30)` e a pavimentação como `(intessellation 39)`, a pavimentação
+só quando não é a dos hexágonos.
+
 ## Mais modos de coloração
 
 Não é o cálculo que decide a cor de um píxel: a cor vem de uma fórmula no `z`
 final, no parâmetro `c` e na contagem de iterações, e há uma fórmula dessas por
-cada modo. Mais vinte e três, num submenu próprio em Fractal → Coloração
+cada modo. Mais vinte e dois, num submenu próprio em Fractal → Coloração
 interior e Fractal → Coloração exterior, acima dos submenus de cor real.
 
 **No interior**, onde a órbita nunca fugiu e só o `z` final e `c` dizem alguma
@@ -1437,19 +1492,19 @@ coisa:
 | `hexagons` | três ondas a um terço de volta umas das outras, que somadas dão uma rede de hexágonos |
 | `spiral` | cinco braços em torno de onde a órbita assentou, enrolados uma vez por cada fator e do módulo |
 | `cos(\|z-c\|)` | anéis em torno do parâmetro, que distinguem os bolbos como faz `\|z-c\|` |
-| `hexagon tiles` | `squares` com hexágonos: um favo de mosaicos com um quadragésimo de unidade de largura, de três tipos porque um hexágono tem seis vizinhos — os dois de `squares` e o primeiro meia volta adiante |
 
 Onze dos modos interiores repetem-se — `cos(mag)`, `mag*cos(real^2)`,
-`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)`, `frac(mag)` e os cinco
-no fundo da tabela — e **Frequência (modos periódicos)**, o primeiro campo do
-diálogo Velocidade da coloração do interior, diz com que frequência. Multiplica
-o argumento do que se repete, por isso a 2 os senos rodam ao dobro da
-velocidade, `squares` desenha quadrados com metade do tamanho e `frac(mag)`
-dezasseis contornos por unidade do módulo onde desenhava oito. Em `cos(mag)`
-estreita também as bandas que escolhem entre o seno e o cosseno. A um, onde
-começa, desenham como sempre desenharam, bit a bit, e os outros modos nunca a
-leem. Uma posição guarda-a como `(incolorfrequency 2)` só quando não é um, por
-isso uma posição que não lhe mexe continua a abrir nas versões anteriores.
+`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)`, `frac(mag)`, os quatro
+no fundo da tabela e `tessellation` — e **Frequência (modos periódicos)**, o
+primeiro campo do diálogo Velocidade da coloração do interior, diz com que
+frequência. Multiplica o argumento do que se repete, por isso a 2 os senos
+rodam ao dobro da velocidade, `squares` desenha quadrados com metade do tamanho
+e `frac(mag)` dezasseis contornos por unidade do módulo onde desenhava oito. Em
+`cos(mag)` estreita também as bandas que escolhem entre o seno e o cosseno. A
+um, onde começa, desenham como sempre desenharam, bit a bit, e os outros modos
+nunca a leem. Uma posição guarda-a como `(incolorfrequency 2)` só quando não é
+um, por isso uma posição que não lhe mexe continua a abrir nas versões
+anteriores.
 
 **Função (modos periódicos)**, por baixo dela, dobra o argumento com uma das
 [funções de velocidade da coloração](#funções-de-velocidade-da-coloração) antes
@@ -1460,12 +1515,12 @@ ao contrário, e `sin`, `cos` e `triangle` dobram o argumento sobre si mesmo, de
 modo que as bandas viram e voltam. Chega a cada função periódica dos onze, cujo
 argumento `a` entra como `k·f(a)`, sendo `k` a frequência: os senos e cossenos,
 o módulo de `frac(mag)`, a parte real e a imaginária cujas faixas fazem os
-quadrados de `squares` e os hexágonos de `hexagon tiles`, e em `cos(mag)`
-também as bandas que escolhem entre o seno e o cosseno. Em `spiral` os cinco
-braços continuam cinco, porque um número de voltas não inteiro deixaria uma
-costura onde o ângulo fecha: a frequência e a função agem sobre o enrolamento.
-Uma função periódica dentro do argumento de outra teria também o seu dobrado.
-Em `ident`, onde começa, nada muda. Uma posição guarda-a como
+quadrados de `squares` e os mosaicos de `tessellation`, e em `cos(mag)` também
+as bandas que escolhem entre o seno e o cosseno. Em `spiral` os cinco braços
+continuam cinco, porque um número de voltas não inteiro deixaria uma costura
+onde o ângulo fecha: a frequência e a função agem sobre o enrolamento. Uma
+função periódica dentro do argumento de outra teria também o seu dobrado. Em
+`ident`, onde começa, nada muda. Uma posição guarda-a como
 `(incolorperiodicfun 6)`, pelo lugar da função na lista contando a partir de
 zero, só quando não é ident.
 

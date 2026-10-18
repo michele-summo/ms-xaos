@@ -1480,6 +1480,43 @@ vier oder fünf hinaus nichts, was man sehen kann — gemessen ergaben vier und
 achtzehn dasselbe Bild. Erhöhen Sie die Rauheit, und die feinen Oktaven haben
 etwas auszugeben, und dann fängt die Anzahl an zu zählen.
 
+### Die Größe der Spuren nach der Zählung
+
+Außen zwei Felder mehr am Fuß des Dialogs. **Skalierung des Rauschens** sagt,
+was die Größe der Spuren bestimmt: **fest**, wo es beginnt, die Frequenz
+allein, wie oben; **Iteration**, die Frequenz, mit der Iterationszahl erhöht;
+**geglättete Iteration**, die Frequenz, mit der weichen Zählung erhöht.
+**Faktor** sagt, um wie viel: die Frequenz verdoppelt sich so oft je zehn
+Iterationen, also sind die Spuren bei `1` halb so groß, wo der Orbit zehn
+Iterationen länger zum Austreten brauchte, und ein Viertel, wo er zwanzig
+länger brauchte. Bei `0` ändert die Zählung nichts. Wo die Zählung steigt, zum
+Rand der Menge hin, werden die Spuren feiner und folgen dem Detail.
+
+Eine Frequenz, die sich von einem Pixel zum nächsten ändert, lässt sich nicht
+einfach über die Ebene legen: das Feld würde sich dehnen, umso mehr, je weiter
+vom Ursprung. Also wird die Bewegung bei den beiden Zweierpotenzen zu beiden
+Seiten der Zählung gelesen, jede ein Feld für sich mit fester Frequenz, und die
+beiden werden überblendet, wie eine Textur zwischen ihren Mipmaps, und die
+Mischung auf den Kontrast eines einzigen Feldes zurückgebracht. Mit
+**geglättete Iteration** ändern die Spuren ihre Größe ohne Naht; mit
+**Iteration** ändern sie sie an den Rändern der Bänder, jedes Band mit einer
+eigenen Körnung. Innen ist die Zählung überall dieselbe, also hat die
+Innenseite keines der beiden Felder.
+
+Zwischen zwei Verdopplungen werden zwei Felder gelesen, und die Färbung kostet
+etwa doppelt so viel wie mit **fest**: 248 ns pro Pixel gegen 127, bei vier
+Oktaven. Wo die Zählung genau auf eine Verdopplung fällt, wie es jede ganze
+Zählung bei einem Faktor von `10` tut, wird ein einziges Feld gelesen, und die
+Kosten sind die von **fest**. Mit **geglättete Iteration** werden `fbm + iter`
+und `fbm` von der Smooth-Schleife gezeichnet, die einige Iterationen über den
+Fluchtradius hinaus rechnet, um die weiche Zählung zu bestimmen. Ein zu hoher
+Faktor bringt die Spuren unter ein Pixel, wo sie zu Körnung werden.
+
+Mit **fest** zeichnet es wie zuvor, Bit für Bit. Eine Position speichert die
+beiden als `(outfbmscale 'smooth 1.5)`, und nur, wenn sie verändert wurden,
+also öffnet sich eine Position, die sie nicht anrührt, weiterhin in früheren
+Versionen.
+
 ### Was es kostet, und das Einzige, was es nicht tut
 
 Das Rauschen wird **einmal pro Pixel** berechnet, in der Färbung, nicht einmal
@@ -1502,11 +1539,32 @@ Die Modi sind **nach** den Echtfarbmodi nummeriert, also bedeutet jede
 Modusnummer, die eine gespeicherte Position schon enthält, weiterhin, was sie
 bedeutete.
 
+## Kachelung
+
+**Fraktal → Innere Färbung → Kachelung...** färbt das Innere nach den Kacheln
+einer der fünfundvierzig Kachelungen von `randsctile`: ihr einziges Feld,
+**Kachelung**, nimmt dieselbe Zahl wie das erste Argument von `randsctile`,
+`3`, Sechsecke, wo es beginnt, und der Reiter Kachelungen von Hilfe → Referenz
+der Benutzerformeln hat ein Bild jeder. Die Kacheln liegen über dem letzten
+`z`, vierzig pro Einheit wie die Quadrate von `squares`, und jede zeigt den
+Winkel von `z`, um einen eigenen Betrag gedreht, sodass sich jede Kachel von
+ihren Nachbarn abhebt, welche Zahl und Form diese auch haben. **Frequenz
+(periodische Modi)** und **Funktion (periodische Modi)** erreichen sie, wie sie
+die anderen Modi erreichen, die sich wiederholen. Die Kachelungen, die sich nie
+wiederholen, werden jenseits von viertausend Millionen Kacheln vom Ursprung
+flach, mit ungedrehtem Winkel.
+
+Die periodischen Kachelungen kosten etwa so viel wie die anderen inneren Modi,
+120 bis 210 ns pro Pixel; die sich nie wiederholenden, die an jedem Punkt neu
+gesucht werden, 250 bis 490. Eine Position speichert den Modus als
+`(incoloring 30)` und die Kachelung als `(intessellation 39)`, die Kachelung
+nur, wenn sie nicht die der Sechsecke ist.
+
 ## Weitere Färbungsmodi
 
 Nicht die Berechnung entscheidet über die Farbe eines Pixels: die Farbe kommt
 aus einer Formel im letzten `z`, im Parameter `c` und in der Iterationszahl,
-und es gibt eine solche Formel pro Modus. Dreiundzwanzig weitere, in einem
+und es gibt eine solche Formel pro Modus. Zweiundzwanzig weitere, in einem
 eigenen Untermenü unter Fraktal → Innere Färbung und Fraktal → Äußere Färbung,
 über den Echtfarb-Untermenüs.
 
@@ -1530,19 +1588,18 @@ eigenen Untermenü unter Fraktal → Innere Färbung und Fraktal → Äußere F�
 | `hexagons` | drei Wellen, eine Dritteldrehung voneinander, die zusammen ein Sechseckgitter ergeben |
 | `spiral` | fünf Arme um den Punkt, an dem sich der Orbit niedergelassen hat, einmal gewunden pro Faktor e im Betrag |
 | `cos(\|z-c\|)` | Ringe um den Parameter, die die Knospen unterscheiden, wie es `\|z-c\|` tut |
-| `hexagon tiles` | `squares` mit Sechsecken: eine Wabe aus Kacheln, ein Vierzigstel einer Einheit breit, in drei Arten, weil ein Sechseck sechs Nachbarn hat — die zwei von `squares` und die erste um eine halbe Drehung versetzt |
 
 Elf der inneren Modi wiederholen sich — `cos(mag)`, `mag*cos(real^2)`,
-`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)`, `frac(mag)` und die
-fünf am Fuß der Tabelle —, und **Frequenz (periodische Modi)**, das erste Feld
-des inneren Dialogs Färbungsgeschwindigkeit, sagt, wie oft. Sie multipliziert
-das Argument dessen, was sich wiederholt, also drehen sich bei 2 die Sinusse
-doppelt so schnell, `squares` zeichnet halb so große Quadrate und `frac(mag)`
-sechzehn Konturen pro Einheit des Betrags, wo es acht zeichnete. In `cos(mag)`
-verengt sie auch die Bänder, die zwischen Sinus und Kosinus wählen. Bei eins,
-wo sie anfängt, zeichnen sie wie immer, bitgenau, und die anderen Modi lesen
-sie nie. Eine Position speichert sie als `(incolorfrequency 2)` nur, wenn sie
-nicht eins ist, also öffnet sich eine Position, die sie nicht anrührt,
+`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)`, `frac(mag)`, die vier
+am Fuß der Tabelle und `tessellation` —, und **Frequenz (periodische Modi)**,
+das erste Feld des inneren Dialogs Färbungsgeschwindigkeit, sagt, wie oft. Sie
+multipliziert das Argument dessen, was sich wiederholt, also drehen sich bei 2
+die Sinusse doppelt so schnell, `squares` zeichnet halb so große Quadrate und
+`frac(mag)` sechzehn Konturen pro Einheit des Betrags, wo es acht zeichnete. In
+`cos(mag)` verengt sie auch die Bänder, die zwischen Sinus und Kosinus wählen.
+Bei eins, wo sie anfängt, zeichnen sie wie immer, bitgenau, und die anderen
+Modi lesen sie nie. Eine Position speichert sie als `(incolorfrequency 2)` nur,
+wenn sie nicht eins ist, also öffnet sich eine Position, die sie nicht anrührt,
 weiterhin in früheren Versionen.
 
 **Funktion (periodische Modi)**, darunter, biegt das Argument mit einer der
@@ -1555,7 +1612,7 @@ Rand hin und ziehen sie um null auseinander, `log` und `atan` umgekehrt, und
 die Bänder umkehren und zurückkommen. Sie erreicht jede periodische Funktion
 der elf, deren Argument `a` als `k·f(a)` eingeht, wobei `k` die Frequenz ist:
 die Sinus und Kosinus, den Betrag von `frac(mag)`, Real- und Imaginärteil,
-deren Streifen die Quadrate von `squares` und die Sechsecke von `hexagon tiles`
+deren Streifen die Quadrate von `squares` und die Kacheln von `tessellation`
 bilden, und in `cos(mag)` auch die Bänder, die zwischen Sinus und Kosinus
 wählen. In `spiral` bleiben die fünf Arme fünf, denn eine nicht ganze Zahl von
 Umläufen hinterließe eine Naht, wo sich der Winkel schließt: Frequenz und

@@ -1345,6 +1345,40 @@ five change nothing you can see — measured, four and eighteen came out the sam
 picture. Raise the roughness and the fine octaves have something to spend, and
 then the count starts to matter.
 
+### Sizing the marks by the count
+
+Outside, two more fields at the foot of the dialog. **Noise scaling** says what
+sizes the marks: `fixed`, where it starts, by the frequency alone, as above;
+`iteration`, by the frequency raised with the escape count; `smooth`, by the
+frequency raised with the smooth count. **Scaling factor** says by how much:
+the frequency doubles that many times every ten iterations, so at `1` the marks
+are half the size where the orbit took ten more iterations to leave, and a
+quarter where it took twenty. At `0` the count changes nothing. Where the count
+climbs, towards the edge of the set, the marks grow finer and follow the
+detail.
+
+A frequency that changes from one pixel to the next cannot simply be laid over
+the plane: the field would stretch, the more the further from the origin. So
+the motion is read at the two powers of two either side of where the count
+stands, each a field of its own at a fixed frequency, and the two are blended,
+as a texture is between its mipmaps, the blend taken back to the contrast of
+one field. With `smooth` the marks change size without a seam; with
+`iteration` they change at the edges of the bands, every band with a grain of
+its own. Inside the count is the same everywhere, so the inside has neither
+field.
+
+Between two doublings two fields are read, and the colouring costs about twice
+what it does fixed: 248 ns a pixel against 127, at four octaves. Where the
+count falls exactly on a doubling, as every whole count does at a factor of
+`10`, one field is read and the cost is that of `fixed`. With `smooth`, `fbm +
+iter` and `fbm` are drawn by the smooth loop, which runs a few iterations past
+the bailout to work the smooth count out. A factor too high takes the marks
+below a pixel, where they turn to grain.
+
+`fixed` draws as before, to the bit. A position saves the two as
+`(outfbmscale 'smooth 1.5)`, and only when they have moved, so a position that
+leaves them alone still opens in earlier versions.
+
 ### What it costs, and the one thing it will not do
 
 The noise is worked out **once a pixel**, in the colouring, not once an
@@ -1364,11 +1398,30 @@ carrying the wrong marks.
 The modes are numbered **after** true colour, so every mode number a saved
 position already holds still means what it meant.
 
+## Tessellation
+
+**Fractal → Incoloring mode → Tessellation...** colours the inside by the tiles
+of one of the forty-five tilings of `randsctile`: its one field, **Tiling**,
+takes the same number as `randsctile`'s first argument, `3`, hexagons, where it
+starts, and the Tilings tab of Help → User formula reference has a picture of
+each. The tiles are laid over the final `z`, forty to a
+unit as the squares of `squares` are, and each shows the angle of `z` turned by
+an amount of its own, so every tile stands apart from its neighbours whatever
+their number and shape. **Frequency (periodic modes)** and **Function (periodic
+modes)** reach it as they reach the other modes that repeat. The tilings that
+never repeat go flat, the angle unturned, past four thousand million tiles from
+the origin.
+
+The periodic tilings cost about what the other inside modes do, 120 to 210 ns a
+pixel; the ones that never repeat, which are located afresh at every point,
+250 to 490. A position saves the mode as `(incoloring 30)` and the tiling as
+`(intessellation 39)`, the tiling only when it is not hexagons.
+
 ## More colouring modes
 
 Calculation is not what decides the colour of a pixel: the colour comes from a
 formula in the final `z`, the parameter `c` and the iteration count, and there
-is one such formula per mode. Twenty-three more of them, in a submenu of their
+is one such formula per mode. Twenty-two more of them, in a submenu of their
 own under Fractal → Incoloring mode and Fractal → Outcoloring mode, above the
 true-colour submenus.
 
@@ -1393,19 +1446,18 @@ anything:
 | `hexagons` | three waves a third of a turn apart, which add up to a lattice of hexagons |
 | `spiral` | five arms about where the orbit settled, wound once to every factor of e in the modulus |
 | `cos(\|z-c\|)` | rings about the parameter, which tell the bulbs apart as `\|z-c\|` does |
-| `hexagon tiles` | `squares` with hexagons: a honeycomb of tiles a fortieth of a unit across, of three kinds since a hexagon has six neighbours — the two of `squares` and the first half a turn on |
 
 Eleven of the inside modes repeat — `cos(mag)`, `mag*cos(real^2)`,
-`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)`, `frac(mag)` and the
-five at the foot of the table — and **Frequency (periodic modes)**, the first
-field of the inside Coloring speed dialog, says how often. It multiplies the
-argument of what repeats, so at 2 the sines turn twice as fast, `squares` draws
-squares half the size and `frac(mag)` sixteen contours to a unit of the modulus
-where it drew eight. In `cos(mag)` it narrows as well the bands that choose
-between the sine and the cosine. At one, where it starts, they draw as they
-always did, to the bit, and the other modes never read it. A position saves it
-as `(incolorfrequency 2)` only when it is not one, so a position that leaves it
-alone still opens in earlier versions.
+`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)`, `frac(mag)`, the four
+at the foot of the table and `tessellation` — and **Frequency (periodic
+modes)**, the first field of the inside Coloring speed dialog, says how often.
+It multiplies the argument of what repeats, so at 2 the sines turn twice as
+fast, `squares` draws squares half the size and `frac(mag)` sixteen contours to
+a unit of the modulus where it drew eight. In `cos(mag)` it narrows as well the
+bands that choose between the sine and the cosine. At one, where it starts,
+they draw as they always did, to the bit, and the other modes never read it. A
+position saves it as `(incolorfrequency 2)` only when it is not one, so a
+position that leaves it alone still opens in earlier versions.
 
 **Function (periodic modes)**, under it, bends the argument by one of the
 [colouring speed functions](#colouring-speed-functions) before the frequency
@@ -1416,7 +1468,7 @@ the edge and spread them out about nought, `log` and `atan` the other way, and
 turn and come back. It reaches every periodic function of the eleven, whose
 argument `a` goes in as `k·f(a)`, `k` being the frequency: the sines and
 cosines, the modulus of `frac(mag)`, the real and imaginary parts whose stripes
-make the squares of `squares` and the hexagons of `hexagon tiles`, and in
+make the squares of `squares` and the tiles of `tessellation`, and in
 `cos(mag)` the bands that choose between the sine and the cosine as well. In
 `spiral` the five arms stay five, since a number of turns that is not whole
 would leave a seam where the angle wraps: the frequency and the function act on

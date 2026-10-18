@@ -1430,6 +1430,41 @@ oltre la quarta o la quinta non cambiano nulla che si possa vedere — misurato,
 quattro e diciotto davano la stessa immagine. Alza la ruvidità e le ottave fini
 hanno qualcosa da spendere, e allora il numero comincia a contare.
 
+### Dimensionare i segni con il conteggio
+
+All'esterno, due campi in più in fondo al dialogo. **Dimensionamento del
+rumore** dice che cosa decide la grandezza dei segni: **fisso**, dove parte, la
+sola frequenza, come sopra; **iterazione**, la frequenza alzata con il
+conteggio delle iterazioni; **iterazione smooth**, la frequenza alzata con il
+conteggio graduale. **Fattore** dice di quanto: la frequenza raddoppia quel
+numero di volte ogni dieci iterazioni, quindi a `1` i segni sono grandi la metà
+dove l'orbita ha impiegato dieci iterazioni in più a uscire, e un quarto dove
+ne ha impiegate venti. A `0` il conteggio non cambia nulla. Dove il conteggio
+sale, verso il bordo dell'insieme, i segni si fanno più fini e seguono il
+dettaglio.
+
+Una frequenza che cambia da un pixel all'altro non si può semplicemente
+stendere sul piano: il campo si stirerebbe, tanto più quanto più ci si
+allontana dall'origine. Così il moto è letto alle due potenze di due a cavallo
+del conteggio, ciascuna un campo a sé a frequenza fissa, e i due sono mescolati
+come una texture tra le sue mipmap, riportando la miscela al contrasto di un
+campo solo. Con **iterazione smooth** i segni cambiano grandezza senza
+cuciture; con **iterazione** cambiano ai bordi delle bande, ogni banda con una
+grana sua. All'interno il conteggio è lo stesso ovunque, quindi l'interno non
+ha nessuno dei due campi.
+
+Tra due raddoppi si leggono due campi, e la colorazione costa circa il doppio
+che con **fisso**: 248 ns per pixel contro 127, a quattro ottave. Dove il
+conteggio cade esattamente su un raddoppio, come fa ogni conteggio intero a un
+fattore di `10`, si legge un campo solo e il costo è quello di **fisso**. Con
+**iterazione smooth**, `fbm + iter` e `fbm` sono disegnati dal ciclo smooth,
+che fa qualche iterazione oltre il bailout per calcolare il conteggio graduale.
+Un fattore troppo alto porta i segni sotto il pixel, dove diventano grana.
+
+Con **fisso** disegna come prima, bit per bit. Una posizione salva i due come
+`(outfbmscale 'smooth 1.5)`, e solo quando sono stati spostati, quindi una
+posizione che non li tocca si apre ancora nelle versioni precedenti.
+
 ### Quanto costa, e l'unica cosa che non fa
 
 Il rumore è calcolato **una volta per pixel**, nella colorazione, non una volta
@@ -1450,11 +1485,32 @@ Le modalità sono numerate **dopo** quelle a colori reali, quindi ogni numero di
 modalità che una posizione salvata contiene già significa ancora ciò che
 significava.
 
+## Tassellazione
+
+**Frattale → Colorazione interna → Tassellazione...** colora l'interno con le
+tessere di una delle quarantacinque tassellature di `randsctile`: il suo unico
+campo, **Tassellazione**, prende lo stesso numero del primo argomento di
+`randsctile`, `3`, gli esagoni, dove parte, e la scheda Tassellature di Aiuto →
+Riferimento delle formule utente ha un'immagine di ciascuna. Le tessere sono
+posate sulla `z` finale, quaranta per unità come i quadrati di `squares`, e
+ciascuna mostra l'angolo di `z` ruotato di una quantità sua, così che ogni
+tessera si stacca dalle vicine qualunque siano il loro numero e la loro forma.
+**Frequenza (modalità periodiche)** e **Funzione (modalità periodiche)** la
+raggiungono come raggiungono le altre modalità che si ripetono. Le tassellature
+che non si ripetono mai diventano piatte, con l'angolo non ruotato, oltre
+quattro miliardi di tessere dall'origine.
+
+Le tassellature periodiche costano circa quanto le altre modalità interne, da
+120 a 210 ns per pixel; quelle che non si ripetono mai, che vengono localizzate
+da capo in ogni punto, da 250 a 490. Una posizione salva la modalità come
+`(incoloring 30)` e la tassellazione come `(intessellation 39)`, la
+tassellazione solo quando non è quella degli esagoni.
+
 ## Altre modalità di colorazione
 
 Non è il calcolo a decidere il colore di un pixel: il colore viene da una
 formula nella `z` finale, nel parametro `c` e nel conteggio delle iterazioni, e
-c'è una formula del genere per ogni modalità. Ventitré in più, in un sottomenu
+c'è una formula del genere per ogni modalità. Ventidue in più, in un sottomenu
 proprio sotto Frattale → Colorazione interna e Frattale → Colorazione esterna,
 sopra i sottomenu a colori reali.
 
@@ -1479,19 +1535,19 @@ dicono qualcosa:
 | `hexagons` | tre onde a un terzo di giro l'una dall'altra, che sommate danno un reticolo di esagoni |
 | `spiral` | cinque bracci attorno a dove si è fermata l'orbita, avvolti una volta a ogni fattore e del modulo |
 | `cos(\|z-c\|)` | anelli attorno al parametro, che distinguono i bulbi come fa `\|z-c\|` |
-| `hexagon tiles` | `squares` con gli esagoni: un nido d'ape di tessere larghe un quarantesimo di unità, di tre tipi perché un esagono ha sei vicini — i due di `squares` e il primo spostato di mezzo giro |
 
 Undici delle modalità interne si ripetono — `cos(mag)`, `mag*cos(real^2)`,
-`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)`, `frac(mag)` e le cinque
-in fondo alla tabella — e **Frequenza (modalità periodiche)**, il primo campo
-del dialogo Velocità della colorazione interno, dice quanto spesso. Moltiplica
-l'argomento di ciò che si ripete, quindi a 2 i seni girano il doppio più in
-fretta, `squares` disegna quadrati grandi la metà e `frac(mag)` sedici contorni
-per unità del modulo dove ne disegnava otto. In `cos(mag)` restringe anche le
-bande che scelgono tra il seno e il coseno. A uno, dove parte, disegnano come
-hanno sempre fatto, bit per bit, e le altre modalità non lo leggono mai. Una
-posizione lo salva come `(incolorfrequency 2)` solo quando non è uno, quindi
-una posizione che non lo tocca si apre ancora nelle versioni precedenti.
+`sin(real^2-imag^2)`, `squares`, `sin(real)*sin(imag)`, `frac(mag)`, le quattro
+in fondo alla tabella e `tessellation` — e **Frequenza (modalità periodiche)**,
+il primo campo del dialogo Velocità della colorazione interno, dice quanto
+spesso. Moltiplica l'argomento di ciò che si ripete, quindi a 2 i seni girano
+il doppio più in fretta, `squares` disegna quadrati grandi la metà e
+`frac(mag)` sedici contorni per unità del modulo dove ne disegnava otto. In
+`cos(mag)` restringe anche le bande che scelgono tra il seno e il coseno. A
+uno, dove parte, disegnano come hanno sempre fatto, bit per bit, e le altre
+modalità non lo leggono mai. Una posizione lo salva come `(incolorfrequency 2)`
+solo quando non è uno, quindi una posizione che non lo tocca si apre ancora
+nelle versioni precedenti.
 
 **Funzione (modalità periodiche)**, sotto di essa, piega l'argomento con una
 delle [funzioni di velocità della
@@ -1503,7 +1559,7 @@ bordo e le diradano attorno allo zero, `log` e `atan` al contrario, e `sin`,
 tornino indietro. Raggiunge ogni funzione periodica delle undici, il cui
 argomento `a` entra come `k·f(a)`, dove `k` è la frequenza: i seni e i coseni,
 il modulo di `frac(mag)`, la parte reale e quella immaginaria le cui strisce
-fanno i quadrati di `squares` e gli esagoni di `hexagon tiles`, e in `cos(mag)`
+fanno i quadrati di `squares` e le tessere di `tessellation`, e in `cos(mag)`
 anche le bande che scelgono tra il seno e il coseno. In `spiral` i cinque
 bracci restano cinque, perché un numero di giri non intero lascerebbe una
 cucitura dove l'angolo si chiude: la frequenza e la funzione agiscono
