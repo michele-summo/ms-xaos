@@ -9,6 +9,12 @@ lessThan(QT_MINOR_VERSION, 5): error("requires Qt >= 6.5.2")
 
 QMAKE_CXXFLAGS += -Wall -Wextra -Wpedantic
 
+# Qt's qyieldcpu.h calls __yield, which the clang of Xcode 26 knows as a builtin
+# but only declares in <arm_acle.h>. CMake hands Qt's headers to the compiler
+# as system headers, where that goes unremarked; qmake passes them with -I, and
+# clang turns it into an error.
+macx: QMAKE_CXXFLAGS += -Wno-error=implicit-function-declaration
+
 TEMPLATE = app
 
 QT += widgets printsupport
