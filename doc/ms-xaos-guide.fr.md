@@ -1513,24 +1513,56 @@ voulait dire.
 ## Pavage
 
 **Fractale → Coloriage intérieur → Pavage...** colore l'intérieur selon les
-tuiles de l'un des quarante-cinq pavages de `randsctile` : son seul champ,
-**Pavage**, prend le même nombre que le premier argument de `randsctile`, `3`,
-les hexagones, où il commence, et l'onglet Pavages d'Aide → Référence des
-formules utilisateur a une image de chacun. Les tuiles sont posées sur le `z`
-final, quarante par unité comme les carrés de `squares`, et chacune montre
-l'angle de `z` tourné d'une quantité à elle, si bien que chaque tuile se
-détache de ses voisines quels que soient leur nombre et leur forme. **Fréquence
-(modes périodiques)** et **Fonction (modes périodiques)** l'atteignent comme
-elles atteignent les autres modes qui se répètent. Les pavages qui ne se
-répètent jamais deviennent plats, l'angle non tourné, au-delà de quatre
-milliards de tuiles de l'origine.
+tuiles de l'un des quarante-cinq pavages de `randsctile`, posées sur le `z`
+final, quarante par unité comme les carrés de `squares`. Son dialogue a trois
+champs.
+
+| champ | |
+| --- | --- |
+| **Pavage** | quel pavage, avec le nombre sous lequel `randsctile` le connaît et son nom : **3: hexagones**, où il commence. L'onglet Pavages d'Aide → Référence des formules utilisateur a une image de chacun |
+| **Coloriage** | d'où vient la couleur, partout : **angle de z**, où il commence ; **angle autour du centre de la tuile**, celui de la tuile où tombe le point, qui fait de chaque tuile une petite roue de couleur ; **zmag**, la valeur du mode de ce nom ; **aucun**, rien que les tuiles |
+| **Tuiles** | comment chaque tuile se détache de ses voisines : **chacune décalée d'une quantité propre**, le long de la palette, où il commence ; **ombrées du centre au bord**, de même, et décalée d'un huitième des couleurs d'un tour de plus du centre au bord, comme un biseau ; **avec le bord marqué**, de même, et la partie extérieure de la tuile tracée dans l'autre moitié de la palette ; **une couleur unie chacune**, une couleur à elle, d'où que vienne la couleur |
+
+Le mode se tient entre les modes qui se répètent et les décompositions, et les
+réglages des deux l'atteignent. **Fréquence (modes périodiques)** et **Fonction
+(modes périodiques)** atteignent les tuiles comme elles atteignent tout
+argument périodique de l'intérieur : à la fréquence 2 les tuiles sont deux fois
+plus petites. Les [réglages des décompositions](#réglages-des-décompositions)
+de l'intérieur atteignent les deux angles, qui sont découpés et parcourus comme
+ceux des décompositions. **Secteurs**, **Rotation**, **Répétitions**, **Sens**
+et **Vitesse** atteignent les deux ; **Angle de** n'atteint que l'angle de `z`,
+celui autour du centre de la tuile n'en ayant pas l'usage ; **Anneaux par
+unité** fait des anneaux du module pour l'angle de `z`, à travers la fréquence
+et la fonction comme pour les décompositions, et pour l'angle autour du centre
+autant d'anneaux du centre au bord, qui suivent la forme de la tuile. **zmag**,
+**aucun** et une tuile unie n'en lisent aucun.
+
+La quantité propre d'une tuile vient du hachage qui la nomme. Pour un angle
+elle couvre autant de la palette qu'un tour de l'angle, si bien qu'un réglage
+de la décomposition déplacé laisse les couleurs des tuiles où elles étaient ;
+pour **zmag**, **aucun** et une tuile unie elle couvre la palette entière, si
+bien qu'**aucun** avec **chacune décalée d'une quantité propre** revient à
+**une couleur unie chacune**. **angle autour du centre de la tuile** met un
+tour entier de couleurs dans chaque tuile, ce qui, à la taille qu'ont les
+tuiles, fait beaucoup de couleurs pour peu de pixels : une **Vitesse**
+inférieure à un, ou une fréquence inférieure à un, rend les roues lisibles.
+
+Avec **Coloriage** sur **angle de z**, **Tuiles** sur **chacune décalée d'une
+quantité propre** et les réglages des décompositions là où ils commencent, le
+mode dessine ce qu'il dessinait avant d'avoir le choix, au bit près. Les
+pavages qui ne se répètent jamais deviennent plats, sans quantité propre,
+au-delà de quatre milliards de tuiles de l'origine.
 
 Les pavages périodiques coûtent à peu près ce que coûtent les autres modes
 intérieurs, de 120 à 210 ns par pixel ; ceux qui ne se répètent jamais,
-localisés à nouveau en chaque point, de 250 à 490. Une position enregistre le
-mode sous la forme `(incoloring 30)` et le pavage sous la forme
-`(intessellation 39)`, le pavage seulement quand ce n'est pas celui des
-hexagones.
+localisés à nouveau en chaque point, de 250 à 490. **angle autour du centre de
+la tuile**, **ombrées du centre au bord** et **avec le bord marqué** mesurent
+où le point se tient dans sa tuile, ce qui coûte jusqu'à deux tiers de plus sur
+les pavages périodiques et peu de plus sur les autres. Une position enregistre
+le mode sous la forme `(incoloring 30)`, le pavage sous la forme
+`(intessellation 39)`, seulement quand ce n'est pas celui des hexagones, et le
+coloriage sous la forme `(intessellstyle 'tile-angle 'edged)`, seulement quand
+il a été déplacé.
 
 ## Plus de modes de coloration
 
@@ -1657,9 +1689,10 @@ utilisateur le font à la place.
 **Fractale → Coloriage intérieur → Décomposition**, et de même sous Coloriage
 extérieur, règle la façon dont les décompositions découpent le tour : binary
 decomposition et color decomposition à l'extérieur, `sign(imag)`,
-`Decomposition-like` et `fbm + decomposition` à l'intérieur. Avec chaque champ
-là où il commence — zéro, et un, droite et un pour les trois derniers —, elles
-dessinent comme elles l'ont toujours fait, au bit près.
+`Decomposition-like` et `fbm + decomposition` à l'intérieur, et les angles de
+`tessellation`. Avec chaque champ là où il commence — zéro, et un, droite et un
+pour les trois derniers —, elles dessinent comme elles l'ont toujours fait, au
+bit près.
 
 | champ | |
 | --- | --- |

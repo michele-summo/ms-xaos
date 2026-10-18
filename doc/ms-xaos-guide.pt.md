@@ -1446,23 +1446,55 @@ que uma posição guardada já contém continua a significar o que significava.
 ## Pavimentação
 
 **Fractal → Coloração interior → Pavimentação...** colore o interior pelos
-mosaicos de uma das quarenta e cinco pavimentações de `randsctile`: o seu único
-campo, **Pavimentação**, leva o mesmo número que o primeiro argumento de
-`randsctile`, `3`, hexágonos, onde começa, e o separador Pavimentações de Ajuda
-→ Referência das fórmulas do utilizador tem uma imagem de cada uma. Os mosaicos
-são estendidos sobre o `z` final, quarenta por unidade como os quadrados de
-`squares`, e cada um mostra o ângulo de `z` rodado de uma quantidade própria,
-de modo que cada mosaico se destaca dos vizinhos, sejam quais forem o seu
-número e a sua forma. **Frequência (modos periódicos)** e **Função (modos
-periódicos)** chegam-lhe como chegam aos outros modos que se repetem. As
-pavimentações que nunca se repetem ficam planas, com o ângulo sem rodar, para
-lá de quatro mil milhões de mosaicos da origem.
+ladrilhos de uma das quarenta e cinco pavimentações de `randsctile`, estendidos
+sobre o `z` final, quarenta por unidade como os quadrados de `squares`. O seu
+diálogo tem três campos.
+
+| campo | |
+| --- | --- |
+| **Pavimentação** | qual pavimentação, com o número pelo qual `randsctile` a conhece e o seu nome: **3: hexágonos**, onde começa. O separador Pavimentações de Ajuda → Referência das fórmulas do utilizador tem uma imagem de cada uma |
+| **Coloração** | de onde vem a cor, em toda a parte: **ângulo de z**, onde começa; **ângulo em torno do centro do ladrilho**, o do ladrilho em que cai o ponto, que faz de cada ladrilho uma pequena roda de cor; **zmag**, o valor do modo com esse nome; **nenhuma**, nada além dos ladrilhos |
+| **Ladrilhos** | como cada ladrilho se destaca dos vizinhos: **cada um deslocado de uma quantidade própria**, ao longo da paleta, onde começa; **sombreados do centro para a borda**, o mesmo, e deslocado mais um oitavo das cores de uma volta do centro para a borda, como um chanfro; **com a borda marcada**, o mesmo, e a parte exterior do ladrilho desenhada na outra metade da paleta; **uma cor lisa cada um**, uma cor sua, venha de onde vier a cor |
+
+O modo está entre os modos que se repetem e as decomposições, e as definições
+de ambos chegam-lhe. **Frequência (modos periódicos)** e **Função (modos
+periódicos)** chegam aos ladrilhos como chegam a todo o argumento periódico do
+interior: na frequência 2 os ladrilhos têm metade do tamanho. As [definições
+das decomposições](#definições-das-decomposições) do interior chegam aos dois
+ângulos, que são cortados e percorridos como os das decomposições. **Setores**,
+**Rotação**, **Repetições**, **Sentido** e **Velocidade** chegam a ambos;
+**Ângulo de** chega só ao ângulo de `z`, porque o de em torno do centro do
+ladrilho não lhe dá uso; **Anéis por unidade** faz anéis do módulo para o
+ângulo de `z`, através da frequência e da função como nas decomposições, e para
+o ângulo em torno do centro outros tantos anéis do centro para a borda, que
+seguem a forma do ladrilho. **zmag**, **nenhuma** e um ladrilho liso não leem
+nenhuma delas.
+
+A quantidade própria de um ladrilho vem do hash que lhe dá o nome. Para um
+ângulo abrange tanto da paleta como uma volta do ângulo, de modo que uma
+definição da decomposição mudada deixa as cores dos ladrilhos onde estavam;
+para **zmag**, **nenhuma** e um ladrilho liso abrange a paleta inteira, de modo
+que **nenhuma** com **cada um deslocado de uma quantidade própria** é o mesmo
+que **uma cor lisa cada um**. **ângulo em torno do centro do ladrilho** põe uma
+volta inteira de cores em cada ladrilho, o que, ao tamanho que os ladrilhos
+têm, são muitíssimas cores em poucos píxeis: uma **Velocidade** abaixo de um,
+ou uma frequência abaixo de um, torna as rodas legíveis.
+
+Com **Coloração** em **ângulo de z**, **Ladrilhos** em **cada um deslocado de
+uma quantidade própria** e as definições das decomposições onde começam, o modo
+desenha o que desenhava antes de ter escolha, bit a bit. As pavimentações que
+nunca se repetem ficam planas, sem quantidade própria, para lá de quatro mil
+milhões de ladrilhos da origem.
 
 As pavimentações periódicas custam mais ou menos o mesmo que os outros modos
 interiores, de 120 a 210 ns por píxel; as que nunca se repetem, que são
-localizadas de novo em cada ponto, de 250 a 490. Uma posição guarda o modo como
-`(incoloring 30)` e a pavimentação como `(intessellation 39)`, a pavimentação
-só quando não é a dos hexágonos.
+localizadas de novo em cada ponto, de 250 a 490. **ângulo em torno do centro do
+ladrilho**, **sombreados do centro para a borda** e **com a borda marcada**
+medem onde está o ponto no seu ladrilho, o que custa até dois terços mais nas
+pavimentações periódicas e pouco mais nas outras. Uma posição guarda o modo
+como `(incoloring 30)`, a pavimentação como `(intessellation 39)`, só quando
+não é a dos hexágonos, e a coloração como
+`(intessellstyle 'tile-angle 'edged)`, só quando foi mudada.
 
 ## Mais modos de coloração
 
@@ -1583,8 +1615,9 @@ vez disso.
 **Fractal → Coloração interior → Decomposição**, e o mesmo em Coloração
 exterior, define como as decomposições cortam a volta: binary decomposition e
 color decomposition no exterior, `sign(imag)`, `Decomposition-like` e
-`fbm + decomposition` no interior. Com cada campo onde começa — zero, e um,
-direita e um nos três últimos — desenham como sempre desenharam, bit a bit.
+`fbm + decomposition` no interior, e os ângulos de `tessellation`. Com cada
+campo onde começa — zero, e um, direita e um nos três últimos — desenham como
+sempre desenharam, bit a bit.
 
 | campo | |
 | --- | --- |

@@ -469,6 +469,7 @@ void uih_setfbmparams(uih_context *c, int inset, number_t intensity,
                       int seed);
 void uih_setfbmscaling(uih_context *c, int scaling, number_t factor);
 void uih_settessellation(uih_context *c, int tiling);
+void uih_settessellationstyle(uih_context *c, int colour, int fill);
 void uih_setpndefault(uih_context *c, int periodicity);
 void uih_setnewtonmodesffe(uih_context *c, int periodicity);
 void uih_setnewtonconvergence(uih_context *c, number_t periodicity);

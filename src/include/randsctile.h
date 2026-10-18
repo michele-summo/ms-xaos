@@ -17,4 +17,12 @@
  * without the parser's arguments around them. */
 int randsctile_name(int kind, number_t x, number_t y, uint64_t *name);
 
+/* The same tile and, besides its name, where the point stands in it: out,
+ * nought at the tile's deepest and one at its edge, and (rx, ry), the point
+ * seen from the tile's middle -- what randsctile's skew and rosette read. It
+ * costs more than the name alone, the edge being measured, so it is for when
+ * they are wanted. */
+int randsctile_place(int kind, number_t x, number_t y, uint64_t *name,
+                     double *out, double *rx, double *ry);
+
 #endif

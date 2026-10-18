@@ -1542,23 +1542,56 @@ bedeutete.
 ## Kachelung
 
 **Fraktal → Innere Färbung → Kachelung...** färbt das Innere nach den Kacheln
-einer der fünfundvierzig Kachelungen von `randsctile`: ihr einziges Feld,
-**Kachelung**, nimmt dieselbe Zahl wie das erste Argument von `randsctile`,
-`3`, Sechsecke, wo es beginnt, und der Reiter Kachelungen von Hilfe → Referenz
-der Benutzerformeln hat ein Bild jeder. Die Kacheln liegen über dem letzten
-`z`, vierzig pro Einheit wie die Quadrate von `squares`, und jede zeigt den
-Winkel von `z`, um einen eigenen Betrag gedreht, sodass sich jede Kachel von
-ihren Nachbarn abhebt, welche Zahl und Form diese auch haben. **Frequenz
-(periodische Modi)** und **Funktion (periodische Modi)** erreichen sie, wie sie
-die anderen Modi erreichen, die sich wiederholen. Die Kachelungen, die sich nie
-wiederholen, werden jenseits von viertausend Millionen Kacheln vom Ursprung
-flach, mit ungedrehtem Winkel.
+einer der fünfundvierzig Kachelungen von `randsctile`, die über dem letzten `z`
+liegen, vierzig pro Einheit wie die Quadrate von `squares`. Ihr Dialog hat drei
+Felder.
+
+| Feld | |
+| --- | --- |
+| **Kachelung** | welche Kachelung, mit der Zahl, unter der `randsctile` sie kennt, und ihrem Namen: **3: Sechsecke**, wo es beginnt. Der Reiter Kachelungen von Hilfe → Referenz der Benutzerformeln hat ein Bild jeder |
+| **Färbung** | woher die Farbe kommt, überall: **Winkel von z**, wo es beginnt; **Winkel um die Kachelmitte**, der um die Mitte der Kachel, in der der Punkt liegt, der jede Kachel zu einem kleinen Farbrad macht; **zmag**, der Wert des Modus dieses Namens; **keine**, nur die Kacheln |
+| **Kacheln** | wie sich jede Kachel von ihren Nachbarn abhebt: **jede um einen eigenen Betrag verschoben**, entlang der Palette, wo es beginnt; **von der Mitte zum Rand schattiert**, dasselbe, und von der Mitte zum Rand um ein Achtel der Farben einer Drehung weiter verschoben, wie eine Fase; **mit betontem Rand**, dasselbe, und der äußere Teil der Kachel in der anderen Hälfte der Palette gezeichnet; **jede in einer eigenen Farbe**, eine Farbe für sich, woher die Farbe auch kommt |
+
+Der Modus steht zwischen den Modi, die sich wiederholen, und den Zerlegungen,
+und die Einstellungen beider erreichen ihn. **Frequenz (periodische Modi)** und
+**Funktion (periodische Modi)** erreichen die Kacheln, wie sie jedes
+periodische Argument des Inneren erreichen: bei Frequenz 2 sind die Kacheln
+halb so groß. Die [Einstellungen der
+Zerlegungen](#einstellungen-der-zerlegungen) des Inneren erreichen die beiden
+Winkel, die geschnitten und durchlaufen werden wie die der Zerlegungen.
+**Sektoren**, **Drehung**, **Wiederholungen**, **Richtung** und
+**Geschwindigkeit** erreichen beide; **Winkel von** erreicht nur den Winkel von
+`z`, da der um die Kachelmitte nichts damit anfangen kann; **Ringe pro
+Einheit** macht beim Winkel von `z` Ringe des Betrags, durch Frequenz und
+Funktion wie bei den Zerlegungen, und beim Winkel um die Mitte ebenso viele
+Ringe von der Mitte zum Rand, die der Form der Kachel folgen. **zmag**,
+**keine** und eine Kachel in eigener Farbe lesen keine davon.
+
+Der eigene Betrag einer Kachel kommt aus dem Hash, der sie benennt. Bei einem
+Winkel umfasst er so viel der Palette wie eine Drehung des Winkels, sodass eine
+verschobene Einstellung der Zerlegung die Farben der Kacheln lässt, wo sie
+waren; bei **zmag**, **keine** und einer Kachel in eigener Farbe umfasst er die
+ganze Palette, sodass **keine** mit **jede um einen eigenen Betrag verschoben**
+dasselbe ist wie **jede in einer eigenen Farbe**. **Winkel um die Kachelmitte**
+legt eine ganze Drehung der Farben in jede Kachel, was bei der Größe der
+Kacheln sehr viele Farben auf wenige Pixel sind: eine **Geschwindigkeit** unter
+eins oder eine Frequenz unter eins macht die Räder lesbar.
+
+Mit **Färbung** auf **Winkel von z**, **Kacheln** auf **jede um einen eigenen
+Betrag verschoben** und den Einstellungen der Zerlegungen, wo sie beginnen,
+zeichnet der Modus, was er zeichnete, bevor er eine Wahl hatte, bitgenau. Die
+Kachelungen, die sich nie wiederholen, werden jenseits von viertausend
+Millionen Kacheln vom Ursprung flach, ohne eigenen Betrag.
 
 Die periodischen Kachelungen kosten etwa so viel wie die anderen inneren Modi,
 120 bis 210 ns pro Pixel; die sich nie wiederholenden, die an jedem Punkt neu
-gesucht werden, 250 bis 490. Eine Position speichert den Modus als
-`(incoloring 30)` und die Kachelung als `(intessellation 39)`, die Kachelung
-nur, wenn sie nicht die der Sechsecke ist.
+gesucht werden, 250 bis 490. **Winkel um die Kachelmitte**, **von der Mitte zum
+Rand schattiert** und **mit betontem Rand** messen, wo der Punkt in seiner
+Kachel steht, was bei den periodischen Kachelungen bis zu zwei Drittel mehr
+kostet und bei den anderen wenig mehr. Eine Position speichert den Modus als
+`(incoloring 30)`, die Kachelung als `(intessellation 39)`, nur wenn sie nicht
+die der Sechsecke ist, und die Färbung als
+`(intessellstyle 'tile-angle 'edged)`, nur wenn sie verschoben wurde.
 
 ## Weitere Färbungsmodi
 
@@ -1684,8 +1717,9 @@ Benutzerformel tun es stattdessen.
 **Fraktal → Innere Färbung → Zerlegung**, und dasselbe unter Äußere Färbung,
 legt fest, wie die Zerlegungen die Drehung schneiden: binary decomposition und
 color decomposition außen, `sign(imag)`, `Decomposition-like` und
-`fbm + decomposition` innen. Mit jedem Feld, wo es beginnt — null, und eins,
-rechts und eins bei den letzten drei —, zeichnen sie wie immer, bitgenau.
+`fbm + decomposition` innen, und die Winkel von `tessellation`. Mit jedem Feld,
+wo es beginnt — null, und eins, rechts und eins bei den letzten drei —,
+zeichnen sie wie immer, bitgenau.
 
 | Feld | |
 | --- | --- |

@@ -117,7 +117,7 @@ static menudialog *uih_perturbationdialog, *uih_juliadialog,
     *uih_incoloringspeeddialog, *uih_outcoloringspeeddialog,
     *uih_indecompdialog, *uih_outdecompdialog,
     *uih_fbmscaledialog, *uih_tessellationdialog,
-    *uih_intessellationdialog,
+    *uih_intessellationdialog, *uih_intessellstyledialog,
     *uih_renderimgdialog, *palettepickerdialog, *loadgpldialog, *savegpldialog,
     *uih_palettecolorsdialog
 #ifdef USE_SFFE
@@ -372,14 +372,21 @@ void uih_registermenudialogs_i18n(void)
     DIALOGFLOAT_I(TR("Dialog", "Scaling factor (doublings per 10 iterations):"), 1);
     NULL_I();
 
-    /* The tiling the inside's tessellation mode lays over z: the dialog the
-     * menu opens, which chooses the mode too, and the number alone, the
-     * command a position saves it as. */
+    /* The inside's tessellation mode: the dialog the menu opens, which
+     * chooses the mode too -- the tiling by its name, what the colour comes
+     * from and how the tiles stand apart; see intessellcolor -- and the
+     * commands a position saves them as, the tiling by its number. */
     Register(uih_tessellationdialog);
-    DIALOGINT_I(TR("Dialog", "Tiling (1-45, as randsctile):"), 3);
+    DIALOGCHOICE_I(TR("Dialog", "Tiling:"), tessell_tilings, 2);
+    DIALOGCHOICE_I(TR("Dialog", "Coloring:"), tessell_colors, 0);
+    DIALOGCHOICE_I(TR("Dialog", "Tiles:"), tessell_fills, 0);
     NULL_I();
     Register(uih_intessellationdialog);
     DIALOGINT_I(TR("Dialog", "Tiling (1-45, as randsctile):"), 3);
+    NULL_I();
+    Register(uih_intessellstyledialog);
+    DIALOGCHOICE_I(TR("Dialog", "Coloring:"), tessell_colors, 0);
+    DIALOGCHOICE_I(TR("Dialog", "Tiles:"), tessell_fills, 0);
     NULL_I();
 
     /* The speed change after ITER as 1.8.0 had it: where the exponent begins
@@ -1359,16 +1366,21 @@ static void uih_setfbmscale(uih_context *c, dialogparam *p)
     uih_setfbmscaling(c, p[0].dint, (number_t)p[1].number);
 }
 
-/* Tessellation..., the mode and its tiling from one dialog, as Fractional
- * Brownian Motion... is; and intessellation, the tiling alone. */
+/* Tessellation..., the mode, its tiling and how it is coloured from one
+ * dialog, as Fractional Brownian Motion... is; and intessellation and
+ * intessellstyle, the tiling and the colouring alone. The dialog's tilings
+ * are counted from nought, randsctile's from one. */
 static int uih_isintessellation(struct uih_context *c)
 {
     return c != NULL && c->fcontext->incoloringmode == INCOLORING_TESSELLATION;
 }
 static menudialog *uih_gettessellationdialog(struct uih_context *c)
 {
-    if (c != NULL)
-        uih_tessellationdialog[0].defint = c->fcontext->intessellation;
+    if (c != NULL) {
+        uih_tessellationdialog[0].defint = c->fcontext->intessellation - 1;
+        uih_tessellationdialog[1].defint = c->fcontext->intessellcolor;
+        uih_tessellationdialog[2].defint = c->fcontext->intessellfill;
+    }
     return uih_tessellationdialog;
 }
 static menudialog *uih_getintessellationdialog(struct uih_context *c)
@@ -1377,12 +1389,23 @@ static menudialog *uih_getintessellationdialog(struct uih_context *c)
         uih_intessellationdialog[0].defint = c->fcontext->intessellation;
     return uih_intessellationdialog;
 }
-/* A dialog of one field hands its value over as it is, not in a
- * dialogparam: see menu_activate. */
-static void uih_setcolortessellation(uih_context *c, int tiling)
+static menudialog *uih_getintessellstyledialog(struct uih_context *c)
+{
+    if (c != NULL) {
+        uih_intessellstyledialog[0].defint = c->fcontext->intessellcolor;
+        uih_intessellstyledialog[1].defint = c->fcontext->intessellfill;
+    }
+    return uih_intessellstyledialog;
+}
+static void uih_setcolortessellation(uih_context *c, dialogparam *p)
 {
     uih_setincoloringmode(c, INCOLORING_TESSELLATION);
-    uih_settessellation(c, tiling);
+    uih_settessellation(c, p[0].dint + 1);
+    uih_settessellationstyle(c, p[1].dint, p[2].dint);
+}
+static void uih_settessellstyle(uih_context *c, dialogparam *p)
+{
+    uih_settessellationstyle(c, p[0].dint, p[1].dint);
 }
 
 /* The speed change after ITER, from its dialog; the mode is the index of the
@@ -2470,9 +2493,10 @@ static menuitem menuitems2[] = {
                QT_TRANSLATE_NOOP("Menu", "Fractional Brownian Motion"),
                "outfbmscale", MENUFLAG_INTERRUPT | MENUFLAG_NOMENU,
                uih_setfbmscale, uih_getfbmscaledialog),
-    /* The tiles of one of randsctile's tilings inside, the mode and the
-     * tiling in one dialog, ticked while it is the mode in use; the tiling
-     * alone, out of the menu, is the command a position saves. */
+    /* The tiles of one of randsctile's tilings inside, the mode, the tiling
+     * and its colouring in one dialog, ticked while it is the mode in use;
+     * the tiling and the colouring, out of the menu, are the commands a
+     * position saves. */
     MENUCDIALOGCB("mincoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Tessellation"),
                  "mincolortessellation",
                  UI | MENUFLAG_RADIO | MENUFLAG_INTERRUPT,
@@ -2481,6 +2505,9 @@ static menuitem menuitems2[] = {
     MENUCDIALOG("mincoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Tessellation"),
                "intessellation", MENUFLAG_INTERRUPT | MENUFLAG_NOMENU,
                uih_settessellation, uih_getintessellationdialog),
+    MENUCDIALOG("mincoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Tessellation"),
+               "intessellstyle", MENUFLAG_INTERRUPT | MENUFLAG_NOMENU,
+               uih_settessellstyle, uih_getintessellstyledialog),
     /* The function, the speed, the shift and the speed change after ITER, in
      * one dialog a side. */
     MENUCDIALOG("mincoloring", NULL, QT_TRANSLATE_NOOP("Menu", "Coloring speed"),

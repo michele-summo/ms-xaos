@@ -4335,8 +4335,10 @@ sfarg *sfrandsctile(sfarg *const p)
 /* The tile alone, for the inside's tessellation mode; see randsctile.h. The
  * same search randsctile_at makes, with no seed, size or skew around it: a
  * salt of its own for each tiling, so that two of them name their tiles
- * apart, and nothing asked of the tile but which it is. */
-int randsctile_name(int kind, number_t x, number_t y, uint64_t *name)
+ * apart, and of the tile only what is wanted -- which it is, and with want
+ * where in it the point stands. */
+static int randsctile_find(int kind, number_t x, number_t y, int want,
+                           struct randsctile_hit *hit)
 {
     if (kind < 1 || kind > RANDSCTILE_KINDS)
         return 0;
@@ -4351,35 +4353,52 @@ int randsctile_name(int kind, number_t x, number_t y, uint64_t *name)
     if (how != RANDSCTILE_TABLE && how != RANDSCTILE_VORONOI &&
         !(fabs(lx) < RANDSCTILE_FAR && fabs(ly) < RANDSCTILE_FAR))
         return 0;
-    struct randsctile_hit hit = {0, 0, 0, 0};
-    int found = 0;
     switch (how) {
         case RANDSCTILE_TABLE:
-            found = randsctile_table(which, X, Y, salt, 0, &hit);
-            break;
+            return randsctile_table(which, X, Y, salt, want, hit);
         case RANDSCTILE_VORONOI: {
             number_t pout, pbx, pby;
-            hit.name = randsc_remix(
-                randscp_nearest(cx, cy, u, v, salt, 0, &pout, &pbx, &pby));
-            found = 1;
-            break;
+            hit->name = randsc_remix(
+                randscp_nearest(cx, cy, u, v, salt, want, &pout, &pbx, &pby));
+            if (want) {
+                hit->out = (double)pout;
+                hit->rx = -(double)pbx;
+                hit->ry = -(double)pby;
+            }
+            return 1;
         }
         case RANDSCTILE_GRID_OF:
-            found = randsctile_grid(which, lx, ly, salt, 0, &hit);
-            break;
+            return randsctile_grid(which, lx, ly, salt, want, hit);
         case RANDSCTILE_KITES:
-            found = randsctile_kites(lx, ly, salt, 0, &hit);
-            break;
+            return randsctile_kites(lx, ly, salt, want, hit);
         case RANDSCTILE_PINWHEEL:
-            found = randsctile_pinwheel(lx, ly, salt, 0, &hit);
-            break;
+            return randsctile_pinwheel(lx, ly, salt, want, hit);
         case RANDSCTILE_CHAIR:
-            found = randsctile_chair(lx, ly, salt, 0, &hit);
-            break;
+            return randsctile_chair(lx, ly, salt, want, hit);
     }
-    if (found)
-        *name = hit.name;
-    return found;
+    return 0;
+}
+
+int randsctile_name(int kind, number_t x, number_t y, uint64_t *name)
+{
+    struct randsctile_hit hit = {0, 0, 0, 0};
+    if (!randsctile_find(kind, x, y, 0, &hit))
+        return 0;
+    *name = hit.name;
+    return 1;
+}
+
+int randsctile_place(int kind, number_t x, number_t y, uint64_t *name,
+                     double *out, double *rx, double *ry)
+{
+    struct randsctile_hit hit = {0, 0, 0, 0};
+    if (!randsctile_find(kind, x, y, 1, &hit))
+        return 0;
+    *name = hit.name;
+    *out = hit.out;
+    *rx = hit.rx;
+    *ry = hit.ry;
+    return 1;
 }
 
 sfarg *sfgamma(sfarg *const p)
