@@ -1343,7 +1343,15 @@ int main(void)
             {"randsct", {0x224342c97c8b0800ULL, 0x224342c97c8b0800ULL}},
         };
         const int which = NUMBER_MANTISSA_BITS == 113 ? 1 : 0;
-        for (int g = 0; g < 5; g++) {
+        /* Recorded at 64 and 113 bits only. A long double that is double, as
+         * on Apple Silicon, lands on other cell edges and has nothing to be
+         * compared with; the behaviour checked above still holds there. */
+        const bool recorded =
+            NUMBER_MANTISSA_BITS == 64 || NUMBER_MANTISSA_BITS == 113;
+        if (!recorded)
+            printf("skip   the golden sums: none recorded at %d bits\n",
+                   NUMBER_MANTISSA_BITS);
+        for (int g = 0; recorded && g < 5; g++) {
             char expr[64];
             sprintf(expr, "%s({7,0},{0.4,0.6},{0.9,0.95})", golden[g].name);
             sffe *f = compile(expr);
@@ -2038,7 +2046,13 @@ int main(void)
                 number_t sector = (number_t)2 * (number_t)M_PI / 6;
                 number_t seam = 0;
                 for (int r = 1; r <= 40; r++) {
-                    number_t rad = (number_t)r / 20;
+                    /* Half a step out, so that no radius is a whole number
+                     * of cells: one that is lands both probes of an edge on a
+                     * cell's own edge, where the noise jumps whatever the
+                     * fold does, and which side each falls on is then down to
+                     * the last bit of a cosine -- a 53-bit long double, as on
+                     * Apple Silicon, put them on opposite sides. */
+                    number_t rad = ((number_t)r + (number_t)0.5) / 20;
                     for (int j = 0; j < 12; j++) {
                         number_t a = sector / 2 * j, e = (number_t)1 / 1000000000;
                         cmplx u = atc(wedged, rad * ncos(a - e), rad * nsin(a - e), 0);

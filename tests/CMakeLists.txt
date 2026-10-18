@@ -38,6 +38,23 @@ function(xaos_add_test_binary target precision)
    endif()
 endfunction()
 
+# The mantissa width of long double, which the recorded engine checksums for
+# USE_LONG_DOUBLE depend on (see engine_ref below). Checked by compiling rather
+# than by running, so that it works when cross-compiling too.
+include(CheckCXXSourceCompiles)
+set(XAOS_LDBL_BITS "")
+foreach(bits 64 53 113)
+   check_cxx_source_compiles("
+      #include <cfloat>
+      static_assert(LDBL_MANT_DIG == ${bits}, \"\");
+      int main() { return 0; }"
+      XAOS_LDBL_IS_${bits})
+   if(XAOS_LDBL_IS_${bits})
+      set(XAOS_LDBL_BITS ${bits})
+      break()
+   endif()
+endforeach()
+
 foreach(prec ${XAOS_TEST_PRECISIONS})
    string(TOLOWER ${prec} suffix)
 
@@ -258,7 +275,16 @@ foreach(prec ${XAOS_TEST_PRECISIONS})
    # long double reference "fails" a correct quad build. Each precision that
    # has a recorded file gets compared; one that does not is still built and
    # run, which is enough to catch a crash.
-   set(engine_expected ${CMAKE_CURRENT_SOURCE_DIR}/engine_ref.${suffix}.expected)
+   #
+   # long double is itself more than one precision: the recorded file is for
+   # the 64-bit mantissa of x87, and on Apple Silicon (53 bits) or Linux on ARM
+   # (113) a long double build looks for one named after its own width.
+   set(engine_record ${suffix})
+   if(prec STREQUAL "USE_LONG_DOUBLE" AND NOT XAOS_LDBL_BITS STREQUAL "64")
+      set(engine_record ${suffix}.ldbl${XAOS_LDBL_BITS})
+   endif()
+   set(engine_expected
+       ${CMAKE_CURRENT_SOURCE_DIR}/engine_ref.${engine_record}.expected)
    if(EXISTS ${engine_expected})
       add_test(NAME engine_unchanged_${suffix}
                COMMAND ${CMAKE_COMMAND}
@@ -270,7 +296,7 @@ foreach(prec ${XAOS_TEST_PRECISIONS})
       message(STATUS
          "tests: no recorded checksums for ${prec}; engine_ref_${suffix} is "
          "run but not compared. Record them with:\n"
-         "    engine_ref_${suffix} > tests/engine_ref.${suffix}.expected")
+         "    engine_ref_${suffix} > tests/engine_ref.${engine_record}.expected")
    endif()
 endforeach()
 
@@ -289,4 +315,10 @@ if(TARGET XaoS)
                     -DPOSITIONS=${CMAKE_CURRENT_SOURCE_DIR}/positions
                     -DWORK=${CMAKE_CURRENT_BINARY_DIR}/roundtrip
                     -P ${CMAKE_CURRENT_SOURCE_DIR}/roundtrip.cmake)
+   # -render opens no window, but Qt still wants a display to start on Linux,
+   # and a build machine or a CI runner has none.
+   if(UNIX AND NOT APPLE)
+      set_tests_properties(position_roundtrip PROPERTIES
+                           ENVIRONMENT QT_QPA_PLATFORM=offscreen)
+   endif()
 endif()

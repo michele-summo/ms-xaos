@@ -11,7 +11,7 @@ QMAKE_CXXFLAGS += -Wall -Wextra -Wpedantic
 
 TEMPLATE = app
 
-QT += widgets
+QT += widgets printsupport
 
 macx {
     TARGET = XaoS

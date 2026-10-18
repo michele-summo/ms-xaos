@@ -3,3 +3,6 @@ SOURCES += \
     $$PWD/gsl_complex_math.c \
     $$PWD/sffe.cpp \
     $$PWD/sffe_cmplx_gsl.cpp
+
+HEADERS += \
+    $$PWD/randsctile_tables.h

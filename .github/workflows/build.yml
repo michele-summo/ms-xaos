@@ -1,55 +1,88 @@
 name: build
 
-on: [push]
+on: [push, pull_request, workflow_dispatch]
+
+# The tests are run everywhere except the two that time the noise and the
+# orbit history (randsc_speed, phist_speed): they compare against a budget in
+# milliseconds, which a shared runner does not keep to.
+env:
+  CTEST_EXCLUDE: _speed_
 
 jobs:
-  linux-qmake:
+  linux-cmake:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
     - name: prerequisites
-      run: sudo apt update && sudo apt install build-essential qttools5-dev-tools qt6-base-dev libgl1-mesa-dev
-    - name: qmake
-      run: qmake6
-    - name: make
-      run: make
+      run: sudo apt update && sudo apt install build-essential ninja-build qt6-base-dev qt6-tools-dev qt6-tools-dev-tools qt6-l10n-tools linguist-qt6 libgl1-mesa-dev
+    - name: cmake
+      run: cmake -S . -B cbuild -G Ninja
+    - name: build
+      run: cmake --build cbuild
+    - name: test
+      run: ctest --test-dir cbuild --output-on-failure -j4 -E "$CTEST_EXCLUDE"
 
   linux-cmake-deepzoom:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
     - name: prerequisites
-      run: sudo apt update && sudo apt install build-essential qt6-base-dev qt6-tools-dev qt6-tools-dev-tools qt6-l10n-tools linguist-qt6 libgl1-mesa-dev
+      run: sudo apt update && sudo apt install build-essential ninja-build qt6-base-dev qt6-tools-dev qt6-tools-dev-tools qt6-l10n-tools linguist-qt6 libgl1-mesa-dev
     - name: cmake
-      run: mkdir cbuild; cd cbuild; cmake -DDEEPZOOM=ON ..
+      run: cmake -S . -B cbuild -G Ninja -DDEEPZOOM=ON -DBUILD_TESTING=OFF
+    - name: build
+      run: cmake --build cbuild
+
+  linux-qmake:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: prerequisites
+      run: sudo apt update && sudo apt install build-essential qt6-base-dev qt6-tools-dev-tools qt6-l10n-tools libgl1-mesa-dev
+    - name: qmake
+      run: qmake6
     - name: make
-      run: cd cbuild; make
+      run: make -j4
+
+  # macos-latest is Apple Silicon. Apple's clang has no __float128, so only
+  # XaoS is built there, without XaoS-quad, and its long double is a double.
+  mac-cmake:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: install-qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: '6.8.*'
+        cache: true
+    - name: cmake
+      run: cmake -S . -B cbuild -DMACDEPLOYQT_ARGS=-dmg
+    - name: build
+      run: cmake --build cbuild -j4
+    - name: test
+      run: ctest --test-dir cbuild --output-on-failure -j4 -E "$CTEST_EXCLUDE"
+    - name: deploy
+      run: cmake --build cbuild --target deploy
+    - name: upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: ms-xaos-macos
+        path: bin/XaoS.dmg
+        if-no-files-found: error
 
   mac-qmake:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
     - name: install-qt
-      uses: jurplel/install-qt-action@v3
+      uses: jurplel/install-qt-action@v4
       with:
-        version: '6.2.4'
+        version: '6.8.*'
+        cache: true
     - name: qmake
       run: qmake
     - name: make
-      run: make
-
-  mac-cmake:
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v1
-    - name: install-qt
-      uses: jurplel/install-qt-action@v3
-      with:
-        version: '6.2.4'
-    - name: cmake
-      run: mkdir cbuild; cd cbuild; cmake ..
-    - name: make
-      run: cd cbuild; make
+      run: make -j4
 
 # This requires too much disk space (more than 40 GB), so it is disabled for now:
 

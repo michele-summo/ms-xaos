@@ -73,9 +73,19 @@ typedef __float128 number_t;
 #define NUMBER_MANTISSA_BITS 113
 #else
 #ifdef USE_LONG_DOUBLE
+// long double is not the same type everywhere: 64 bits of mantissa on x87
+// (Windows with MinGW, Linux and macOS on Intel), but only 53 on Apple Silicon,
+// where it is double, and 113 on Linux for ARM. The header says which.
+#include <float.h>
 typedef long double number_t;
+#if LDBL_MANT_DIG == 53
+#define NUMBER_DIGITS 17
+#elif LDBL_MANT_DIG == 113
+#define NUMBER_DIGITS 36
+#else
 #define NUMBER_DIGITS 21 /* 64 bits on x87 */
-#define NUMBER_MANTISSA_BITS 64
+#endif
+#define NUMBER_MANTISSA_BITS LDBL_MANT_DIG
 #else
 typedef double number_t;
 #define NUMBER_DIGITS 17 /* 53 bits */
