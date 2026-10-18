@@ -77,6 +77,28 @@ The original project:
 - [Users' Google Group](http://groups.google.com/group/xaos-users)
 - [Developer's Guide](https://github.com/xaos-project/XaoS/wiki/Developer's-Guide)
 
+Building
+--------
+
+MS XaoS builds with CMake and Qt 6 on Windows (MinGW), Linux and macOS. On
+Ubuntu 24.04:
+
+    sudo apt install build-essential cmake qt6-base-dev qt6-tools-dev \
+                     qt6-tools-dev-tools qt6-l10n-tools linguist-qt6 libgl1-mesa-dev
+    cmake -S . -B build && cmake --build build -j`nproc`
+    ctest --test-dir build
+
+leaves `bin/XaoS` and `bin/XaoS-quad`. On macOS, with Qt from Homebrew:
+
+    brew install qt cmake
+    cmake -S . -B build -DCMAKE_PREFIX_PATH=$(brew --prefix qt)
+    cmake --build build -j`sysctl -n hw.ncpu`
+
+leaves `bin/XaoS.app`; there is no XaoS-quad on a Mac, as Apple's compiler has
+no 128-bit floating point. The notes at the top of
+[CMakeLists.txt](CMakeLists.txt) say more, including how to make a bundle that
+runs without Qt installed.
+
 Bugs and Support
 ----------------
 

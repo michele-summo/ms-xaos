@@ -49,6 +49,15 @@ static const number_t LAMBERTW_TOLERANCE = 1e-31;
  * bailout of two, where a fractal actually lives, and one twice as far. */
 static const number_t ERF_NEAR_TOLERANCE = 1e-32;
 static const number_t ERF_FAR_TOLERANCE = 1e-27;
+#elif NUMBER_MANTISSA_BITS < 64
+/* long double that is only double, as on Apple Silicon: the same margins over
+ * the type's epsilon as the x87 build below has over its own, 2.2e-16 here
+ * against 1.1e-19 there, and erf far out loses its seven digits from sixteen
+ * rather than from nineteen. */
+static const number_t GAMMA_TOLERANCE = 1e-13;
+static const number_t LAMBERTW_TOLERANCE = 1e-14;
+static const number_t ERF_NEAR_TOLERANCE = 1e-14;
+static const number_t ERF_FAR_TOLERANCE = 1e-9;
 #else
 /* The Lanczos ceiling, which is where this sits at any precision. */
 static const number_t GAMMA_TOLERANCE = 1e-13;

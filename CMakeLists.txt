@@ -59,6 +59,31 @@
 #   building it, or -DDEEPZOOM=ON to make the main binary quad instead, in
 #   which case no second one is built.
 #
+# To build XaoS on macOS:
+#
+# * install Qt 6 and CMake, for example with Homebrew (brew install qt cmake),
+#   or Qt from the online installer,
+#
+# * type:
+#
+#   cmake -S . -B build -DCMAKE_PREFIX_PATH=$(brew --prefix qt) && \
+#   cmake --build build -j`sysctl -n hw.ncpu`
+#
+#   (with the online installer, CMAKE_PREFIX_PATH is <PATH_TO_QT_SDK>/Qt/6.10.0/macos).
+#
+# * The result is bin/XaoS.app, with the catalogs, the tutorial and the
+#   examples already inside it. "open bin/XaoS.app" starts it.
+#
+# * To make it run on a Mac without Qt, and to have a disk image of it:
+#
+#   cmake -S . -B build -DMACDEPLOYQT_ARGS=-dmg && cmake --build build --target deploy
+#
+#   which leaves bin/XaoS.dmg beside it.
+#
+# * Apple's compiler has no __float128, so XaoS-quad is not built there; and on
+#   Apple Silicon long double is the same as double, so XaoS zooms to about
+#   1e15 rather than 1e18 before the pixels come apart.
+#
 # Notes if you use Qt Creator to build XaoS via cmake:
 #
 # * You may get an error like 'No CMake configuration for build type "Debug" found.'
@@ -86,7 +111,13 @@ cmake_minimum_required(VERSION 3.14.0)
 # set(CMAKE_C_COMPILER gcc-13.2)
 # set(CMAKE_CXX_COMPILER g++-13.2)
 
-project(XaoS)
+# The version is written once, in config.h, where the About box reads it; the
+# bundle on macOS and anything else here that needs it takes it from there.
+file(STRINGS ${CMAKE_SOURCE_DIR}/src/include/config.h XAOS_VERSION_LINE
+     REGEX "^#define XaoS_VERSION_BASE ")
+string(REGEX REPLACE ".*\"(.*)\".*" "\\1" XAOS_VERSION "${XAOS_VERSION_LINE}")
+
+project(XaoS VERSION ${XAOS_VERSION})
 
 option(DEEPZOOM "Build the XaoS binary itself at 128-bit precision" OFF)
 option(DIAG "Also build XaoS-diag, which reports overlay/calculation ordering" OFF)
@@ -170,6 +201,11 @@ include_directories(
 
 # set the Application icon, the first line is the property added to Info.plist
 set(MACOSX_BUNDLE_ICON_FILE XaoS.icns)
+set(MACOSX_BUNDLE_BUNDLE_NAME "MS XaoS")
+set(MACOSX_BUNDLE_GUI_IDENTIFIER "it.michelesummo.ms-xaos")
+set(MACOSX_BUNDLE_SHORT_VERSION_STRING ${XAOS_VERSION})
+set(MACOSX_BUNDLE_BUNDLE_VERSION ${XAOS_VERSION})
+set(MACOSX_BUNDLE_COPYRIGHT "GNU General Public License, version 2 or later")
 set(XaoS_ICON ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/XaoS.icns)
 set_source_files_properties(${XaoS_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
@@ -302,6 +338,47 @@ else()
        endif()
     endif(WIN32)
 
+    # On macOS each binary is an application bundle, XaoS.app in bin/, and a
+    # bundle looks for the catalogs, the tutorial and the examples in its own
+    # Resources folder (xio_getcatalog and its relatives try ../Resources from
+    # the executable). They are copied in after every link, so the bundle that
+    # comes out of the build opens on its own, from anywhere, without Qt
+    # Creator or a working directory to find them. The examples go in flat, as
+    # tools/deploy-mac has always put them.
+    if(APPLE)
+       file(GLOB XAOS_BUNDLE_EXAMPLES ${CMAKE_CURRENT_SOURCE_DIR}/examples/*/*.xpf)
+       foreach(t ${XAOS_BINARIES})
+          set(res $<TARGET_BUNDLE_CONTENT_DIR:${t}>/Resources)
+          add_custom_command(TARGET ${t} POST_BUILD
+             COMMAND ${CMAKE_COMMAND} -E make_directory ${res}/examples
+             COMMAND ${CMAKE_COMMAND} -E copy_directory
+                     ${CMAKE_CURRENT_SOURCE_DIR}/catalogs ${res}/catalogs
+             COMMAND ${CMAKE_COMMAND} -E copy_directory
+                     ${CMAKE_CURRENT_SOURCE_DIR}/tutorial ${res}/tutorial
+             COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                     ${XAOS_BUNDLE_EXAMPLES} ${res}/examples
+             VERBATIM)
+       endforeach()
+
+       # 'deploy' puts the Qt frameworks inside the bundles, as windeployqt
+       # does beside the .exe on Windows, so that bin/XaoS.app runs on a Mac
+       # without Qt. -DMACDEPLOYQT_ARGS=-dmg also makes a disk image of it.
+       find_program(MACDEPLOYQT macdeployqt HINTS ${QT_BIN_DIR}
+                    ${_qt_bin_dir} ${Qt6_DIR}/../../../bin)
+       if(MACDEPLOYQT)
+          set(deploy_cmds "")
+          foreach(t ${XAOS_BINARIES})
+             list(APPEND deploy_cmds
+                  COMMAND ${MACDEPLOYQT} $<TARGET_BUNDLE_DIR:${t}>
+                          ${MACDEPLOYQT_ARGS})
+          endforeach()
+          add_custom_target(deploy DEPENDS ${XAOS_BINARIES} ${deploy_cmds}
+                            COMMENT "Putting the Qt frameworks into the bundles")
+       else()
+          message(STATUS "macdeployqt not found; the 'deploy' target is unavailable")
+       endif()
+    endif(APPLE)
+
     # 'randsctile-thumbnails' redraws the pictures in the Tilings tab of the
     # formula reference, into src/ui/images/tilings, from randsctile itself.
     # Not part of the build: the pictures are kept in the tree, and the
@@ -349,10 +426,11 @@ if (EMSCRIPTEN)
         COMMENT "Running postprocess-web..."
     )
 else()
-# install bundle
-install(TARGETS XaoS DESTINATION bin)
+# install bundle (a bundle on macOS, which carries its own data, so it goes
+# to the top of the installation path rather than into bin/)
+install(TARGETS XaoS BUNDLE DESTINATION . RUNTIME DESTINATION bin)
 if(BUILD_QUAD_BINARY)
-   install(TARGETS XaoS-quad DESTINATION bin)
+   install(TARGETS XaoS-quad BUNDLE DESTINATION . RUNTIME DESTINATION bin)
 endif(BUILD_QUAD_BINARY)
 
 # install catalogs and tutorial

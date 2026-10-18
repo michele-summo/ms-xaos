@@ -3,6 +3,9 @@ INCLUDEPATH += $$PWD
 HEADERS += \
     $$PWD/cmplx.h \
     $$PWD/config.h \
+    $$PWD/fbm_contrast_table.h \
+    $$PWD/fbm_noise.h \
+    $$PWD/number_math.h \
     $$PWD/btrace.h \
     $$PWD/c256.h \
     $$PWD/catalog.h \
