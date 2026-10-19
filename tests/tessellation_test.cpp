@@ -685,6 +685,50 @@ int main()
         check(agree_out, "and outside");
     }
 
+    /* --- the same distance on every palette, in every style -------------
+     *
+     * A tile's own amount is as much as a turn of the angle takes, 20000,
+     * whatever the colour comes from and whatever the size of the palette:
+     * a flat tile, zmag and none took the whole palette once, which made the
+     * same intensity move a tile eighty places on one palette and a third of
+     * one on another. So every style gives the same value on a palette of
+     * 200 entries and on one of 65534, and the tile's turn moves it by the
+     * intensity times 20000 times the turn. */
+    {
+        const int size = cpalette.size;
+        int same = 1, scaled = 1;
+        auto never = []() { return 0; };
+        for (int c : {TESSELL_ANGLE, TESSELL_MIDDLE, TESSELL_ZMAG, TESSELL_NONE})
+            for (int f : {TESSELL_TURNED, TESSELL_SHADED, TESSELL_EDGED,
+                          TESSELL_FLAT})
+                for (number_t much : {(number_t)0.01, (number_t)1}) {
+                    number_t v[2], bare = 0;
+                    for (int k = 0; k < 2; k++) {
+                        cpalette.size = k ? 65535 : 200;
+                        v[k] = tessell_colour(c, f, much, (number_t)0.37, 0.25,
+                                              0.1, -0.2, (number_t)0.3,
+                                              (number_t)-0.4, (number_t)5000,
+                                              0, 0, 1, 0, 1, 0, never);
+                        bare = tessell_colour(c, f, 0, (number_t)0.37, 0.25,
+                                              0.1, -0.2, (number_t)0.3,
+                                              (number_t)-0.4, (number_t)5000,
+                                              0, 0, 1, 0, 1, 0, never);
+                    }
+                    if (v[0] != v[1])
+                        same = 0;
+                    /* out at a quarter: no edge, and a bevel of 625 */
+                    const number_t own =
+                        much * ((number_t)0.37 * 20000 +
+                                (f == TESSELL_SHADED ? (number_t)625 : 0));
+                    const number_t d = v[0] - bare - own;
+                    if (d > (number_t)1e-6 || d < (number_t)-1e-6)
+                        scaled = 0;
+                }
+        cpalette.size = size;
+        check(same, "every style moves a tile as far on any palette");
+        check(scaled, "by the intensity times a turn of the angle's colours");
+    }
+
     /* --- the dialog's names ---------------------------------------------- */
     {
         int n = 0, numbered = 1;

@@ -1508,8 +1508,8 @@ diálogo tiene cuatro campos.
 | --- | --- |
 | **Teselado** | qué teselado, con el número con que lo conoce `randsctile` y su nombre: **3: hexágonos**, donde empieza. La pestaña Teselados de Ayuda → Referencia de fórmulas de usuario tiene una imagen de cada uno |
 | **Coloreado** | de dónde viene el color, en todas partes: **ángulo de z**, donde empieza; **ángulo en torno al centro de la tesela**, el de la tesela en la que cae el punto, que hace de cada tesela una pequeña rueda de color; **zmag**, el valor del modo de ese nombre; **ninguno**, nada más que las teselas |
-| **Teselas** | cómo se separa cada tesela de sus vecinas: **cada una desplazada en una cantidad propia**, a lo largo de la paleta, donde empieza; **sombreadas del centro al borde**, lo mismo, y desplazada un octavo más de los colores de una vuelta del centro al borde, como un bisel; **con el borde marcado**, lo mismo, y la parte exterior de la tesela dibujada en la otra mitad de la paleta; **un color liso cada una**, un color propio, venga de donde venga el color |
-| **Intensidad** | cuánto se separan las teselas a lo largo de la paleta: multiplica cada cantidad propia de una tesela, su desplazamiento, el bisel de **sombreadas del centro al borde** y el borde de **con el borde marcado**. En `1`, donde empieza, las teselas son como se describen aquí; en `0` solo queda aquello de lo que viene el color, así que **ángulo de z** es una descomposición simple y **zmag** el zmag simple; en medio las teselas apenas se ven, y por encima de `1` se ven más. Medido con **Vista → Sonda de paleta (haz clic en un punto)**, en `1` una tesela de **ángulo de z** y **cada una desplazada en una cantidad propia** se desplaza hasta unos diez lugares, así que `0.1` la desplaza hasta uno y `0.2` hasta dos; con **un color liso cada una**, **zmag** o **ninguno** se desplaza hasta la paleta entera, 8191 lugares en la predeterminada, así que allí un lugar es cerca de `0.0001` |
+| **Teselas** | cómo se separa cada tesela de sus vecinas: **cada una desplazada en una cantidad propia**, a lo largo de la paleta, donde empieza; **sombreadas del centro al borde**, lo mismo, y desplazada un octavo más de los colores de una vuelta del centro al borde, como un bisel; **con el borde marcado**, lo mismo, y la parte exterior de la tesela desplazada la mitad de los colores de una vuelta más; **un color liso cada una**, un color propio, venga de donde venga el color |
+| **Intensidad** | cuánto se separan las teselas a lo largo de la paleta: multiplica cada cantidad propia de una tesela, su desplazamiento, el bisel de **sombreadas del centro al borde** y el borde de **con el borde marcado**. En `1`, donde empieza, las teselas son como se describen aquí; en `0` solo queda aquello de lo que viene el color, así que **ángulo de z** es una descomposición simple y **zmag** el zmag simple; en medio las teselas apenas se ven, y por encima de `1` se ven más. Medido con **Vista → Sonda de paleta (haz clic en un punto)**, en `1` una tesela se desplaza hasta unos diez lugares, en cualquier estilo y en cualquier paleta, así que `0.1` la desplaza hasta un lugar y `0.01` hasta una décima |
 
 El modo está entre los modos que se repiten y las descomposiciones, y los
 ajustes de ambos lo alcanzan. **Frecuencia (modos periódicos)** y **Función
@@ -1525,15 +1525,16 @@ frecuencia y la función como en las descomposiciones, y para el ángulo en torn
 al centro otros tantos anillos del centro al borde, que siguen la forma de la
 tesela. **zmag**, **ninguno** y una tesela lisa no leen ninguno de ellos.
 
-La cantidad propia de una tesela viene del hash que la nombra. Para un ángulo
-abarca tanta paleta como una vuelta del ángulo, así que un ajuste de la
-descomposición movido deja los colores de las teselas donde estaban; para
-**zmag**, **ninguno** y una tesela lisa abarca la paleta entera, así que
-**ninguno** con **cada una desplazada en una cantidad propia** es lo mismo que
-**un color liso cada una**. **ángulo en torno al centro de la tesela** pone una
-vuelta entera de colores en cada tesela, que al tamaño que tienen las teselas
-son muchísimos colores en pocos píxeles: una **Velocidad** por debajo de uno, o
-una frecuencia por debajo de uno, hace legibles las ruedas.
+La cantidad propia de una tesela viene del hash que la nombra. Venga de donde
+venga el color, abarca tanta paleta como una vuelta del ángulo, unos diez
+lugares de la sonda de paleta en cualquier paleta, así que un ajuste de la
+descomposición movido deja los colores de las teselas donde estaban y la
+intensidad desplaza igual todos los estilos; **ninguno** con **cada una
+desplazada en una cantidad propia** es lo mismo que **un color liso cada una**.
+**ángulo en torno al centro de la tesela** pone una vuelta entera de colores en
+cada tesela, que al tamaño que tienen las teselas son muchísimos colores en
+pocos píxeles: una **Velocidad** por debajo de uno, o una frecuencia por debajo
+de uno, hace legibles las ruedas.
 
 Con **Coloreado** en **ángulo de z**, **Teselas** en **cada una desplazada en
 una cantidad propia** y los ajustes de las descomposiciones donde empiezan, el

@@ -1568,8 +1568,8 @@ Felder.
 | --- | --- |
 | **Kachelung** | welche Kachelung, mit der Zahl, unter der `randsctile` sie kennt, und ihrem Namen: **3: Sechsecke**, wo es beginnt. Der Reiter Kachelungen von Hilfe → Referenz der Benutzerformeln hat ein Bild jeder |
 | **Färbung** | woher die Farbe kommt, überall: **Winkel von z**, wo es beginnt; **Winkel um die Kachelmitte**, der um die Mitte der Kachel, in der der Punkt liegt, der jede Kachel zu einem kleinen Farbrad macht; **zmag**, der Wert des Modus dieses Namens; **keine**, nur die Kacheln |
-| **Kacheln** | wie sich jede Kachel von ihren Nachbarn abhebt: **jede um einen eigenen Betrag verschoben**, entlang der Palette, wo es beginnt; **von der Mitte zum Rand schattiert**, dasselbe, und von der Mitte zum Rand um ein Achtel der Farben einer Drehung weiter verschoben, wie eine Fase; **mit betontem Rand**, dasselbe, und der äußere Teil der Kachel in der anderen Hälfte der Palette gezeichnet; **jede in einer eigenen Farbe**, eine Farbe für sich, woher die Farbe auch kommt |
-| **Intensität** | wie weit die Kacheln auf der Palette auseinanderliegen: sie vervielfacht jeden eigenen Betrag einer Kachel, ihre Verschiebung, die Abschrägung von **von der Mitte zum Rand schattiert** und den Rand von **mit betontem Rand**. Bei `1`, wo sie beginnt, sind die Kacheln wie hier beschrieben; bei `0` bleibt nur, woher die Farbe kommt, also ist **Winkel von z** eine einfache Zerlegung und **zmag** einfaches zmag; dazwischen sind die Kacheln schwach zu sehen, über `1` stärker. Mit **Ausschnitt → Palettensonde (auf einen Punkt klicken)** gemessen, wird bei `1` eine Kachel von **Winkel von z** und **jede um einen eigenen Betrag verschoben** um bis zu etwa zehn Stellen verschoben, also bei `0.1` um bis zu eine und bei `0.2` um bis zu zwei; mit **jede in einer eigenen Farbe**, **zmag** oder **keine** um bis zur ganzen Palette, 8191 Stellen bei der Standardpalette, sodass eine Stelle dort etwa `0.0001` ist |
+| **Kacheln** | wie sich jede Kachel von ihren Nachbarn abhebt: **jede um einen eigenen Betrag verschoben**, entlang der Palette, wo es beginnt; **von der Mitte zum Rand schattiert**, dasselbe, und von der Mitte zum Rand um ein Achtel der Farben einer Drehung weiter verschoben, wie eine Fase; **mit betontem Rand**, dasselbe, und der äußere Teil der Kachel um die Hälfte der Farben einer Drehung weiter verschoben; **jede in einer eigenen Farbe**, eine Farbe für sich, woher die Farbe auch kommt |
+| **Intensität** | wie weit die Kacheln auf der Palette auseinanderliegen: sie vervielfacht jeden eigenen Betrag einer Kachel, ihre Verschiebung, die Abschrägung von **von der Mitte zum Rand schattiert** und den Rand von **mit betontem Rand**. Bei `1`, wo sie beginnt, sind die Kacheln wie hier beschrieben; bei `0` bleibt nur, woher die Farbe kommt, also ist **Winkel von z** eine einfache Zerlegung und **zmag** einfaches zmag; dazwischen sind die Kacheln schwach zu sehen, über `1` stärker. Mit **Ausschnitt → Palettensonde (auf einen Punkt klicken)** gemessen, wird eine Kachel bei `1` um bis zu etwa zehn Stellen verschoben, in jedem Stil und auf jeder Palette, also bei `0.1` um bis zu eine Stelle und bei `0.01` um bis zu ein Zehntel |
 
 Der Modus steht zwischen den Modi, die sich wiederholen, und den Zerlegungen,
 und die Einstellungen beider erreichen ihn. **Frequenz (periodische Modi)** und
@@ -1586,15 +1586,16 @@ Funktion wie bei den Zerlegungen, und beim Winkel um die Mitte ebenso viele
 Ringe von der Mitte zum Rand, die der Form der Kachel folgen. **zmag**,
 **keine** und eine Kachel in eigener Farbe lesen keine davon.
 
-Der eigene Betrag einer Kachel kommt aus dem Hash, der sie benennt. Bei einem
-Winkel umfasst er so viel der Palette wie eine Drehung des Winkels, sodass eine
-verschobene Einstellung der Zerlegung die Farben der Kacheln lässt, wo sie
-waren; bei **zmag**, **keine** und einer Kachel in eigener Farbe umfasst er die
-ganze Palette, sodass **keine** mit **jede um einen eigenen Betrag verschoben**
-dasselbe ist wie **jede in einer eigenen Farbe**. **Winkel um die Kachelmitte**
-legt eine ganze Drehung der Farben in jede Kachel, was bei der Größe der
-Kacheln sehr viele Farben auf wenige Pixel sind: eine **Geschwindigkeit** unter
-eins oder eine Frequenz unter eins macht die Räder lesbar.
+Der eigene Betrag einer Kachel kommt aus dem Hash, der sie benennt. Woher die
+Farbe auch kommt, er umfasst so viel der Palette wie eine Drehung des Winkels,
+etwa zehn Stellen der Palettensonde auf jeder Palette, sodass eine verschobene
+Einstellung der Zerlegung die Farben der Kacheln lässt, wo sie waren, und die
+Intensität jeden Stil gleich verschiebt; **keine** mit **jede um einen eigenen
+Betrag verschoben** ist dasselbe wie **jede in einer eigenen Farbe**. **Winkel
+um die Kachelmitte** legt eine ganze Drehung der Farben in jede Kachel, was bei
+der Größe der Kacheln sehr viele Farben auf wenige Pixel sind: eine
+**Geschwindigkeit** unter eins oder eine Frequenz unter eins macht die Räder
+lesbar.
 
 Mit **Färbung** auf **Winkel von z**, **Kacheln** auf **jede um einen eigenen
 Betrag verschoben** und den Einstellungen der Zerlegungen, wo sie beginnen,

@@ -1424,8 +1424,8 @@ to a unit as the squares of `squares` are. Its dialog has four fields.
 | --- | --- |
 | **Tiling** | which tiling, by the number `randsctile` knows it by and its name — `3: hexagons`, where it starts. The Tilings tab of Help → User formula reference has a picture of each |
 | **Coloring** | what the colour comes from, all over: `angle`, the angle of `z`, where it starts; `tile-angle`, the angle about the middle of the tile the point is in, which makes each tile a small wheel of colour; `zmag`, the value of the mode of that name; `none`, nothing but the tiles |
-| **Tiles** | how each tile stands apart from its neighbours: `turned`, moved along the palette by an amount of its own, where it starts; `shaded`, the same, and moved by an eighth of a turn's colours more from its middle to its edge, a bevel; `edged`, the same, and the outer part of the tile drawn in the other half of the palette; `flat`, one colour of its own, whatever the colour comes from |
-| **Intensity** | how far apart along the palette the tiles are set: it multiplies every amount a tile has of its own, its turn, the bevel of `shaded` and the edge of `edged`. At `1`, where it starts, the tiles are as described here; at `0` only what the colour comes from is left, so `angle` is a plain decomposition and `zmag` plain `zmag`; in between the tiles show faintly, and above `1` more strongly. Measured with **View → Palette probe (click a point)**, at `1` a tile of `angle` and `turned` is moved by up to about ten places, so that `0.1` moves it by up to one and `0.2` by up to two; with `flat`, `zmag` or `none` it is moved by up to the whole palette, 8191 places on the default one, so that one place there is about `0.0001` |
+| **Tiles** | how each tile stands apart from its neighbours: `turned`, moved along the palette by an amount of its own, where it starts; `shaded`, the same, and moved by an eighth of a turn's colours more from its middle to its edge, a bevel; `edged`, the same, and the outer part of the tile moved by half a turn's colours more; `flat`, one colour of its own, whatever the colour comes from |
+| **Intensity** | how far apart along the palette the tiles are set: it multiplies every amount a tile has of its own, its turn, the bevel of `shaded` and the edge of `edged`. At `1`, where it starts, the tiles are as described here; at `0` only what the colour comes from is left, so `angle` is a plain decomposition and `zmag` plain `zmag`; in between the tiles show faintly, and above `1` more strongly. Measured with **View → Palette probe (click a point)**, at `1` a tile is moved by up to about ten places, in every style and on any palette, so that `0.1` moves it by up to one place and `0.01` by up to a tenth |
 
 The mode stands between the modes that repeat and the decompositions, and the
 settings of both reach it. **Frequency (periodic modes)** and **Function
@@ -1440,13 +1440,14 @@ frequency and the function as for the decompositions, and for the angle about
 the middle that many rings from the middle to the edge, which follow the tile's
 shape. `zmag`, `none` and a flat tile read none of them.
 
-A tile's own amount comes from the hash that names it. For an angle it spans as
-much of the palette as a turn of the angle does, so a decomposition setting
-moved leaves the tiles' colours where they were; for `zmag`, `none` and a flat
-tile it spans the whole palette, so `none` with `turned` is the same as `flat`.
-`tile-angle` puts a whole turn of the colours into every tile, which at the
-size the tiles have is a great many colours to a few pixels: a **Speed** below
-one, or a frequency below one, makes the wheels readable.
+A tile's own amount comes from the hash that names it. Whatever the colour
+comes from, it spans as much of the palette as a turn of the angle does, about
+ten places of the palette probe on any palette, so that a decomposition setting
+moved leaves the tiles' colours where they were and the intensity moves every
+style alike; `none` with `turned` is the same as `flat`. `tile-angle` puts a
+whole turn of the colours into every tile, which at the size the tiles have is
+a great many colours to a few pixels: a **Speed** below one, or a frequency
+below one, makes the wheels readable.
 
 With **Coloring** at `angle`, **Tiles** at `turned`, **Intensity** at `1` and
 the decomposition settings where they start, the mode draws what it drew before

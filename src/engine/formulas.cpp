@@ -1561,11 +1561,15 @@ static number_t tessell_colour(int colour, int fill, number_t much,
                                number_t radial, Ring ring_odd)
 {
     number_t i_f;
-    /* A tile's own amount, along the palette: for an angle as much of it as
-     * the angle's turn has always taken, so that moving a decomposition
-     * setting keeps the tiles' colours where they were; for the rest, and
-     * for a flat tile, the whole cycle. */
-    const number_t cycle = 2 * decomp_half();
+    /* A tile's own amount, along the palette: as much of it as the angle's
+     * turn has always taken, 20000, about ten places of the palette probe,
+     * whatever the colour comes from and whatever the size of the palette,
+     * so that the intensity moves every tile by the same distance -- a
+     * hundredth is a tenth of a place in every style. A flat tile, zmag and
+     * none took the whole palette once, which made a hundredth eighty
+     * places on a palette of 65534 entries and a third of one on the
+     * editor's 248. */
+    const number_t cycle = 20000;
     if (fill == TESSELL_FLAT)
         i_f = much * (turn * cycle);
     else if (colour == TESSELL_ANGLE || colour == TESSELL_MIDDLE) {
@@ -1577,7 +1581,7 @@ static number_t tessell_colour(int colour, int fill, number_t much,
         i_f = decomp_colour(decomp_turn(middle ? (number_t)rx : are,
                                         middle ? (number_t)ry : aim, rotation),
                             sectors, repeats, way, speed) +
-              much * (turn * 20000);
+              much * (turn * cycle);
         if (middle ? radial > 0 && decomp_odd(radial * (number_t)out)
                    : ring_odd())
             i_f += decomp_half();
@@ -1587,12 +1591,12 @@ static number_t tessell_colour(int colour, int fill, number_t much,
         i_f = much * (turn * cycle);
     /* shaded: an eighth of what a turn of the angle takes, from the middle to
      * the edge -- a bevel and not a rainbow, as the modes' own spans are,
-     * whatever the size of the palette; edged: the outer part of the tile in
-     * the other half of the palette */
+     * whatever the size of the palette; edged: the outer part of the tile
+     * moved by half a turn's colours, which was half the palette once */
     if (fill == TESSELL_SHADED)
         i_f += much * ((number_t)out * 2500);
     else if (fill == TESSELL_EDGED && out > TESSELL_EDGE)
-        i_f += much * decomp_half();
+        i_f += much * (cycle / 2);
     return i_f;
 }
 

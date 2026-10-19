@@ -1470,8 +1470,8 @@ diálogo tem quatro campos.
 | --- | --- |
 | **Pavimentação** | qual pavimentação, com o número pelo qual `randsctile` a conhece e o seu nome: **3: hexágonos**, onde começa. O separador Pavimentações de Ajuda → Referência das fórmulas do utilizador tem uma imagem de cada uma |
 | **Coloração** | de onde vem a cor, em toda a parte: **ângulo de z**, onde começa; **ângulo em torno do centro do ladrilho**, o do ladrilho em que cai o ponto, que faz de cada ladrilho uma pequena roda de cor; **zmag**, o valor do modo com esse nome; **nenhuma**, nada além dos ladrilhos |
-| **Ladrilhos** | como cada ladrilho se destaca dos vizinhos: **cada um deslocado de uma quantidade própria**, ao longo da paleta, onde começa; **sombreados do centro para a borda**, o mesmo, e deslocado mais um oitavo das cores de uma volta do centro para a borda, como um chanfro; **com a borda marcada**, o mesmo, e a parte exterior do ladrilho desenhada na outra metade da paleta; **uma cor lisa cada um**, uma cor sua, venha de onde vier a cor |
-| **Intensidade** | quão afastados ficam os ladrilhos ao longo da paleta: multiplica cada quantidade própria de um ladrilho, o seu deslocamento, o bisel de **sombreados do centro para a borda** e a borda de **com a borda marcada**. Em `1`, onde começa, os ladrilhos são como aqui descritos; em `0` fica só aquilo de que vem a cor, pelo que **ângulo de z** é uma decomposição simples e **zmag** o zmag simples; pelo meio os ladrilhos mal se veem, e acima de `1` veem-se mais. Medido com **Vista → Sonda da paleta (clique num ponto)**, em `1` um ladrilho de **ângulo de z** e **cada um deslocado de uma quantidade própria** desloca-se até cerca de dez lugares, pelo que `0.1` o desloca até um e `0.2` até dois; com **uma cor lisa cada um**, **zmag** ou **nenhuma** desloca-se até à paleta inteira, 8191 lugares na predefinida, pelo que aí um lugar vale cerca de `0.0001` |
+| **Ladrilhos** | como cada ladrilho se destaca dos vizinhos: **cada um deslocado de uma quantidade própria**, ao longo da paleta, onde começa; **sombreados do centro para a borda**, o mesmo, e deslocado mais um oitavo das cores de uma volta do centro para a borda, como um chanfro; **com a borda marcada**, o mesmo, e a parte exterior do ladrilho deslocada mais metade das cores de uma volta; **uma cor lisa cada um**, uma cor sua, venha de onde vier a cor |
+| **Intensidade** | quão afastados ficam os ladrilhos ao longo da paleta: multiplica cada quantidade própria de um ladrilho, o seu deslocamento, o bisel de **sombreados do centro para a borda** e a borda de **com a borda marcada**. Em `1`, onde começa, os ladrilhos são como aqui descritos; em `0` fica só aquilo de que vem a cor, pelo que **ângulo de z** é uma decomposição simples e **zmag** o zmag simples; pelo meio os ladrilhos mal se veem, e acima de `1` veem-se mais. Medido com **Vista → Sonda da paleta (clique num ponto)**, em `1` um ladrilho desloca-se até cerca de dez lugares, em qualquer estilo e em qualquer paleta, pelo que `0.1` o desloca até um lugar e `0.01` até uma décima |
 
 O modo está entre os modos que se repetem e as decomposições, e as definições
 de ambos chegam-lhe. **Frequência (modos periódicos)** e **Função (modos
@@ -1487,15 +1487,16 @@ o ângulo em torno do centro outros tantos anéis do centro para a borda, que
 seguem a forma do ladrilho. **zmag**, **nenhuma** e um ladrilho liso não leem
 nenhuma delas.
 
-A quantidade própria de um ladrilho vem do hash que lhe dá o nome. Para um
-ângulo abrange tanto da paleta como uma volta do ângulo, de modo que uma
-definição da decomposição mudada deixa as cores dos ladrilhos onde estavam;
-para **zmag**, **nenhuma** e um ladrilho liso abrange a paleta inteira, de modo
-que **nenhuma** com **cada um deslocado de uma quantidade própria** é o mesmo
-que **uma cor lisa cada um**. **ângulo em torno do centro do ladrilho** põe uma
-volta inteira de cores em cada ladrilho, o que, ao tamanho que os ladrilhos
-têm, são muitíssimas cores em poucos píxeis: uma **Velocidade** abaixo de um,
-ou uma frequência abaixo de um, torna as rodas legíveis.
+A quantidade própria de um ladrilho vem do hash que lhe dá o nome. Venha de
+onde vier a cor, abrange tanto da paleta como uma volta do ângulo, cerca de dez
+lugares da sonda da paleta em qualquer paleta, de modo que uma definição da
+decomposição mudada deixa as cores dos ladrilhos onde estavam e a intensidade
+desloca todos os estilos por igual; **nenhuma** com **cada um deslocado de uma
+quantidade própria** é o mesmo que **uma cor lisa cada um**. **ângulo em torno
+do centro do ladrilho** põe uma volta inteira de cores em cada ladrilho, o que,
+ao tamanho que os ladrilhos têm, são muitíssimas cores em poucos píxeis: uma
+**Velocidade** abaixo de um, ou uma frequência abaixo de um, torna as rodas
+legíveis.
 
 Com **Coloração** em **ângulo de z**, **Ladrilhos** em **cada um deslocado de
 uma quantidade própria** e as definições das decomposições onde começam, o modo
