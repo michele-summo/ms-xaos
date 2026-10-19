@@ -1,6 +1,6 @@
 # MS XaoS
 
-> Tradução do [guia em inglês](ms-xaos-guide.md) da versão 2.8. Onde diferirem,
+> Tradução do [guia em inglês](ms-xaos-guide.md) da versão 2.9. Onde diferirem,
 > a referência é o original em inglês.
 
 Um fork do [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Tudo o que o
