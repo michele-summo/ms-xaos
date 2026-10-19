@@ -113,6 +113,9 @@ const char *const outcolorname[] = {"iter",
                                     "fbm + smooth",
                                     "fbm + iter",
                                     "fbm",
+                                    "tessellation + smooth",
+                                    "tessellation + iter",
+                                    "tessellation",
                                     NULL};
 
 const char *const tcolorname[] = {
@@ -489,9 +492,13 @@ static inline int smooth_count_far(unsigned int done, number_t s, number_t m,
         /* fbm + iter and fbm, here only because their marks are sized by    \
          * the smooth count: that handed on, and the rest drawn by            \
          * color_output as ever. They read neither zre nor zim, which the     \
-         * passes past the bailout have moved. */                             \
+         * passes past the bailout have moved. The tessellation modes, here   \
+         * for the smooth count as well, read them only for the angle of z,   \
+         * which is then the angle a few passes on. */                        \
         if (cfractalc.coloringmode == OutColormodeClass::ColOut_fbm_iter ||    \
-            cfractalc.coloringmode == OutColormodeClass::ColOut_fbm) {         \
+            cfractalc.coloringmode == OutColormodeClass::ColOut_fbm ||         \
+            cfractalc.coloringmode.ColorMode >=                                \
+                OutColormodeClass::ColOut_tessell_smooth) {                    \
             color_smooth = smoothed;                                           \
             color_smooth_held = 1;                                             \
             return (color_output(zre, zim, cfractalc.maxiter - iter));         \
@@ -1498,6 +1505,186 @@ static int decomp_binary_odd(number_t turn, int sectors, number_t repeats,
            1;
 }
 
+/* --- the tessellations ------------------------------------------------------
+ *
+ * What a point of a tessellation is coloured, inside or out, once its tile is
+ * known: turn, the tile's own amount from nought to one, the hash that names
+ * it; out, how far out of its middle the point stands, from nought to one;
+ * and (rx, ry), where it stands seen from that middle. colour and fill are
+ * what the colour comes from and how the tile stands apart, as
+ * intessellcolor says; (are, aim) is what the angle of TESSELL_ANGLE is of,
+ * zmag the value of TESSELL_ZMAG, and the rest the side's decomposition
+ * settings, with ring_odd() saying whether the point is in an odd ring of
+ * what the angle is of.
+ *
+ * much, the intensity, multiplies every amount the tile has of its own --
+ * its turn, the bevel and the edge -- and nothing else: at one, as they
+ * always were, to the bit, since a product by one is exact; at nought what
+ * the colour comes from alone. */
+template <class Ring>
+static number_t tessell_colour(int colour, int fill, number_t much,
+                               number_t turn, double out, double rx,
+                               double ry, number_t are, number_t aim,
+                               number_t zmag, number_t rotation, int sectors,
+                               number_t repeats, int way, number_t speed,
+                               number_t radial, Ring ring_odd)
+{
+    number_t i_f;
+    /* A tile's own amount, along the palette: for an angle as much of it as
+     * the angle's turn has always taken, so that moving a decomposition
+     * setting keeps the tiles' colours where they were; for the rest, and
+     * for a flat tile, the whole cycle. */
+    const number_t cycle = 2 * decomp_half();
+    if (fill == TESSELL_FLAT)
+        i_f = much * (turn * cycle);
+    else if (colour == TESSELL_ANGLE || colour == TESSELL_MIDDLE) {
+        /* the angle, of z or about the tile's middle, cut and walked as the
+         * decompositions are; the rings, of the modulus for z and of how far
+         * out of the middle the point stands for the tile, which makes them
+         * the tile's shape shrunk */
+        const int middle = colour == TESSELL_MIDDLE;
+        i_f = decomp_colour(decomp_turn(middle ? (number_t)rx : are,
+                                        middle ? (number_t)ry : aim, rotation),
+                            sectors, repeats, way, speed) +
+              much * (turn * 20000);
+        if (middle ? radial > 0 && decomp_odd(radial * (number_t)out)
+                   : ring_odd())
+            i_f += decomp_half();
+    } else if (colour == TESSELL_ZMAG)
+        i_f = zmag + much * (turn * cycle);
+    else
+        i_f = much * (turn * cycle);
+    /* shaded: an eighth of what a turn of the angle takes, from the middle to
+     * the edge -- a bevel and not a rainbow, as the modes' own spans are,
+     * whatever the size of the palette; edged: the outer part of the tile in
+     * the other half of the palette */
+    if (fill == TESSELL_SHADED)
+        i_f += much * ((number_t)out * 2500);
+    else if (fill == TESSELL_EDGED && out > TESSELL_EDGE)
+        i_f += much * decomp_half();
+    return i_f;
+}
+
+/* The tile of the outside's tiling under (x, y), and where in it the point
+ * stands when something reads that; turn is nought where no tile is to be
+ * had, past the reach of a tiling that never repeats. */
+static number_t tessell_turn(int tiling, int colour, int fill, number_t x,
+                             number_t y, double &out, double &rx, double &ry)
+{
+    number_t turn = 0;
+#ifdef USE_SFFE
+    uint64_t name;
+    if (colour == TESSELL_MIDDLE || fill == TESSELL_SHADED ||
+                fill == TESSELL_EDGED
+            ? randsctile_place(tiling, x, y, &name, &out, &rx, &ry)
+            : randsctile_name(tiling, x, y, &name))
+        turn = (number_t)(name >> 11) / (number_t)((uint64_t)1 << 53);
+#else
+    (void)tiling, (void)colour, (void)fill, (void)x, (void)y, (void)out,
+        (void)rx, (void)ry;
+#endif
+    return turn;
+}
+
+/* A value of the outside, through the colouring speed and function, onto
+ * the palette: what color_output ends with, for the tessellation modes,
+ * which may look up two values for one pixel. */
+static unsigned int color_lookup(number_t i_f)
+{
+    color_precalc(i_f, 0);
+    unsigned int iter = color_wrap(i_f, ((unsigned int)(cpalette.size - 1))
+                                            << 8);
+    if ((cpalette.type & (C256 | SMALLITER)) || !(iter & 255))
+        return (cpalette.pixels[1 + (iter >> 8)]);
+    unsigned int i1 = cpalette.pixels[1 + (iter >> 8)], i2;
+    if ((int)(iter >> 8) == cpalette.size - 2)
+        i2 = cpalette.pixels[1];
+    else
+        i2 = cpalette.pixels[2 + (iter >> 8)];
+    return (interpoltype(cpalette, i2, i1, iter & 255));
+}
+
+/* The outside's tessellation modes: the tiles of one of randsctile's tilings
+ * laid over the pixel's place in the plane, frequency to a unit -- not over
+ * the escape point, which jumps from band to band and would give grain, as
+ * it did for the fbm motion -- worn by the smooth count, by the whole one,
+ * or alone. iter is the whole count in 256ths, smooth the smooth one.
+ *
+ * Sized by the count, the frequency doubles factor times every ten
+ * iterations, as the fbm marks do, and for the same reason it is not laid
+ * over the plane as it stands, which would stretch the tiles: the tiles are
+ * read at the two powers of two either side of where the count stands, each
+ * a tiling of its own at a fixed size, and the two pixels are blended by
+ * where between them the count stands. Tiles have no middle value to blend
+ * towards, as the motion has, so it is the colours that are blended, a
+ * dissolve from one size to the next; a palette of 256 entries, which has
+ * no colours between its own, takes the nearer. */
+static unsigned int tessell_output(number_t zre, number_t zim,
+                                   unsigned int iter, number_t smooth)
+{
+    const int colour = cfractalc.outtessellcolor;
+    const int fill = cfractalc.outtessellfill;
+    const number_t base =
+        cfractalc.coloringmode == OutColormodeType::ColOut_tessell_smooth
+            ? smooth
+            : cfractalc.coloringmode == OutColormodeType::ColOut_tessell_iter
+                  ? (number_t)iter
+                  : 0;
+    /* zmag has no use outside, where the modulus is past the bailout: the
+     * log of it, as iter+log(mag) adds, is what tells the points apart */
+    const number_t zmag =
+        colour == TESSELL_ZMAG ? nlog(zre * zre + zim * zim + 1) * SMUL * 4
+                               : 0;
+    /* the bands of the decomposition settings' iterations per band, as the
+     * colour decomposition has them */
+    auto ring_odd = [&]() {
+        return cfractalc.outdecompradial > 0 &&
+               ((iter >> SHIFT) / cfractalc.outdecompradial) & 1;
+    };
+    auto at = [&](number_t f) {
+        double out = 0, rx = 0, ry = 0;
+        const number_t turn =
+            tessell_turn(cfractalc.outtessellation, colour, fill,
+                         color_px * f, color_py * f, out, rx, ry);
+        return color_lookup(
+            base + tessell_colour(colour, fill, cfractalc.outtessellintensity,
+                                  turn, out, rx, ry, zre, zim, zmag,
+                                  cfractalc.outdecomprotation,
+                                  cfractalc.outdecompsectors,
+                                  cfractalc.outdecomprepeats,
+                                  cfractalc.outdecompway,
+                                  cfractalc.outdecompspeed,
+                                  (number_t)cfractalc.outdecompradial,
+                                  ring_odd));
+    };
+    number_t f = cfractalc.outtessellfrequency;
+    if (cfractalc.outtessellscaling == FBM_SCALE_FIXED ||
+        !(cfractalc.outtessellfactor != 0))
+        return at(f);
+    const number_t count = cfractalc.outtessellscaling == FBM_SCALE_SMOOTH
+                               ? smooth / 256
+                               : (number_t)(iter >> SHIFT);
+    number_t doublings = cfractalc.outtessellfactor * count / 10;
+    /* past a thousand doublings either way the tiles are long gone below a
+     * pixel or above the picture, and the power of two has to fit an int */
+    if (!(doublings > -1000))
+        doublings = -1000;
+    if (doublings > 1000)
+        doublings = 1000;
+    const number_t whole = nfloor(doublings);
+    const double between = (double)(doublings - whole);
+    f = nldexp(f, (int)whole);
+    const unsigned int a = at(f);
+    if (between == 0)
+        return a;
+    const unsigned int b = at(2 * f);
+    if (cpalette.type & (C256 | SMALLITER))
+        return between < 0.5 ? a : b;
+    int w = (int)(between * 256);
+    w = w < 0 ? 0 : (w > 255 ? 255 : w);
+    return (interpoltype(cpalette, b, a, w));
+}
+
 static unsigned int color_output(number_t zre, number_t zim, unsigned int iter);
 static unsigned int color_output(number_t zre, number_t zim, unsigned int iter)
 {
@@ -1617,6 +1804,11 @@ static unsigned int color_output(number_t zre, number_t zim, unsigned int iter)
             i_f = fbm_fold(fbm_at_pixel(0, fbm_count(iter >> SHIFT, smooth)) *
                            SMUL);
             break;
+        case OutColormodeType::ColOut_tessell_smooth:
+        case OutColormodeType::ColOut_tessell_iter:
+        case OutColormodeType::ColOut_tessell:
+            /* a pixel of their own, which may be two blended */
+            return tessell_output(zre, zim, iter, smooth);
         case OutColormodeType::ColOut_abs_real_minus_abs_imag:
             /* how lopsided the escape point is, with no count: the level sets
              * of the difference rather than of the modulus */
@@ -1888,68 +2080,28 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
         {
             const int colour = cfractalc.intessellcolor;
             const int fill = cfractalc.intessellfill;
-            uint64_t name;
-            number_t turn = 0;
             /* where in its tile the point stands, measured only when
              * something reads it, the edge costing more than the name */
             double out = 0, rx = 0, ry = 0;
-#ifdef USE_SFFE
-            const number_t tx = periodic(zre) * 40, ty = periodic(zim) * 40;
-            if (colour == TESSELL_MIDDLE || fill == TESSELL_SHADED ||
-                        fill == TESSELL_EDGED
-                    ? randsctile_place(cfractalc.intessellation, tx, ty, &name,
-                                       &out, &rx, &ry)
-                    : randsctile_name(cfractalc.intessellation, tx, ty, &name))
-                turn = (number_t)(name >> 11) /
-                       (number_t)((uint64_t)1 << 53);
-#else
-            (void)name;
-#endif
-            if (plain && colour == TESSELL_ANGLE && fill == TESSELL_TURNED) {
+            const number_t turn = tessell_turn(
+                cfractalc.intessellation, colour, fill, periodic(zre) * 40,
+                periodic(zim) * 40, out, rx, ry);
+            if (plain && colour == TESSELL_ANGLE && fill == TESSELL_TURNED &&
+                cfractalc.intessellintensity == 1) {
                 /* what the mode drew before it had a choice, to the bit */
                 i_f = ((atan2l(zre, zim) / (M_PI + M_PI) + 0.75 + turn) *
                        20000);
                 break;
             }
-            /* A tile's own amount, along the palette: for an angle as much
-             * of it as the angle's turn has always taken, so that moving a
-             * decomposition setting keeps the tiles' colours where they
-             * were; for the rest, and for a flat tile, the whole cycle. */
-            const number_t cycle = 2 * decomp_half();
-            if (fill == TESSELL_FLAT)
-                i_f = turn * cycle;
-            else if (colour == TESSELL_ANGLE || colour == TESSELL_MIDDLE) {
-                /* the angle, of z or about the tile's middle, cut and walked
-                 * as the decompositions are; the rings, of the modulus for z
-                 * and of how far out of the middle the point stands for the
-                 * tile, which makes them the tile's shape shrunk */
-                const int middle = colour == TESSELL_MIDDLE;
-                i_f = decomp_colour(
-                          decomp_turn(middle ? (number_t)rx : qre,
-                                      middle ? (number_t)ry : qim,
-                                      cfractalc.indecomprotation),
-                          cfractalc.indecompsectors, cfractalc.indecomprepeats,
-                          cfractalc.indecompway, cfractalc.indecompspeed) +
-                      turn * 20000;
-                if (middle ? cfractalc.indecompradial > 0 &&
-                                 decomp_odd(cfractalc.indecompradial *
-                                            (number_t)out)
-                           : ring_odd())
-                    i_f += decomp_half();
-            } else if (colour == TESSELL_ZMAG)
-                i_f = (zre * zre + zim * zim) *
-                          (number_t)(cfractalc.maxiter >> 1) * SMUL +
-                      SMUL + turn * cycle;
-            else
-                i_f = turn * cycle;
-            /* shaded: an eighth of what a turn of the angle takes, from the
-             * middle to the edge -- a bevel and not a rainbow, as the modes'
-             * own spans are, whatever the size of the palette; edged: the
-             * outer part of the tile in the other half of the palette */
-            if (fill == TESSELL_SHADED)
-                i_f += (number_t)out * 2500;
-            else if (fill == TESSELL_EDGED && out > TESSELL_EDGE)
-                i_f += decomp_half();
+            i_f = tessell_colour(
+                colour, fill, cfractalc.intessellintensity, turn, out, rx, ry,
+                qre, qim,
+                (zre * zre + zim * zim) * (number_t)(cfractalc.maxiter >> 1) *
+                        SMUL +
+                    SMUL,
+                cfractalc.indecomprotation, cfractalc.indecompsectors,
+                cfractalc.indecomprepeats, cfractalc.indecompway,
+                cfractalc.indecompspeed, cfractalc.indecompradial, ring_odd);
         }
         break;
     case 21: /* log(mag): zmag with the contrast moved onto the small values,

@@ -2593,6 +2593,57 @@ void uih_settessellationstyle(uih_context *c, int colour, int fill)
     }
 }
 
+/* How far apart along the palette the inside's tiles are set; see
+ * intessellintensity. */
+void uih_settessellationintensity(uih_context *c, number_t intensity)
+{
+    fractal_context *f = c->fcontext;
+    if (!(intensity == intensity))
+        intensity = 1;
+    if (f->intessellintensity != intensity) {
+        f->intessellintensity = intensity;
+        f->version++;
+        uih_newimage(c);
+    }
+}
+
+/* Everything the outside's tessellation modes are drawn by; see
+ * outtessellation. */
+void uih_setouttessellation(uih_context *c, int tiling, int colour, int fill,
+                            number_t intensity, number_t frequency,
+                            int scaling, number_t factor)
+{
+    fractal_context *f = c->fcontext;
+    if (tiling < 1 || tiling > RANDSCTILE_TILINGS)
+        tiling = 3;
+    if (colour < TESSELL_ANGLE || colour > TESSELL_NONE)
+        colour = TESSELL_ANGLE;
+    if (fill < TESSELL_TURNED || fill > TESSELL_FLAT)
+        fill = TESSELL_TURNED;
+    if (!(intensity == intensity))
+        intensity = 1;
+    if (!(frequency == frequency))
+        frequency = 8;
+    if (scaling < FBM_SCALE_FIXED || scaling > FBM_SCALE_SMOOTH)
+        scaling = FBM_SCALE_FIXED;
+    if (!(factor == factor))
+        factor = 1;
+    if (f->outtessellation != tiling || f->outtessellcolor != colour ||
+        f->outtessellfill != fill || f->outtessellintensity != intensity ||
+        f->outtessellfrequency != frequency ||
+        f->outtessellscaling != scaling || f->outtessellfactor != factor) {
+        f->outtessellation = tiling;
+        f->outtessellcolor = colour;
+        f->outtessellfill = fill;
+        f->outtessellintensity = intensity;
+        f->outtessellfrequency = frequency;
+        f->outtessellscaling = scaling;
+        f->outtessellfactor = factor;
+        f->version++;
+        uih_newimage(c);
+    }
+}
+
 void uih_setpndefault(uih_context *c, int value) {
     if (c->fcontext->pndefault != (int)value) {
         c->fcontext->pndefault = value;
@@ -3022,6 +3073,9 @@ void uih_initstate(struct uih_context *uih)
     uih_setfbmscaling(uih, FBM_SCALE_FIXED, 1);
     uih_settessellation(uih, 3);
     uih_settessellationstyle(uih, TESSELL_ANGLE, TESSELL_TURNED);
+    uih_settessellationintensity(uih, 1);
+    uih_setouttessellation(uih, 3, TESSELL_ANGLE, TESSELL_TURNED, 1, 8,
+                           FBM_SCALE_FIXED, 1);
     uih_setpndefault(uih, 0);
     uih_setnewtonmodesffe(uih, 0);
     uih_setnewtonconvergence(uih, 1E-6);

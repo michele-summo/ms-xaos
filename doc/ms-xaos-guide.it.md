@@ -1,6 +1,6 @@
 # MS XaoS
 
-> Traduzione della [guida in inglese](ms-xaos-guide.md) della versione 2.7.
+> Traduzione della [guida in inglese](ms-xaos-guide.md) della versione 2.8.
 > Dove le due differiscono, fa fede l'originale inglese.
 
 Un fork di [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Tutto ciò che fa
@@ -1506,13 +1506,14 @@ significava.
 **Frattale → Colorazione interna → Tassellazione...** colora l'interno con le
 tessere di una delle quarantacinque tassellature di `randsctile`, posate sulla
 `z` finale, quaranta per unità come i quadrati di `squares`. Il suo dialogo ha
-tre campi.
+quattro campi.
 
 | campo | |
 | --- | --- |
 | **Tassellazione** | quale tassellatura, con il numero con cui la conosce `randsctile` e il suo nome: **3: esagoni**, dove parte. La scheda Tassellature di Aiuto → Riferimento delle formule utente ha un'immagine di ciascuna |
 | **Colorazione** | da cosa viene il colore, dappertutto: **angolo di z**, dove parte; **angolo attorno al centro della tessera**, quello della tessera in cui cade il punto, che fa di ogni tessera una piccola ruota di colore; **zmag**, il valore della modalità con quel nome; **nessuna**, solo le tessere |
 | **Tessere** | come ogni tessera si stacca dalle vicine: **ognuna spostata di un tanto proprio**, lungo la tavolozza, dove parte; **sfumate dal centro al bordo**, lo stesso, e spostata di un ottavo dei colori di un giro in più dal centro al bordo, come una smussatura; **con il bordo marcato**, lo stesso, e la parte esterna della tessera disegnata nell'altra metà della tavolozza; **un colore pieno ciascuna**, un colore suo, da qualunque cosa venga il colore |
+| **Intensità** | quanto sono distanti lungo la tavolozza le tessere: moltiplica ogni quantità propria di una tessera, il suo spostamento, la smussatura di **sfumate dal centro al bordo** e il bordo di **con il bordo marcato**. A `1`, dove parte, le tessere sono come descritte qui; a `0` resta solo ciò da cui viene il colore, così **angolo di z** è una decomposizione semplice e **zmag** lo zmag semplice; in mezzo le tessere si vedono appena, e sopra `1` di più |
 
 La modalità sta tra le modalità che si ripetono e le decomposizioni, e le
 impostazioni di entrambe la raggiungono. **Frequenza (modalità periodiche)** e
@@ -1542,7 +1543,9 @@ Con **Colorazione** a **angolo di z**, **Tessere** a **ognuna spostata di un
 tanto proprio** e le impostazioni delle decomposizioni dove partono, la
 modalità disegna quello che disegnava prima di avere una scelta, bit per bit.
 Le tassellature che non si ripetono mai diventano piatte, senza una quantità
-propria, oltre quattro miliardi di tessere dall'origine.
+propria, oltre quattro miliardi di tessere dall'origine. Questo vale con
+**Intensità** a `1`. A `0` le tessere si vedono ancora con **angolo attorno al
+centro della tessera**, il cui angolo è misurato dal centro di ogni tessera.
 
 Le tassellature periodiche costano circa quanto le altre modalità interne, da
 120 a 210 ns per pixel; quelle che non si ripetono mai, che vengono localizzate
@@ -1553,6 +1556,41 @@ tassellature periodiche e poco di più sulle altre. Una posizione salva la
 modalità come `(incoloring 30)`, la tassellazione come `(intessellation 39)`,
 solo quando non è quella degli esagoni, e la colorazione come
 `(intessellstyle 'tile-angle 'edged)`, solo quando è stata spostata.
+L'intensità si salva come `(intessellintensity 0.5)`, solo quando non è uno.
+
+### All'esterno
+
+**Frattale → Colorazione esterna → Tassellazione...** ha tre modalità, come
+Moto browniano frazionario: `tessellation + smooth`, le tessere sopra il
+conteggio smooth; `tessellation + iter`, sopra il conteggio intero;
+`tessellation`, le tessere da sole. Le tessere sono posate sul posto del pixel
+nel piano, non sul punto di fuga, che salta da una fascia all'altra e darebbe
+solo grana, come accadde quando ci fu provato il moto.
+
+| campo | |
+| --- | --- |
+| **Modalità** | una delle tre |
+| **Tassellazione**, **Colorazione**, **Tessere**, **Intensità** | come all'interno, con impostazioni proprie. **angolo di z** è l'angolo del punto di fuga e **zmag** il logaritmo del suo modulo, come lo aggiunge `iter+log(mag)`; con **iterazione smooth** l'angolo è quello di qualche iterazione oltre il bailout, dove si calcola il conteggio smooth |
+| **Frequenza** | tessere per unità del piano, `8` dove parte: la grandezza delle tessere, che va alzata quando si zooma, come la frequenza del moto |
+| **Dimensionamento delle tessere** e **Fattore** | cosa dà la grandezza alle tessere, come [Dimensionare i segni con il conteggio](#dimensionare-i-segni-con-il-conteggio) la dà ai segni del moto: **fisso**, la sola frequenza; **iterazione** o **iterazione smooth**, la frequenza raddoppiata tante volte quante dice il fattore ogni dieci iterazioni di quel conteggio |
+
+Tra due raddoppi le tessere sono lette a entrambe le grandezze e i due colori
+si fondono, una dissolvenza da una grandezza alla successiva: le tessere non
+hanno un valore di mezzo verso cui fondersi, come ha il moto. Una tavolozza di
+256 colori, che non ne ha tra i suoi, prende la grandezza più vicina. Tra due
+raddoppi la tassellatura è letta due volte, il che ne raddoppia il costo. Un
+fattore di `1` raddoppia la frequenza dieci volte ogni cento iterazioni, il che
+porta presto le tessere sotto il pixel: qualche decimo è un inizio migliore. Le
+[impostazioni delle decomposizioni](#impostazioni-delle-decomposizioni)
+dell'esterno raggiungono i due angoli: **Iterazioni per fascia** fa fasce del
+conteggio per l'angolo di z e anelli dal centro al bordo per l'angolo attorno
+al centro.
+
+Con **Intensità** a `0` e **Colorazione** a **nessuna**, `tessellation + iter`
+disegna come `iter` e `tessellation` un solo colore. Una posizione salva la
+modalità come da `(outcoloring 21)` a `(outcoloring 23)`, e le impostazioni in
+un solo comando, `(outtessellation 5 'tile-angle 'shaded 0.6 40 'smooth 0.4)`,
+solo quando una di esse è stata spostata.
 
 ## Altre modalità di colorazione
 
@@ -1676,9 +1714,9 @@ motore significa una seconda copia compilata di ogni ciclo di calcolo. `trap` e
 **Frattale → Colorazione interna → Decomposizione**, e lo stesso sotto
 Colorazione esterna, imposta come le decomposizioni tagliano il giro: binary
 decomposition e color decomposition all'esterno, `sign(imag)`,
-`Decomposition-like` e `fbm + decomposition` all'interno, e gli angoli di
-`tessellation`. Con ogni campo dove parte — zero, e uno, destra e uno gli
-ultimi tre — disegnano come hanno sempre fatto, bit per bit.
+`Decomposition-like` e `fbm + decomposition` all'interno, e gli angoli delle
+tassellazioni, interna ed esterna. Con ogni campo dove parte — zero, e uno,
+destra e uno gli ultimi tre — disegnano come hanno sempre fatto, bit per bit.
 
 | campo | |
 | --- | --- |

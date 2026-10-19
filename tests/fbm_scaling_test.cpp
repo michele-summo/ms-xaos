@@ -118,6 +118,11 @@ int main(void)
     cfractalc.outfbmscaling = FBM_SCALE_FIXED;
     cfractalc.outfbmfactor = 1;
     cfractalc.intessellation = 3;
+    cfractalc.intessellintensity = 1;
+    cfractalc.outtessellation = 3;
+    cfractalc.outtessellintensity = 1;
+    cfractalc.outtessellfrequency = 8;
+    cfractalc.outtessellfactor = 1;
     color_change_prepare(&cfractalc);
 
     /* --- fixed, what there was ------------------------------------------ */

@@ -1,6 +1,6 @@
 # MS XaoS
 
-> Traducción de la [guía en inglés](ms-xaos-guide.md) de la versión 2.7. Donde
+> Traducción de la [guía en inglés](ms-xaos-guide.md) de la versión 2.8. Donde
 > difieran, la referencia es el original en inglés.
 
 Un fork de [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Todo lo que hace
@@ -1502,13 +1502,14 @@ significaba.
 **Fractal → Coloreado interior → Teselado...** colorea el interior según las
 teselas de uno de los cuarenta y cinco teselados de `randsctile`, tendidas
 sobre la `z` final, cuarenta por unidad como los cuadrados de `squares`. Su
-diálogo tiene tres campos.
+diálogo tiene cuatro campos.
 
 | campo | |
 | --- | --- |
 | **Teselado** | qué teselado, con el número con que lo conoce `randsctile` y su nombre: **3: hexágonos**, donde empieza. La pestaña Teselados de Ayuda → Referencia de fórmulas de usuario tiene una imagen de cada uno |
 | **Coloreado** | de dónde viene el color, en todas partes: **ángulo de z**, donde empieza; **ángulo en torno al centro de la tesela**, el de la tesela en la que cae el punto, que hace de cada tesela una pequeña rueda de color; **zmag**, el valor del modo de ese nombre; **ninguno**, nada más que las teselas |
 | **Teselas** | cómo se separa cada tesela de sus vecinas: **cada una desplazada en una cantidad propia**, a lo largo de la paleta, donde empieza; **sombreadas del centro al borde**, lo mismo, y desplazada un octavo más de los colores de una vuelta del centro al borde, como un bisel; **con el borde marcado**, lo mismo, y la parte exterior de la tesela dibujada en la otra mitad de la paleta; **un color liso cada una**, un color propio, venga de donde venga el color |
+| **Intensidad** | cuánto se separan las teselas a lo largo de la paleta: multiplica cada cantidad propia de una tesela, su desplazamiento, el bisel de **sombreadas del centro al borde** y el borde de **con el borde marcado**. En `1`, donde empieza, las teselas son como se describen aquí; en `0` solo queda aquello de lo que viene el color, así que **ángulo de z** es una descomposición simple y **zmag** el zmag simple; en medio las teselas apenas se ven, y por encima de `1` se ven más |
 
 El modo está entre los modos que se repiten y las descomposiciones, y los
 ajustes de ambos lo alcanzan. **Frecuencia (modos periódicos)** y **Función
@@ -1538,7 +1539,9 @@ Con **Coloreado** en **ángulo de z**, **Teselas** en **cada una desplazada en
 una cantidad propia** y los ajustes de las descomposiciones donde empiezan, el
 modo dibuja lo que dibujaba antes de tener elección, bit a bit. Los teselados
 que nunca se repiten quedan planos, sin cantidad propia, más allá de cuatro mil
-millones de teselas del origen.
+millones de teselas del origen. Eso vale con **Intensidad** en `1`. En `0` las
+teselas aún se ven con **ángulo en torno al centro de la tesela**, cuyo ángulo
+se mide desde el centro de cada tesela.
 
 Los teselados periódicos cuestan más o menos lo que los demás modos interiores,
 de 120 a 210 ns por píxel; los que nunca se repiten, que se localizan de nuevo
@@ -1548,7 +1551,42 @@ el punto en su tesela, lo que cuesta hasta dos tercios más en los teselados
 periódicos y poco más en los demás. Una posición guarda el modo como
 `(incoloring 30)`, el teselado como `(intessellation 39)`, solo cuando no es el
 de hexágonos, y el coloreado como `(intessellstyle 'tile-angle 'edged)`, solo
-cuando se ha movido.
+cuando se ha movido. La intensidad se guarda como `(intessellintensity 0.5)`,
+solo cuando no es uno.
+
+### En el exterior
+
+**Fractal → Coloreado exterior → Teselado...** tiene tres modos, como
+Movimiento browniano fraccionario: `tessellation + smooth`, las teselas sobre
+el recuento suavizado; `tessellation + iter`, sobre el recuento entero;
+`tessellation`, las teselas solas. Las teselas se tienden sobre el lugar del
+píxel en el plano, no sobre el punto de escape, que salta de una franja a la
+siguiente y solo daría grano, como pasó cuando se probó allí el movimiento.
+
+| campo | |
+| --- | --- |
+| **Modo** | uno de los tres |
+| **Teselado**, **Coloreado**, **Teselas**, **Intensidad** | como en el interior, con ajustes propios. **ángulo de z** es el ángulo del punto de escape y **zmag** el logaritmo de su módulo, como lo suma `iter+log(mag)`; con **iteración suavizada** el ángulo es el de unas pocas iteraciones más allá del bailout, donde se calcula el recuento suavizado |
+| **Frecuencia** | teselas por unidad del plano, `8` donde empieza: el tamaño de las teselas, que hay que subir al acercarse, como la frecuencia del movimiento |
+| **Escalado de las teselas** y **Factor** | qué da el tamaño a las teselas, como [El tamaño de las marcas según el recuento](#el-tamaño-de-las-marcas-según-el-recuento) se lo da a las marcas del movimiento: **fijo**, la frecuencia sola; **iteración** o **iteración suavizada**, la frecuencia duplicada tantas veces como dice el factor cada diez iteraciones de ese recuento |
+
+Entre dos duplicaciones las teselas se leen en los dos tamaños y los dos
+colores se funden, un fundido de un tamaño al siguiente: las teselas no tienen
+un valor intermedio hacia el que fundirse, como tiene el movimiento. Una paleta
+de 256 colores, que no tiene ninguno entre los suyos, toma el tamaño más
+cercano. Entre dos duplicaciones el teselado se lee dos veces, lo que duplica
+su coste. Un factor de `1` duplica la frecuencia diez veces cada cien
+iteraciones, lo que pronto lleva las teselas por debajo del píxel: unas décimas
+son un mejor comienzo. Los [ajustes de las
+descomposiciones](#ajustes-de-las-descomposiciones) del exterior alcanzan los
+dos ángulos: **Iteraciones por franja** hace franjas del recuento para el
+ángulo de z y anillos del centro al borde para el ángulo en torno al centro.
+
+Con **Intensidad** en `0` y **Coloreado** en **ninguno**, `tessellation + iter`
+dibuja como `iter` y `tessellation` un solo color. Una posición guarda el modo
+como `(outcoloring 21)` a `(outcoloring 23)`, y los ajustes en un solo comando,
+`(outtessellation 5 'tile-angle 'shaded 0.6 40 'smooth 0.4)`, solo cuando
+alguno se ha movido.
 
 ## Más modos de coloreado
 
@@ -1672,9 +1710,9 @@ su lugar.
 **Fractal → Coloreado interior → Descomposición**, y lo mismo bajo Coloreado
 exterior, fija cómo cortan la vuelta las descomposiciones: binary decomposition
 y color decomposition en el exterior, `sign(imag)`, `Decomposition-like` y
-`fbm + decomposition` en el interior, y los ángulos de `tessellation`. Con cada
-campo donde empieza — cero, y uno, derecha y uno los tres últimos — dibujan
-como siempre, bit a bit.
+`fbm + decomposition` en el interior, y los ángulos de los teselados, interior
+y exterior. Con cada campo donde empieza — cero, y uno, derecha y uno los tres
+últimos — dibujan como siempre, bit a bit.
 
 | campo | |
 | --- | --- |

@@ -114,6 +114,11 @@ int main(void)
     cfractalc.indecomprepeats = cfractalc.outdecomprepeats = 1;
     cfractalc.indecompspeed = cfractalc.outdecompspeed = 1;
     cfractalc.intessellation = 3;
+    cfractalc.intessellintensity = 1;
+    cfractalc.outtessellation = 3;
+    cfractalc.outtessellintensity = 1;
+    cfractalc.outtessellfrequency = 8;
+    cfractalc.outtessellfactor = 1;
     color_change_prepare(&cfractalc);
 
     /* --- at one, what there was ---------------------------------------
