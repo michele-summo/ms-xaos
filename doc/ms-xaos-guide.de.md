@@ -223,6 +223,21 @@ Benutzerformel zu laden, eine abzuspielen oder eine mit `-render` zu berechnen
 führt denselben Befehl `usrform` aus, schiebt sie aber nicht mehr in den
 Verlauf, wo jede davon früher den Platz einer selbst getippten einnahm.
 
+**Pfeil nach oben und Pfeil nach unten** gehen dieselben Formeln durch, ohne
+die Leiste zu verlassen. Pfeil nach oben bringt aus der ersten Zeile der Leiste
+die Formel, die vor der gezeigten verwendet wurde; Pfeil nach unten geht aus
+der letzten Zeile zurück zur neuesten und dann zu dem, was in der Leiste stand,
+bevor Sie begannen. Die zwei kleinen Pfeile neben der Leiste tun dasselbe,
+jeder ausgegraut, wenn es in seiner Richtung nicht weitergeht. Eine Formel, die
+schon in der Leiste steht, wird übersprungen, und was Sie tippen, wird zum
+neuen Ausgangspunkt.
+
+Die zuletzt verwendete Formel steht blass in der Leiste: ganz, solange die
+Leiste leer ist, und ihr Rest hinter dem Getippten, solange das Getippte ihr
+Anfang ist. Tab setzt sie ganz in die Leiste. Sobald das Getippte anders
+weitergeht, verschwindet der blasse Text, und Tab geht wie bisher zu den
+Schaltflächen weiter.
+
 **Ausschnitt → Status** zeigt die Formel genauso: in einer Zeile, wenn sie ins
 Fenster passt, sonst in zwei — die zweite unter der ersten, zwischen Namen
 umgebrochen —, und wenn auch zwei sie nicht fassen, endet die zweite mit drei

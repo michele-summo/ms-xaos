@@ -4,6 +4,7 @@
 
 #include <QtWidgets>
 #include <cmath>
+#include <memory>
 
 #include "formulaedit.h"
 #include "formulahelp.h"
@@ -35,6 +36,11 @@ class NameWrapLayout : public QAbstractTextDocumentLayout
     }
     QRectF blockBoundingRect(const QTextBlock &block) const override;
 
+    /* The formula shown faint behind the text, of which the text is the
+     * start, or none. Its lines are cut where its own would be, so that the
+     * text lies exactly on its start and only the rest of it shows. */
+    void setGhost(const QString &ghost);
+
   protected:
     void documentChanged(int, int, int) override { relayout(); }
 
@@ -42,9 +48,50 @@ class NameWrapLayout : public QAbstractTextDocumentLayout
     void relayout();
     /* The height of a block's lines together. */
     static qreal linesHeight(const QTextLayout *layout);
+    /* Lays layout out in lines ending at ends, starting at margin. Returns
+     * how tall they are and widens widest to the widest. */
+    static qreal fill(QTextLayout *layout, const std::vector<int> &ends,
+                      qreal margin, qreal &widest);
 
     QSizeF m_size;
+    QString m_ghost;
+    /* The ghost laid out, while it is shown. */
+    std::unique_ptr<QTextLayout> m_ghostLayout;
 };
+
+void NameWrapLayout::setGhost(const QString &ghost)
+{
+    if (ghost == m_ghost)
+        return;
+    m_ghost = ghost;
+    relayout();
+}
+
+qreal NameWrapLayout::fill(QTextLayout *layout, const std::vector<int> &ends,
+                           qreal margin, qreal &widest)
+{
+    layout->beginLayout();
+    qreal height = 0;
+    int start = 0;
+    for (int end : ends) {
+        QTextLine line = layout->createLine();
+        if (!line.isValid())
+            break;
+        /* setNumColumns counts glyphs, so a font that draws two letters as
+         * one could hand a line a character more than it was given; it is
+         * then given one fewer until it fits. */
+        int columns = end - start;
+        line.setNumColumns(columns);
+        while (line.textLength() > end - start && columns > 1)
+            line.setNumColumns(--columns);
+        line.setPosition(QPointF(margin, height));
+        height += line.height();
+        widest = qMax(widest, line.naturalTextWidth());
+        start = line.textStart() + line.textLength();
+    }
+    layout->endLayout();
+    return height;
+}
 
 void NameWrapLayout::relayout()
 {
@@ -55,47 +102,72 @@ void NameWrapLayout::relayout()
     const qreal avail = width > 0 ? qMax<qreal>(1, width - 2 * margin) : 1e9;
     const QFontMetricsF metrics(doc->defaultFont());
 
-    qreal y = margin, widest = 0;
-    for (QTextBlock block = doc->begin(); block.isValid();
-         block = block.next()) {
-        const QString text = block.text();
-        const std::vector<int> ends = formula_wrap(
+    auto wrap = [avail, &metrics](const QString &text) {
+        return formula_wrap(
             reinterpret_cast<const char16_t *>(text.utf16()), (int)text.size(),
             avail, [&text, &metrics](int start, int end) {
                 return metrics.horizontalAdvance(text.mid(start, end - start));
             });
+    };
+    /* Anywhere, which is what makes the count in fill exact: setNumColumns
+     * ends a line only where the wrap mode allows one to end, and under any
+     * other mode goes on to the next space -- which in a formula is usually
+     * the end of it. */
+    QTextOption option = doc->defaultTextOption();
+    option.setWrapMode(QTextOption::WrapAnywhere);
 
-        /* Anywhere, which is what makes the count below exact: setNumColumns
-         * ends a line only where the wrap mode allows one to end, and under
-         * any other mode goes on to the next space -- which in a formula is
-         * usually the end of it. */
+    /* The ghost is behind a formula of one line that it begins with, and
+     * nothing else: the bar lets in no line breaks, and a text that has gone
+     * its own way has nothing left to complete. */
+    const QTextBlock first = doc->begin();
+    const bool ghosted = !m_ghost.isEmpty() && first.isValid() &&
+                         !first.next().isValid() &&
+                         m_ghost.size() > first.text().size() &&
+                         m_ghost.startsWith(first.text());
+    std::vector<int> ghostEnds;
+    if (ghosted)
+        ghostEnds = wrap(m_ghost);
+
+    qreal y = margin, widest = 0;
+    for (QTextBlock block = doc->begin(); block.isValid();
+         block = block.next()) {
+        const QString text = block.text();
+        std::vector<int> ends;
+        if (ghosted) {
+            /* The ghost's own lines as far as the text goes, so that each
+             * character of the text sits where it does in the ghost. */
+            const int length = (int)text.size();
+            for (int end : ghostEnds) {
+                ends.push_back(qMin(end, length));
+                if (end >= length)
+                    break;
+            }
+        } else
+            ends = wrap(text);
+
         QTextLayout *layout = block.layout();
-        QTextOption option = doc->defaultTextOption();
-        option.setWrapMode(QTextOption::WrapAnywhere);
         layout->setTextOption(option);
-        layout->beginLayout();
-        qreal height = 0;
-        int start = 0;
-        for (int end : ends) {
-            QTextLine line = layout->createLine();
-            if (!line.isValid())
-                break;
-            /* setNumColumns counts glyphs, so a font that draws two letters
-             * as one could hand a line a character more than it was given;
-             * it is then given one fewer until it fits. */
-            int columns = end - start;
-            line.setNumColumns(columns);
-            while (line.textLength() > end - start && columns > 1)
-                line.setNumColumns(--columns);
-            line.setPosition(QPointF(margin, height));
-            height += line.height();
-            widest = qMax(widest, line.naturalTextWidth());
-            start = line.textStart() + line.textLength();
-        }
-        layout->endLayout();
+        qreal height = fill(layout, ends, margin, widest);
         layout->setPosition(QPointF(0, y));
+
+        if (ghosted) {
+            /* Only the rest is drawn: the text covers the start, and the same
+             * letters twice, one faint, would look smudged. */
+            m_ghostLayout.reset(new QTextLayout(m_ghost, doc->defaultFont()));
+            m_ghostLayout->setTextOption(option);
+            QTextLayout::FormatRange hidden;
+            hidden.start = 0;
+            hidden.length = (int)text.size();
+            hidden.format.setForeground(Qt::transparent);
+            m_ghostLayout->setFormats({hidden});
+            height = qMax(height, fill(m_ghostLayout.get(), ghostEnds, margin,
+                                       widest));
+            m_ghostLayout->setPosition(QPointF(0, y));
+        }
         y += height;
     }
+    if (!ghosted)
+        m_ghostLayout.reset();
     m_size = QSizeF(width > 0 ? width : widest + 2 * margin, y + margin);
     emit documentSizeChanged(m_size);
     emit update();
@@ -124,6 +196,10 @@ void NameWrapLayout::draw(QPainter *painter, const PaintContext &context)
     int cursorWidth = property("cursorWidth").toInt(&known);
     if (!known)
         cursorWidth = 1;
+    if (m_ghostLayout) {
+        painter->setPen(context.palette.color(QPalette::PlaceholderText));
+        m_ghostLayout->draw(painter, QPointF(0, 0), {}, context.clip);
+    }
     painter->setPen(context.palette.color(QPalette::Text));
     for (QTextBlock block = document()->begin(); block.isValid();
          block = block.next()) {
@@ -187,6 +263,112 @@ FormulaEdit::FormulaEdit(QWidget *parent) : QTextEdit(parent)
     connect(document()->documentLayout(),
             &QAbstractTextDocumentLayout::documentSizeChanged, this,
             [this](const QSizeF &) { updateGeometry(); });
+    /* Text typed, pasted or undone is where stepping starts from next; text
+     * a step put in is not. */
+    connect(this, &QTextEdit::textChanged, this, [this]() {
+        if (!m_stepping)
+            restartSteps();
+        updateGhost();
+    });
+}
+
+void FormulaEdit::setHistory(const QStringList &used)
+{
+    m_used = used;
+    restartSteps();
+    updateGhost();
+}
+
+void FormulaEdit::setOnStep(const std::function<void()> &onStep)
+{
+    m_onStep = onStep;
+}
+
+void FormulaEdit::restartSteps()
+{
+    const QString text = toPlainText();
+    m_steps = QStringList(text);
+    /* A formula that is already in the bar is not a step: Up would seem to
+     * do nothing. */
+    for (const QString &formula : m_used)
+        if (formula != text)
+            m_steps << formula;
+    m_step = 0;
+    if (m_onStep)
+        m_onStep();
+}
+
+bool FormulaEdit::canStepOlder() const
+{
+    return m_step + 1 < m_steps.size();
+}
+
+bool FormulaEdit::canStepNewer() const
+{
+    return m_step > 0;
+}
+
+void FormulaEdit::stepOlder()
+{
+    if (canStepOlder())
+        stepTo(m_step + 1);
+}
+
+void FormulaEdit::stepNewer()
+{
+    if (canStepNewer())
+        stepTo(m_step - 1);
+}
+
+void FormulaEdit::stepTo(int step)
+{
+    m_step = step;
+    /* Through the cursor rather than setPlainText, so that a step can be
+     * undone like anything typed. */
+    m_stepping = true;
+    QTextCursor cursor = textCursor();
+    cursor.select(QTextCursor::Document);
+    cursor.insertText(m_steps[step]);
+    setTextCursor(cursor);
+    m_stepping = false;
+    if (m_onStep)
+        m_onStep();
+}
+
+QString FormulaEdit::ghost() const
+{
+    if (m_used.isEmpty())
+        return QString();
+    const QString &last = m_used.first();
+    const QString text = toPlainText();
+    return last.size() > text.size() && last.startsWith(text) ? last
+                                                               : QString();
+}
+
+void FormulaEdit::updateGhost()
+{
+    static_cast<NameWrapLayout *>(document()->documentLayout())
+        ->setGhost(ghost());
+}
+
+bool FormulaEdit::event(QEvent *event)
+{
+    /* Tab takes the ghost when there is one, and moves on to the next field
+     * otherwise -- which QWidget does before keyPressEvent is asked. */
+    if (event->type() == QEvent::KeyPress) {
+        QKeyEvent *key = static_cast<QKeyEvent *>(event);
+        if (key->key() == Qt::Key_Tab && key->modifiers() == Qt::NoModifier) {
+            const QString whole = ghost();
+            if (!whole.isEmpty()) {
+                QTextCursor cursor = textCursor();
+                cursor.select(QTextCursor::Document);
+                cursor.insertText(whole);
+                setTextCursor(cursor);
+                return true;
+            }
+        }
+    }
+    return QTextEdit::event(event);
 }
 
 void FormulaEdit::setTallest(int pixels)
@@ -231,6 +413,24 @@ void FormulaEdit::keyPressEvent(QKeyEvent *event)
     if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
         event->ignore();
         return;
+    }
+    /* Up from the first line and Down from the last step through the
+     * formulas used before, as in a shell; within the bar they move the
+     * cursor between its lines as ever. */
+    const bool plain =
+        (event->modifiers() & ~Qt::KeypadModifier) == Qt::NoModifier;
+    if (plain && (event->key() == Qt::Key_Up || event->key() == Qt::Key_Down)) {
+        const bool up = event->key() == Qt::Key_Up;
+        QTextCursor cursor = textCursor();
+        cursor.clearSelection();
+        if (!cursor.movePosition(up ? QTextCursor::Up : QTextCursor::Down)) {
+            if (up)
+                stepOlder();
+            else
+                stepNewer();
+            event->accept();
+            return;
+        }
     }
     QTextEdit::keyPressEvent(event);
 }

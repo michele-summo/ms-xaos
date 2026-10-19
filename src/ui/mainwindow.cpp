@@ -1511,8 +1511,42 @@ void MainWindow::showDialog(const char *name)
                 edit->setPlainText(QString::fromUtf8(dialog->defstr));
                 edit->moveCursor(QTextCursor::End);
 
+                /* Beside the bar, a step back through the formulas used
+                 * before and one forward again, each greyed where there is
+                 * nowhere further to go. They take no focus, so that Tab
+                 * goes from the bar to the buttons below as it did. */
+                QToolButton *older = new QToolButton(qDialog);
+                older->setObjectName(label + "-older");
+                older->setArrowType(Qt::UpArrow);
+                older->setFocusPolicy(Qt::NoFocus);
+                older->setToolTip(TR("Dialog", "Older formula (Up)"));
+                older->setAccessibleName(TR("Dialog", "Older formula (Up)"));
+                QToolButton *newer = new QToolButton(qDialog);
+                newer->setObjectName(label + "-newer");
+                newer->setArrowType(Qt::DownArrow);
+                newer->setFocusPolicy(Qt::NoFocus);
+                newer->setToolTip(TR("Dialog", "Newer formula (Down)"));
+                newer->setAccessibleName(TR("Dialog", "Newer formula (Down)"));
+                edit->setOnStep([edit, older, newer]() {
+                    older->setEnabled(edit->canStepOlder());
+                    newer->setEnabled(edit->canStepNewer());
+                });
+                edit->setHistory(formula_history());
+                connect(older, &QToolButton::clicked, edit,
+                        [edit]() { edit->stepOlder(); });
+                connect(newer, &QToolButton::clicked, edit,
+                        [edit]() { edit->stepNewer(); });
+                QVBoxLayout *steps = new QVBoxLayout();
+                steps->setSpacing(0);
+                steps->addWidget(older);
+                steps->addWidget(newer);
+                steps->addStretch();
+                QHBoxLayout *field = new QHBoxLayout();
+                field->addWidget(edit);
+                field->addLayout(steps);
+
                 QFormLayout *formLayout = new QFormLayout();
-                formLayout->addRow(label, edit);
+                formLayout->addRow(label, field);
 
                 /* The line under the bar. It is there whether or not there is
                  * anything to say, and two lines high so that a long signature

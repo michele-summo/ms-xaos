@@ -214,6 +214,20 @@ riprodurne una, o renderizzarne una con `-render` esegue lo stesso comando
 `usrform` ma non la mette più nella cronologia, dove ciascuna di queste
 prendeva il posto di una che avevi scritto tu.
 
+**Freccia su e freccia giù** scorrono le stesse formule senza lasciare la
+barra. Freccia su, dalla prima riga della barra, porta la formula usata prima
+di quella mostrata; freccia giù, dall'ultima riga, torna verso la più recente e
+poi a ciò che la barra conteneva prima che cominciassi. Le due piccole frecce
+accanto alla barra fanno lo stesso, ciascuna grigia quando da quella parte non
+c'è altro. Una formula che è già nella barra viene saltata, e ciò che scrivi
+diventa il punto da cui si riparte.
+
+L'ultima formula usata è mostrata in grigio chiaro nella barra: intera finché
+la barra è vuota, e il resto dopo ciò che hai scritto finché ciò che scrivi ne
+è l'inizio. Tab la mette intera nella barra. Appena ciò che scrivi prende
+un'altra strada il testo in grigio sparisce, e Tab passa ai pulsanti come
+prima.
+
 **Vista → Stato** mostra la formula allo stesso modo: su una riga se ci sta
 nella finestra, su due se no — la seconda sotto la prima, andando a capo tra i
 nomi — e quando nemmeno due bastano, la seconda finisce con tre puntini e la

@@ -200,6 +200,19 @@ position that holds a user formula, replaying one, or rendering one with
 `-render` runs the same `usrform` command but no longer pushes it into the
 history, where each of those used to take the place of one you had typed.
 
+**Up and Down** step through the same formulas without leaving the bar. Up,
+from the first line of the bar, brings in the formula used before the one
+shown; Down, from the last line, goes back towards the newest and then to what
+the bar held before you began. The two small arrows beside the bar do the same,
+each greyed when there is nothing further that way. A formula that is already
+in the bar is passed over, and typing makes what you typed the place the steps
+start from again.
+
+The formula used last is shown faint in the bar: the whole of it while the bar
+is empty, and the rest of it after what you have typed for as long as what you
+type is how it begins. Tab puts it in the bar whole. Once what you type goes
+another way the faint text goes too, and Tab moves on to the buttons as before.
+
 **View → Status** shows the formula the same way: on one line if it fits the
 window, on two if not — the second under the first, going on between names —
 and when two do not hold it either, the second ends in three dots and its

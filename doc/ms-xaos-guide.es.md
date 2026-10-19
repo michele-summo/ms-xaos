@@ -213,6 +213,19 @@ una con `-render` ejecuta el mismo comando `usrform` pero ya no la mete en el
 historial, donde cada una de ellas ocupaba el lugar de una que habías escrito
 tú.
 
+**Flecha arriba y flecha abajo** recorren las mismas fórmulas sin salir de la
+barra. Flecha arriba, desde la primera línea de la barra, trae la fórmula usada
+antes de la que se ve; flecha abajo, desde la última línea, vuelve hacia la más
+reciente y luego a lo que tenía la barra antes de empezar. Las dos flechas
+pequeñas junto a la barra hacen lo mismo, cada una en gris cuando no hay nada
+más en esa dirección. Una fórmula que ya está en la barra se salta, y lo que
+escribes pasa a ser el punto desde el que se vuelve a empezar.
+
+La última fórmula usada se muestra tenue en la barra: entera mientras la barra
+está vacía, y el resto detrás de lo que has escrito mientras lo que escribes
+sea su comienzo. Tab la pone entera en la barra. En cuanto lo que escribes va
+por otro camino el texto tenue desaparece, y Tab pasa a los botones como antes.
+
 **Vista → Estado** muestra la fórmula de la misma manera: en una línea si cabe
 en la ventana, en dos si no — la segunda bajo la primera, saltando entre
 nombres — y cuando ni dos bastan, la segunda acaba en tres puntos y su

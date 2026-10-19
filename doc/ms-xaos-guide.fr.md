@@ -220,6 +220,20 @@ contient une formule utilisateur, en rejouer une ou en rendre une avec
 `-render` exécute la même commande `usrform` mais ne la pousse plus dans
 l'historique, où chacune prenait la place d'une que vous aviez tapée.
 
+**Flèche haut et flèche bas** parcourent les mêmes formules sans quitter la
+barre. Flèche haut, depuis la première ligne de la barre, amène la formule
+utilisée avant celle affichée ; flèche bas, depuis la dernière ligne, revient
+vers la plus récente puis à ce que la barre contenait avant que vous ne
+commenciez. Les deux petites flèches à côté de la barre font de même, chacune
+grisée quand il n'y a plus rien de ce côté. Une formule déjà dans la barre est
+sautée, et ce que vous tapez devient le point d'où l'on repart.
+
+La dernière formule utilisée apparaît en pâle dans la barre : entière tant que
+la barre est vide, et sa suite après ce que vous avez tapé tant que ce que vous
+tapez en est le début. Tab la met entière dans la barre. Dès que ce que vous
+tapez prend un autre chemin, le texte pâle disparaît, et Tab passe aux boutons
+comme avant.
+
 **Vue → Affichage état** montre la formule de la même façon : sur une ligne si
 elle tient dans la fenêtre, sur deux sinon — la seconde sous la première,
 passant à la ligne entre les noms — et quand deux ne suffisent pas non plus, la

@@ -210,6 +210,19 @@ uma ou renderizar uma com `-render` executa o mesmo comando `usrform` mas já
 não a põe no histórico, onde cada uma delas tomava o lugar de uma que tinha
 escrito.
 
+**Seta para cima e seta para baixo** percorrem as mesmas fórmulas sem sair da
+barra. A seta para cima, a partir da primeira linha da barra, traz a fórmula
+usada antes da que se vê; a seta para baixo, a partir da última linha, volta
+para a mais recente e depois para o que a barra tinha antes de começar. As duas
+pequenas setas ao lado da barra fazem o mesmo, cada uma a cinzento quando não
+há mais nada nesse sentido. Uma fórmula que já está na barra é saltada, e o que
+escreve passa a ser o ponto de onde se recomeça.
+
+A última fórmula usada aparece esbatida na barra: inteira enquanto a barra está
+vazia, e o resto a seguir ao que escreveu enquanto o que escreve for o seu
+início. Tab põe-na inteira na barra. Assim que o que escreve segue outro
+caminho, o texto esbatido desaparece, e Tab passa para os botões como antes.
+
 **Vista → Estado** mostra a fórmula da mesma maneira: numa linha se couber na
 janela, em duas se não — a segunda por baixo da primeira, mudando de linha
 entre nomes — e quando nem duas chegam, a segunda acaba em três pontos e o seu

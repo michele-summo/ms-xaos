@@ -36,7 +36,23 @@ class FormulaEdit : public QTextEdit
     /* The height the text needs, held between one line and the tallest. */
     int wantedHeight() const;
 
+    /* The formulas used before, newest first, which the bar steps through
+     * and of which the newest is its ghost: while the text is the start of
+     * that formula, the rest of it is shown faint after the text, the whole
+     * of it while the bar is empty, and Tab puts it in the bar. */
+    void setHistory(const QStringList &used);
+    /* One step back to an older formula, or forward to a newer one and at
+     * last to what was in the bar before stepping began. Up and Down do the
+     * same from the first and the last line of the bar. */
+    bool canStepOlder() const;
+    bool canStepNewer() const;
+    void stepOlder();
+    void stepNewer();
+    /* Called whenever whether it can step either way may have changed. */
+    void setOnStep(const std::function<void()> &onStep);
+
   protected:
+    bool event(QEvent *event) override;
     /* Return and Enter are the dialog's, which takes them as OK: a formula
      * has no second line to begin. */
     void keyPressEvent(QKeyEvent *event) override;
@@ -45,8 +61,21 @@ class FormulaEdit : public QTextEdit
     void insertFromMimeData(const QMimeData *source) override;
 
   private:
+    /* Starts the steps again from the text as it is now. */
+    void restartSteps();
+    void stepTo(int step);
+    void updateGhost();
+    QString ghost() const;
+
     int m_tallest = 400;
     int m_preferredWidth = 600;
+    QStringList m_used;
+    /* What was in the bar when stepping began, then the formulas used before
+     * other than it: the step is where the bar is in them. */
+    QStringList m_steps;
+    int m_step = 0;
+    bool m_stepping = false;
+    std::function<void()> m_onStep;
 };
 
 /* The formulas used before: what Fractal -> User formula has been given, newest

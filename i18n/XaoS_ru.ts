@@ -701,7 +701,19 @@
         <translation>Центрировать по оси:</translation>
     </message>
     <message>
-        <location filename="../src/ui/mainwindow.cpp" line="1553"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1522"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1523"/>
+        <source>Older formula (Up)</source>
+        <translation>Более старая формула (стрелка вверх)</translation>
+    </message>
+    <message>
+        <location filename="../src/ui/mainwindow.cpp" line="1528"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1529"/>
+        <source>Newer formula (Down)</source>
+        <translation>Более новая формула (стрелка вниз)</translation>
+    </message>
+    <message>
+        <location filename="../src/ui/mainwindow.cpp" line="1587"/>
         <source>History...</source>
         <translation>История...</translation>
     </message>
@@ -4263,27 +4275,27 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../src/ui/formulaedit.cpp" line="307"/>
+        <location filename="../src/ui/formulaedit.cpp" line="507"/>
         <source>(%1 characters)</source>
         <translation>(%1 символов)</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulaedit.cpp" line="331"/>
+        <location filename="../src/ui/formulaedit.cpp" line="531"/>
         <source>Formulas used before</source>
         <translation>Ранее использованные формулы</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulaedit.cpp" line="336"/>
+        <location filename="../src/ui/formulaedit.cpp" line="536"/>
         <source>No formula has been used yet.</source>
         <translation>Формулы ещё не использовались.</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulaedit.cpp" line="337"/>
+        <location filename="../src/ui/formulaedit.cpp" line="537"/>
         <source>Newest first. Double-click one, or pick it and press Use, to put it in the formula bar.</source>
         <translation>Сначала самые новые. Дважды щёлкните формулу или выберите её и нажмите «Использовать», чтобы вставить её в строку формулы.</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulaedit.cpp" line="351"/>
+        <location filename="../src/ui/formulaedit.cpp" line="551"/>
         <source>Use</source>
         <translation>Использовать</translation>
     </message>
