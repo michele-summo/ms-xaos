@@ -1,6 +1,6 @@
 # MS XaoS
 
-> Traduction du [guide en anglais](ms-xaos-guide.md) de la version 2.8. En cas
+> Traduction du [guide en anglais](ms-xaos-guide.md) de la version 2.9. En cas
 > de différence, l'original anglais fait foi.
 
 Un fork de [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Tout ce que fait
@@ -1596,7 +1596,7 @@ donnerait que du grain, comme lorsque le mouvement y fut essayé.
 | champ | |
 | --- | --- |
 | **Mode** | l'un des trois |
-| **Pavage**, **Coloriage**, **Tuiles**, **Intensité** | comme à l'intérieur, avec des réglages à eux. **angle de z** est l'angle du point d'échappement et **zmag** le logarithme de son module, tel que `iter+log(mag)` l'ajoute ; avec **itération lissée** l'angle est celui de quelques itérations après le bailout, là où le compte lissé est calculé |
+| **Pavage**, **Coloriage**, **Tuiles**, **Intensité** | comme à l'intérieur, avec des réglages à eux. **angle de z** est l'angle du point d'échappement et **zmag** le logarithme de son module, tel que `iter+log(mag)` l'ajoute ; sauf dans `tessellation + iter` avec un dimensionnement **fixe** ou **itération**, tous deux sont lus quelques itérations après le bailout, là où le compte lissé est calculé, et fondus dans le même point une itération plus loin à mesure que le compte lissé avance vers l'itération suivante, de sorte qu'ils se poursuivent à travers les bords des itérations au lieu de s'y briser |
 | **Fréquence** | tuiles par unité du plan, `8` au départ : la taille des tuiles, qu'il faut augmenter en zoomant, comme la fréquence du mouvement |
 | **Mise à l'échelle des tuiles** et **Facteur** | ce qui donne leur taille aux tuiles, comme [La taille des marques selon le compte](#la-taille-des-marques-selon-le-compte) la donne aux marques du mouvement : **fixe**, la fréquence seule ; **itération** ou **itération lissée**, la fréquence doublée autant de fois que le dit le facteur toutes les dix itérations de ce compte |
 

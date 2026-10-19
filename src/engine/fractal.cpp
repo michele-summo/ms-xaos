@@ -301,7 +301,9 @@ void set_fractalc(fractal_context *context, struct image *img)
 
     /* The smooth loop for the smooth modes, and for the other two fbm modes
      * outside when their marks are sized by the smooth count, which only
-     * this loop works out; and the same for the tessellation modes. */
+     * this loop works out; and the same for the tessellation modes, but for
+     * tessellation alone always, since the angle and zmag of z read past the
+     * bailout need it to run on without the edges of the iterations. */
     if ((cfractalc.coloringmode == OutColormodeType::ColOut_smooth ||
          cfractalc.coloringmode == OutColormodeType::ColOut_smooth_log ||
          cfractalc.coloringmode == OutColormodeType::ColOut_fbm_smooth ||
@@ -309,8 +311,8 @@ void set_fractalc(fractal_context *context, struct image *img)
            cfractalc.coloringmode == OutColormodeType::ColOut_fbm) &&
           cfractalc.outfbmscaling == FBM_SCALE_SMOOTH) ||
          cfractalc.coloringmode == OutColormodeType::ColOut_tessell_smooth ||
-         ((cfractalc.coloringmode == OutColormodeType::ColOut_tessell_iter ||
-           cfractalc.coloringmode == OutColormodeType::ColOut_tessell) &&
+         cfractalc.coloringmode == OutColormodeType::ColOut_tessell ||
+         (cfractalc.coloringmode == OutColormodeType::ColOut_tessell_iter &&
           cfractalc.outtessellscaling == FBM_SCALE_SMOOTH)) &&
         cformula.smooth_calculate != NULL &&
         (cpalette.type &

@@ -2,7 +2,7 @@
 
 A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Everything the
 original does, it still does; this describes what has been added or changed,
-and why. Version 2.8.
+and why. Version 2.9.
 
 ## Two binaries
 
@@ -1476,7 +1476,7 @@ as it did when the motion was tried there.
 | field | |
 | --- | --- |
 | **Mode** | one of the three |
-| **Tiling**, **Coloring**, **Tiles**, **Intensity** | as inside, with settings of their own. `angle` is the angle of the escape point and `zmag` the log of its modulus, as `iter+log(mag)` adds it; with `smooth` the angle is the one a few iterations past the bailout, where the smooth count is worked out |
+| **Tiling**, **Coloring**, **Tiles**, **Intensity** | as inside, with settings of their own. `angle` is the angle of the escape point and `zmag` the log of its modulus, as `iter+log(mag)` adds it; except in `tessellation + iter` with `fixed` or `iteration` scaling, both are read a few iterations past the bailout, where the smooth count is worked out, and dissolved into the same point one iteration on as far as the smooth count has gone towards the next iteration, so that they run on across the edges of the iterations instead of breaking there |
 | **Frequency** | tiles to a unit of the plane, `8` where it starts: the size of the tiles, which has to be raised as you zoom in, as the motion's frequency does |
 | **Tile scaling** and **Scaling factor** | what sizes the tiles, as [Sizing the marks by the count](#sizing-the-marks-by-the-count) sizes the motion's marks: `fixed` by the frequency alone; `iteration` or `smooth`, by the frequency doubled factor times every ten iterations of that count |
 

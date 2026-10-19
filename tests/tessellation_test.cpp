@@ -25,6 +25,7 @@
  */
 #include <cstdio>
 #include <cstring>
+#include <initializer_list>
 
 #include "formulas.cpp"
 
@@ -510,6 +511,61 @@ int main()
         check(doubled, "a whole number of doublings is the tiles at that "
                        "frequency");
         check(between, "and between two, with 256 colours, one of the two");
+        outstyle(3, TESSELL_ANGLE, TESSELL_TURNED, 1, 8, FBM_SCALE_FIXED, 1);
+    }
+
+    /* --- the angle and zmag across an edge of the iterations ------------
+     *
+     * Read at the escape point, which one pass more takes to its square, the
+     * angle and zmag jumped at every edge of the iterations. With a smooth
+     * count, the colour where the point stands just past the line the passes
+     * stop at (tau nought) is the colour of the point one pass on, and on the
+     * other side of the edge (tau one) the colour of that side's own point,
+     * which is that same point: the two must agree. tau one is the colour as
+     * it was, and the colourings that do not read z never notice tau. */
+    {
+        cfractalc.coloringmode = OutColormodeType::ColOut_tessell;
+        cpalette.type = C256;
+        auto at = [](number_t zre, number_t zim, number_t tau, unsigned int n) {
+            color_smooth = (number_t)n * 256;
+            color_smooth_held = 1;
+            smooth_tau = tau;
+            smooth_degree = 2;
+            return color_output(zre, zim, n);
+        };
+        int agree = 1, as_was = 1, apart = 1, moved = 0;
+        for (int c : {TESSELL_ANGLE, TESSELL_ZMAG, TESSELL_MIDDLE,
+                      TESSELL_NONE}) {
+            outstyle(3, c, TESSELL_SHADED, 1, 8, FBM_SCALE_FIXED, 1);
+            const int reads_z = c == TESSELL_ANGLE || c == TESSELL_ZMAG;
+            for (int iy = -6; iy < 6; iy++)
+                for (int ix = -6; ix < 6; ix++) {
+                    color_px = ((number_t)ix + (number_t)0.5) / 7;
+                    color_py = ((number_t)iy + (number_t)0.5) / 5;
+                    number_t zre = ((number_t)ix + (number_t)0.5) * 300;
+                    number_t zim = ((number_t)iy + (number_t)0.5) * 170;
+                    unsigned int plain = color_output(zre, zim, 9);
+                    unsigned int near = at(zre, zim, 0, 9);
+                    unsigned int far = at(zre * zre - zim * zim,
+                                          2 * zre * zim, 1, 10);
+                    if (reads_z && near != far)
+                        agree = 0;
+                    if (at(zre, zim, 1, 9) != plain)
+                        as_was = 0;
+                    if (!reads_z && near != plain)
+                        apart = 0;
+                    if (reads_z && near != plain)
+                        moved = 1;
+                }
+        }
+        smooth_tau = -1;
+        cpalette.type = 0;
+        check(agree, "the angle and zmag agree across an edge of the "
+                     "iterations");
+        check(as_was && moved, "the point's own colour at one, another "
+                               "below");
+        check(apart, "tile-angle and none never read where between the "
+                     "passes the point stands");
         outstyle(3, TESSELL_ANGLE, TESSELL_TURNED, 1, 8, FBM_SCALE_FIXED, 1);
     }
 

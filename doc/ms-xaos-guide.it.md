@@ -1,6 +1,6 @@
 # MS XaoS
 
-> Traduzione della [guida in inglese](ms-xaos-guide.md) della versione 2.8.
+> Traduzione della [guida in inglese](ms-xaos-guide.md) della versione 2.9.
 > Dove le due differiscono, fa fede l'originale inglese.
 
 Un fork di [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Tutto ciò che fa
@@ -1570,7 +1570,7 @@ solo grana, come accadde quando ci fu provato il moto.
 | campo | |
 | --- | --- |
 | **Modalità** | una delle tre |
-| **Tassellazione**, **Colorazione**, **Tessere**, **Intensità** | come all'interno, con impostazioni proprie. **angolo di z** è l'angolo del punto di fuga e **zmag** il logaritmo del suo modulo, come lo aggiunge `iter+log(mag)`; con **iterazione smooth** l'angolo è quello di qualche iterazione oltre il bailout, dove si calcola il conteggio smooth |
+| **Tassellazione**, **Colorazione**, **Tessere**, **Intensità** | come all'interno, con impostazioni proprie. **angolo di z** è l'angolo del punto di fuga e **zmag** il logaritmo del suo modulo, come lo aggiunge `iter+log(mag)`; tranne che in `tessellation + iter` con dimensionamento **fisso** o **iterazione**, si leggono entrambi qualche iterazione oltre il bailout, dove si calcola il conteggio smooth, e sfumano nello stesso punto un'iterazione dopo quanto il conteggio smooth è avanzato verso l'iterazione seguente, così proseguono attraverso i bordi delle iterazioni invece di spezzarsi lì |
 | **Frequenza** | tessere per unità del piano, `8` dove parte: la grandezza delle tessere, che va alzata quando si zooma, come la frequenza del moto |
 | **Dimensionamento delle tessere** e **Fattore** | cosa dà la grandezza alle tessere, come [Dimensionare i segni con il conteggio](#dimensionare-i-segni-con-il-conteggio) la dà ai segni del moto: **fisso**, la sola frequenza; **iterazione** o **iterazione smooth**, la frequenza raddoppiata tante volte quante dice il fattore ogni dieci iterazioni di quel conteggio |
 

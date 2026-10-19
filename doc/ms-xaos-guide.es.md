@@ -1,6 +1,6 @@
 # MS XaoS
 
-> Traducción de la [guía en inglés](ms-xaos-guide.md) de la versión 2.8. Donde
+> Traducción de la [guía en inglés](ms-xaos-guide.md) de la versión 2.9. Donde
 > difieran, la referencia es el original en inglés.
 
 Un fork de [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Todo lo que hace
@@ -1566,7 +1566,7 @@ siguiente y solo daría grano, como pasó cuando se probó allí el movimiento.
 | campo | |
 | --- | --- |
 | **Modo** | uno de los tres |
-| **Teselado**, **Coloreado**, **Teselas**, **Intensidad** | como en el interior, con ajustes propios. **ángulo de z** es el ángulo del punto de escape y **zmag** el logaritmo de su módulo, como lo suma `iter+log(mag)`; con **iteración suavizada** el ángulo es el de unas pocas iteraciones más allá del bailout, donde se calcula el recuento suavizado |
+| **Teselado**, **Coloreado**, **Teselas**, **Intensidad** | como en el interior, con ajustes propios. **ángulo de z** es el ángulo del punto de escape y **zmag** el logaritmo de su módulo, como lo suma `iter+log(mag)`; salvo en `tessellation + iter` con escalado **fijo** o **iteración**, ambos se leen unas pocas iteraciones más allá del bailout, donde se calcula el recuento suavizado, y se funden con el mismo punto una iteración después en la medida en que el recuento suavizado ha avanzado hacia la iteración siguiente, de modo que siguen sin cortes a través de los bordes de las iteraciones en lugar de romperse allí |
 | **Frecuencia** | teselas por unidad del plano, `8` donde empieza: el tamaño de las teselas, que hay que subir al acercarse, como la frecuencia del movimiento |
 | **Escalado de las teselas** y **Factor** | qué da el tamaño a las teselas, como [El tamaño de las marcas según el recuento](#el-tamaño-de-las-marcas-según-el-recuento) se lo da a las marcas del movimiento: **fijo**, la frecuencia sola; **iteración** o **iteración suavizada**, la frecuencia duplicada tantas veces como dice el factor cada diez iteraciones de ese recuento |
 

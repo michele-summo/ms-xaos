@@ -1,6 +1,6 @@
 # MS XaoS
 
-> Übersetzung der [englischen Anleitung](ms-xaos-guide.md) der Version 2.8. Wo
+> Übersetzung der [englischen Anleitung](ms-xaos-guide.md) der Version 2.9. Wo
 > sie voneinander abweichen, gilt das englische Original.
 
 Ein Fork von [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Alles, was das
@@ -1629,7 +1629,7 @@ ergäbe, wie damals, als die Bewegung dort versucht wurde.
 | Feld | |
 | --- | --- |
 | **Modus** | einer der drei |
-| **Kachelung**, **Färbung**, **Kacheln**, **Intensität** | wie innen, mit eigenen Einstellungen. **Winkel von z** ist der Winkel des Fluchtpunkts und **zmag** der Logarithmus seines Betrags, wie ihn `iter+log(mag)` hinzufügt; mit **geglättete Iteration** ist der Winkel der einige Iterationen nach dem Bailout, wo die geglättete Zählung berechnet wird |
+| **Kachelung**, **Färbung**, **Kacheln**, **Intensität** | wie innen, mit eigenen Einstellungen. **Winkel von z** ist der Winkel des Fluchtpunkts und **zmag** der Logarithmus seines Betrags, wie ihn `iter+log(mag)` hinzufügt; außer bei `tessellation + iter` mit **fest** oder **Iteration** werden beide einige Iterationen nach dem Bailout gelesen, wo die geglättete Zählung berechnet wird, und gehen so weit in denselben Punkt eine Iteration später über, wie die geglättete Zählung zur nächsten Iteration fortgeschritten ist, sodass sie über die Ränder der Iterationen hinweg durchlaufen, statt dort abzubrechen |
 | **Frequenz** | Kacheln pro Einheit der Ebene, `8` zu Beginn: die Größe der Kacheln, die man beim Hineinzoomen erhöhen muss, wie die Frequenz der Bewegung |
 | **Skalierung der Kacheln** und **Faktor** | was die Kacheln bemisst, wie [Die Größe der Spuren nach der Zählung](#die-größe-der-spuren-nach-der-zählung) die Spuren der Bewegung bemisst: **fest**, die Frequenz allein; **Iteration** oder **geglättete Iteration**, die Frequenz so oft verdoppelt, wie der Faktor sagt, alle zehn Iterationen dieser Zählung |
 
