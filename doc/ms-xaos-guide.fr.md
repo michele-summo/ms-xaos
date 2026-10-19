@@ -1,6 +1,6 @@
 # MS XaoS
 
-> Traduction du [guide en anglais](ms-xaos-guide.md) de la version 2.9. En cas
+> Traduction du [guide en anglais](ms-xaos-guide.md) de la version 2.10. En cas
 > de différence, l'original anglais fait foi.
 
 Un fork de [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Tout ce que fait
@@ -1538,7 +1538,7 @@ champs.
 | **Pavage** | quel pavage, avec le nombre sous lequel `randsctile` le connaît et son nom : **3: hexagones**, où il commence. L'onglet Pavages d'Aide → Référence des formules utilisateur a une image de chacun |
 | **Coloriage** | d'où vient la couleur, partout : **angle de z**, où il commence ; **angle autour du centre de la tuile**, celui de la tuile où tombe le point, qui fait de chaque tuile une petite roue de couleur ; **zmag**, la valeur du mode de ce nom ; **aucun**, rien que les tuiles |
 | **Tuiles** | comment chaque tuile se détache de ses voisines : **chacune décalée d'une quantité propre**, le long de la palette, où il commence ; **ombrées du centre au bord**, de même, et décalée d'un huitième des couleurs d'un tour de plus du centre au bord, comme un biseau ; **avec le bord marqué**, de même, et la partie extérieure de la tuile tracée dans l'autre moitié de la palette ; **une couleur unie chacune**, une couleur à elle, d'où que vienne la couleur |
-| **Intensité** | à quelle distance les tuiles sont placées le long de la palette : elle multiplie chaque quantité propre d'une tuile, son décalage, le biseau de **ombrées du centre au bord** et le bord de **avec le bord marqué**. À `1`, là où elle commence, les tuiles sont comme décrites ici ; à `0` il ne reste que ce dont vient la couleur, de sorte que **angle de z** est une décomposition simple et **zmag** le zmag simple ; entre les deux les tuiles se voient à peine, et au-dessus de `1` davantage |
+| **Intensité** | à quelle distance les tuiles sont placées le long de la palette : elle multiplie chaque quantité propre d'une tuile, son décalage, le biseau de **ombrées du centre au bord** et le bord de **avec le bord marqué**. À `1`, là où elle commence, les tuiles sont comme décrites ici ; à `0` il ne reste que ce dont vient la couleur, de sorte que **angle de z** est une décomposition simple et **zmag** le zmag simple ; entre les deux, l'image à `0` se fond dans l'image à `1` d'autant, de sorte que `0.1` fait entrer les tuiles d'un dixième, et au-dessus de `1` les quantités sont multipliées et les tuiles ressortent davantage. Une palette de 256 couleurs, qui n'a pas de couleurs entre les siennes dans lesquelles fondre, déplace aussi entre les deux les tuiles de cette part de leurs quantités |
 
 Le mode se tient entre les modes qui se répètent et les décompositions, et les
 réglages des deux l'atteignent. **Fréquence (modes périodiques)** et **Fonction

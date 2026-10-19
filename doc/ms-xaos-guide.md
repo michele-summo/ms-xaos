@@ -2,7 +2,7 @@
 
 A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Everything the
 original does, it still does; this describes what has been added or changed,
-and why. Version 2.9.
+and why. Version 2.10.
 
 ## Two binaries
 
@@ -1425,7 +1425,7 @@ to a unit as the squares of `squares` are. Its dialog has four fields.
 | **Tiling** | which tiling, by the number `randsctile` knows it by and its name — `3: hexagons`, where it starts. The Tilings tab of Help → User formula reference has a picture of each |
 | **Coloring** | what the colour comes from, all over: `angle`, the angle of `z`, where it starts; `tile-angle`, the angle about the middle of the tile the point is in, which makes each tile a small wheel of colour; `zmag`, the value of the mode of that name; `none`, nothing but the tiles |
 | **Tiles** | how each tile stands apart from its neighbours: `turned`, moved along the palette by an amount of its own, where it starts; `shaded`, the same, and moved by an eighth of a turn's colours more from its middle to its edge, a bevel; `edged`, the same, and the outer part of the tile drawn in the other half of the palette; `flat`, one colour of its own, whatever the colour comes from |
-| **Intensity** | how far apart along the palette the tiles are set: it multiplies every amount a tile has of its own, its turn, the bevel of `shaded` and the edge of `edged`. At `1`, where it starts, the tiles are as described here; at `0` only what the colour comes from is left, so `angle` is a plain decomposition and `zmag` plain `zmag`; in between the tiles show faintly, and above `1` more strongly |
+| **Intensity** | how far apart along the palette the tiles are set: it multiplies every amount a tile has of its own, its turn, the bevel of `shaded` and the edge of `edged`. At `1`, where it starts, the tiles are as described here; at `0` only what the colour comes from is left, so `angle` is a plain decomposition and `zmag` plain `zmag`; in between, the picture at `0` is dissolved into the picture at `1` by that much, so that `0.1` brings the tiles a tenth of the way in, and above `1` the amounts are multiplied and the tiles stand out more. A palette of 256 colours, which has no colours between its own to dissolve through, moves the tiles by that part of their amounts in between as well |
 
 The mode stands between the modes that repeat and the decompositions, and the
 settings of both reach it. **Frequency (periodic modes)** and **Function

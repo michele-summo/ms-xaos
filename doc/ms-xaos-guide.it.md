@@ -1,6 +1,6 @@
 # MS XaoS
 
-> Traduzione della [guida in inglese](ms-xaos-guide.md) della versione 2.9.
+> Traduzione della [guida in inglese](ms-xaos-guide.md) della versione 2.10.
 > Dove le due differiscono, fa fede l'originale inglese.
 
 Un fork di [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Tutto ciò che fa
@@ -1513,7 +1513,7 @@ quattro campi.
 | **Tassellazione** | quale tassellatura, con il numero con cui la conosce `randsctile` e il suo nome: **3: esagoni**, dove parte. La scheda Tassellature di Aiuto → Riferimento delle formule utente ha un'immagine di ciascuna |
 | **Colorazione** | da cosa viene il colore, dappertutto: **angolo di z**, dove parte; **angolo attorno al centro della tessera**, quello della tessera in cui cade il punto, che fa di ogni tessera una piccola ruota di colore; **zmag**, il valore della modalità con quel nome; **nessuna**, solo le tessere |
 | **Tessere** | come ogni tessera si stacca dalle vicine: **ognuna spostata di un tanto proprio**, lungo la tavolozza, dove parte; **sfumate dal centro al bordo**, lo stesso, e spostata di un ottavo dei colori di un giro in più dal centro al bordo, come una smussatura; **con il bordo marcato**, lo stesso, e la parte esterna della tessera disegnata nell'altra metà della tavolozza; **un colore pieno ciascuna**, un colore suo, da qualunque cosa venga il colore |
-| **Intensità** | quanto sono distanti lungo la tavolozza le tessere: moltiplica ogni quantità propria di una tessera, il suo spostamento, la smussatura di **sfumate dal centro al bordo** e il bordo di **con il bordo marcato**. A `1`, dove parte, le tessere sono come descritte qui; a `0` resta solo ciò da cui viene il colore, così **angolo di z** è una decomposizione semplice e **zmag** lo zmag semplice; in mezzo le tessere si vedono appena, e sopra `1` di più |
+| **Intensità** | quanto sono distanti lungo la tavolozza le tessere: moltiplica ogni quantità propria di una tessera, il suo spostamento, la smussatura di **sfumate dal centro al bordo** e il bordo di **con il bordo marcato**. A `1`, dove parte, le tessere sono come descritte qui; a `0` resta solo ciò da cui viene il colore, così **angolo di z** è una decomposizione semplice e **zmag** lo zmag semplice; in mezzo l'immagine a `0` sfuma in quella a `1` di tanto, così `0.1` porta dentro le tessere per un decimo, e sopra `1` le quantità si moltiplicano e le tessere spiccano di più. Una tavolozza di 256 colori, che non ha colori tra i suoi in cui sfumare, anche in mezzo sposta le tessere di quella parte delle loro quantità |
 
 La modalità sta tra le modalità che si ripetono e le decomposizioni, e le
 impostazioni di entrambe la raggiungono. **Frequenza (modalità periodiche)** e

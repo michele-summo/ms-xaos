@@ -1617,12 +1617,13 @@ static number_t tessell_turn(int tiling, int colour, int fill, number_t x,
     return turn;
 }
 
-/* A value of the outside, through the colouring speed and function, onto
- * the palette: what color_output ends with, for the tessellation modes,
- * which may look up two values for one pixel. */
-static unsigned int color_lookup(number_t i_f)
+/* A value of the outside, or of the inside with inset, through the colouring
+ * speed and function, onto the palette: what color_output and incolor_output
+ * end with, for the tessellation modes, which may look up more than one
+ * value for one pixel. */
+static unsigned int color_lookup(number_t i_f, int inset = 0)
 {
-    color_precalc(i_f, 0);
+    color_precalc(i_f, inset);
     unsigned int iter = color_wrap(i_f, ((unsigned int)(cpalette.size - 1))
                                             << 8);
     if ((cpalette.type & (C256 | SMALLITER)) || !(iter & 255))
@@ -1633,6 +1634,29 @@ static unsigned int color_lookup(number_t i_f)
     else
         i2 = cpalette.pixels[2 + (iter >> 8)];
     return (interpoltype(cpalette, i2, i1, iter & 255));
+}
+
+/* The intensity of a tessellation, between nought and one: the picture at
+ * nought, the colour alone, dissolved into the picture at one, the tiles as
+ * they stand, by that much. look(much) is the pixel at an intensity.
+ *
+ * Moving each tile along the palette by a part of its amount, as an
+ * intensity does past one and on a palette of 256 colours, which has no
+ * colours between its own to dissolve through, was what it did at first:
+ * but a palette goes through all its colours in a turn, and a tenth of a
+ * turn already took a tile to another colour, so that a tenth looked much
+ * as a half did, and the steps at the edges of the tiles were as sharp at a
+ * tenth as at one. Dissolved, a tenth is the colour with the tiles a tenth
+ * of the way in. */
+template <class Look>
+static unsigned int tessell_dissolve(number_t much, Look look)
+{
+    if (!(much > 0 && much < 1) || (cpalette.type & (C256 | SMALLITER)))
+        return look(much);
+    const unsigned int tiles = look(1), bare = look(0);
+    int w = (int)(much * 256);
+    w = w < 0 ? 0 : (w > 255 ? 255 : w);
+    return (interpoltype(cpalette, tiles, bare, w));
 }
 
 /* The outside's tessellation modes: the tiles of one of randsctile's tilings
@@ -1700,22 +1724,26 @@ static unsigned int tessell_output(number_t zre, number_t zim,
         const number_t turn =
             tessell_turn(cfractalc.outtessellation, colour, fill,
                          color_px * f, color_py * f, out, rx, ry);
-        auto value = [&](number_t re, number_t im, number_t mag) {
-            return base +
-                   tessell_colour(colour, fill, cfractalc.outtessellintensity,
-                                  turn, out, rx, ry, re, im, mag,
-                                  cfractalc.outdecomprotation,
-                                  cfractalc.outdecompsectors,
-                                  cfractalc.outdecomprepeats,
-                                  cfractalc.outdecompway,
-                                  cfractalc.outdecompspeed,
-                                  (number_t)cfractalc.outdecompradial,
-                                  ring_odd);
+        auto pixel = [&](number_t re, number_t im, number_t mag) {
+            return tessell_dissolve(
+                cfractalc.outtessellintensity, [&](number_t much) {
+                    return color_lookup(
+                        base +
+                        tessell_colour(colour, fill, much, turn, out, rx, ry,
+                                       re, im, mag,
+                                       cfractalc.outdecomprotation,
+                                       cfractalc.outdecompsectors,
+                                       cfractalc.outdecomprepeats,
+                                       cfractalc.outdecompway,
+                                       cfractalc.outdecompspeed,
+                                       (number_t)cfractalc.outdecompradial,
+                                       ring_odd));
+                });
         };
-        const unsigned int here = color_lookup(value(zre, zim, zmag));
+        const unsigned int here = pixel(zre, zim, zmag);
         if (!onward)
             return here;
-        const unsigned int next = color_lookup(value(nextre, nextim, nextmag));
+        const unsigned int next = pixel(nextre, nextim, nextmag);
         if (cpalette.type & (C256 | SMALLITER))
             return tau < 0.5 ? next : here;
         int w = (int)(tau * 256);
@@ -2159,15 +2187,24 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
                        20000);
                 break;
             }
-            i_f = tessell_colour(
-                colour, fill, cfractalc.intessellintensity, turn, out, rx, ry,
-                qre, qim,
-                (zre * zre + zim * zim) * (number_t)(cfractalc.maxiter >> 1) *
-                        SMUL +
-                    SMUL,
-                cfractalc.indecomprotation, cfractalc.indecompsectors,
-                cfractalc.indecomprepeats, cfractalc.indecompway,
-                cfractalc.indecompspeed, cfractalc.indecompradial, ring_odd);
+            auto value = [&](number_t much) {
+                return tessell_colour(
+                    colour, fill, much, turn, out, rx, ry, qre, qim,
+                    (zre * zre + zim * zim) *
+                            (number_t)(cfractalc.maxiter >> 1) * SMUL +
+                        SMUL,
+                    cfractalc.indecomprotation, cfractalc.indecompsectors,
+                    cfractalc.indecomprepeats, cfractalc.indecompway,
+                    cfractalc.indecompspeed, cfractalc.indecompradial,
+                    ring_odd);
+            };
+            const number_t much = cfractalc.intessellintensity;
+            if (much > 0 && much < 1 &&
+                !(cpalette.type & (C256 | SMALLITER)))
+                return tessell_dissolve(much, [&](number_t m) {
+                    return color_lookup(value(m), 1);
+                });
+            i_f = value(much);
         }
         break;
     case 21: /* log(mag): zmag with the contrast moved onto the small values,

@@ -1,7 +1,7 @@
 # MS XaoS
 
-> Tradução do [guia em inglês](ms-xaos-guide.md) da versão 2.9. Onde diferirem,
-> a referência é o original em inglês.
+> Tradução do [guia em inglês](ms-xaos-guide.md) da versão 2.10. Onde
+> diferirem, a referência é o original em inglês.
 
 Um fork do [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Tudo o que o
 original faz, continua a fazer; este guia descreve o que foi acrescentado ou
@@ -1471,7 +1471,7 @@ diálogo tem quatro campos.
 | **Pavimentação** | qual pavimentação, com o número pelo qual `randsctile` a conhece e o seu nome: **3: hexágonos**, onde começa. O separador Pavimentações de Ajuda → Referência das fórmulas do utilizador tem uma imagem de cada uma |
 | **Coloração** | de onde vem a cor, em toda a parte: **ângulo de z**, onde começa; **ângulo em torno do centro do ladrilho**, o do ladrilho em que cai o ponto, que faz de cada ladrilho uma pequena roda de cor; **zmag**, o valor do modo com esse nome; **nenhuma**, nada além dos ladrilhos |
 | **Ladrilhos** | como cada ladrilho se destaca dos vizinhos: **cada um deslocado de uma quantidade própria**, ao longo da paleta, onde começa; **sombreados do centro para a borda**, o mesmo, e deslocado mais um oitavo das cores de uma volta do centro para a borda, como um chanfro; **com a borda marcada**, o mesmo, e a parte exterior do ladrilho desenhada na outra metade da paleta; **uma cor lisa cada um**, uma cor sua, venha de onde vier a cor |
-| **Intensidade** | quão afastados ficam os ladrilhos ao longo da paleta: multiplica cada quantidade própria de um ladrilho, o seu deslocamento, o bisel de **sombreados do centro para a borda** e a borda de **com a borda marcada**. Em `1`, onde começa, os ladrilhos são como aqui descritos; em `0` fica só aquilo de que vem a cor, pelo que **ângulo de z** é uma decomposição simples e **zmag** o zmag simples; pelo meio os ladrilhos mal se veem, e acima de `1` veem-se mais |
+| **Intensidade** | quão afastados ficam os ladrilhos ao longo da paleta: multiplica cada quantidade própria de um ladrilho, o seu deslocamento, o bisel de **sombreados do centro para a borda** e a borda de **com a borda marcada**. Em `1`, onde começa, os ladrilhos são como aqui descritos; em `0` fica só aquilo de que vem a cor, pelo que **ângulo de z** é uma decomposição simples e **zmag** o zmag simples; pelo meio, a imagem em `0` funde-se na imagem em `1` nessa medida, de modo que `0.1` traz os ladrilhos uma décima parte, e acima de `1` as quantidades são multiplicadas e os ladrilhos destacam-se mais. Uma paleta de 256 cores, que não tem cores entre as suas para onde fundir, também pelo meio desloca os ladrilhos dessa parte das suas quantidades |
 
 O modo está entre os modos que se repetem e as decomposições, e as definições
 de ambos chegam-lhe. **Frequência (modos periódicos)** e **Função (modos
