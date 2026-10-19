@@ -433,6 +433,28 @@ static inline number_t bailout_threshold(void)
 static const number_t SMOOTH_FAR = 1e6;
 static const number_t SMOOTH_POWER = 1e3;
 
+/* Where between two of the orbit's passes the escape point handed on stands,
+ * for the outside tessellation's angle and zmag, which read it: nought where
+ * one pass fewer would have left it at the line the passes stop at, one where
+ * one more pass would have been needed, so that the point at one is, near
+ * enough, the point at nought taken through one pass more -- its angle times
+ * the degree, its logarithm times the degree. Below nought where it is not
+ * known. The degree is the orbit's own, as the far count measures it. */
+static thread_local number_t smooth_tau = -1, smooth_degree = 2;
+
+/* The same at the bailout: the last pass from s to m across t. */
+static inline void smooth_tau_near(number_t s, number_t m, number_t t)
+{
+    smooth_tau = -1;
+    if (!(s > 1) || !(t > s) || !(m >= t))
+        return;
+    const number_t ls = nlog(s), lm = nlog(m), lt = nlog(t);
+    if (!(lm >= ls * (number_t)1.5) || !(lm - lm == 0))
+        return;
+    smooth_degree = lm / ls;
+    smooth_tau = nlog(lm / lt) / nlog(smooth_degree);
+}
+
 /* At the bailout: done passes, the last from s to m either side of t. */
 static inline number_t smooth_count_near(unsigned int done, number_t s,
                                          number_t m, number_t t)
@@ -462,6 +484,10 @@ static inline int smooth_count_far(unsigned int done, number_t s, number_t m,
     if (!(ls > 0) || !(lm >= ls * (number_t)1.5) || !(t > 1) ||
         !(lm - lm == 0))
         return 0;
+    /* the passes stop at the first past the larger of the two */
+    smooth_degree = lm / ls;
+    smooth_tau = nlog(lm / nlog(t > SMOOTH_FAR ? t : SMOOTH_FAR)) /
+                 nlog(smooth_degree);
     /* ln ln t, worked out once a picture by set_fractalc */
     const number_t llt = t == cfractalc.bailoutloglogof ? cfractalc.bailoutloglog
                                                         : nlog(nlog(t));
@@ -483,25 +509,30 @@ static inline int smooth_count_far(unsigned int done, number_t s, number_t m,
          * than the pixels. */                                                 \
         number_t smoothed = 0;                                                 \
         int beyond = 0;                                                        \
+        smooth_tau = -1;                                                       \
         SMOOTHBEYOND(beyond, smoothed);                                        \
+        /* the escape point, before PRESMOOTH puts the quantity in its place */\
+        const number_t escre = zre;                                            \
         if (!beyond) {                                                         \
             PRESMOOTH;                                                         \
             smoothed = smooth_count_near(cfractalc.maxiter - iter, szmag,      \
                                          zre, SMOOTHTHRESHOLD);                \
+            smooth_tau_near(szmag, zre, SMOOTHTHRESHOLD);                      \
         }                                                                      \
         /* fbm + iter and fbm, here only because their marks are sized by    \
          * the smooth count: that handed on, and the rest drawn by            \
          * color_output as ever. They read neither zre nor zim, which the     \
          * passes past the bailout have moved. The tessellation modes, here   \
-         * for the smooth count as well, read them only for the angle of z,   \
-         * which is then the angle a few passes on. */                        \
+         * for the smooth count as well, read them for the angle and zmag   \
+         * of z, which is then the point a few passes on, and smooth_tau     \
+         * with it. */                                                        \
         if (cfractalc.coloringmode == OutColormodeClass::ColOut_fbm_iter ||    \
             cfractalc.coloringmode == OutColormodeClass::ColOut_fbm ||         \
             cfractalc.coloringmode.ColorMode >=                                \
                 OutColormodeClass::ColOut_tessell_smooth) {                    \
             color_smooth = smoothed;                                           \
             color_smooth_held = 1;                                             \
-            return (color_output(zre, zim, cfractalc.maxiter - iter));         \
+            return (color_output(escre, zim, cfractalc.maxiter - iter));       \
         }                                                                      \
         if (cfractalc.coloringmode == OutColormodeClass::ColOut_smooth_log) {  \
             smoothed = nlog(smoothed) * ((cpalette.size - 1)) /                \
@@ -1618,9 +1649,19 @@ static unsigned int color_lookup(number_t i_f)
  * where between them the count stands. Tiles have no middle value to blend
  * towards, as the motion has, so it is the colours that are blended, a
  * dissolve from one size to the next; a palette of 256 entries, which has
- * no colours between its own, takes the nearer. */
+ * no colours between its own, takes the nearer.
+ *
+ * The angle and zmag of z are another matter: they are read at the escape
+ * point, and that jumps where the count does -- one pass more doubles the
+ * angle -- so they drew the edges of the iterations however smooth the rest
+ * was. Where the smooth count was worked out, tau says where between two
+ * passes the point stands (see smooth_tau), and the colour of the point is
+ * dissolved into the colour of the point one pass on, all of it at nought,
+ * none at one: at an edge both sides then show the same point, and between
+ * the edges the colour runs on without a break. */
 static unsigned int tessell_output(number_t zre, number_t zim,
-                                   unsigned int iter, number_t smooth)
+                                   unsigned int iter, number_t smooth,
+                                   number_t tau)
 {
     const int colour = cfractalc.outtessellcolor;
     const int fill = cfractalc.outtessellfill;
@@ -1641,21 +1682,45 @@ static unsigned int tessell_output(number_t zre, number_t zim,
         return cfractalc.outdecompradial > 0 &&
                ((iter >> SHIFT) / cfractalc.outdecompradial) & 1;
     };
+    /* the point one pass on, where it is wanted */
+    const int onward = tau >= 0 && tau < 1 && fill != TESSELL_FLAT &&
+                       (colour == TESSELL_ANGLE || colour == TESSELL_ZMAG);
+    number_t nextre = 0, nextim = 0, nextmag = 0;
+    if (onward) {
+        const number_t turned = smooth_degree * natan2(zim, zre);
+        nextre = ncos(turned);
+        nextim = nsin(turned);
+        if (colour == TESSELL_ZMAG) {
+            const number_t l = smooth_degree * nlog(zre * zre + zim * zim);
+            nextmag = (l > 40 ? l : nlog(nexp(l) + 1)) * SMUL * 4;
+        }
+    }
     auto at = [&](number_t f) {
         double out = 0, rx = 0, ry = 0;
         const number_t turn =
             tessell_turn(cfractalc.outtessellation, colour, fill,
                          color_px * f, color_py * f, out, rx, ry);
-        return color_lookup(
-            base + tessell_colour(colour, fill, cfractalc.outtessellintensity,
-                                  turn, out, rx, ry, zre, zim, zmag,
+        auto value = [&](number_t re, number_t im, number_t mag) {
+            return base +
+                   tessell_colour(colour, fill, cfractalc.outtessellintensity,
+                                  turn, out, rx, ry, re, im, mag,
                                   cfractalc.outdecomprotation,
                                   cfractalc.outdecompsectors,
                                   cfractalc.outdecomprepeats,
                                   cfractalc.outdecompway,
                                   cfractalc.outdecompspeed,
                                   (number_t)cfractalc.outdecompradial,
-                                  ring_odd));
+                                  ring_odd);
+        };
+        const unsigned int here = color_lookup(value(zre, zim, zmag));
+        if (!onward)
+            return here;
+        const unsigned int next = color_lookup(value(nextre, nextim, nextmag));
+        if (cpalette.type & (C256 | SMALLITER))
+            return tau < 0.5 ? next : here;
+        int w = (int)(tau * 256);
+        w = w < 0 ? 0 : (w > 255 ? 255 : w);
+        return (interpoltype(cpalette, here, next, w));
     };
     number_t f = cfractalc.outtessellfrequency;
     if (cfractalc.outtessellscaling == FBM_SCALE_FIXED ||
@@ -1693,6 +1758,7 @@ static unsigned int color_output(number_t zre, number_t zim, unsigned int iter)
      * out, the whole one in its place. */
     const number_t smooth =
         color_smooth_held ? color_smooth : (number_t)iter * 256;
+    const number_t tau = color_smooth_held ? smooth_tau : -1;
     color_smooth_held = 0;
     iter <<= SHIFT;
     i_f = iter;
@@ -1808,7 +1874,7 @@ static unsigned int color_output(number_t zre, number_t zim, unsigned int iter)
         case OutColormodeType::ColOut_tessell_iter:
         case OutColormodeType::ColOut_tessell:
             /* a pixel of their own, which may be two blended */
-            return tessell_output(zre, zim, iter, smooth);
+            return tessell_output(zre, zim, iter, smooth, tau);
         case OutColormodeType::ColOut_abs_real_minus_abs_imag:
             /* how lopsided the escape point is, with no count: the level sets
              * of the difference rather than of the modulus */

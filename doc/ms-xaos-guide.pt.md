@@ -1528,7 +1528,7 @@ seguinte e só daria grão, como aconteceu quando lá se experimentou o moviment
 | campo | |
 | --- | --- |
 | **Modo** | um dos três |
-| **Pavimentação**, **Coloração**, **Ladrilhos**, **Intensidade** | como no interior, com definições próprias. **ângulo de z** é o ângulo do ponto de fuga e **zmag** o logaritmo do seu módulo, tal como `iter+log(mag)` o soma; com **iteração suavizada** o ângulo é o de algumas iterações depois do bailout, onde se calcula a contagem suavizada |
+| **Pavimentação**, **Coloração**, **Ladrilhos**, **Intensidade** | como no interior, com definições próprias. **ângulo de z** é o ângulo do ponto de fuga e **zmag** o logaritmo do seu módulo, tal como `iter+log(mag)` o soma; exceto em `tessellation + iter` com dimensionamento **fixo** ou **iteração**, ambos são lidos algumas iterações depois do bailout, onde se calcula a contagem suavizada, e fundem-se no mesmo ponto uma iteração depois à medida que a contagem suavizada avança para a iteração seguinte, de modo que continuam através dos limites das iterações em vez de se quebrarem aí |
 | **Frequência** | ladrilhos por unidade do plano, `8` onde começa: o tamanho dos ladrilhos, que é preciso subir ao aproximar, como a frequência do movimento |
 | **Escala dos ladrilhos** e **Fator** | o que dá o tamanho aos ladrilhos, como [O tamanho das marcas pela contagem](#o-tamanho-das-marcas-pela-contagem) o dá às marcas do movimento: **fixo**, só a frequência; **iteração** ou **iteração suavizada**, a frequência duplicada tantas vezes quantas diz o fator a cada dez iterações dessa contagem |
 
