@@ -1570,21 +1570,21 @@ solo grana, come accadde quando ci fu provato il moto.
 | campo | |
 | --- | --- |
 | **Modalità** | una delle tre |
-| **Tassellazione**, **Colorazione**, **Tessere**, **Intensità** | come all'interno, con impostazioni proprie. **angolo di z** è l'angolo del punto di fuga e **zmag** il logaritmo del suo modulo, come lo aggiunge `iter+log(mag)`; tranne che in `tessellation + iter` con dimensionamento **fisso** o **iterazione**, si leggono entrambi qualche iterazione oltre il bailout, dove si calcola il conteggio smooth, e sfumano nello stesso punto un'iterazione dopo quanto il conteggio smooth è avanzato verso l'iterazione seguente, così proseguono attraverso i bordi delle iterazioni invece di spezzarsi lì |
+| **Tassellazione**, **Colorazione**, **Tessere**, **Intensità** | come all'interno, con impostazioni proprie. **angolo di z** è l'angolo del punto di fuga e **zmag** il logaritmo del suo modulo, come lo aggiunge `iter+log(mag)`; tranne che in `tessellation + iter` con dimensionamento **fisso** o **iterazione**, si leggono entrambi qualche iterazione oltre il bailout, dove si calcola il conteggio smooth, e il loro posto sulla tavolozza si avvicina a quello dello stesso punto un'iterazione dopo quanto il conteggio smooth è avanzato verso l'iterazione seguente, così proseguono attraverso i bordi delle iterazioni invece di spezzarsi lì |
 | **Frequenza** | tessere per unità del piano, `8` dove parte: la grandezza delle tessere, che va alzata quando si zooma, come la frequenza del moto |
 | **Dimensionamento delle tessere** e **Fattore** | cosa dà la grandezza alle tessere, come [Dimensionare i segni con il conteggio](#dimensionare-i-segni-con-il-conteggio) la dà ai segni del moto: **fisso**, la sola frequenza; **iterazione** o **iterazione smooth**, la frequenza raddoppiata tante volte quante dice il fattore ogni dieci iterazioni di quel conteggio |
 
-Tra due raddoppi le tessere sono lette a entrambe le grandezze e i due colori
-si fondono, una dissolvenza da una grandezza alla successiva: le tessere non
-hanno un valore di mezzo verso cui fondersi, come ha il moto. Una tavolozza di
-256 colori, che non ne ha tra i suoi, prende la grandezza più vicina. Tra due
-raddoppi la tassellatura è letta due volte, il che ne raddoppia il costo. Un
-fattore di `1` raddoppia la frequenza dieci volte ogni cento iterazioni, il che
-porta presto le tessere sotto il pixel: qualche decimo è un inizio migliore. Le
-[impostazioni delle decomposizioni](#impostazioni-delle-decomposizioni)
-dell'esterno raggiungono i due angoli: **Iterazioni per fascia** fa fasce del
-conteggio per l'angolo di z e anelli dal centro al bordo per l'angolo attorno
-al centro.
+Tra due raddoppi le tessere sono lette a entrambe le grandezze e i loro due
+posti sulla tavolozza si mescolano per la via più corta, così ogni pixel è un
+colore della tavolozza e la sonda della tavolozza lo nomina: dove le tessere
+delle due grandezze stanno lontane sulla tavolozza, il mescolamento passa per i
+colori tra loro. Tra due raddoppi la tassellatura è letta due volte, il che ne
+raddoppia il costo. Un fattore di `1` raddoppia la frequenza dieci volte ogni
+cento iterazioni, il che porta presto le tessere sotto il pixel: qualche decimo
+è un inizio migliore. Le [impostazioni delle
+decomposizioni](#impostazioni-delle-decomposizioni) dell'esterno raggiungono i
+due angoli: **Iterazioni per fascia** fa fasce del conteggio per l'angolo di z
+e anelli dal centro al bordo per l'angolo attorno al centro.
 
 Con **Intensità** a `0` e **Colorazione** a **nessuna**, `tessellation + iter`
 disegna come `iter` e `tessellation` un solo colore. Una posizione salva la

@@ -1476,20 +1476,20 @@ as it did when the motion was tried there.
 | field | |
 | --- | --- |
 | **Mode** | one of the three |
-| **Tiling**, **Coloring**, **Tiles**, **Intensity** | as inside, with settings of their own. `angle` is the angle of the escape point and `zmag` the log of its modulus, as `iter+log(mag)` adds it; except in `tessellation + iter` with `fixed` or `iteration` scaling, both are read a few iterations past the bailout, where the smooth count is worked out, and dissolved into the same point one iteration on as far as the smooth count has gone towards the next iteration, so that they run on across the edges of the iterations instead of breaking there |
+| **Tiling**, **Coloring**, **Tiles**, **Intensity** | as inside, with settings of their own. `angle` is the angle of the escape point and `zmag` the log of its modulus, as `iter+log(mag)` adds it; except in `tessellation + iter` with `fixed` or `iteration` scaling, both are read a few iterations past the bailout, where the smooth count is worked out, and their place on the palette is moved towards the place of the same point one iteration on as far as the smooth count has gone towards the next iteration, so that they run on across the edges of the iterations instead of breaking there |
 | **Frequency** | tiles to a unit of the plane, `8` where it starts: the size of the tiles, which has to be raised as you zoom in, as the motion's frequency does |
 | **Tile scaling** and **Scaling factor** | what sizes the tiles, as [Sizing the marks by the count](#sizing-the-marks-by-the-count) sizes the motion's marks: `fixed` by the frequency alone; `iteration` or `smooth`, by the frequency doubled factor times every ten iterations of that count |
 
-Between two doublings the tiles are read at both sizes and the two colours are
-blended, a dissolve from one size to the next: tiles have no middle value to
-blend towards, as the motion has. A palette of 256 colours, which has none
-between its own, takes the nearer size. Between two doublings the tiling is
-read twice, which doubles its cost. A factor of `1` doubles the frequency ten
-times every hundred iterations, which takes the tiles below a pixel soon: a
-factor of a few tenths is a better start. The outside's [decomposition
-settings](#decomposition-settings) reach the two angles, **Iterations per
-band** making bands of the count for the angle of `z` and rings from the middle
-to the edge for the angle about the middle.
+Between two doublings the tiles are read at both sizes and their two places on
+the palette are blended, the short way round, so that every pixel is a colour
+of the palette and the palette probe names it: where the tiles of the two sizes
+lie far apart on the palette, the blend runs through the colours between them.
+Between two doublings the tiling is read twice, which doubles its cost. A
+factor of `1` doubles the frequency ten times every hundred iterations, which
+takes the tiles below a pixel soon: a factor of a few tenths is a better start.
+The outside's [decomposition settings](#decomposition-settings) reach the two
+angles, **Iterations per band** making bands of the count for the angle of `z`
+and rings from the middle to the edge for the angle about the middle.
 
 With **Intensity** at `0` and **Coloring** at `none`, `tessellation + iter`
 draws as `iter` and `tessellation` one colour. A position saves the mode as

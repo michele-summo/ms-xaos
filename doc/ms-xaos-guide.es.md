@@ -1566,16 +1566,16 @@ siguiente y solo daría grano, como pasó cuando se probó allí el movimiento.
 | campo | |
 | --- | --- |
 | **Modo** | uno de los tres |
-| **Teselado**, **Coloreado**, **Teselas**, **Intensidad** | como en el interior, con ajustes propios. **ángulo de z** es el ángulo del punto de escape y **zmag** el logaritmo de su módulo, como lo suma `iter+log(mag)`; salvo en `tessellation + iter` con escalado **fijo** o **iteración**, ambos se leen unas pocas iteraciones más allá del bailout, donde se calcula el recuento suavizado, y se funden con el mismo punto una iteración después en la medida en que el recuento suavizado ha avanzado hacia la iteración siguiente, de modo que siguen sin cortes a través de los bordes de las iteraciones en lugar de romperse allí |
+| **Teselado**, **Coloreado**, **Teselas**, **Intensidad** | como en el interior, con ajustes propios. **ángulo de z** es el ángulo del punto de escape y **zmag** el logaritmo de su módulo, como lo suma `iter+log(mag)`; salvo en `tessellation + iter` con escalado **fijo** o **iteración**, ambos se leen unas pocas iteraciones más allá del bailout, donde se calcula el recuento suavizado, y su lugar en la paleta se acerca al lugar del mismo punto una iteración después en la medida en que el recuento suavizado ha avanzado hacia la iteración siguiente, de modo que siguen sin cortes a través de los bordes de las iteraciones en lugar de romperse allí |
 | **Frecuencia** | teselas por unidad del plano, `8` donde empieza: el tamaño de las teselas, que hay que subir al acercarse, como la frecuencia del movimiento |
 | **Escalado de las teselas** y **Factor** | qué da el tamaño a las teselas, como [El tamaño de las marcas según el recuento](#el-tamaño-de-las-marcas-según-el-recuento) se lo da a las marcas del movimiento: **fijo**, la frecuencia sola; **iteración** o **iteración suavizada**, la frecuencia duplicada tantas veces como dice el factor cada diez iteraciones de ese recuento |
 
-Entre dos duplicaciones las teselas se leen en los dos tamaños y los dos
-colores se funden, un fundido de un tamaño al siguiente: las teselas no tienen
-un valor intermedio hacia el que fundirse, como tiene el movimiento. Una paleta
-de 256 colores, que no tiene ninguno entre los suyos, toma el tamaño más
-cercano. Entre dos duplicaciones el teselado se lee dos veces, lo que duplica
-su coste. Un factor de `1` duplica la frecuencia diez veces cada cien
+Entre dos duplicaciones las teselas se leen en los dos tamaños y sus dos
+lugares en la paleta se mezclan por el camino más corto, de modo que cada píxel
+es un color de la paleta y la sonda de paleta lo nombra: donde las teselas de
+los dos tamaños quedan lejos en la paleta, la mezcla pasa por los colores que
+hay entre ellas. Entre dos duplicaciones el teselado se lee dos veces, lo que
+duplica su coste. Un factor de `1` duplica la frecuencia diez veces cada cien
 iteraciones, lo que pronto lleva las teselas por debajo del píxel: unas décimas
 son un mejor comienzo. Los [ajustes de las
 descomposiciones](#ajustes-de-las-descomposiciones) del exterior alcanzan los

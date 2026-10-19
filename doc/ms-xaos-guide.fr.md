@@ -1596,18 +1596,18 @@ donnerait que du grain, comme lorsque le mouvement y fut essayé.
 | champ | |
 | --- | --- |
 | **Mode** | l'un des trois |
-| **Pavage**, **Coloriage**, **Tuiles**, **Intensité** | comme à l'intérieur, avec des réglages à eux. **angle de z** est l'angle du point d'échappement et **zmag** le logarithme de son module, tel que `iter+log(mag)` l'ajoute ; sauf dans `tessellation + iter` avec un dimensionnement **fixe** ou **itération**, tous deux sont lus quelques itérations après le bailout, là où le compte lissé est calculé, et fondus dans le même point une itération plus loin à mesure que le compte lissé avance vers l'itération suivante, de sorte qu'ils se poursuivent à travers les bords des itérations au lieu de s'y briser |
+| **Pavage**, **Coloriage**, **Tuiles**, **Intensité** | comme à l'intérieur, avec des réglages à eux. **angle de z** est l'angle du point d'échappement et **zmag** le logarithme de son module, tel que `iter+log(mag)` l'ajoute ; sauf dans `tessellation + iter` avec un dimensionnement **fixe** ou **itération**, tous deux sont lus quelques itérations après le bailout, là où le compte lissé est calculé, et leur place sur la palette s'approche de celle du même point une itération plus loin à mesure que le compte lissé avance vers l'itération suivante, de sorte qu'ils se poursuivent à travers les bords des itérations au lieu de s'y briser |
 | **Fréquence** | tuiles par unité du plan, `8` au départ : la taille des tuiles, qu'il faut augmenter en zoomant, comme la fréquence du mouvement |
 | **Mise à l'échelle des tuiles** et **Facteur** | ce qui donne leur taille aux tuiles, comme [La taille des marques selon le compte](#la-taille-des-marques-selon-le-compte) la donne aux marques du mouvement : **fixe**, la fréquence seule ; **itération** ou **itération lissée**, la fréquence doublée autant de fois que le dit le facteur toutes les dix itérations de ce compte |
 
-Entre deux doublements les tuiles sont lues aux deux tailles et les deux
-couleurs sont fondues, un fondu d'une taille à la suivante : les tuiles n'ont
-pas de valeur médiane vers laquelle se fondre, comme en a le mouvement. Une
-palette de 256 couleurs, qui n'en a aucune entre les siennes, prend la taille
-la plus proche. Entre deux doublements le pavage est lu deux fois, ce qui en
-double le coût. Un facteur de `1` double la fréquence dix fois toutes les cent
-itérations, ce qui amène vite les tuiles sous le pixel : quelques dixièmes sont
-un meilleur départ. Les [réglages des
+Entre deux doublements les tuiles sont lues aux deux tailles et leurs deux
+places sur la palette sont mélangées par le plus court chemin, de sorte que
+chaque pixel est une couleur de la palette et que la sonde de palette la nomme
+: là où les tuiles des deux tailles sont loin l'une de l'autre sur la palette,
+le mélange passe par les couleurs entre elles. Entre deux doublements le pavage
+est lu deux fois, ce qui en double le coût. Un facteur de `1` double la
+fréquence dix fois toutes les cent itérations, ce qui amène vite les tuiles
+sous le pixel : quelques dixièmes sont un meilleur départ. Les [réglages des
 décompositions](#réglages-des-décompositions) de l'extérieur atteignent les
 deux angles : **Itérations par bande** fait des bandes du compte pour l'angle
 de z et des anneaux du centre au bord pour l'angle autour du centre.

@@ -1629,18 +1629,18 @@ ergäbe, wie damals, als die Bewegung dort versucht wurde.
 | Feld | |
 | --- | --- |
 | **Modus** | einer der drei |
-| **Kachelung**, **Färbung**, **Kacheln**, **Intensität** | wie innen, mit eigenen Einstellungen. **Winkel von z** ist der Winkel des Fluchtpunkts und **zmag** der Logarithmus seines Betrags, wie ihn `iter+log(mag)` hinzufügt; außer bei `tessellation + iter` mit **fest** oder **Iteration** werden beide einige Iterationen nach dem Bailout gelesen, wo die geglättete Zählung berechnet wird, und gehen so weit in denselben Punkt eine Iteration später über, wie die geglättete Zählung zur nächsten Iteration fortgeschritten ist, sodass sie über die Ränder der Iterationen hinweg durchlaufen, statt dort abzubrechen |
+| **Kachelung**, **Färbung**, **Kacheln**, **Intensität** | wie innen, mit eigenen Einstellungen. **Winkel von z** ist der Winkel des Fluchtpunkts und **zmag** der Logarithmus seines Betrags, wie ihn `iter+log(mag)` hinzufügt; außer bei `tessellation + iter` mit **fest** oder **Iteration** werden beide einige Iterationen nach dem Bailout gelesen, wo die geglättete Zählung berechnet wird, und ihre Stelle auf der Palette rückt so weit zur Stelle desselben Punkts eine Iteration später, wie die geglättete Zählung zur nächsten Iteration fortgeschritten ist, sodass sie über die Ränder der Iterationen hinweg durchlaufen, statt dort abzubrechen |
 | **Frequenz** | Kacheln pro Einheit der Ebene, `8` zu Beginn: die Größe der Kacheln, die man beim Hineinzoomen erhöhen muss, wie die Frequenz der Bewegung |
 | **Skalierung der Kacheln** und **Faktor** | was die Kacheln bemisst, wie [Die Größe der Spuren nach der Zählung](#die-größe-der-spuren-nach-der-zählung) die Spuren der Bewegung bemisst: **fest**, die Frequenz allein; **Iteration** oder **geglättete Iteration**, die Frequenz so oft verdoppelt, wie der Faktor sagt, alle zehn Iterationen dieser Zählung |
 
-Zwischen zwei Verdopplungen werden die Kacheln in beiden Größen gelesen und die
-beiden Farben überblendet, von einer Größe zur nächsten: Kacheln haben keinen
-mittleren Wert, zu dem man mischen könnte, wie ihn die Bewegung hat. Eine
-Palette mit 256 Farben, die keine zwischen ihren eigenen hat, nimmt die nähere
-Größe. Zwischen zwei Verdopplungen wird die Kachelung zweimal gelesen, was ihre
-Kosten verdoppelt. Ein Faktor von `1` verdoppelt die Frequenz zehnmal alle
-hundert Iterationen, was die Kacheln bald unter ein Pixel bringt: einige
-Zehntel sind ein besserer Anfang. Die [Einstellungen der
+Zwischen zwei Verdopplungen werden die Kacheln in beiden Größen gelesen und
+ihre beiden Stellen auf der Palette auf dem kürzeren Weg gemischt, sodass jedes
+Pixel eine Farbe der Palette ist und die Palettensonde sie benennt: Liegen die
+Kacheln der beiden Größen auf der Palette weit auseinander, läuft die Mischung
+durch die Farben dazwischen. Zwischen zwei Verdopplungen wird die Kachelung
+zweimal gelesen, was ihre Kosten verdoppelt. Ein Faktor von `1` verdoppelt die
+Frequenz zehnmal alle hundert Iterationen, was die Kacheln bald unter ein Pixel
+bringt: einige Zehntel sind ein besserer Anfang. Die [Einstellungen der
 Zerlegungen](#einstellungen-der-zerlegungen) von außen erreichen die beiden
 Winkel: **Iterationen pro Band** macht Bänder der Zählung für den Winkel von z
 und Ringe von der Mitte zum Rand für den Winkel um die Mitte.

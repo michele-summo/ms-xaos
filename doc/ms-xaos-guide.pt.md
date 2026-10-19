@@ -1528,19 +1528,19 @@ seguinte e só daria grão, como aconteceu quando lá se experimentou o moviment
 | campo | |
 | --- | --- |
 | **Modo** | um dos três |
-| **Pavimentação**, **Coloração**, **Ladrilhos**, **Intensidade** | como no interior, com definições próprias. **ângulo de z** é o ângulo do ponto de fuga e **zmag** o logaritmo do seu módulo, tal como `iter+log(mag)` o soma; exceto em `tessellation + iter` com dimensionamento **fixo** ou **iteração**, ambos são lidos algumas iterações depois do bailout, onde se calcula a contagem suavizada, e fundem-se no mesmo ponto uma iteração depois à medida que a contagem suavizada avança para a iteração seguinte, de modo que continuam através dos limites das iterações em vez de se quebrarem aí |
+| **Pavimentação**, **Coloração**, **Ladrilhos**, **Intensidade** | como no interior, com definições próprias. **ângulo de z** é o ângulo do ponto de fuga e **zmag** o logaritmo do seu módulo, tal como `iter+log(mag)` o soma; exceto em `tessellation + iter` com dimensionamento **fixo** ou **iteração**, ambos são lidos algumas iterações depois do bailout, onde se calcula a contagem suavizada, e o seu lugar na paleta aproxima-se do lugar do mesmo ponto uma iteração depois à medida que a contagem suavizada avança para a iteração seguinte, de modo que continuam através dos limites das iterações em vez de se quebrarem aí |
 | **Frequência** | ladrilhos por unidade do plano, `8` onde começa: o tamanho dos ladrilhos, que é preciso subir ao aproximar, como a frequência do movimento |
 | **Escala dos ladrilhos** e **Fator** | o que dá o tamanho aos ladrilhos, como [O tamanho das marcas pela contagem](#o-tamanho-das-marcas-pela-contagem) o dá às marcas do movimento: **fixo**, só a frequência; **iteração** ou **iteração suavizada**, a frequência duplicada tantas vezes quantas diz o fator a cada dez iterações dessa contagem |
 
-Entre duas duplicações os ladrilhos são lidos nos dois tamanhos e as duas cores
-fundem-se, uma transição de um tamanho para o seguinte: os ladrilhos não têm um
-valor intermédio para onde fundir, como tem o movimento. Uma paleta de 256
-cores, que não tem nenhuma entre as suas, fica com o tamanho mais próximo.
-Entre duas duplicações a pavimentação é lida duas vezes, o que duplica o seu
-custo. Um fator de `1` duplica a frequência dez vezes a cada cem iterações, o
-que depressa leva os ladrilhos para baixo do píxel: algumas décimas são um
-começo melhor. As [definições das decomposições](#definições-das-decomposições)
-do exterior chegam aos dois ângulos: **Iterações por faixa** faz faixas da
+Entre duas duplicações os ladrilhos são lidos nos dois tamanhos e os seus dois
+lugares na paleta misturam-se pelo caminho mais curto, de modo que cada píxel é
+uma cor da paleta e a sonda da paleta a nomeia: onde os ladrilhos dos dois
+tamanhos ficam longe na paleta, a mistura passa pelas cores entre eles. Entre
+duas duplicações a pavimentação é lida duas vezes, o que duplica o seu custo.
+Um fator de `1` duplica a frequência dez vezes a cada cem iterações, o que
+depressa leva os ladrilhos para baixo do píxel: algumas décimas são um começo
+melhor. As [definições das decomposições](#definições-das-decomposições) do
+exterior chegam aos dois ângulos: **Iterações por faixa** faz faixas da
 contagem para o ângulo de z e anéis do centro para a borda para o ângulo em
 torno do centro.
 
