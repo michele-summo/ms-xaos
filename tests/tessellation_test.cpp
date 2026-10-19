@@ -569,72 +569,96 @@ int main()
         outstyle(3, TESSELL_ANGLE, TESSELL_TURNED, 1, 8, FBM_SCALE_FIXED, 1);
     }
 
-    /* --- an intensity between nought and one, dissolved ------------------
+    /* --- the intensity moves the tiles along the palette ----------------
      *
-     * With a palette of colours between its entries, an intensity between
-     * nought and one is the picture at nought dissolved into the picture at
-     * one by that much: each channel of the pixel lies between the two, and
-     * the tiles are not moved along the palette, which took a tile to
-     * another colour already at a tenth. Inside and out. */
+     * The intensity is how far each tile is moved along the palette, any
+     * amount, and the colour drawn is always one the palette has at that
+     * place: what the palette probe, which works the point out again with a
+     * palette whose entries are their own numbers, finds there. With a true
+     * colour palette each channel lies between the entry the probe names and
+     * the next, as the palette's own blend has it, at every intensity --
+     * none of them the two pictures at nought and one dissolved, which would
+     * draw a colour the probe has no place for. Inside and out. */
     {
         const int was = cpalette.type, mode = cfractalc.incoloringmode;
         const struct truec keep = cpalette.info.truec;
+        unsigned int *const colours = cpalette.pixels;
+        static unsigned int places[257];
+        for (int k = 0; k < 257; k++)
+            places[k] = k;
         cfractalc.incoloringmode = INCOLORING_TESSELLATION;
-        cpalette.type = TRUECOLOR;
         cpalette.info.truec.rmask = 0xff0000;
         cpalette.info.truec.gmask = 0x00ff00;
         cpalette.info.truec.bmask = 0x0000ff;
         cpalette.info.truec.allmask = 0xffffff;
-        auto within = [](unsigned int v, unsigned int a, unsigned int b) {
+        /* the colour and the place the probe gives for it */
+        auto onplace = [&](unsigned int colour, unsigned int place) {
+            if (place < 1 || (int)place >= cpalette.size)
+                return 0;
+            const unsigned int a = colours[place],
+                               b = colours[(int)place == cpalette.size - 1
+                                               ? 1
+                                               : place + 1];
             for (int shift = 0; shift < 24; shift += 8) {
-                int x = (v >> shift) & 255, p = (a >> shift) & 255,
+                int x = (colour >> shift) & 255, p = (a >> shift) & 255,
                     q = (b >> shift) & 255;
                 int lo = p < q ? p : q, hi = p < q ? q : p;
-                if (x < lo - 1 || x > hi + 1)
+                if (x < lo || x > hi)
                     return 0;
             }
             return 1;
         };
-        int between_in = 1, moved_in = 0, between_out = 1, moved_out = 0;
-        for (int c : {TESSELL_ANGLE, TESSELL_ZMAG})
-            for (int f : {TESSELL_TURNED, TESSELL_SHADED, TESSELL_EDGED}) {
+        int agree_in = 1, agree_out = 1, moved = 0;
+        for (int c : {TESSELL_ANGLE, TESSELL_ZMAG, TESSELL_NONE})
+            for (int f : {TESSELL_TURNED, TESSELL_SHADED, TESSELL_EDGED,
+                          TESSELL_FLAT}) {
                 style(c, f);
-                outstyle(3, c, f, 1, 8, FBM_SCALE_FIXED, 1);
                 cfractalc.coloringmode = OutColormodeType::ColOut_tessell;
-                for (int iy = -8; iy < 8; iy++)
-                    for (int ix = -8; ix < 8; ix++) {
-                        number_t x = ((number_t)ix + (number_t)0.5) / 23;
-                        number_t y = ((number_t)iy + (number_t)0.5) / 29;
-                        color_px = x;
-                        color_py = y;
-                        unsigned int in[3], out[3];
-                        const number_t much[3] = {0, 1, (number_t)0.25};
-                        for (int k = 0; k < 3; k++) {
-                            cfractalc.intessellintensity = much[k];
-                            cfractalc.outtessellintensity = much[k];
-                            in[k] = incolor_output(x, y, (number_t)0.3,
+                for (number_t much : {(number_t)0.01, (number_t)0.25,
+                                      (number_t)1, (number_t)141.42})
+                    for (int iy = -8; iy < 8; iy++)
+                        for (int ix = -8; ix < 8; ix++) {
+                            number_t x = ((number_t)ix + (number_t)0.5) / 23;
+                            number_t y = ((number_t)iy + (number_t)0.5) / 29;
+                            color_px = x;
+                            color_py = y;
+                            cfractalc.intessellintensity = much;
+                            outstyle(3, c, f, much, 8, FBM_SCALE_FIXED, 1);
+                            unsigned int in[2], out[2];
+                            for (int probe = 0; probe < 2; probe++) {
+                                cpalette.type = probe ? SMALLITER : TRUECOLOR;
+                                cpalette.pixels = probe ? places : colours;
+                                in[probe] =
+                                    incolor_output(x, y, (number_t)0.3,
                                                    (number_t)-0.4, 100);
-                            out[k] = color_output(x * 3 + 1, y * 3 - 2, 7);
+                                out[probe] =
+                                    color_output(x * 3 + 1, y * 3 - 2, 7);
+                            }
+                            if (!onplace(in[0], in[1]))
+                                agree_in = 0;
+                            if (!onplace(out[0], out[1]))
+                                agree_out = 0;
+                            if (much == (number_t)0.25) {
+                                cfractalc.intessellintensity = 0;
+                                cpalette.type = SMALLITER;
+                                cpalette.pixels = places;
+                                if (incolor_output(x, y, (number_t)0.3,
+                                                   (number_t)-0.4,
+                                                   100) != in[1])
+                                    moved = 1;
+                            }
                         }
-                        if (!within(in[2], in[0], in[1]))
-                            between_in = 0;
-                        if (in[2] != in[0] && in[2] != in[1])
-                            moved_in = 1;
-                        if (!within(out[2], out[0], out[1]))
-                            between_out = 0;
-                        if (out[2] != out[0] && out[2] != out[1])
-                            moved_out = 1;
-                    }
             }
         cfractalc.intessellintensity = 1;
         cfractalc.incoloringmode = mode;
         style(TESSELL_ANGLE, TESSELL_TURNED);
         outstyle(3, TESSELL_ANGLE, TESSELL_TURNED, 1, 8, FBM_SCALE_FIXED, 1);
         cpalette.type = was;
+        cpalette.pixels = colours;
         cpalette.info.truec = keep;
-        check(between_in && moved_in, "inside, an intensity of a quarter is "
-                                      "the two pictures dissolved");
-        check(between_out && moved_out, "and outside");
+        check(agree_in && moved, "inside, every intensity draws the colour "
+                                 "at the place the probe finds");
+        check(agree_out, "and outside");
     }
 
     /* --- the dialog's names ---------------------------------------------- */
