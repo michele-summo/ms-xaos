@@ -1,0 +1,8 @@
+(initstate)
+(formula 'mandel)
+(maxiter 300)
+(incoloring 30)
+(intessellation 39)
+(intessellstyle 'tile-angle 'shaded)
+(intessellintensity 0.5)
+(view -0.2 0 0.2 0.2)

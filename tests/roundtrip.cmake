@@ -1,6 +1,9 @@
 # Saving a position and loading it back has to land on the same image.
 #
-# Run as: cmake -DXAOS=<binary> -DPOSITIONS=<dir> -DWORK=<dir> -P roundtrip.cmake
+# Run as: cmake -DXAOS=<binary> -DPOSITIONS=<dir> [-DEXAMPLES=<dir>] -DWORK=<dir>
+#         -P roundtrip.cmake
+#
+# EXAMPLES is a folder of shipped examples to go through as well.
 #
 # For each position: render it, replay it with a savepos appended, render what
 # that wrote, and compare the two images. Any difference means the file does
@@ -34,6 +37,10 @@ macro(xaos_render input prefix)
 endmacro()
 
 file(GLOB positions ${POSITIONS}/*.xpf)
+if(EXAMPLES)
+   file(GLOB examples ${EXAMPLES}/*.xpf)
+   list(APPEND positions ${examples})
+endif()
 list(LENGTH positions count)
 if(count EQUAL 0)
    message(FATAL_ERROR "no positions found in ${POSITIONS}")
@@ -42,7 +49,7 @@ endif()
 set(failures "")
 
 foreach(position ${positions})
-   get_filename_component(name ${position} NAME_WE)
+   get_filename_component(name ${position} NAME_WLE)
    set(dir ${WORK}/${name})
    file(REMOVE_RECURSE ${dir})
    file(MAKE_DIRECTORY ${dir})

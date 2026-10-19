@@ -10,6 +10,13 @@ All example fractals are copyrighted by their original
 authors, but may be reproduced in any form. You are also encouraged to
 contribute your own generated fractals.
 
+MS-XaoS holds the examples of this fork. The penrose-*.xpf files show the
+tessellation on Penrose rhombs (tessellation 39), inside (penrose-in-*) and
+outside (penrose-out-*): the same tiles at intensity 0.01, 0.1, 1 and 141.42,
+then each colouring (angle, tile-angle, zmag, none), each tile style (turned,
+shaded, edged, flat) and, outside, each scaling (fixed, smooth, iteration).
+penrose-*-cubes are the shaded rhombi, which read as cubes.
+
 0rfel1.xpf contains Daniel Skarda: 0rfelyus 1 (1997)
 0rfel2.xpf contains Daniel Skarda: 0rfelyus 2 (1997)
 2spirals.xpf contains Jan Hubicka: Two Spirals (1997)

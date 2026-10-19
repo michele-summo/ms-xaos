@@ -327,7 +327,8 @@ endforeach()
 
 # Saving a position and loading it back has to land on the same image. This
 # drives the built binary rather than compiling anything, so it lives outside
-# the per-precision loop and runs once, against whichever XaoS was built.
+# the per-precision loop and runs once, against whichever XaoS was built. It
+# goes through tests/positions and the fork's own examples in examples/MS-XaoS.
 #
 # It earns its keep: the palette used to be written after the filters, and a
 # position combining a palette with the palette emulation filter came back in
@@ -338,6 +339,7 @@ if(TARGET XaoS)
             COMMAND ${CMAKE_COMMAND}
                     -DXAOS=$<TARGET_FILE:XaoS>
                     -DPOSITIONS=${CMAKE_CURRENT_SOURCE_DIR}/positions
+                    -DEXAMPLES=${CMAKE_SOURCE_DIR}/examples/MS-XaoS
                     -DWORK=${CMAKE_CURRENT_BINARY_DIR}/roundtrip
                     -P ${CMAKE_CURRENT_SOURCE_DIR}/roundtrip.cmake)
    # -render opens no window, but Qt still wants a display to start on Linux,

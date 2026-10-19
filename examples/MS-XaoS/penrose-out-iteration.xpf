@@ -1,0 +1,6 @@
+(initstate)
+(formula 'mandel)
+(maxiter 300)
+(outcoloring 22)
+(outtessellation 39 'zmag 'edged 0.2 2 'iteration 2)
+(view -0.6 0 3.2 3.2)
