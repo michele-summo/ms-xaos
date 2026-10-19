@@ -1,126 +1,172 @@
-# MS XaoS 2.5
+# MS XaoS 2.7
 
 What has changed since
-[2.4](https://github.com/michele-summo/ms-xaos/releases/tag/v2.4). Everything
-MS XaoS adds over [XaoS](https://github.com/xaos-project/XaoS) 4.3.3 is in the
+[2.5](https://github.com/michele-summo/ms-xaos/releases/tag/v2.5). Version 2.6
+was never released on its own, so what it brought is here too. Everything MS
+XaoS adds over [XaoS](https://github.com/xaos-project/XaoS) 4.3.3 is in the
 notes of [1.6](https://github.com/michele-summo/ms-xaos/releases/tag/v1.6),
 [1.7](https://github.com/michele-summo/ms-xaos/releases/tag/v1.7),
 [1.7.2](https://github.com/michele-summo/ms-xaos/releases/tag/v1.7.2),
 [1.7.4](https://github.com/michele-summo/ms-xaos/releases/tag/v1.7.4),
 [1.8.0](https://github.com/michele-summo/ms-xaos/releases/tag/v1.8.0),
-[2.3](https://github.com/michele-summo/ms-xaos/releases/tag/v2.3) and
-[2.4](https://github.com/michele-summo/ms-xaos/releases/tag/v2.4), and the
-[guide](https://github.com/michele-summo/ms-xaos/blob/v2.5/doc/ms-xaos-guide.md)
+[2.3](https://github.com/michele-summo/ms-xaos/releases/tag/v2.3),
+[2.4](https://github.com/michele-summo/ms-xaos/releases/tag/v2.4) and
+[2.5](https://github.com/michele-summo/ms-xaos/releases/tag/v2.5), and the
+[guide](https://github.com/michele-summo/ms-xaos/blob/v2.7/doc/ms-xaos-guide.md)
 says what each thing does and why it was made that way.
 
-## Coloring speed in one dialog
+## The formula history in the bar
 
-Incoloring mode and Outcoloring mode had four entries for what takes a
-colouring value to a place in the palette: Coloring speed, Coloring shift, a
-submenu of the twelve speed functions and, at its foot, the speed change
-after ITER in a dialog of its own. Each side now has one, **Coloring speed**:
-the function chosen from a list, the speed and the shift, and under the
-heading *Speed change after ITER* the fields its own dialog had. OK sets them
-all as one step of undo, each as it would be set alone, so only what moved is
-redrawn.
+Fractal → User formula reached the formulas used before only through the
+History... window. The bar now steps through them itself: **Up**, from its
+first line, brings in the formula used before the one shown, and **Down**,
+from its last line, goes back towards the newest and then to what the bar held
+before stepping began, as in a shell. Two small arrows beside the bar do the
+same, each greyed when there is nothing further that way. A formula already in
+the bar is passed over, so the first Up always changes something, and typing
+makes the typed text the place the steps start from again. The steps go
+through the bar's own editing, so they can be undone.
 
-## How often the inside modes repeat
+**The formula used last is shown faint** in the bar: all of it while the bar
+is empty, and the rest of it after what you have typed for as long as what you
+type is how it begins. Tab puts it in the bar whole; once what you type goes
+another way the faint text goes too, and Tab moves on to the buttons as
+before. The faint text is laid out on the same lines as the whole formula, so
+each typed character sits over the one it completes however many lines it
+takes.
 
-Six inside modes repeat at a pace written into them: cos(mag),
-mag\*cos(real^2), sin(real^2-imag^2), squares, sin(real)\*sin(imag) and
-frac(mag). The colouring speed acts on the value they hand over, not inside
-them, so nothing set how close together their bands lay.
+The bar now opens empty, with that formula faint in it, and OK on an empty bar
+uses it. Only the very first time, before any formula has been used, does it
+open with the formula in use, `z^2+c`.
 
-**Frequency (periodic modes)**, the first field of the inside Coloring speed
-dialog, multiplies what they repeat on: at 2 the squares are an eightieth of
-a unit on a side instead of a fortieth, and frac(mag) draws sixteen contours
-to a unit of the modulus instead of eight. At one, where it starts and where
-New puts it back, the six draw as they did to the bit. The inside modes that
-do not repeat never read it.
+## Tessellation
 
-## Fractional Brownian Motion in one dialog
+**Fractal → Incoloring mode → Tessellation...** colours the inside by the
+tiles of any of the forty-five tilings of `randsctile`, laid over the final
+`z` forty to a unit as the squares of `squares` are. Its dialog has three
+fields:
 
-It was a submenu of Other coloring mode, with its three modes as radio
-entries and a Settings dialog under them for the five numbers. It is now
-**Fractional Brownian Motion...** in Incoloring mode and Outcoloring mode,
-beside the modes themselves, and ticked whenever one of its three is in use.
-The dialog chooses the mode from a list and has the five numbers below it;
-OK sets them together as one step of undo.
+* **Tiling**, by the number `randsctile` knows it by and its name, `3:
+  hexagons` where it starts. The Tilings tab of the formula reference has a
+  picture of each.
+* **Coloring**, what the colour comes from: `angle`, the angle of `z`, where
+  it starts; `tile-angle`, the angle about the middle of the tile, which makes
+  each tile a small wheel of colour; `zmag`; or `none`, the tiles alone.
+* **Tiles**, how each tile stands apart: `turned`, moved along the palette by
+  an amount of its own, where it starts; `shaded`, with a bevel from its middle
+  to its edge; `edged`, its outer part drawn in the other half of the palette;
+  `flat`, one colour of its own.
 
-## Six languages complete
+The frequency and function of the periodic modes size the tiles, and the
+decomposition settings below cut and walk the two angles. The periodic tilings
+cost about what the other inside modes do, 120 to 210 ns a pixel; the ones
+that never repeat, located afresh at every point, 250 to 490. A position saves
+the mode as `(incoloring 30)`, the tiling as `(intessellation 39)` only when
+it is not hexagons, and the colouring as `(intessellstyle 'tile-angle 'edged)`
+only when it has moved.
 
-German, Spanish, French, Italian, Portuguese and Russian now have every text
-of the interface translated. Much of what reached the screen through a table
-or a variable had never been offered to the translators: the names of the
-filters and of the palette algorithms, the bailout shapes, the true-colour
-modes, the choices of every dialog, the descriptions and headings of the user
-formula reference, and the submenus, which were named before there was a
-language and so kept their English. The formula reference leaves the names
-and argument lists as they are, since they are syntax, and a saved position
-still names things in English. The other languages have the new texts
-waiting for a translator.
+## Decomposition settings
 
-OK, Cancel and the file and colour dialogs are Qt's and come from its own
-translations. XaoS looked for them where Qt is installed, which a machine
-running XaoS out of its folder has not got, and loaded them in the system's
-language whatever language had been chosen. Those of the six languages are
-now built in, from Qt 6.8.0 (Portuguese is Qt's Brazilian, there being no
-other), and the language chosen is the one loaded.
+**Decomposition...** in Incoloring mode and in Outcoloring mode sets how the
+decompositions cut the turn: binary decomposition and color decomposition
+outside, `sign(imag)`, `Decomposition-like` and `fbm + decomposition` inside,
+and the angles of tessellation. Its fields are the sectors to a repetition (an
+odd number taken up to the even one above in the binary ones, where two
+sectors of a colour would meet), the rotation, inside the angle of `z`, `z-c`
+or `z*c`, rings per unit inside or iterations per band outside, the
+repetitions, the direction (right, left, or both, a mirror) and a speed: more
+colours to a repetition in the colour ones, the distance between alternate
+sectors' colours in the binary ones. With binary decomposition outside, the
+bands and sectors together draw the grid of external rays and equipotentials.
 
-The guide is in the six languages too, each saying at its top which version
-of the English guide it was made from and that the English one is the
-reference. Help, and What is new in About, open the guide in the language
-XaoS is in, and the English one where there is none.
+With every field where it starts the old code runs, and the five draw as 2.5
+does, pixel for pixel. They are saved as `(indecomposition ...)` and
+`(outdecomposition ...)` only when moved. Moved, a decomposition is no longer
+symmetric about the real axis, and XaoS stops drawing one half as the mirror
+of the other.
 
-## A crash after New
+## More periodic modes, and a function for them
 
-XaoS could crash minutes after a position had been loaded and File → New
-chosen, while drawing text. Loading a position, which Open, Undo and
-`-loadpos` all do, freed the context that plays it and kept the pointer to
-it; New wrote zeros into that freed block, and whatever the heap gave it to
-next was damaged. The pointer is now cleared with the free, which puts right
-the morph dialog as well, the other place that looked at it.
+Four new inside modes repeat, in the Other coloring mode submenu: `cos(|z|)`,
+rings about where the orbit settled; `hexagons`, three waves a third of a turn
+apart; `spiral`, five arms wound once to every factor of e in the modulus; and
+`cos(|z-c|)`, rings about the parameter. With tessellation, eleven inside
+modes now read **Frequency (periodic modes)**.
 
-## Memory through a session
+**Function (periodic modes)**, under it in the inside Coloring speed dialog,
+bends the argument of every periodic function of the eleven by one of the
+twelve colouring speed functions before the frequency multiplies it: `square`
+and `cube` crowd the bands towards the edge, `log` and `atan` the other way,
+and `sin`, `cos` and `triangle` fold them back on themselves. At `ident`, where
+it starts, nothing changes; it is saved as `(incolorperiodicfun 6)` only when
+it is not ident. Both Coloring speed dialogs are now laid out in two columns,
+the speed change after ITER on the right.
 
-Every saved position left two formula parsers behind, and the undo history
-saves a position before and after every command, so XaoS took more memory
-the longer it was used. They are freed with the rest.
+## Fractional Brownian Motion sized by the count
 
-## Removed
+The outside's Fractional Brownian Motion dialog has two more fields. **Noise
+scaling** says what sizes the marks: `fixed`, by the frequency alone as
+before, where it starts; `iteration`, by the frequency raised with the escape
+count; `smooth`, with the smooth count. **Scaling factor** is how many times
+the frequency doubles every ten iterations, so the marks grow finer towards
+the edge of the set and follow its detail. The field is read at the two powers
+of two either side of the count and the two are blended, as a texture is
+between its mipmaps, so `smooth` changes the size without a seam and
+`iteration` gives every band a grain of its own.
 
-* The OpenGL driver. `-DOPENGL=ON`, off by default, drew the picture with
-  glDrawPixels from a mirrored copy of the image every frame and left out the
-  full-screen handling of the menu bar. Nothing depended on it; the option,
-  its CI job and its mentions in About and the guide go with it.
-* Code that nothing calls: `src/formeval`, a separate formula evaluator of
-  2020 that neither build compiled, and functions left with no caller, among
-  them the line and rectangle drawing of the image code and the complex
-  functions no formula reaches. Help no longer looks for a help file in
-  `HELPPATH`; it has opened the guide on line for a long time.
+Between two doublings the colouring costs about twice the fixed one, 248 ns a
+pixel against 127 at four octaves. `fixed`, or a factor of nought, draws as
+before to the bit, and the setting is saved as `(outfbmscale 'smooth 1.5)`
+only when it has moved.
+
+## Reopening a dialog from a ticked entry
+
+Clicking Tessellation... or Fractional Brownian Motion... while that mode was
+already in use did nothing, so there was no way to change the settings of the
+mode in use. The menu took a ticked radio entry for a checkbox to switch off, a
+mistake that came from upstream. A radio entry now always opens its dialog; a
+ticked checkbox, such as Julia mode or Perturbation, still turns off without
+one.
+
+## Linux and macOS
+
+MS XaoS builds with CMake and Qt 6 on Linux and on macOS as well as on
+Windows, and the qmake project links again. On macOS the build makes an
+application bundle with the catalogs, the tutorial and the examples inside,
+and a `deploy` target that runs macdeployqt and makes a `.dmg`; the README
+says how. There is no quad build on the Mac, Apple's compiler having no
+128-bit float, and on Apple Silicon `long double` is a `double`, 53 bits: the
+ordinary build there goes as deep as a 64-bit double build does, not as deep
+as XaoS.exe. The tests know about the 53 bits.
+
+GitHub builds every commit on Linux and on macOS (Apple Silicon, Qt 6.10),
+with CMake and with qmake, and runs the tests on both.
+
+## Translations and the guide
+
+Every new text of the interface is translated into German, Spanish, French,
+Italian, Portuguese and Russian, and the guide describes everything above in
+English and in the six translations.
 
 ## Tests
 
-353 tests, two more than 2.4: the frequency at each precision. At one, the
-six modes it reaches must give the checksums they gave before it existed;
-away from one, for the four that read z alone, a frequency must draw the
-same as z scaled by it, exactly; and the modes that do not repeat must never
-read it. The round trip of saved positions, each drawn, saved, loaded and
-drawn again, has one that sets the frequency.
+359 tests, six more than 2.5: the decomposition settings, the scaling of
+Fractional Brownian Motion and tessellation, each at both precisions. The five
+decompositions, the fixed fbm modes and tessellation where it starts are
+pinned to the checksums they gave before the change; each setting is checked
+to move what it belongs to and nothing else; the doublings of the fbm
+frequency are exact, and every tiling has a tile everywhere. The frequency
+test covers the eleven periodic modes and the function. The round trip of
+saved positions has six more.
 
-The two dialogs were tried in the running program, from their menus to the
-picture after OK.
+The dialogs were tried in the running program in Italian and German, from
+their menus to the picture after OK.
 
 ## Compatibility
 
-* Positions saved by 2.4 load. Those saved by 2.5 open in 2.4 unless they
-  set the frequency, which a position saves only when it is not one.
-* A position writes the colouring speed and Fractional Brownian Motion as
-  before. The commands of the entries the dialogs replaced are kept, out of
-  the menu, for a script: `mincolorspeed`, `mincolorshift`, `infun0` to
-  `infun11`, `incolorspeedgroups` and the same outside, and `infbmset` and
-  `outfbmset`.
-* The radio entries of the old Fractional Brownian Motion submenu, `in23` to
-  `in25` and `out18` to `out20`, are gone; `(incoloring 23)` and the like do
-  what they did.
-* A build configured with `-DOPENGL=ON` gets the ordinary widget.
+* Positions saved by 2.5 load and draw as 2.5 draws them, pixel for pixel.
+* Those saved by 2.7 open in 2.5 unless they use something new: the five new
+  inside modes, or a periodic function, decomposition setting, fbm scaling or
+  tessellation setting that has moved from where it starts.
+* The download for Windows holds XaoS.exe and XaoS-quad.exe as before; the
+  one for macOS holds the ordinary build alone.
