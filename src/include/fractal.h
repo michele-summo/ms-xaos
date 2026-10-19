@@ -125,7 +125,13 @@ enum OutColormode {
                     ColOut_fbm_smooth,
                     ColOut_fbm_iter,
                     ColOut_fbm,
-                    ColOut_MAXMode = ColOut_fbm
+                    /* The tiles of one of randsctile's tilings over the
+                     * plane, worn by the smooth count, by the whole one, or
+                     * alone, as the three fbm modes wear the motion. */
+                    ColOut_tessell_smooth,
+                    ColOut_tessell_iter,
+                    ColOut_tessell,
+                    ColOut_MAXMode = ColOut_tessell
                   };
    enum OutColormode ColorMode;
    int AsInt() {return ColorMode; }
@@ -433,6 +439,24 @@ struct fractal_context {
      * had no choice: with the decomposition settings where they start, the
      * old code, to the bit. */
     int intessellcolor, intessellfill;
+    /* How far apart along the palette the tiles are set: what multiplies
+     * every amount a tile has of its own -- its turn, the bevel of a shaded
+     * one and the edge of an edged one. At one, where it starts, the tiles
+     * are as they were before there was a choice; at nought only what the
+     * colour comes from is left, the angle a plain decomposition and zmag
+     * plain zmag. */
+    number_t intessellintensity;
+    /* The outside's tessellation modes, the same four settings for the
+     * outside's own tiles, which are laid over the pixel's place in the
+     * plane, as the outside's fbm motion is, and not over the escape point,
+     * which jumps from band to band: frequency tiles to a unit, sized by the
+     * count as the fbm marks are -- scaling one of the FBM_SCALE_ ways,
+     * factor the doublings over ten iterations. Its angles are cut and
+     * walked by the outside's decomposition settings. */
+    int outtessellation, outtessellcolor, outtessellfill;
+    number_t outtessellintensity, outtessellfrequency;
+    int outtessellscaling;
+    number_t outtessellfactor;
     //MSUMMO HACK 20220409
     int pndefault;
     int newtonmodesffe;

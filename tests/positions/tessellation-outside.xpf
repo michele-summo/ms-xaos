@@ -1,0 +1,7 @@
+(initstate)
+(formula 'mandel)
+(maxiter 400)
+(outcoloring 21)
+(outtessellation 5 'tile-angle 'shaded 0.6 40 'smooth 0.4)
+(outdecomposition 6 30 2 3 'left 2)
+(view -0.7453 0.1127 0.03 0.03)

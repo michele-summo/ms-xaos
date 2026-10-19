@@ -1,5 +1,5 @@
-/* The inside's tessellation mode: what it colours by and how its tiles stand
- * apart.
+/* The tessellation modes: what they colour by, how their tiles stand apart,
+ * and how far apart they are set.
  *
  * Where it starts -- the angle of z, turned, with the decomposition settings
  * where they start -- it must draw what it drew before it had a choice, to
@@ -12,6 +12,13 @@
  * about the tile's middle, a flat tile is the same whatever it would have
  * been coloured by, and the frequency of the periodic modes is the tiles at
  * z scaled.
+ *
+ * The intensity at one is what there was, and at nought leaves only what the
+ * colour comes from: zmag is zmag and the angle the decomposition, to the
+ * bit. The outside's three modes, at nought with nothing to colour by, are
+ * the count alone; sized by the count, a whole number of doublings is the
+ * tiles at a fixed frequency that many times doubled, and in between a
+ * palette of 256 entries takes one of the two sizes.
  *
  * formulas.cpp is included rather than linked, since incolor_output is its
  * own and static.
@@ -60,6 +67,40 @@ static unsigned long long inside(number_t s = 1)
             h *= 1099511628211ULL;
         }
     return h;
+}
+
+/* The outside over the same grid, the pixel's place the point itself and a
+ * count of its own at each, in the mode given. */
+static unsigned int outside_at(int ix, int iy)
+{
+    number_t x = ((number_t)ix + (number_t)0.5) / 23;
+    number_t y = ((number_t)iy + (number_t)0.5) / 29;
+    color_px = x;
+    color_py = y;
+    return color_output(x * 3 + 1, y * 3 - 2,
+                        (unsigned int)((ix * 7 + iy * 3 + 400) % 23));
+}
+static unsigned long long outside(OutColormodeType::OutColormode mode)
+{
+    cfractalc.coloringmode = mode;
+    unsigned long long h = 1469598103934665603ULL;
+    for (int iy = -40; iy < 40; iy++)
+        for (int ix = -40; ix < 40; ix++) {
+            h ^= outside_at(ix, iy);
+            h *= 1099511628211ULL;
+        }
+    return h;
+}
+static void outstyle(int tiling, int colour, int fill, number_t intensity,
+                     number_t frequency, int scaling, number_t factor)
+{
+    cfractalc.outtessellation = tiling;
+    cfractalc.outtessellcolor = colour;
+    cfractalc.outtessellfill = fill;
+    cfractalc.outtessellintensity = intensity;
+    cfractalc.outtessellfrequency = frequency;
+    cfractalc.outtessellscaling = scaling;
+    cfractalc.outtessellfactor = factor;
 }
 
 static void style(int colour, int fill)
@@ -120,6 +161,11 @@ int main()
     cfractalc.indecomprepeats = cfractalc.outdecomprepeats = 1;
     cfractalc.indecompspeed = cfractalc.outdecompspeed = 1;
     cfractalc.intessellation = 3;
+    cfractalc.intessellintensity = 1;
+    cfractalc.outtessellation = 3;
+    cfractalc.outtessellintensity = 1;
+    cfractalc.outtessellfrequency = 8;
+    cfractalc.outtessellfactor = 1;
     style(TESSELL_ANGLE, TESSELL_TURNED);
     color_change_prepare(&cfractalc);
 
@@ -268,6 +314,203 @@ int main()
         }
         check(scaled, "frequency 2 is the tiles at z scaled by 2");
         style(TESSELL_ANGLE, TESSELL_TURNED);
+    }
+
+    /* --- the inside's intensity ------------------------------------------ */
+    {
+        /* at nought, what the colour comes from alone */
+        int zmag = 1, angle = 1, notile = 1;
+        cfractalc.intessellintensity = 0;
+        for (int t = 1; t <= RANDSCTILE_TILINGS; t++) {
+            cfractalc.intessellation = t;
+            style(TESSELL_ZMAG, TESSELL_TURNED);
+            unsigned long long tz = inside();
+            cfractalc.incoloringmode = 1;
+            unsigned long long hz = 1469598103934665603ULL;
+            for (int iy = -40; iy < 40; iy++)
+                for (int ix = -40; ix < 40; ix++) {
+                    number_t zre = ((number_t)ix + (number_t)0.5) / 23;
+                    number_t zim = ((number_t)iy + (number_t)0.5) / 29;
+                    hz ^= incolor_output(zre, zim, (number_t)0.3,
+                                         (number_t)-0.4, 100);
+                    hz *= 1099511628211ULL;
+                }
+            if (tz != hz)
+                zmag = 0;
+            /* the angle with its settings moved, which is when
+             * Decomposition-like is worked as the tessellation's angle is */
+            decomp(6, 15, 1, 3, 2, 2, (number_t)1.5);
+            style(TESSELL_ANGLE, TESSELL_TURNED);
+            unsigned long long ta = inside();
+            cfractalc.incoloringmode = 2;
+            unsigned long long ha = 1469598103934665603ULL;
+            for (int iy = -40; iy < 40; iy++)
+                for (int ix = -40; ix < 40; ix++) {
+                    number_t zre = ((number_t)ix + (number_t)0.5) / 23;
+                    number_t zim = ((number_t)iy + (number_t)0.5) / 29;
+                    ha ^= incolor_output(zre, zim, (number_t)0.3,
+                                         (number_t)-0.4, 100);
+                    ha *= 1099511628211ULL;
+                }
+            plain();
+            if (ta != ha)
+                angle = 0;
+        }
+        check(zmag, "at intensity nought zmag is zmag, on every tiling");
+        check(angle, "and the angle the decomposition, on every tiling");
+        /* nor does the tiling show, but in the angle about its middle */
+        for (int c = 0; c < 4; c++)
+            for (int f = 0; f < 4; f++) {
+                if (c == TESSELL_MIDDLE && f != TESSELL_FLAT)
+                    continue;
+                style(c, f);
+                cfractalc.intessellation = 3;
+                unsigned long long a = inside();
+                cfractalc.intessellation = 18;
+                if (a != inside()) {
+                    printf("       %s, %s shows its tiles at nought\n",
+                           tessell_colors[c], tessell_fills[f]);
+                    notile = 0;
+                }
+            }
+        check(notile, "nor do the tiles, but about their middles");
+
+        /* away from one every colouring and fill moves */
+        int moves = 1;
+        for (int c = 0; c < 4; c++)
+            for (int f = 0; f < 4; f++) {
+                style(c, f);
+                cfractalc.intessellintensity = 1;
+                unsigned long long one = inside();
+                cfractalc.intessellintensity = (number_t)0.5;
+                if (one == inside()) {
+                    printf("       %s, %s does not move\n", tessell_colors[c],
+                           tessell_fills[f]);
+                    moves = 0;
+                }
+            }
+        check(moves, "and away from one every colouring and fill moves");
+        cfractalc.intessellintensity = 1;
+        style(TESSELL_ANGLE, TESSELL_TURNED);
+    }
+
+    /* --- the outside ----------------------------------------------------- */
+    {
+        typedef OutColormodeType M;
+        cfractalc.outcolorspeed = 1;
+        outstyle(3, TESSELL_NONE, TESSELL_TURNED, 0, 8, FBM_SCALE_FIXED, 1);
+        const unsigned long long iter = outside(M::ColOut_iter);
+        int count = 1;
+        for (int t = 1; t <= RANDSCTILE_TILINGS; t += 11)
+            for (int s = 0; s < 3; s++) {
+                outstyle(t, TESSELL_NONE, TESSELL_TURNED, 0, 8, s, 1);
+                if (outside(M::ColOut_tessell_iter) != iter)
+                    count = 0;
+            }
+        check(count, "at intensity nought, by nothing, tessellation + iter is "
+                     "iter");
+        outstyle(18, TESSELL_NONE, TESSELL_TURNED, 0, 8, FBM_SCALE_FIXED, 1);
+        cfractalc.coloringmode = M::ColOut_tessell;
+        unsigned int first = outside_at(0, 0);
+        int flat = 1;
+        for (int k = -40; k < 40; k++)
+            if (outside_at(k, k / 2) != first)
+                flat = 0;
+        check(flat, "and tessellation alone one colour");
+
+        /* each mode, colouring and fill a picture of its own at one */
+        int apart = 1;
+        static const M::OutColormode modes[3] = {
+            M::ColOut_tessell_smooth, M::ColOut_tessell_iter, M::ColOut_tessell};
+        for (int c = 0; c < 4; c++)
+            for (int f = 0; f < 3; f++) {
+                outstyle(3, c, f, 1, 8, FBM_SCALE_FIXED, 1);
+                unsigned long long a = outside(M::ColOut_tessell);
+                outstyle(3, c, f, (number_t)0.5, 8, FBM_SCALE_FIXED, 1);
+                if (a == outside(M::ColOut_tessell))
+                    apart = 0;
+            }
+        outstyle(3, TESSELL_ANGLE, TESSELL_TURNED, 1, 8, FBM_SCALE_FIXED, 1);
+        if (outside(modes[1]) == outside(modes[2]) ||
+            outside(modes[1]) == iter)
+            apart = 0;
+        check(apart, "at one the tiles show, and the intensity moves them");
+
+        /* the decomposition settings reach the outside's angles alone */
+        int reach = 1;
+        for (int c = 0; c < 4; c++) {
+            outstyle(3, c, TESSELL_TURNED, 1, 8, FBM_SCALE_FIXED, 1);
+            unsigned long long a = outside(M::ColOut_tessell);
+            cfractalc.outdecompsectors = 6;
+            unsigned long long b = outside(M::ColOut_tessell);
+            cfractalc.outdecompsectors = 0;
+            if ((c == TESSELL_ANGLE || c == TESSELL_MIDDLE) != (a != b))
+                reach = 0;
+        }
+        check(reach, "the outside's decomposition settings reach its angles "
+                     "and nothing else");
+
+        /* the inside's intensity is not the outside's, nor the other way */
+        outstyle(3, TESSELL_ANGLE, TESSELL_SHADED, 1, 8, FBM_SCALE_FIXED, 1);
+        style(TESSELL_ANGLE, TESSELL_SHADED);
+        unsigned long long o = outside(M::ColOut_tessell),
+                           i = inside();
+        cfractalc.intessellintensity = 3;
+        int own = outside(M::ColOut_tessell) == o;
+        cfractalc.intessellintensity = 1;
+        cfractalc.outtessellintensity = 3;
+        own = own && inside() == i;
+        check(own, "each side has an intensity of its own");
+        style(TESSELL_ANGLE, TESSELL_TURNED);
+
+        /* sized by the count: fixed is a factor of nought, the smooth count
+         * where it is whole the whole one, and a whole number of doublings
+         * the fixed frequency that many times doubled */
+        outstyle(3, TESSELL_ANGLE, TESSELL_TURNED, 1, 8, FBM_SCALE_FIXED, 1);
+        const unsigned long long fixed = outside(M::ColOut_tessell);
+        outstyle(3, TESSELL_ANGLE, TESSELL_TURNED, 1, 8, FBM_SCALE_ITER, 0);
+        int nought = outside(M::ColOut_tessell) == fixed;
+        outstyle(3, TESSELL_ANGLE, TESSELL_TURNED, 1, 8, FBM_SCALE_SMOOTH, 0);
+        nought = nought && outside(M::ColOut_tessell) == fixed;
+        check(nought, "at a factor of nought the count changes nothing");
+        outstyle(3, TESSELL_ANGLE, TESSELL_TURNED, 1, 8, FBM_SCALE_ITER, 3);
+        unsigned long long whole = outside(M::ColOut_tessell);
+        cfractalc.outtessellscaling = FBM_SCALE_SMOOTH;
+        check(outside(M::ColOut_tessell) == whole && whole != fixed,
+              "the smooth count where it is whole sizes as the whole one");
+
+        int doubled = 1, between = 1;
+        cpalette.type = C256;
+        cfractalc.coloringmode = M::ColOut_tessell;
+        for (int iy = -40; iy < 40; iy += 3)
+            for (int ix = -40; ix < 40; ix += 3) {
+                const int n = (ix * 7 + iy * 3 + 400) % 23;
+                outstyle(5, TESSELL_ANGLE, TESSELL_TURNED, 1, 2,
+                         FBM_SCALE_ITER, 10);
+                unsigned int scaled = outside_at(ix, iy);
+                outstyle(5, TESSELL_ANGLE, TESSELL_TURNED, 1,
+                         nldexp((number_t)2, n), FBM_SCALE_FIXED, 1);
+                if (scaled != outside_at(ix, iy))
+                    doubled = 0;
+                /* three doublings in ten iterations: between two sizes,
+                 * one or the other */
+                outstyle(5, TESSELL_ANGLE, TESSELL_TURNED, 1, 2,
+                         FBM_SCALE_ITER, 3);
+                unsigned int mid = outside_at(ix, iy);
+                const int w = (int)nfloor((number_t)3 * n / 10);
+                outstyle(5, TESSELL_ANGLE, TESSELL_TURNED, 1,
+                         nldexp((number_t)2, w), FBM_SCALE_FIXED, 1);
+                unsigned int lo = outside_at(ix, iy);
+                cfractalc.outtessellfrequency = nldexp((number_t)2, w + 1);
+                unsigned int hi = outside_at(ix, iy);
+                if (mid != lo && mid != hi)
+                    between = 0;
+            }
+        cpalette.type = 0;
+        check(doubled, "a whole number of doublings is the tiles at that "
+                       "frequency");
+        check(between, "and between two, with 256 colours, one of the two");
+        outstyle(3, TESSELL_ANGLE, TESSELL_TURNED, 1, 8, FBM_SCALE_FIXED, 1);
     }
 
     /* --- the dialog's names ---------------------------------------------- */

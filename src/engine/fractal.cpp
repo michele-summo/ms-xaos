@@ -301,13 +301,17 @@ void set_fractalc(fractal_context *context, struct image *img)
 
     /* The smooth loop for the smooth modes, and for the other two fbm modes
      * outside when their marks are sized by the smooth count, which only
-     * this loop works out. */
+     * this loop works out; and the same for the tessellation modes. */
     if ((cfractalc.coloringmode == OutColormodeType::ColOut_smooth ||
          cfractalc.coloringmode == OutColormodeType::ColOut_smooth_log ||
          cfractalc.coloringmode == OutColormodeType::ColOut_fbm_smooth ||
          ((cfractalc.coloringmode == OutColormodeType::ColOut_fbm_iter ||
            cfractalc.coloringmode == OutColormodeType::ColOut_fbm) &&
-          cfractalc.outfbmscaling == FBM_SCALE_SMOOTH)) &&
+          cfractalc.outfbmscaling == FBM_SCALE_SMOOTH) ||
+         cfractalc.coloringmode == OutColormodeType::ColOut_tessell_smooth ||
+         ((cfractalc.coloringmode == OutColormodeType::ColOut_tessell_iter ||
+           cfractalc.coloringmode == OutColormodeType::ColOut_tessell) &&
+          cfractalc.outtessellscaling == FBM_SCALE_SMOOTH)) &&
         cformula.smooth_calculate != NULL &&
         (cpalette.type &
          (TRUECOLOR | TRUECOLOR16 | TRUECOLOR24 | GRAYSCALE | LARGEITER))) {
@@ -531,6 +535,14 @@ fractal_context *make_fractalc(const int formula, float wi, float he)
     new_ctxt->intessellation = 3;
     new_ctxt->intessellcolor = TESSELL_ANGLE;
     new_ctxt->intessellfill = TESSELL_TURNED;
+    new_ctxt->intessellintensity = 1;
+    new_ctxt->outtessellation = 3;
+    new_ctxt->outtessellcolor = TESSELL_ANGLE;
+    new_ctxt->outtessellfill = TESSELL_TURNED;
+    new_ctxt->outtessellintensity = 1;
+    new_ctxt->outtessellfrequency = 8;
+    new_ctxt->outtessellscaling = FBM_SCALE_FIXED;
+    new_ctxt->outtessellfactor = 1;
     new_ctxt->pndefault = 0;
     new_ctxt->newtonmodesffe = 0;
     new_ctxt->newtonconvergence = 1E-6;

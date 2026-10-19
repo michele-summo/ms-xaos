@@ -1530,7 +1530,7 @@ voulait dire.
 
 **Fractale → Coloriage intérieur → Pavage...** colore l'intérieur selon les
 tuiles de l'un des quarante-cinq pavages de `randsctile`, posées sur le `z`
-final, quarante par unité comme les carrés de `squares`. Son dialogue a trois
+final, quarante par unité comme les carrés de `squares`. Son dialogue a quatre
 champs.
 
 | champ | |
@@ -1538,6 +1538,7 @@ champs.
 | **Pavage** | quel pavage, avec le nombre sous lequel `randsctile` le connaît et son nom : **3: hexagones**, où il commence. L'onglet Pavages d'Aide → Référence des formules utilisateur a une image de chacun |
 | **Coloriage** | d'où vient la couleur, partout : **angle de z**, où il commence ; **angle autour du centre de la tuile**, celui de la tuile où tombe le point, qui fait de chaque tuile une petite roue de couleur ; **zmag**, la valeur du mode de ce nom ; **aucun**, rien que les tuiles |
 | **Tuiles** | comment chaque tuile se détache de ses voisines : **chacune décalée d'une quantité propre**, le long de la palette, où il commence ; **ombrées du centre au bord**, de même, et décalée d'un huitième des couleurs d'un tour de plus du centre au bord, comme un biseau ; **avec le bord marqué**, de même, et la partie extérieure de la tuile tracée dans l'autre moitié de la palette ; **une couleur unie chacune**, une couleur à elle, d'où que vienne la couleur |
+| **Intensité** | à quelle distance les tuiles sont placées le long de la palette : elle multiplie chaque quantité propre d'une tuile, son décalage, le biseau de **ombrées du centre au bord** et le bord de **avec le bord marqué**. À `1`, là où elle commence, les tuiles sont comme décrites ici ; à `0` il ne reste que ce dont vient la couleur, de sorte que **angle de z** est une décomposition simple et **zmag** le zmag simple ; entre les deux les tuiles se voient à peine, et au-dessus de `1` davantage |
 
 Le mode se tient entre les modes qui se répètent et les décompositions, et les
 réglages des deux l'atteignent. **Fréquence (modes périodiques)** et **Fonction
@@ -1567,7 +1568,9 @@ Avec **Coloriage** sur **angle de z**, **Tuiles** sur **chacune décalée d'une
 quantité propre** et les réglages des décompositions là où ils commencent, le
 mode dessine ce qu'il dessinait avant d'avoir le choix, au bit près. Les
 pavages qui ne se répètent jamais deviennent plats, sans quantité propre,
-au-delà de quatre milliards de tuiles de l'origine.
+au-delà de quatre milliards de tuiles de l'origine. Cela vaut avec
+**Intensité** à `1`. À `0` les tuiles se voient encore avec **angle autour du
+centre de la tuile**, dont l'angle est mesuré depuis le centre de chaque tuile.
 
 Les pavages périodiques coûtent à peu près ce que coûtent les autres modes
 intérieurs, de 120 à 210 ns par pixel ; ceux qui ne se répètent jamais,
@@ -1578,7 +1581,43 @@ les pavages périodiques et peu de plus sur les autres. Une position enregistre
 le mode sous la forme `(incoloring 30)`, le pavage sous la forme
 `(intessellation 39)`, seulement quand ce n'est pas celui des hexagones, et le
 coloriage sous la forme `(intessellstyle 'tile-angle 'edged)`, seulement quand
-il a été déplacé.
+il a été déplacé. L'intensité est enregistrée sous la forme
+`(intessellintensity 0.5)`, seulement quand elle n'est pas un.
+
+### À l'extérieur
+
+**Fractale → Coloriage extérieur → Pavage...** a trois modes, comme Mouvement
+brownien fractionnaire : `tessellation + smooth`, les tuiles portées par le
+compte lissé ; `tessellation + iter`, par le compte entier ; `tessellation`,
+les tuiles seules. Les tuiles sont posées sur la place du pixel dans le plan,
+non sur le point d'échappement, qui saute d'une bande à la suivante et ne
+donnerait que du grain, comme lorsque le mouvement y fut essayé.
+
+| champ | |
+| --- | --- |
+| **Mode** | l'un des trois |
+| **Pavage**, **Coloriage**, **Tuiles**, **Intensité** | comme à l'intérieur, avec des réglages à eux. **angle de z** est l'angle du point d'échappement et **zmag** le logarithme de son module, tel que `iter+log(mag)` l'ajoute ; avec **itération lissée** l'angle est celui de quelques itérations après le bailout, là où le compte lissé est calculé |
+| **Fréquence** | tuiles par unité du plan, `8` au départ : la taille des tuiles, qu'il faut augmenter en zoomant, comme la fréquence du mouvement |
+| **Mise à l'échelle des tuiles** et **Facteur** | ce qui donne leur taille aux tuiles, comme [La taille des marques selon le compte](#la-taille-des-marques-selon-le-compte) la donne aux marques du mouvement : **fixe**, la fréquence seule ; **itération** ou **itération lissée**, la fréquence doublée autant de fois que le dit le facteur toutes les dix itérations de ce compte |
+
+Entre deux doublements les tuiles sont lues aux deux tailles et les deux
+couleurs sont fondues, un fondu d'une taille à la suivante : les tuiles n'ont
+pas de valeur médiane vers laquelle se fondre, comme en a le mouvement. Une
+palette de 256 couleurs, qui n'en a aucune entre les siennes, prend la taille
+la plus proche. Entre deux doublements le pavage est lu deux fois, ce qui en
+double le coût. Un facteur de `1` double la fréquence dix fois toutes les cent
+itérations, ce qui amène vite les tuiles sous le pixel : quelques dixièmes sont
+un meilleur départ. Les [réglages des
+décompositions](#réglages-des-décompositions) de l'extérieur atteignent les
+deux angles : **Itérations par bande** fait des bandes du compte pour l'angle
+de z et des anneaux du centre au bord pour l'angle autour du centre.
+
+Avec **Intensité** à `0` et **Coloriage** sur **aucun**, `tessellation + iter`
+dessine comme `iter` et `tessellation` une seule couleur. Une position
+enregistre le mode sous la forme `(outcoloring 21)` à `(outcoloring 23)`, et
+les réglages en une seule commande,
+`(outtessellation 5 'tile-angle 'shaded 0.6 40 'smooth 0.4)`, seulement quand
+l'un d'eux a été déplacé.
 
 ## Plus de modes de coloration
 
@@ -1705,10 +1744,10 @@ utilisateur le font à la place.
 **Fractale → Coloriage intérieur → Décomposition**, et de même sous Coloriage
 extérieur, règle la façon dont les décompositions découpent le tour : binary
 decomposition et color decomposition à l'extérieur, `sign(imag)`,
-`Decomposition-like` et `fbm + decomposition` à l'intérieur, et les angles de
-`tessellation`. Avec chaque champ là où il commence — zéro, et un, droite et un
-pour les trois derniers —, elles dessinent comme elles l'ont toujours fait, au
-bit près.
+`Decomposition-like` et `fbm + decomposition` à l'intérieur, et les angles des
+pavages, intérieur et extérieur. Avec chaque champ là où il commence — zéro, et
+un, droite et un pour les trois derniers —, elles dessinent comme elles l'ont
+toujours fait, au bit près.
 
 | champ | |
 | --- | --- |

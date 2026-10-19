@@ -1464,13 +1464,14 @@ que uma posição guardada já contém continua a significar o que significava.
 **Fractal → Coloração interior → Pavimentação...** colore o interior pelos
 ladrilhos de uma das quarenta e cinco pavimentações de `randsctile`, estendidos
 sobre o `z` final, quarenta por unidade como os quadrados de `squares`. O seu
-diálogo tem três campos.
+diálogo tem quatro campos.
 
 | campo | |
 | --- | --- |
 | **Pavimentação** | qual pavimentação, com o número pelo qual `randsctile` a conhece e o seu nome: **3: hexágonos**, onde começa. O separador Pavimentações de Ajuda → Referência das fórmulas do utilizador tem uma imagem de cada uma |
 | **Coloração** | de onde vem a cor, em toda a parte: **ângulo de z**, onde começa; **ângulo em torno do centro do ladrilho**, o do ladrilho em que cai o ponto, que faz de cada ladrilho uma pequena roda de cor; **zmag**, o valor do modo com esse nome; **nenhuma**, nada além dos ladrilhos |
 | **Ladrilhos** | como cada ladrilho se destaca dos vizinhos: **cada um deslocado de uma quantidade própria**, ao longo da paleta, onde começa; **sombreados do centro para a borda**, o mesmo, e deslocado mais um oitavo das cores de uma volta do centro para a borda, como um chanfro; **com a borda marcada**, o mesmo, e a parte exterior do ladrilho desenhada na outra metade da paleta; **uma cor lisa cada um**, uma cor sua, venha de onde vier a cor |
+| **Intensidade** | quão afastados ficam os ladrilhos ao longo da paleta: multiplica cada quantidade própria de um ladrilho, o seu deslocamento, o bisel de **sombreados do centro para a borda** e a borda de **com a borda marcada**. Em `1`, onde começa, os ladrilhos são como aqui descritos; em `0` fica só aquilo de que vem a cor, pelo que **ângulo de z** é uma decomposição simples e **zmag** o zmag simples; pelo meio os ladrilhos mal se veem, e acima de `1` veem-se mais |
 
 O modo está entre os modos que se repetem e as decomposições, e as definições
 de ambos chegam-lhe. **Frequência (modos periódicos)** e **Função (modos
@@ -1500,7 +1501,9 @@ Com **Coloração** em **ângulo de z**, **Ladrilhos** em **cada um deslocado de
 uma quantidade própria** e as definições das decomposições onde começam, o modo
 desenha o que desenhava antes de ter escolha, bit a bit. As pavimentações que
 nunca se repetem ficam planas, sem quantidade própria, para lá de quatro mil
-milhões de ladrilhos da origem.
+milhões de ladrilhos da origem. Isto vale com **Intensidade** em `1`. Em `0` os
+ladrilhos ainda se veem com **ângulo em torno do centro do ladrilho**, cujo
+ângulo é medido a partir do centro de cada ladrilho.
 
 As pavimentações periódicas custam mais ou menos o mesmo que os outros modos
 interiores, de 120 a 210 ns por píxel; as que nunca se repetem, que são
@@ -1510,7 +1513,43 @@ medem onde está o ponto no seu ladrilho, o que custa até dois terços mais nas
 pavimentações periódicas e pouco mais nas outras. Uma posição guarda o modo
 como `(incoloring 30)`, a pavimentação como `(intessellation 39)`, só quando
 não é a dos hexágonos, e a coloração como
-`(intessellstyle 'tile-angle 'edged)`, só quando foi mudada.
+`(intessellstyle 'tile-angle 'edged)`, só quando foi mudada. A intensidade
+guarda-se como `(intessellintensity 0.5)`, só quando não é um.
+
+### No exterior
+
+**Fractal → Coloração exterior → Pavimentação...** tem três modos, como
+Movimento browniano fracionário: `tessellation + smooth`, os ladrilhos sobre a
+contagem suavizada; `tessellation + iter`, sobre a contagem inteira;
+`tessellation`, os ladrilhos sozinhos. Os ladrilhos estendem-se sobre o lugar
+do píxel no plano, não sobre o ponto de fuga, que salta de uma faixa para a
+seguinte e só daria grão, como aconteceu quando lá se experimentou o movimento.
+
+| campo | |
+| --- | --- |
+| **Modo** | um dos três |
+| **Pavimentação**, **Coloração**, **Ladrilhos**, **Intensidade** | como no interior, com definições próprias. **ângulo de z** é o ângulo do ponto de fuga e **zmag** o logaritmo do seu módulo, tal como `iter+log(mag)` o soma; com **iteração suavizada** o ângulo é o de algumas iterações depois do bailout, onde se calcula a contagem suavizada |
+| **Frequência** | ladrilhos por unidade do plano, `8` onde começa: o tamanho dos ladrilhos, que é preciso subir ao aproximar, como a frequência do movimento |
+| **Escala dos ladrilhos** e **Fator** | o que dá o tamanho aos ladrilhos, como [O tamanho das marcas pela contagem](#o-tamanho-das-marcas-pela-contagem) o dá às marcas do movimento: **fixo**, só a frequência; **iteração** ou **iteração suavizada**, a frequência duplicada tantas vezes quantas diz o fator a cada dez iterações dessa contagem |
+
+Entre duas duplicações os ladrilhos são lidos nos dois tamanhos e as duas cores
+fundem-se, uma transição de um tamanho para o seguinte: os ladrilhos não têm um
+valor intermédio para onde fundir, como tem o movimento. Uma paleta de 256
+cores, que não tem nenhuma entre as suas, fica com o tamanho mais próximo.
+Entre duas duplicações a pavimentação é lida duas vezes, o que duplica o seu
+custo. Um fator de `1` duplica a frequência dez vezes a cada cem iterações, o
+que depressa leva os ladrilhos para baixo do píxel: algumas décimas são um
+começo melhor. As [definições das decomposições](#definições-das-decomposições)
+do exterior chegam aos dois ângulos: **Iterações por faixa** faz faixas da
+contagem para o ângulo de z e anéis do centro para a borda para o ângulo em
+torno do centro.
+
+Com **Intensidade** em `0` e **Coloração** em **nenhuma**,
+`tessellation + iter` desenha como `iter` e `tessellation` uma só cor. Uma
+posição guarda o modo como `(outcoloring 21)` a `(outcoloring 23)`, e as
+definições num só comando,
+`(outtessellation 5 'tile-angle 'shaded 0.6 40 'smooth 0.4)`, só quando alguma
+foi mudada.
 
 ## Mais modos de coloração
 
@@ -1631,9 +1670,9 @@ vez disso.
 **Fractal → Coloração interior → Decomposição**, e o mesmo em Coloração
 exterior, define como as decomposições cortam a volta: binary decomposition e
 color decomposition no exterior, `sign(imag)`, `Decomposition-like` e
-`fbm + decomposition` no interior, e os ângulos de `tessellation`. Com cada
-campo onde começa — zero, e um, direita e um nos três últimos — desenham como
-sempre desenharam, bit a bit.
+`fbm + decomposition` no interior, e os ângulos das pavimentações, interior e
+exterior. Com cada campo onde começa — zero, e um, direita e um nos três
+últimos — desenham como sempre desenharam, bit a bit.
 
 | campo | |
 | --- | --- |

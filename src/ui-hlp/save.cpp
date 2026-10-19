@@ -675,6 +675,46 @@ void uih_saveframe(struct uih_context *uih)
             s->fcontext->intessellcolor = uih->fcontext->intessellcolor;
             s->fcontext->intessellfill = uih->fcontext->intessellfill;
         }
+        /* The inside's intensity, and everything the outside's tessellation
+         * modes are drawn by in one command: written only when moved, so
+         * that a position that leaves them alone opens in 2.7. */
+        if (s->fcontext->intessellintensity !=
+            uih->fcontext->intessellintensity) {
+            start_save(uih, "intessellintensity");
+            save_float(uih, uih->fcontext->intessellintensity);
+            stop_save(uih);
+            s->fcontext->intessellintensity =
+                uih->fcontext->intessellintensity;
+        }
+        if (s->fcontext->outtessellation != uih->fcontext->outtessellation ||
+            s->fcontext->outtessellcolor != uih->fcontext->outtessellcolor ||
+            s->fcontext->outtessellfill != uih->fcontext->outtessellfill ||
+            s->fcontext->outtessellintensity !=
+                uih->fcontext->outtessellintensity ||
+            s->fcontext->outtessellfrequency !=
+                uih->fcontext->outtessellfrequency ||
+            s->fcontext->outtessellscaling !=
+                uih->fcontext->outtessellscaling ||
+            s->fcontext->outtessellfactor != uih->fcontext->outtessellfactor) {
+            start_save(uih, "outtessellation");
+            save_int(uih, uih->fcontext->outtessellation);
+            save_nstring(uih, uih->fcontext->outtessellcolor, tessell_colors);
+            save_nstring(uih, uih->fcontext->outtessellfill, tessell_fills);
+            save_float(uih, uih->fcontext->outtessellintensity);
+            save_float(uih, uih->fcontext->outtessellfrequency);
+            save_nstring(uih, uih->fcontext->outtessellscaling, fbm_scalings);
+            save_float(uih, uih->fcontext->outtessellfactor);
+            stop_save(uih);
+            s->fcontext->outtessellation = uih->fcontext->outtessellation;
+            s->fcontext->outtessellcolor = uih->fcontext->outtessellcolor;
+            s->fcontext->outtessellfill = uih->fcontext->outtessellfill;
+            s->fcontext->outtessellintensity =
+                uih->fcontext->outtessellintensity;
+            s->fcontext->outtessellfrequency =
+                uih->fcontext->outtessellfrequency;
+            s->fcontext->outtessellscaling = uih->fcontext->outtessellscaling;
+            s->fcontext->outtessellfactor = uih->fcontext->outtessellfactor;
+        }
         /* The decompositions' settings, one command a side, written only
          * when one of them has moved: a position that leaves them alone
          * opens in 2.5, which knows nothing of them. */
@@ -931,6 +971,14 @@ int uih_save_enable(struct uih_context *uih, xio_file f, int mode)
     s->fcontext->intessellation = 3;
     s->fcontext->intessellcolor = TESSELL_ANGLE;
     s->fcontext->intessellfill = TESSELL_TURNED;
+    s->fcontext->intessellintensity = 1;
+    s->fcontext->outtessellation = 3;
+    s->fcontext->outtessellcolor = TESSELL_ANGLE;
+    s->fcontext->outtessellfill = TESSELL_TURNED;
+    s->fcontext->outtessellintensity = 1;
+    s->fcontext->outtessellfrequency = 8;
+    s->fcontext->outtessellscaling = FBM_SCALE_FIXED;
+    s->fcontext->outtessellfactor = 1;
     s->fcontext->pndefault = 0;
     s->fcontext->newtonmodesffe = 0;
     s->fcontext->newtonconvergence = 1E-6;

@@ -4,520 +4,549 @@
 <context>
     <name>Dialog</name>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="148"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="154"/>
         <source>Perturbation:</source>
         <translation>Pertürbasyon:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="152"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="158"/>
         <source>Julia-seed:</source>
         <translation>Julia başlangıç değeri:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="156"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="162"/>
         <source>Morphing type:</source>
         <translation>Biçimlendirme:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="157"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="163"/>
         <source>Startuptime:</source>
         <translation>Başlangıç Süresi:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="158"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="164"/>
         <source>Stoptime:</source>
         <translation>Bitiş Süresi:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="162"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="168"/>
         <source>Files to render:</source>
         <translation>Oluşturma dosyası:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="163"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="175"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="169"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="181"/>
         <source>Basename:</source>
         <translation>Komut:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="164"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="176"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="170"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="182"/>
         <source>Width:</source>
         <translation>Genişlik:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="165"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="177"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="171"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="183"/>
         <source>Height:</source>
         <translation>Yükseklik:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="166"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="178"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="172"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="184"/>
         <source>Pixel width (cm):</source>
         <translation>Piksel genişliği (cm):</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="167"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="179"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="173"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="185"/>
         <source>Pixel height (cm):</source>
         <translation>Piksel yüksekliği (cm):</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="168"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="174"/>
         <source>Framerate:</source>
         <translation>Karesayısı:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="169"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="180"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="175"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="186"/>
         <source>Image type:</source>
         <translation>Resim türü:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="170"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="181"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="176"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="187"/>
         <source>Antialiasing:</source>
         <translation>Anti-aliasing (farklı tonlardaki piksellere geçiş):</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="171"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="177"/>
         <source>Always recalculate:</source>
         <translation>Her zaman yeniden hesapla:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="185"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="191"/>
         <source>Center:</source>
         <translation>Merkez:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="186"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="422"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="429"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="441"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="448"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="459"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="463"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="477"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="481"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="545"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="552"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="192"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="457"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="464"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="476"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="483"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="494"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="498"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="512"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="516"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="580"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="587"/>
         <source>Radius:</source>
         <translation>Yarıçap:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="188"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="253"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="194"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="259"/>
         <source>Angle:</source>
         <translation>Açı:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="192"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="346"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="355"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="398"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="404"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="420"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="427"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="198"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="352"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="361"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="407"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="433"/>
         <location filename="../src/ui-hlp/menu.cpp" line="439"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="446"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="458"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="455"/>
         <location filename="../src/ui-hlp/menu.cpp" line="462"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="476"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="480"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="496"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="499"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="506"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="509"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="543"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="550"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="474"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="481"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="493"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="497"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="511"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="515"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="531"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="534"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="541"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="544"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="578"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="585"/>
         <source>Mode:</source>
         <translation>Mod:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="193"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="199"/>
         <source>Start:</source>
         <translation>Başlangıç:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="194"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="200"/>
         <source>End:</source>
         <translation>Bitiş:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="198"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="591"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="204"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="626"/>
         <source>Color:</source>
         <translation>Renk:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="202"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="208"/>
         <source>Rotations per second:</source>
         <translation>Birimdeki dönme sayısı:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="206"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="212"/>
         <source>Letters per second:</source>
         <translation>Birimdeki harf sayısı:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="210"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="216"/>
         <source>Iterations:</source>
         <translation>İterasyon:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="214"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="220"/>
         <source>Text:</source>
         <translation>Metin:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="218"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="224"/>
         <source>Your command:</source>
         <translation>Komutunuz:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="222"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="226"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="230"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="234"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="290"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="228"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="232"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="236"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="240"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="296"/>
         <source>Filename:</source>
         <translation>Dosya adı:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="238"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="244"/>
         <source>Formula:</source>
         <translation>Formül:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="242"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="248"/>
         <source>X center:</source>
         <translation>X merkezi:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="243"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="249"/>
         <source>Y center:</source>
         <translation>Y merkezi:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="244"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="250"/>
         <source>X Radius:</source>
         <translation>X Yarıçapı:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="245"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="251"/>
         <source>Y Radius:</source>
         <translation>Y yapıçapı:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="249"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="255"/>
         <source>Coordinates:</source>
         <translation>Koordinatlar:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="257"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="263"/>
         <source>continuous rotation</source>
         <translation>Sürekli dön</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="261"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="267"/>
         <source>Fast rotation</source>
         <translation>Hızlı dön</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="265"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="271"/>
         <source>filter</source>
         <translation>Filtre</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="266"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="272"/>
         <source>enable</source>
         <translation>Erişime aç</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="270"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="276"/>
         <source>Amount:</source>
         <translation>Miktar:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="274"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="280"/>
         <source>Zooming speed:</source>
         <translation>Yakınlaştırma hızı:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="278"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="284"/>
         <source>Name:</source>
         <translation>İsim:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="282"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="288"/>
         <source>Bailout:</source>
         <translation>Döngüden çık:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="286"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="292"/>
         <source>Threads:</source>
         <translation>İş parçacığı:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="294"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="300"/>
         <source>Julia mode:</source>
         <translation>Julia tipi:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="298"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="304"/>
         <source>Horizontal position:</source>
         <translation>Yatay konum:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="299"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="305"/>
         <source>Vertical position:</source>
         <translation>Dikay konum:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="303"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="309"/>
         <source>Dynamic resolution:</source>
         <translation>Dinamik çözünürlük:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="307"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="313"/>
         <source>Time:</source>
         <translation>Zaman:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="311"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="315"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="317"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="321"/>
         <source>Number:</source>
         <translation>Sayı:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="327"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="335"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="347"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="356"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="333"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="341"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="353"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="362"/>
         <source>Intensity (colour bands):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="328"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="336"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="348"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="357"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="334"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="342"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="354"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="363"/>
         <source>Frequency (cells per unit):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="329"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="337"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="349"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="358"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="335"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="343"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="355"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="364"/>
         <source>Octaves:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="330"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="338"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="350"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="359"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="336"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="344"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="356"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="365"/>
         <source>Roughness:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="365"/>
         <location filename="../src/ui-hlp/menu.cpp" line="371"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="377"/>
         <source>Noise scaling:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="366"/>
         <location filename="../src/ui-hlp/menu.cpp" line="372"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="378"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="415"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="424"/>
         <source>Scaling factor (doublings per 10 iterations):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="380"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="386"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="408"/>
         <source>Tiling:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="381"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="388"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="387"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="395"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="409"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="419"/>
         <source>Coloring:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="382"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="389"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="388"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="396"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="410"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="420"/>
         <source>Tiles:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="385"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="389"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="399"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="411"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="421"/>
+        <source>Intensity (0 none, 1 standard):</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/ui-hlp/menu.cpp" line="392"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="418"/>
         <source>Tiling (1-45, as randsctile):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="396"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="402"/>
-        <source>ITER (where the change starts):</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="397"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="403"/>
-        <source>Exponent (above 1 faster, below slower):</source>
+        <location filename="../src/ui-hlp/menu.cpp" line="412"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="422"/>
+        <source>Frequency (tiles per unit):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/ui-hlp/menu.cpp" line="414"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="433"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="455"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="473"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="493"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="503"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="537"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="423"/>
+        <source>Tile scaling:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/ui-hlp/menu.cpp" line="431"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="437"/>
+        <source>ITER (where the change starts):</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/ui-hlp/menu.cpp" line="432"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="438"/>
+        <source>Exponent (above 1 faster, below slower):</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/ui-hlp/menu.cpp" line="449"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="468"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="490"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="508"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="528"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="538"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="572"/>
         <source>Initial exponent:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="415"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="434"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="467"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="485"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="538"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="450"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="469"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="502"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="520"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="573"/>
         <source>Initial speed:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="417"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="424"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="436"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="443"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="456"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="460"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="474"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="452"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="459"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="471"/>
         <location filename="../src/ui-hlp/menu.cpp" line="478"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="494"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="497"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="504"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="507"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="540"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="547"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="491"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="495"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="509"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="513"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="529"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="532"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="539"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="542"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="575"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="582"/>
         <source>ITER:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="418"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="425"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="437"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="444"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="457"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="461"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="475"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="453"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="460"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="472"/>
         <location filename="../src/ui-hlp/menu.cpp" line="479"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="495"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="498"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="505"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="508"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="541"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="548"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="492"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="496"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="510"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="514"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="530"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="533"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="540"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="543"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="576"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="583"/>
         <source>Exponent:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="419"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="426"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="438"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="445"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="468"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="469"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="486"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="487"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="542"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="549"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="454"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="461"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="473"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="480"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="503"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="504"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="521"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="522"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="577"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="584"/>
         <source>Speed:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="527"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="562"/>
         <source>Frequency (periodic modes):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="528"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="563"/>
         <source>Function (periodic modes):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="532"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="567"/>
         <source>Function:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="533"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="568"/>
         <source>Coloring speed:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="534"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="569"/>
         <source>Coloring shift:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="536"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="571"/>
         <source>Speed change after ITER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="559"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="570"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="594"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="605"/>
         <source>Sectors (0 = the mode&apos;s own):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="560"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="571"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="595"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="606"/>
         <source>Rotation (degrees):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="561"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="596"/>
         <source>Angle of:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="562"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="597"/>
         <source>Rings per unit (0 = none):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="564"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="574"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="599"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="609"/>
         <source>Repetitions:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="565"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="575"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="600"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="610"/>
         <source>Direction:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="572"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="607"/>
         <source>Iterations per band (0 = none):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="580"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="615"/>
         <source>Algorithm number:</source>
         <translation>Algoritma Sayısı:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="331"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="339"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="351"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="360"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="581"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="337"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="345"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="357"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="366"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="616"/>
         <source>Seed:</source>
         <translation>Başlangıç değeri:</translation>
     </message>
@@ -598,48 +627,63 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="566"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="576"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="72"/>
+        <source>tessellation + smooth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/ui-hlp/menu.cpp" line="73"/>
+        <source>tessellation + iter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/ui-hlp/menu.cpp" line="74"/>
+        <source>tessellation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/ui-hlp/menu.cpp" line="601"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="611"/>
         <source>Speed (binary: separation):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="582"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="617"/>
         <source>Shift:</source>
         <translation>Değiştirme:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="586"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="621"/>
         <source>Visualiser:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="596"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="631"/>
         <source>Palette:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="600"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="635"/>
         <source>Load Palette Config</source>
         <translation>Palet yapılandırmasını yükle</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="604"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="639"/>
         <source>Save Palette Config</source>
         <translation>Palet yapılandırmasını kaydet</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="608"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="643"/>
         <source>Frames per second:</source>
         <translation>Saniyedeki kare sayısı:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="613"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="648"/>
         <source>Formula</source>
         <translation>Formül</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="617"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="652"/>
         <source>Initialization:</source>
         <translation>Başlangıç durumuna dönme:</translation>
     </message>
@@ -697,19 +741,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui/mainwindow.cpp" line="1522"/>
-        <location filename="../src/ui/mainwindow.cpp" line="1523"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1527"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1528"/>
         <source>Older formula (Up)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui/mainwindow.cpp" line="1528"/>
-        <location filename="../src/ui/mainwindow.cpp" line="1529"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1533"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1534"/>
         <source>Newer formula (Down)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui/mainwindow.cpp" line="1587"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1592"/>
         <source>History...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -739,293 +783,293 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="164"/>
+        <location filename="../src/engine/formulas.cpp" line="167"/>
         <location filename="../src/ui-hlp/save.cpp" line="36"/>
         <source>left</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="165"/>
+        <location filename="../src/engine/formulas.cpp" line="168"/>
         <source>both</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="170"/>
+        <location filename="../src/engine/formulas.cpp" line="173"/>
         <source>fixed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="171"/>
+        <location filename="../src/engine/formulas.cpp" line="174"/>
         <source>iteration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="172"/>
+        <location filename="../src/engine/formulas.cpp" line="175"/>
         <source>smooth</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="178"/>
+        <location filename="../src/engine/formulas.cpp" line="181"/>
         <source>angle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="179"/>
+        <location filename="../src/engine/formulas.cpp" line="182"/>
         <source>tile-angle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="180"/>
+        <location filename="../src/engine/formulas.cpp" line="183"/>
         <source>zmag</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="181"/>
+        <location filename="../src/engine/formulas.cpp" line="184"/>
         <source>none</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="183"/>
+        <location filename="../src/engine/formulas.cpp" line="186"/>
         <source>turned</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="184"/>
+        <location filename="../src/engine/formulas.cpp" line="187"/>
         <source>shaded</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="185"/>
+        <location filename="../src/engine/formulas.cpp" line="188"/>
         <source>edged</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="186"/>
+        <location filename="../src/engine/formulas.cpp" line="189"/>
         <source>flat</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="192"/>
+        <location filename="../src/engine/formulas.cpp" line="195"/>
         <source>1: squares</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="193"/>
+        <location filename="../src/engine/formulas.cpp" line="196"/>
         <source>2: equilateral triangles</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="194"/>
+        <location filename="../src/engine/formulas.cpp" line="197"/>
         <source>3: hexagons</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="195"/>
+        <location filename="../src/engine/formulas.cpp" line="198"/>
         <source>4: octagons and squares (4.8.8)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="196"/>
+        <location filename="../src/engine/formulas.cpp" line="199"/>
         <source>5: hexagons and triangles, the trihexagonal (3.6.3.6)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="197"/>
+        <location filename="../src/engine/formulas.cpp" line="200"/>
         <source>6: hexagons, squares and triangles (3.4.6.4)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="198"/>
+        <location filename="../src/engine/formulas.cpp" line="201"/>
         <source>7: dodecagons and triangles (3.12.12)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="199"/>
+        <location filename="../src/engine/formulas.cpp" line="202"/>
         <source>8: dodecagons, hexagons and squares (4.6.12)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="200"/>
+        <location filename="../src/engine/formulas.cpp" line="203"/>
         <source>9: rows of squares and of triangles (3.3.3.4.4)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="201"/>
+        <location filename="../src/engine/formulas.cpp" line="204"/>
         <source>10: the snub square (3.3.4.3.4)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="202"/>
+        <location filename="../src/engine/formulas.cpp" line="205"/>
         <source>11: the snub hexagonal, hexagons in a sea of triangles (3.3.3.3.6)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="203"/>
+        <location filename="../src/engine/formulas.cpp" line="206"/>
         <source>12: tetrakis square: right triangles, eight round a point</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="204"/>
+        <location filename="../src/engine/formulas.cpp" line="207"/>
         <source>13: rhombille: rhombi that read as cubes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="205"/>
+        <location filename="../src/engine/formulas.cpp" line="208"/>
         <source>14: deltoidal trihexagonal: kites</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="206"/>
+        <location filename="../src/engine/formulas.cpp" line="209"/>
         <source>15: triakis triangular: obtuse triangles</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="207"/>
+        <location filename="../src/engine/formulas.cpp" line="210"/>
         <source>16: kisrhombille: half-equilateral triangles, twelve round a point</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="208"/>
+        <location filename="../src/engine/formulas.cpp" line="211"/>
         <source>17: prismatic pentagons</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="209"/>
+        <location filename="../src/engine/formulas.cpp" line="212"/>
         <source>18: Cairo pentagons</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="210"/>
+        <location filename="../src/engine/formulas.cpp" line="213"/>
         <source>19: floret pentagons, six to a flower</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="211"/>
+        <location filename="../src/engine/formulas.cpp" line="214"/>
         <source>20: bricks, running bond</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="212"/>
+        <location filename="../src/engine/formulas.cpp" line="215"/>
         <source>21: Flemish bond: a brick and a half brick by turns</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="213"/>
+        <location filename="../src/engine/formulas.cpp" line="216"/>
         <source>22: herringbone</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="214"/>
+        <location filename="../src/engine/formulas.cpp" line="217"/>
         <source>23: basketweave</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="215"/>
+        <location filename="../src/engine/formulas.cpp" line="218"/>
         <source>24: Pythagorean: squares of two sizes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="216"/>
+        <location filename="../src/engine/formulas.cpp" line="219"/>
         <source>25: chevrons</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="217"/>
+        <location filename="../src/engine/formulas.cpp" line="220"/>
         <source>26: squares and rhombi in alternate rows</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="218"/>
+        <location filename="../src/engine/formulas.cpp" line="221"/>
         <source>27: houses: a pentagon, up and hanging by turns</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="219"/>
+        <location filename="../src/engine/formulas.cpp" line="222"/>
         <source>28: rows: two of squares, one of triangles</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="220"/>
+        <location filename="../src/engine/formulas.cpp" line="223"/>
         <source>29: rows: one of squares, two of triangles</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="221"/>
+        <location filename="../src/engine/formulas.cpp" line="224"/>
         <source>30: hexagons among triangles</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="222"/>
+        <location filename="../src/engine/formulas.cpp" line="225"/>
         <source>31: Greek crosses</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="223"/>
+        <location filename="../src/engine/formulas.cpp" line="226"/>
         <source>32: T tetrominoes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="224"/>
+        <location filename="../src/engine/formulas.cpp" line="227"/>
         <source>33: eight-pointed stars and crosses</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="225"/>
+        <location filename="../src/engine/formulas.cpp" line="228"/>
         <source>34: six-pointed stars and hexagons</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="226"/>
+        <location filename="../src/engine/formulas.cpp" line="229"/>
         <source>35: eight-pointed stars with four-pointed ones and rhombi</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="227"/>
+        <location filename="../src/engine/formulas.cpp" line="230"/>
         <source>36: twelve-pointed stars with three-pointed ones and rhombi</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="228"/>
+        <location filename="../src/engine/formulas.cpp" line="231"/>
         <source>37: twelve-pointed stars with notched hexagons and squares</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="229"/>
+        <location filename="../src/engine/formulas.cpp" line="232"/>
         <source>38: Voronoi cells, irregular -- randscp&apos;s</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="230"/>
+        <location filename="../src/engine/formulas.cpp" line="233"/>
         <source>39: Penrose rhombs: never repeats, fivefold</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="231"/>
+        <location filename="../src/engine/formulas.cpp" line="234"/>
         <source>40: Penrose kites and darts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="232"/>
+        <location filename="../src/engine/formulas.cpp" line="235"/>
         <source>41: Ammann-Beenker: squares and rhombi, eightfold, never repeats</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="233"/>
+        <location filename="../src/engine/formulas.cpp" line="236"/>
         <source>42: rhombi in twelve directions, never repeats</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="234"/>
+        <location filename="../src/engine/formulas.cpp" line="237"/>
         <source>43: rhombi in seven directions, never repeats</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="235"/>
+        <location filename="../src/engine/formulas.cpp" line="238"/>
         <source>44: the pinwheel: triangles facing every way there is</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="236"/>
+        <location filename="../src/engine/formulas.cpp" line="239"/>
         <source>45: the chair: Ls cut into Ls</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1035,7 +1079,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="163"/>
+        <location filename="../src/engine/formulas.cpp" line="166"/>
         <location filename="../src/ui-hlp/save.cpp" line="38"/>
         <source>right</source>
         <translation type="unfinished"></translation>
@@ -1059,95 +1103,95 @@
 <context>
     <name>Error</name>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="673"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="708"/>
         <source>No file selected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="679"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="747"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="714"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="782"/>
         <source>renderanim: Width parameter must be positive integer in the range 0..4096</source>
         <translation>Ekrandaki mevcut animasyon görüntüsü: Genişlik parametresi 0..4096 aralığında pozitif tamsayı olmalıdır</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="686"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="754"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="721"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="789"/>
         <source>renderanim: Height parameter must be positive integer in the range 0..4096</source>
         <translation>Ekrandaki mevcut animasyon görüntüsü:  Yükseklik parametresi 0..4096 aralığında pozitif tamsayı olmalıdır</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="692"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="760"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="727"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="795"/>
         <source>renderanim: Invalid real width and height dimensions</source>
         <translation>Ekrandaki mevcut animasyon görüntüsü: Genişlik ve yükseklik için geçersiz boyutlar</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="697"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="732"/>
         <source>renderanim: invalid framerate</source>
         <translation>Ekrandaki mevcut animasyon görüntüsü:  Geçersiz karehızı</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="702"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="766"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="737"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="801"/>
         <source>renderanim: antialiasing not supported in 256 color mode</source>
         <translation>Ekrandaki mevcut animasyon görüntüsü:  Kenar yumusatma 256 renk modunda desteklenmiyor</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="737"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="772"/>
         <source>Could not render the image</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="815"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="828"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="850"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="863"/>
         <source>animateview: Invalid viewpoint</source>
         <translation>Animasyon görüş alanı: Geçersiz bakış açısı</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="841"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="876"/>
         <source>Invalid viewpoint</source>
         <translation>Geçersiz bakış açısı</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1245"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="1274"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="1280"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="1309"/>
         <source>Unknown palette type</source>
         <translation>Geçersiz palet türü</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1608"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="1726"/>
         <source>Corrupted palette file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1622"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="1740"/>
         <source>RGB out of range. Failed to load palette.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1638"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="1756"/>
         <source>Failed to open palette configuration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1667"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="1785"/>
         <source>Failed to save palette configuration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1761"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="1776"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="1879"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="1894"/>
         <source>Initialization of color cycling failed.</source>
         <translation>Renk döngüsünü başlatmak  başarısız.</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1763"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="1778"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="1881"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="1896"/>
         <source>Try to enable palette emulation filter</source>
         <translation>Renk paleti emülsiyonfiltresini etkinleştirmeyi deneyiniz</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1887"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2005"/>
         <source>Algorithm:%i seed:%i size:%i</source>
         <translation>Algoritma:%i Başlangıç değeri:%i boyut:%i</translation>
     </message>
@@ -1397,18 +1441,18 @@
     </message>
     <message>
         <location filename="../src/ui/image_qt.cpp" line="188"/>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3503"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3557"/>
         <source>Cartesian grid not supported on zoom &gt; 100000x</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/save.cpp" line="857"/>
+        <location filename="../src/ui-hlp/save.cpp" line="897"/>
         <source>Recording is already enabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/save.cpp" line="862"/>
-        <location filename="../src/ui-hlp/save.cpp" line="869"/>
+        <location filename="../src/ui-hlp/save.cpp" line="902"/>
+        <location filename="../src/ui-hlp/save.cpp" line="909"/>
         <source>File could not be opened or out of memory</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2642,1082 +2686,1085 @@
 <context>
     <name>Menu</name>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1943"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2061"/>
         <source>Root menu</source>
         <translation>Ana menü</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1944"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2062"/>
         <source>Animation root menu</source>
         <translation>Animasyon ana menüsü</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1945"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2063"/>
         <source>Replay only commands</source>
         <translation>Sadece komutları yeniden oynat</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1948"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2066"/>
         <source>Line drawing functions</source>
         <translation>Doğru çizme fonksiyonu</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1949"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2067"/>
         <source>Line</source>
         <translation>Doğru</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1951"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2069"/>
         <source>Morph line</source>
         <translation>Biçimlendirilmiş doğru</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1953"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2071"/>
         <source>Morph last line</source>
         <translation>Son doğruyu biçimlendir</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1955"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2073"/>
         <source>Set line key</source>
         <translation>Doğru anahtarını belirle</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1957"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2075"/>
         <source>Clear line</source>
         <translation>Doğruyu temizle</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1959"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2077"/>
         <source>Clear all lines</source>
         <translation>Tüm doğruları temizle</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1961"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2079"/>
         <source>Animation functions</source>
         <translation>Animasyon fonksiyonları</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1962"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2044"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2073"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2188"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2190"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2080"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2162"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2191"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2306"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2308"/>
         <source>View</source>
         <translation>Görüntü</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1964"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2082"/>
         <source>Morph view</source>
         <translation>Biçimlenmiş görünüm</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1966"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2084"/>
         <source>Morph julia</source>
         <translation>Biçimlendirilmiş Julia kümesi</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1968"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2086"/>
         <source>Move view</source>
         <translation>Görüntü taşıma</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1970"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2088"/>
         <source>Morph angle</source>
         <translation>Biçimlendirilmiş açı</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1972"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2090"/>
         <source>Zoom center</source>
         <translation>Yakınlaştırma merkezi</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1974"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2049"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2092"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2167"/>
         <source>Zoom</source>
         <translation>Yakınlaştır</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1975"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2093"/>
         <source>Un-zoom</source>
         <translation>Yakınlaştırmayı geri al</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1977"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2095"/>
         <source>Stop zooming</source>
         <translation>Yakınlaştırmayı durdur</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1979"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2097"/>
         <source>Smooth morphing parameters</source>
         <translation>Düzenli geçiş parametreleri</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1981"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2099"/>
         <source>Timing functions</source>
         <translation>Zamanlama fonksiyonları</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1982"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2100"/>
         <source>Usleep</source>
         <translation>Programı duraklat</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1984"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2102"/>
         <source>Wait for text</source>
         <translation>Metin için bekle</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1986"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2104"/>
         <source>Wait for complete image</source>
         <translation>Resmin tamamlanması için bekle</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1988"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2106"/>
         <source>Include file</source>
         <translation>Dosya dahil et</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1990"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2247"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2108"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2365"/>
         <source>Default palette</source>
         <translation>Varsayılan renk levhası</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1994"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2112"/>
         <source>Precision</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1996"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2114"/>
         <source>Formula</source>
         <translation>Formül</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1998"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2116"/>
         <source>Maximal zooming step</source>
         <translation>Maksimum yakınlaştırma işlemi</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2000"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2118"/>
         <source>Zooming speedup</source>
         <translation>Yakınlaştırmayı hızlandır</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2002"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2120"/>
         <source>Filter</source>
         <translation>Filtre</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2007"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2125"/>
         <source>Antialiasing in linear light</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2013"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2015"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2131"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2133"/>
         <source>Letters per second</source>
         <translation>Saniyedeki simge sayısı</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2017"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2372"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2135"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2490"/>
         <source>Interrupt</source>
         <translation>Duraklama</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2020"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2029"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2138"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2147"/>
         <source>Status</source>
         <translation>Durum</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2023"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2033"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2141"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2151"/>
         <source>Ministatus</source>
         <translation>Mini durum bildirimi</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2025"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2035"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2143"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2153"/>
         <source>Cartesian Grid</source>
         <translation>Koordinat düzlemi</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2038"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2067"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2156"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2185"/>
         <source>File</source>
         <translation>Dosya</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2039"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2157"/>
         <source>Edit</source>
         <translation>Düzenle</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2040"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2158"/>
         <source>Fractal</source>
         <translation>Fraktal</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2041"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2159"/>
         <source>Calculation</source>
         <translation>Hesaplama</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2042"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2418"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2160"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2536"/>
         <source>Filters</source>
         <translation>Filtreler</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2043"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2161"/>
         <source>Action</source>
         <translation>Eylem</translation>
     </message>
     <message>
         <location filename="../src/ui/main.cpp" line="622"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2065"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2074"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2183"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2192"/>
         <source>Help</source>
         <translation>Yardım</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2050"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2168"/>
         <source>Selection zoom (drag a rectangle)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2054"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2172"/>
         <source>Zoom in 2x</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2056"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2174"/>
         <source>Zoom in 10x</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2058"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2176"/>
         <source>Zoom out 2x</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2060"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2178"/>
         <source>Zoom out 10x</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2062"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2180"/>
         <source>Palette probe (click a point)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2066"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2184"/>
         <source>Tutorials</source>
         <translation>Öğretim videoları</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2071"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2189"/>
         <source>Stop replay</source>
         <translation>Tekrar oynatmayı durdur</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2075"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2193"/>
         <source>Command</source>
         <translation>Komut</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2077"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2195"/>
         <source>Play string</source>
         <translation>Fraktal dizeyi çalıştır</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2080"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2198"/>
         <source>Clear screen</source>
         <translation>Ekranı temizle</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2082"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2200"/>
         <source>Display fractal</source>
         <translation>Fraktalı gizle</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2085"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2203"/>
         <source>Display text</source>
         <translation>Metni gizle</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2088"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2206"/>
         <source>Text color</source>
         <translation>Metin rengi</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2090"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2208"/>
         <source>Horizontal text position</source>
         <translation>Yatay metin konumu</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2092"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2210"/>
         <source>Vertical text position</source>
         <translation>Dikey metin konumu</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2093"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2211"/>
         <source>Text position</source>
         <translation>Metin konumu</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2096"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2214"/>
         <source>Message</source>
         <translation>Mesaj</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2114"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2232"/>
         <source>Initstate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2115"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2233"/>
         <source>New</source>
         <translation>Yeni</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2116"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2234"/>
         <source>Open</source>
         <translation>Aç</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2119"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2237"/>
         <source>Save</source>
         <translation>Kaydet</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2121"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2239"/>
         <source>Save as</source>
         <translation>Farklı kaydet</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2122"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2240"/>
         <source>PNG</source>
         <translation>PNG</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2125"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2243"/>
         <source>Record</source>
         <translation>Kayıt al</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2127"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2245"/>
         <source>Replay</source>
         <translation>Tekrar oynat</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2134"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2252"/>
         <source>Render</source>
         <translation>Oluşturma</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2136"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2254"/>
         <source>Render Image</source>
         <translation>Oluşturma resmi</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2140"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2258"/>
         <source>Load random example</source>
         <translation>Rastgele örnek yükle</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2142"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2260"/>
         <source>Save configuration</source>
         <translation>Yapılandırmayı kaydet</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2145"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2263"/>
         <source>Undo</source>
         <translation>Geri</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2149"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2267"/>
         <source>Redo</source>
         <translation>Yenile</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2153"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2271"/>
         <source>Copy position URL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2155"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2273"/>
         <source>Formulae</source>
         <translation>Formüller</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2156"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2274"/>
         <source>More formulae</source>
         <translation>Daha fazla formül</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2161"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2279"/>
         <source>User formula</source>
         <translation>Kullaıcı formülleri</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2163"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2281"/>
         <source>User initialization</source>
         <translation>Kullanıcı başlatma</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2165"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2283"/>
         <source>Set p values on first iteration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2167"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2285"/>
         <source>Newton mode simulation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2172"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2290"/>
         <source>Incoloring mode</source>
         <translation>Renklendirme modu</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2173"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2291"/>
         <source>Outcoloring mode</source>
         <translation>Dış renklendirme modu</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2175"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2293"/>
         <source>Plane</source>
         <translation>Düzlem</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2176"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2294"/>
         <source>Palette</source>
         <translation>Palet</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2179"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2297"/>
         <source>Mandelbrot mode</source>
         <translation>Mandelbrot kümesi oluşturma modu</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2182"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2300"/>
         <source>Julia mode</source>
         <translation>Julia kümesi oluşturma modu</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2185"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2303"/>
         <source>Fast julia mode</source>
         <translation>Hızlı Julia kümesi oluşturma modu</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2193"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2311"/>
         <source>Rotation</source>
         <translation>Dönme</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2194"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2312"/>
         <source>Set angle</source>
         <translation>Açıyı ayarla</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2197"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2315"/>
         <source>Set plane</source>
         <translation>Düzlemi ayarla</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2200"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2318"/>
         <source>Inside coloring mode</source>
         <translation>8 bit derinliğe sahip iç renklendirme modu</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2203"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2321"/>
         <source>Outside coloring mode</source>
         <translation>8 bit derinliğe sahip dış renklendirme modu</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2208"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2315"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2326"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2433"/>
         <source>Bailout mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2211"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2329"/>
         <source>Inside truecolor coloring mode</source>
         <translation>24 bit derinliğe sahip iç rengi seçme modu</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2214"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2332"/>
         <source>Outside truecolor coloring mode</source>
         <translation>24 bit derinliğe sahip dış rengi seçme modu</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2217"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2335"/>
         <source>Inside coloring speed function</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2220"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2338"/>
         <source>Outside coloring speed function</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2223"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2341"/>
         <source>Inside coloring speed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2226"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2344"/>
         <source>Outside coloring speed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2229"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2347"/>
         <source>Inside coloring shift</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2232"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2350"/>
         <source>Outside coloring shift</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2237"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2355"/>
         <source>Inside coloring frequency</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2241"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2359"/>
         <source>Inside coloring periodic function</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2244"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2362"/>
         <source>Julia seed</source>
         <translation>Julia başlangıç değeri</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2249"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2367"/>
         <source>Random palette</source>
         <translation>Rastgele palet</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2251"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2253"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2369"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2371"/>
         <source>Custom palette</source>
         <translation>Özel palet</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2256"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2374"/>
         <source>Palette Colors</source>
         <translation>Palet renkleri</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2259"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2377"/>
         <source>Palette Editor</source>
         <translation>Palet düzenleyici</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2261"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2379"/>
         <source>Load Palette Config</source>
         <translation>Palet yapılandırmasını yükle</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2263"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2381"/>
         <source>Save Palette Config</source>
         <translation>Palet yapılandırmasını kaydet</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2266"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2384"/>
         <source>Color cycling</source>
         <translation>Renk döngüsü</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2268"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2386"/>
         <source>Reversed color cycling</source>
         <translation>Ters renk döngüsü</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2271"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2389"/>
         <source>Color cycling speed</source>
         <translation>Renk döngüsü hızı</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2274"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2392"/>
         <source>Shift palette</source>
         <translation>Rengi değiştir</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2276"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2394"/>
         <source>Shift one forward</source>
         <translation>Bir adım öne al</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2278"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2396"/>
         <source>Shift one backward</source>
         <translation>Bir adım geriye al</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2280"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2398"/>
         <source>Solid guessing</source>
         <translation>Fraktal oluşturma</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2281"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2399"/>
         <source>Disable solid guessing</source>
         <translation>Tahmin etmeyi devre dışı bırak</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2284"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2402"/>
         <source>Guess 2x2 rectangles</source>
         <translation>2x2 birimkarelik dikdörtgeni tahmin et</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2286"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2404"/>
         <source>Guess 3x3 rectangles</source>
         <translation>3x3 birimkarelik dikdörtgeni tahmin et</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2288"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2406"/>
         <source>Guess 4x4 rectangles</source>
         <translation>4x4 birimkarelik dikdörtgeni tahmin et</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2290"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2408"/>
         <source>Guess 5x5 rectangles</source>
         <translation>5xx5 birimkarelik dikdörtgeni tahmin et</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2292"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2410"/>
         <source>Guess 6x6 rectangles</source>
         <translation>6x6 birimkarelik dikdörtgeni tahmin et</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2294"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2412"/>
         <source>Guess 7x7 rectangles</source>
         <translation>7x7 birimkarelik dikdörtgeni tahmin et</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2296"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2414"/>
         <source>Guess 8x8 rectangles</source>
         <translation>8x8 birimkarelik dikdörtgeni tahmin et</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2298"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2416"/>
         <source>Guess unlimited rectangles</source>
         <translation>Sınırsız dikdörtgeni tahmin et</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2300"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2418"/>
         <source>Dynamic resolution</source>
         <translation>Dinamik çözünürlük</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2301"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2419"/>
         <source>Periodicity checking</source>
         <translation>Periyodik örüntü kontrolü</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2304"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2422"/>
         <source>Threads</source>
         <translation>İş paketleri</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2306"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2424"/>
         <source>Iterations</source>
         <translation>Yinelemeler</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2308"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2426"/>
         <source>Bailout</source>
         <translation>Yinelemeden kaçış</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2323"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2441"/>
         <source>Circle (classic)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2324"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2442"/>
         <source>Square</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2325"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2443"/>
         <source>Diamond</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2326"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2444"/>
         <source>Real axis</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2327"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2445"/>
         <source>Imaginary axis</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2328"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2446"/>
         <source>Both axes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2329"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2447"/>
         <source>Triangle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2330"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2448"/>
         <source>Hexagon</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2331"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2449"/>
         <source>Octagon</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2332"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2336"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2450"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2454"/>
         <source>0 degrees</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2333"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2337"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2451"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2455"/>
         <source>90 degrees</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2334"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2452"/>
         <source>180 degrees</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2335"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2453"/>
         <source>-90 degrees</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2339"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2457"/>
         <source>Newton convergence</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2341"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2344"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2422"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2459"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2462"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2540"/>
         <source>Perturbation</source>
         <translation>Pertürbasyon</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2348"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2466"/>
         <source>Zooming speed</source>
         <translation>Yakınlaştırma hızı</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2350"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2468"/>
         <source>Fixed step</source>
         <translation>Sabit adım aralığı</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2353"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2471"/>
         <source>Solid guessing range</source>
         <translation>Tahmin aralığı</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2355"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2473"/>
         <source>Disable rotation</source>
         <translation>Döndürmeyi devre dışı bırak</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2358"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2476"/>
         <source>Continuous rotation</source>
         <translation>Sürekli döndür</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2360"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2478"/>
         <source>Rotate by mouse</source>
         <translation>Fare imleci ile döndür</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2362"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2480"/>
         <source>Rotation speed</source>
         <translation>Döndürme hızı</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2364"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2482"/>
         <source>Automatic rotation</source>
         <translation>Otomatik döndür</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2366"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2484"/>
         <source>Fast rotation mode</source>
         <translation>Hızlı dönme modu</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2370"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2488"/>
         <source>Recalculate</source>
         <translation>Tekrar hesapla</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2374"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2492"/>
         <source>Disable dynamic resolution</source>
         <translation>Dinamik çözünürlüğü devre dışı bırak</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2377"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2495"/>
         <source>Use only during animation</source>
         <translation>Sadece animasyon esnasında kullan</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2379"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2497"/>
         <source>Use also for new images</source>
         <translation>Sadece yeni resimler için kullan</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2381"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2499"/>
         <source>Dynamic resolution mode</source>
         <translation>Dinamik çözünürlük modu</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2388"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2506"/>
         <source>Autopilot</source>
         <translation>Oto-pilot modu</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2391"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2509"/>
         <source>Hide Messages</source>
         <translation>Mesajları gizle</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2394"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2512"/>
         <source>An introduction to fractals</source>
         <translation>Fraktallara giriş</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2396"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2514"/>
         <source>XaoS features overview</source>
         <translation>XaoS özelliklerine bakış</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2397"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2515"/>
         <source>Math behind fractals</source>
         <translation>Fraktalların ardındaki matematik</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2398"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2430"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2516"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2548"/>
         <source>Other fractal types in XaoS</source>
         <translation>XaoS için diğer fraktal türleri</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2400"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2518"/>
         <source>What&apos;s new?</source>
         <translation>Güncellemeler neler?</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2402"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2425"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2520"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2543"/>
         <source>Whole story</source>
         <translation>Tüm hikaye</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2404"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2522"/>
         <source>Introduction</source>
         <translation>Giriş</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2405"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2523"/>
         <source>Mandelbrot set</source>
         <translation>Mandelbrot kümesi</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2406"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2524"/>
         <source>Julia set</source>
         <translation>Julia kümesi</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2407"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2525"/>
         <source>Higher power Mandelbrots</source>
         <translation>Daha yüksek güçlü Mandebrotlar</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2408"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2526"/>
         <source>Newton&apos;s method</source>
         <translation>Newton’un yöntemi</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2409"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2527"/>
         <source>Barnsley&apos;s formula</source>
         <translation>Barnsley&apos;in yöntemi</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2410"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2528"/>
         <source>Phoenix</source>
         <translation>Phoenix</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2411"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2529"/>
         <source>Octo</source>
         <translation>Octo</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2412"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2530"/>
         <source>Magnet</source>
         <translation>Magnet</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2413"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2531"/>
         <source>All features</source>
         <translation>Tüm özellikler</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2415"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2533"/>
         <source>Outcoloring modes</source>
         <translation>Dış renklendirme modları</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2416"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2534"/>
         <source>Incoloring modes</source>
         <translation>İç renklendirme modları</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2417"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2535"/>
         <source>True-color coloring modes</source>
         <translation>Gerçek-renkli renklendirme modları</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2419"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2537"/>
         <source>Planes</source>
         <translation>Düzlemler</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2420"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2538"/>
         <source>Animations and position files</source>
         <translation>Animasyon ve pozisyon dosyaları</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2423"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2541"/>
         <source>Random palettes</source>
         <translation>Rastgele paletler</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2424"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2542"/>
         <source>Other noteworthy features</source>
         <translation>Diğer önemli özellikler</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2427"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2545"/>
         <source>The definition and fractal dimension</source>
         <translation>Tanım ve fraktal boyutu</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2429"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2547"/>
         <source>Escape time fractals</source>
         <translation>Kaçış zamanı fraktalları</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2432"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2550"/>
         <source>Triceratops and Catseye fractals</source>
         <translation>Triceratops ve Catseye fraktalları</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2434"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2552"/>
         <source>Mandelbar, Lambda, Manowar and Spider</source>
         <translation>Mandelbar, Lambda, Manowar ve Spider Kümeleri</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2436"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2554"/>
         <source>Sierpinski Gasket, S.Carpet, Koch Snowflake</source>
         <translation>Sierpinski Üçgeni, S. Halısı, Koch Kar Tanesi</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2438"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2556"/>
         <source>What&apos;s new in 3.0?</source>
         <translation>3.0’da neler var?</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2439"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2557"/>
         <source>What&apos;s new in 4.0?</source>
         <translation>4.0’da neler var?</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2460"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2461"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2578"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2579"/>
         <source>Other coloring mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2462"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2580"/>
         <source>True-color incoloring mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2463"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2581"/>
         <source>True-color outcoloring mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2500"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2505"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2508"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2618"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2623"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2626"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2629"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2633"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2638"/>
         <source>Tessellation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2513"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2516"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2528"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2531"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2643"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2646"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2658"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2661"/>
         <source>Coloring speed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2520"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2523"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2650"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2653"/>
         <source>Decomposition</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2534"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2537"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2664"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2667"/>
         <source>Coloring shift</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2471"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2475"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2483"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2487"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="2493"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2589"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2593"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2601"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2605"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2611"/>
         <source>Fractional Brownian Motion</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2734"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2864"/>
         <source>Speed change after ITER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2746"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2876"/>
         <source>Speed change after ITER (groups)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2758"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2888"/>
         <source>Speed change after ITER (speeds)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2770"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2900"/>
         <source>Speed change after ITER (1.8.0)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="2782"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="2912"/>
         <source>Speed change after ITER (two groups, no radius)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3785,17 +3832,17 @@
         <translation>Kullanıcı Forumu</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="130"/>
+        <location filename="../src/engine/formulas.cpp" line="133"/>
         <source>Disable truecolor colouring</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="131"/>
+        <location filename="../src/engine/formulas.cpp" line="134"/>
         <source>simple red (for education purposes)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="132"/>
+        <location filename="../src/engine/formulas.cpp" line="135"/>
         <source>simple blue (for education purposes)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3869,23 +3916,23 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1139"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="1174"/>
         <source>XaoS must restart to change the thread count.</source>
         <translation>İşlemin değiştirilmesi için XaoS yeniden başlatılmalı.</translation>
     </message>
     <message>
         <location filename="../src/ui/main.cpp" line="399"/>
-        <location filename="../src/ui-hlp/menu.cpp" line="1140"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="1175"/>
         <source>Do you want to quit now?</source>
         <translation>Çıkmak istediğinizden emin misiniz?</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1634"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="1752"/>
         <source>File %s opened.</source>
         <translation>%ler dosyası yüklendi.</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/menu.cpp" line="1663"/>
+        <location filename="../src/ui-hlp/menu.cpp" line="1781"/>
         <location filename="../src/ui-hlp/ui_helper.cpp" line="681"/>
         <location filename="../src/ui-hlp/ui_helper.cpp" line="698"/>
         <location filename="../src/ui-hlp/ui_helper.cpp" line="828"/>
@@ -3992,65 +4039,65 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3179"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3233"/>
         <source>%s %.2f times (%.1fE) %2.2f frames/sec %c %i %i %i %u            </source>
         <translation>%s %.2f zamanda (%.1fE) %2.2f kare/saniye %c %i %i %i %u            </translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3181"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3235"/>
         <source>unzoomed</source>
         <translation>Yakınlaştırma</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3181"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3235"/>
         <source>zoomed</source>
         <translation>Yakınlaştır</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3187"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3241"/>
         <source>framerate:%f
 </source>
         <translation>Karehızı:%f
 </translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3236"/>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3305"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3290"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3359"/>
         <source>Formula:</source>
         <translation type="unfinished">Formül:</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3240"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3294"/>
         <source>(%i characters)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3298"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3352"/>
         <source>Fractal name:%s</source>
         <translation type="unfinished">Fraktal ismi:%s</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3313"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3367"/>
         <source>Fractal type:%s</source>
         <translation type="unfinished">Fraktal türü:%s</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3314"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3368"/>
         <source>Mandelbrot</source>
         <translation>Mandelbrot</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3315"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3369"/>
         <source>Julia</source>
         <translation>Julia</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3334"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3388"/>
         <source>View:[%s,%s]</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3340"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3394"/>
         <source>size:[%s,%s]</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4067,57 +4114,57 @@
         <translation type="vanished">boyut:[%1.12f,%1.12f]</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3346"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3400"/>
         <source>Rotation:%4.2f   Screen size:%i:%i</source>
         <translation>Döndürme:%4.2f   Ekran boyutu:%i:%i</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3352"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3406"/>
         <source>Iterations:%-4u Palette size:%i</source>
         <translation>Yinelemeler:%-4u Palet boyutu:%i</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3357"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3411"/>
         <source>Bailout:%4.2f</source>
         <translation>Döngüdençık%4.2f</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3362"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3416"/>
         <source>Autopilot:%-4s  Plane:%s</source>
         <translation>Oto-pilot:%-4s Düzlem:%s</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3363"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3417"/>
         <source>On</source>
         <translation>Açık</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3363"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3417"/>
         <source>Off</source>
         <translation>Kapalı</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3368"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3422"/>
         <source>incoloring:%s    outcoloring:%s</source>
         <translation>iç renklendirme:%s dış renklendirme:%s</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3374"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3428"/>
         <source>zoomspeed:%f</source>
         <translation>yakınlaştırma hızı:%f</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3379"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3433"/>
         <source>Parameter:none</source>
         <translation>Parametre: yok</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3381"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3435"/>
         <source>Parameter:[%f,%f]</source>
         <translation>Parametre:[%f,%f]</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3402"/>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3456"/>
         <source>Mouse:[%1.12f,%1.12f]</source>
         <translation type="unfinished"></translation>
     </message>

@@ -1561,7 +1561,7 @@ bedeutete.
 
 **Fraktal → Innere Färbung → Kachelung...** färbt das Innere nach den Kacheln
 einer der fünfundvierzig Kachelungen von `randsctile`, die über dem letzten `z`
-liegen, vierzig pro Einheit wie die Quadrate von `squares`. Ihr Dialog hat drei
+liegen, vierzig pro Einheit wie die Quadrate von `squares`. Ihr Dialog hat vier
 Felder.
 
 | Feld | |
@@ -1569,6 +1569,7 @@ Felder.
 | **Kachelung** | welche Kachelung, mit der Zahl, unter der `randsctile` sie kennt, und ihrem Namen: **3: Sechsecke**, wo es beginnt. Der Reiter Kachelungen von Hilfe → Referenz der Benutzerformeln hat ein Bild jeder |
 | **Färbung** | woher die Farbe kommt, überall: **Winkel von z**, wo es beginnt; **Winkel um die Kachelmitte**, der um die Mitte der Kachel, in der der Punkt liegt, der jede Kachel zu einem kleinen Farbrad macht; **zmag**, der Wert des Modus dieses Namens; **keine**, nur die Kacheln |
 | **Kacheln** | wie sich jede Kachel von ihren Nachbarn abhebt: **jede um einen eigenen Betrag verschoben**, entlang der Palette, wo es beginnt; **von der Mitte zum Rand schattiert**, dasselbe, und von der Mitte zum Rand um ein Achtel der Farben einer Drehung weiter verschoben, wie eine Fase; **mit betontem Rand**, dasselbe, und der äußere Teil der Kachel in der anderen Hälfte der Palette gezeichnet; **jede in einer eigenen Farbe**, eine Farbe für sich, woher die Farbe auch kommt |
+| **Intensität** | wie weit die Kacheln auf der Palette auseinanderliegen: sie vervielfacht jeden eigenen Betrag einer Kachel, ihre Verschiebung, die Abschrägung von **von der Mitte zum Rand schattiert** und den Rand von **mit betontem Rand**. Bei `1`, wo sie beginnt, sind die Kacheln wie hier beschrieben; bei `0` bleibt nur, woher die Farbe kommt, also ist **Winkel von z** eine einfache Zerlegung und **zmag** einfaches zmag; dazwischen sind die Kacheln schwach zu sehen, über `1` stärker |
 
 Der Modus steht zwischen den Modi, die sich wiederholen, und den Zerlegungen,
 und die Einstellungen beider erreichen ihn. **Frequenz (periodische Modi)** und
@@ -1599,7 +1600,10 @@ Mit **Färbung** auf **Winkel von z**, **Kacheln** auf **jede um einen eigenen
 Betrag verschoben** und den Einstellungen der Zerlegungen, wo sie beginnen,
 zeichnet der Modus, was er zeichnete, bevor er eine Wahl hatte, bitgenau. Die
 Kachelungen, die sich nie wiederholen, werden jenseits von viertausend
-Millionen Kacheln vom Ursprung flach, ohne eigenen Betrag.
+Millionen Kacheln vom Ursprung flach, ohne eigenen Betrag. Das gilt mit
+**Intensität** bei `1`. Bei `0` sind die Kacheln mit **Winkel um die
+Kachelmitte** noch zu sehen, dessen Winkel von der Mitte jeder Kachel aus
+gemessen wird.
 
 Die periodischen Kachelungen kosten etwa so viel wie die anderen inneren Modi,
 120 bis 210 ns pro Pixel; die sich nie wiederholenden, die an jedem Punkt neu
@@ -1609,7 +1613,44 @@ Kachel steht, was bei den periodischen Kachelungen bis zu zwei Drittel mehr
 kostet und bei den anderen wenig mehr. Eine Position speichert den Modus als
 `(incoloring 30)`, die Kachelung als `(intessellation 39)`, nur wenn sie nicht
 die der Sechsecke ist, und die Färbung als
-`(intessellstyle 'tile-angle 'edged)`, nur wenn sie verschoben wurde.
+`(intessellstyle 'tile-angle 'edged)`, nur wenn sie verschoben wurde. Die
+Intensität wird als `(intessellintensity 0.5)` gespeichert, nur wenn sie nicht
+eins ist.
+
+### Außen
+
+**Fraktal → Äußere Färbung → Kachelung...** hat drei Modi, wie Fraktionale
+Brownsche Bewegung: `tessellation + smooth`, die Kacheln über der geglätteten
+Zählung; `tessellation + iter`, über der ganzen Zählung; `tessellation`, die
+Kacheln allein. Die Kacheln liegen über dem Ort des Pixels in der Ebene, nicht
+über dem Fluchtpunkt, der von einem Band zum nächsten springt und nur Körnung
+ergäbe, wie damals, als die Bewegung dort versucht wurde.
+
+| Feld | |
+| --- | --- |
+| **Modus** | einer der drei |
+| **Kachelung**, **Färbung**, **Kacheln**, **Intensität** | wie innen, mit eigenen Einstellungen. **Winkel von z** ist der Winkel des Fluchtpunkts und **zmag** der Logarithmus seines Betrags, wie ihn `iter+log(mag)` hinzufügt; mit **geglättete Iteration** ist der Winkel der einige Iterationen nach dem Bailout, wo die geglättete Zählung berechnet wird |
+| **Frequenz** | Kacheln pro Einheit der Ebene, `8` zu Beginn: die Größe der Kacheln, die man beim Hineinzoomen erhöhen muss, wie die Frequenz der Bewegung |
+| **Skalierung der Kacheln** und **Faktor** | was die Kacheln bemisst, wie [Die Größe der Spuren nach der Zählung](#die-größe-der-spuren-nach-der-zählung) die Spuren der Bewegung bemisst: **fest**, die Frequenz allein; **Iteration** oder **geglättete Iteration**, die Frequenz so oft verdoppelt, wie der Faktor sagt, alle zehn Iterationen dieser Zählung |
+
+Zwischen zwei Verdopplungen werden die Kacheln in beiden Größen gelesen und die
+beiden Farben überblendet, von einer Größe zur nächsten: Kacheln haben keinen
+mittleren Wert, zu dem man mischen könnte, wie ihn die Bewegung hat. Eine
+Palette mit 256 Farben, die keine zwischen ihren eigenen hat, nimmt die nähere
+Größe. Zwischen zwei Verdopplungen wird die Kachelung zweimal gelesen, was ihre
+Kosten verdoppelt. Ein Faktor von `1` verdoppelt die Frequenz zehnmal alle
+hundert Iterationen, was die Kacheln bald unter ein Pixel bringt: einige
+Zehntel sind ein besserer Anfang. Die [Einstellungen der
+Zerlegungen](#einstellungen-der-zerlegungen) von außen erreichen die beiden
+Winkel: **Iterationen pro Band** macht Bänder der Zählung für den Winkel von z
+und Ringe von der Mitte zum Rand für den Winkel um die Mitte.
+
+Mit **Intensität** bei `0` und **Färbung** auf **keine** zeichnet
+`tessellation + iter` wie `iter` und `tessellation` eine einzige Farbe. Eine
+Position speichert den Modus als `(outcoloring 21)` bis `(outcoloring 23)` und
+die Einstellungen in einem Befehl,
+`(outtessellation 5 'tile-angle 'shaded 0.6 40 'smooth 0.4)`, nur wenn eine
+davon verschoben wurde.
 
 ## Weitere Färbungsmodi
 
@@ -1735,9 +1776,9 @@ Benutzerformel tun es stattdessen.
 **Fraktal → Innere Färbung → Zerlegung**, und dasselbe unter Äußere Färbung,
 legt fest, wie die Zerlegungen die Drehung schneiden: binary decomposition und
 color decomposition außen, `sign(imag)`, `Decomposition-like` und
-`fbm + decomposition` innen, und die Winkel von `tessellation`. Mit jedem Feld,
-wo es beginnt — null, und eins, rechts und eins bei den letzten drei —,
-zeichnen sie wie immer, bitgenau.
+`fbm + decomposition` innen, und die Winkel der Kachelungen, innen und außen.
+Mit jedem Feld, wo es beginnt — null, und eins, rechts und eins bei den letzten
+drei —, zeichnen sie wie immer, bitgenau.
 
 | Feld | |
 | --- | --- |

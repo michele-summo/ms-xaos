@@ -1,0 +1,7 @@
+(initstate)
+(formula 'mandel)
+(maxiter 300)
+(incoloring 30)
+(intessellstyle 'zmag 'edged)
+(intessellintensity 0.3)
+(view -0.2 0 1.6 1.6)

@@ -1418,13 +1418,14 @@ position already holds still means what it meant.
 
 **Fractal → Incoloring mode → Tessellation...** colours the inside by the tiles
 of one of the forty-five tilings of `randsctile`, laid over the final `z` forty
-to a unit as the squares of `squares` are. Its dialog has three fields.
+to a unit as the squares of `squares` are. Its dialog has four fields.
 
 | field | |
 | --- | --- |
 | **Tiling** | which tiling, by the number `randsctile` knows it by and its name — `3: hexagons`, where it starts. The Tilings tab of Help → User formula reference has a picture of each |
 | **Coloring** | what the colour comes from, all over: `angle`, the angle of `z`, where it starts; `tile-angle`, the angle about the middle of the tile the point is in, which makes each tile a small wheel of colour; `zmag`, the value of the mode of that name; `none`, nothing but the tiles |
 | **Tiles** | how each tile stands apart from its neighbours: `turned`, moved along the palette by an amount of its own, where it starts; `shaded`, the same, and moved by an eighth of a turn's colours more from its middle to its edge, a bevel; `edged`, the same, and the outer part of the tile drawn in the other half of the palette; `flat`, one colour of its own, whatever the colour comes from |
+| **Intensity** | how far apart along the palette the tiles are set: it multiplies every amount a tile has of its own, its turn, the bevel of `shaded` and the edge of `edged`. At `1`, where it starts, the tiles are as described here; at `0` only what the colour comes from is left, so `angle` is a plain decomposition and `zmag` plain `zmag`; in between the tiles show faintly, and above `1` more strongly |
 
 The mode stands between the modes that repeat and the decompositions, and the
 settings of both reach it. **Frequency (periodic modes)** and **Function
@@ -1447,18 +1448,54 @@ tile it spans the whole palette, so `none` with `turned` is the same as `flat`.
 size the tiles have is a great many colours to a few pixels: a **Speed** below
 one, or a frequency below one, makes the wheels readable.
 
-With **Coloring** at `angle`, **Tiles** at `turned` and the decomposition
-settings where they start, the mode draws what it drew before it had a choice,
-to the bit. The tilings that never repeat go flat, with no amount of their own,
-past four thousand million tiles from the origin.
+With **Coloring** at `angle`, **Tiles** at `turned`, **Intensity** at `1` and
+the decomposition settings where they start, the mode draws what it drew before
+it had a choice, to the bit. At an intensity of `0` the tiles still show with
+`tile-angle`, whose angle is measured from each tile's middle. The tilings that
+never repeat go flat, with no amount of their own, past four thousand million
+tiles from the origin.
 
 The periodic tilings cost about what the other inside modes do, 120 to 210 ns a
 pixel; the ones that never repeat, which are located afresh at every point, 250
 to 490. `tile-angle`, `shaded` and `edged` measure where the point stands in
 its tile, which costs up to two thirds more on the periodic tilings and little
 more on the others. A position saves the mode as `(incoloring 30)`, the tiling
-as `(intessellation 39)`, only when it is not hexagons, and the colouring as
-`(intessellstyle 'tile-angle 'edged)`, only when it has moved.
+as `(intessellation 39)`, only when it is not hexagons, the colouring as
+`(intessellstyle 'tile-angle 'edged)`, only when it has moved, and the
+intensity as `(intessellintensity 0.5)`, only when it is not one.
+
+### Outside
+
+**Fractal → Outcoloring mode → Tessellation...** has three modes, as Fractional
+Brownian Motion has: `tessellation + smooth`, the tiles worn by the smooth
+count; `tessellation + iter`, by the whole count; and `tessellation`, the tiles
+alone. The tiles are laid over the pixel's place in the plane, not over the
+escape point, which jumps from one band to the next and would give only grain,
+as it did when the motion was tried there.
+
+| field | |
+| --- | --- |
+| **Mode** | one of the three |
+| **Tiling**, **Coloring**, **Tiles**, **Intensity** | as inside, with settings of their own. `angle` is the angle of the escape point and `zmag` the log of its modulus, as `iter+log(mag)` adds it; with `smooth` the angle is the one a few iterations past the bailout, where the smooth count is worked out |
+| **Frequency** | tiles to a unit of the plane, `8` where it starts: the size of the tiles, which has to be raised as you zoom in, as the motion's frequency does |
+| **Tile scaling** and **Scaling factor** | what sizes the tiles, as [Sizing the marks by the count](#sizing-the-marks-by-the-count) sizes the motion's marks: `fixed` by the frequency alone; `iteration` or `smooth`, by the frequency doubled factor times every ten iterations of that count |
+
+Between two doublings the tiles are read at both sizes and the two colours are
+blended, a dissolve from one size to the next: tiles have no middle value to
+blend towards, as the motion has. A palette of 256 colours, which has none
+between its own, takes the nearer size. Between two doublings the tiling is
+read twice, which doubles its cost. A factor of `1` doubles the frequency ten
+times every hundred iterations, which takes the tiles below a pixel soon: a
+factor of a few tenths is a better start. The outside's [decomposition
+settings](#decomposition-settings) reach the two angles, **Iterations per
+band** making bands of the count for the angle of `z` and rings from the middle
+to the edge for the angle about the middle.
+
+With **Intensity** at `0` and **Coloring** at `none`, `tessellation + iter`
+draws as `iter` and `tessellation` one colour. A position saves the mode as
+`(outcoloring 21)` to `(outcoloring 23)`, and the settings in one command,
+`(outtessellation 5 'tile-angle 'shaded 0.6 40 'smooth 0.4)`, only when one of
+them has moved.
 
 ## More colouring modes
 
@@ -1579,9 +1616,9 @@ and `stripe` in a user formula do it instead.
 **Fractal → Incoloring mode → Decomposition**, and the same under Outcoloring
 mode, sets how the decompositions cut the turn: binary decomposition and color
 decomposition outside, `sign(imag)`, `Decomposition-like` and
-`fbm + decomposition` inside, and the angles of `tessellation`. With every
-field where it starts — nought, and one, right and one for the last three —
-they draw as they always did, to the bit.
+`fbm + decomposition` inside, and the angles of the tessellations, inside and
+out. With every field where it starts — nought, and one, right and one for the
+last three — they draw as they always did, to the bit.
 
 | field | |
 | --- | --- |
