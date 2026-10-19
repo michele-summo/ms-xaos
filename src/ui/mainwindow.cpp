@@ -1508,7 +1508,12 @@ void MainWindow::showDialog(const char *name)
                  * box, one line wide however long the formula. */
                 FormulaEdit *edit = new FormulaEdit(qDialog);
                 edit->setObjectName(label + "-data");
-                edit->setPlainText(QString::fromUtf8(dialog->defstr));
+                /* Empty, with the formula used last faint in it, once there
+                 * is one: the formula in use only the first time, when there
+                 * is nothing faint to show. */
+                const QStringList used = formula_history();
+                if (used.isEmpty())
+                    edit->setPlainText(QString::fromUtf8(dialog->defstr));
                 edit->moveCursor(QTextCursor::End);
 
                 /* Beside the bar, a step back through the formulas used
@@ -1531,7 +1536,7 @@ void MainWindow::showDialog(const char *name)
                     older->setEnabled(edit->canStepOlder());
                     newer->setEnabled(edit->canStepNewer());
                 });
-                edit->setHistory(formula_history());
+                edit->setHistory(used);
                 connect(older, &QToolButton::clicked, edit,
                         [edit]() { edit->stepOlder(); });
                 connect(newer, &QToolButton::clicked, edit,
@@ -1586,7 +1591,7 @@ void MainWindow::showDialog(const char *name)
                 QPushButton *history = buttonBox->addButton(
                     TR("Dialog", "History..."), QDialogButtonBox::ActionRole);
                 history->setAutoDefault(false);
-                history->setEnabled(!formula_history().isEmpty());
+                history->setEnabled(!used.isEmpty());
                 connect(history, &QPushButton::clicked, qDialog,
                         [qDialog, edit]() {
                             formula_history_open(
@@ -1639,8 +1644,13 @@ void MainWindow::showDialog(const char *name)
                  * render that holds a user formula runs as well. */
                 connect(qDialog, &QDialog::accepted, qDialog,
                         [=](void){
-                            formula_history_add(edit->toPlainText());
-                            param->dstring = strdup(edit->toPlainText().toUtf8());
+                            /* OK on an empty bar takes the faint formula,
+                             * as Tab would, rather than no formula at all. */
+                            QString formula = edit->toPlainText();
+                            if (formula.trimmed().isEmpty() && !used.isEmpty())
+                                formula = used.first();
+                            formula_history_add(formula);
+                            param->dstring = strdup(formula.toUtf8());
                             menuActivate(item, param);
                         });
                 qDialog->open();

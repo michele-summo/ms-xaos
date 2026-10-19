@@ -212,6 +212,9 @@ The formula used last is shown faint in the bar: the whole of it while the bar
 is empty, and the rest of it after what you have typed for as long as what you
 type is how it begins. Tab puts it in the bar whole. Once what you type goes
 another way the faint text goes too, and Tab moves on to the buttons as before.
+The bar opens empty, with that formula faint in it, and OK on an empty bar uses
+it; only the very first time, before any formula has been used, does it open
+with the formula in use, `z^2+c`.
 
 **View → Status** shows the formula the same way: on one line if it fits the
 window, on two if not — the second under the first, going on between names —

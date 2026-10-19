@@ -236,7 +236,10 @@ Die zuletzt verwendete Formel steht blass in der Leiste: ganz, solange die
 Leiste leer ist, und ihr Rest hinter dem Getippten, solange das Getippte ihr
 Anfang ist. Tab setzt sie ganz in die Leiste. Sobald das Getippte anders
 weitergeht, verschwindet der blasse Text, und Tab geht wie bisher zu den
-Schaltflächen weiter.
+Schaltflächen weiter. Die Leiste öffnet sich leer, mit dieser Formel blass
+darin, und OK bei leerer Leiste verwendet sie; nur beim allerersten Mal, bevor
+überhaupt eine Formel verwendet wurde, öffnet sie sich mit der aktuellen
+Formel, `z^2+c`.
 
 **Ausschnitt → Status** zeigt die Formel genauso: in einer Zeile, wenn sie ins
 Fenster passt, sonst in zwei — die zweite unter der ersten, zwischen Namen

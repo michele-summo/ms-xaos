@@ -226,7 +226,9 @@ L'ultima formula usata è mostrata in grigio chiaro nella barra: intera finché
 la barra è vuota, e il resto dopo ciò che hai scritto finché ciò che scrivi ne
 è l'inizio. Tab la mette intera nella barra. Appena ciò che scrivi prende
 un'altra strada il testo in grigio sparisce, e Tab passa ai pulsanti come
-prima.
+prima. La barra si apre vuota, con quella formula in grigio, e OK su una barra
+vuota usa quella; solo la primissima volta, quando non è ancora stata usata
+nessuna formula, si apre con la formula in uso, `z^2+c`.
 
 **Vista → Stato** mostra la formula allo stesso modo: su una riga se ci sta
 nella finestra, su due se no — la seconda sotto la prima, andando a capo tra i

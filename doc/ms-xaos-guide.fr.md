@@ -232,7 +232,9 @@ La dernière formule utilisée apparaît en pâle dans la barre : entière tant 
 la barre est vide, et sa suite après ce que vous avez tapé tant que ce que vous
 tapez en est le début. Tab la met entière dans la barre. Dès que ce que vous
 tapez prend un autre chemin, le texte pâle disparaît, et Tab passe aux boutons
-comme avant.
+comme avant. La barre s'ouvre vide, avec cette formule en pâle, et OK sur une
+barre vide l'utilise ; seule la toute première fois, avant qu'aucune formule
+n'ait été utilisée, elle s'ouvre sur la formule en cours, `z^2+c`.
 
 **Vue → Affichage état** montre la formule de la même façon : sur une ligne si
 elle tient dans la fenêtre, sur deux sinon — la seconde sous la première,

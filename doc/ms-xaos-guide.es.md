@@ -225,6 +225,9 @@ La última fórmula usada se muestra tenue en la barra: entera mientras la barra
 está vacía, y el resto detrás de lo que has escrito mientras lo que escribes
 sea su comienzo. Tab la pone entera en la barra. En cuanto lo que escribes va
 por otro camino el texto tenue desaparece, y Tab pasa a los botones como antes.
+La barra se abre vacía, con esa fórmula tenue dentro, y Aceptar con la barra
+vacía la usa; solo la primerísima vez, cuando aún no se ha usado ninguna
+fórmula, se abre con la fórmula en uso, `z^2+c`.
 
 **Vista → Estado** muestra la fórmula de la misma manera: en una línea si cabe
 en la ventana, en dos si no — la segunda bajo la primera, saltando entre
