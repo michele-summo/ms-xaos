@@ -1561,11 +1561,15 @@ static number_t tessell_colour(int colour, int fill, number_t much,
                                number_t radial, Ring ring_odd)
 {
     number_t i_f;
-    /* A tile's own amount, along the palette: for an angle as much of it as
-     * the angle's turn has always taken, so that moving a decomposition
-     * setting keeps the tiles' colours where they were; for the rest, and
-     * for a flat tile, the whole cycle. */
-    const number_t cycle = 2 * decomp_half();
+    /* A tile's own amount, along the palette: as much of it as the angle's
+     * turn has always taken, 20000, about ten places of the palette probe,
+     * whatever the colour comes from and whatever the size of the palette,
+     * so that the intensity moves every tile by the same distance -- a
+     * hundredth is a tenth of a place in every style. A flat tile, zmag and
+     * none took the whole palette once, which made a hundredth eighty
+     * places on a palette of 65534 entries and a third of one on the
+     * editor's 248. */
+    const number_t cycle = 20000;
     if (fill == TESSELL_FLAT)
         i_f = much * (turn * cycle);
     else if (colour == TESSELL_ANGLE || colour == TESSELL_MIDDLE) {
@@ -1577,7 +1581,7 @@ static number_t tessell_colour(int colour, int fill, number_t much,
         i_f = decomp_colour(decomp_turn(middle ? (number_t)rx : are,
                                         middle ? (number_t)ry : aim, rotation),
                             sectors, repeats, way, speed) +
-              much * (turn * 20000);
+              much * (turn * cycle);
         if (middle ? radial > 0 && decomp_odd(radial * (number_t)out)
                    : ring_odd())
             i_f += decomp_half();
@@ -1587,12 +1591,12 @@ static number_t tessell_colour(int colour, int fill, number_t much,
         i_f = much * (turn * cycle);
     /* shaded: an eighth of what a turn of the angle takes, from the middle to
      * the edge -- a bevel and not a rainbow, as the modes' own spans are,
-     * whatever the size of the palette; edged: the outer part of the tile in
-     * the other half of the palette */
+     * whatever the size of the palette; edged: the outer part of the tile
+     * moved by half a turn's colours, which was half the palette once */
     if (fill == TESSELL_SHADED)
         i_f += much * ((number_t)out * 2500);
     else if (fill == TESSELL_EDGED && out > TESSELL_EDGE)
-        i_f += much * decomp_half();
+        i_f += much * (cycle / 2);
     return i_f;
 }
 
@@ -1617,14 +1621,14 @@ static number_t tessell_turn(int tiling, int colour, int fill, number_t x,
     return turn;
 }
 
-/* A value of the outside, through the colouring speed and function, onto
- * the palette: what color_output ends with, for the tessellation modes,
- * which may look up two values for one pixel. */
-static unsigned int color_lookup(number_t i_f)
+/* A place on the palette, a value of the outside through the colouring
+ * speed and function, in 256ths of an entry, onto the palette: what
+ * color_output ends with, for the tessellation modes, which may look up two
+ * values for one pixel and blend their places. */
+static unsigned int color_at_place(number_t place)
 {
-    color_precalc(i_f, 0);
-    unsigned int iter = color_wrap(i_f, ((unsigned int)(cpalette.size - 1))
-                                            << 8);
+    unsigned int iter = color_wrap(place, ((unsigned int)(cpalette.size - 1))
+                                              << 8);
     if ((cpalette.type & (C256 | SMALLITER)) || !(iter & 255))
         return (cpalette.pixels[1 + (iter >> 8)]);
     unsigned int i1 = cpalette.pixels[1 + (iter >> 8)], i2;
@@ -1633,6 +1637,21 @@ static unsigned int color_lookup(number_t i_f)
     else
         i2 = cpalette.pixels[2 + (iter >> 8)];
     return (interpoltype(cpalette, i2, i1, iter & 255));
+}
+
+/* Between two places on the palette, by w (nought at a, one at b), the short
+ * way round: the palette is a ring, and two tiles near its two ends are
+ * neighbours. What is blended is the place and not the colour, so that the
+ * pixel is always a colour the palette has, the one the palette probe names
+ * for it. */
+static number_t color_place_between(number_t a, number_t b, number_t w)
+{
+    const number_t cycle =
+        (number_t)(((unsigned int)(cpalette.size - 1)) << 8);
+    number_t d = b - a;
+    if (cycle > 0 && d - d == 0)
+        d -= cycle * nfloor(d / cycle + (number_t)0.5);
+    return a + d * w;
 }
 
 /* The outside's tessellation modes: the tiles of one of randsctile's tilings
@@ -1646,19 +1665,19 @@ static unsigned int color_lookup(number_t i_f)
  * over the plane as it stands, which would stretch the tiles: the tiles are
  * read at the two powers of two either side of where the count stands, each
  * a tiling of its own at a fixed size, and the two pixels are blended by
- * where between them the count stands. Tiles have no middle value to blend
- * towards, as the motion has, so it is the colours that are blended, a
- * dissolve from one size to the next; a palette of 256 entries, which has
- * no colours between its own, takes the nearer.
+ * where between them the count stands. It is their places on the palette
+ * that are blended, the short way round, and not their colours: a blend of
+ * colours drew colours the palette does not have, which the palette probe
+ * cannot name.
  *
  * The angle and zmag of z are another matter: they are read at the escape
  * point, and that jumps where the count does -- one pass more doubles the
  * angle -- so they drew the edges of the iterations however smooth the rest
  * was. Where the smooth count was worked out, tau says where between two
- * passes the point stands (see smooth_tau), and the colour of the point is
- * dissolved into the colour of the point one pass on, all of it at nought,
- * none at one: at an edge both sides then show the same point, and between
- * the edges the colour runs on without a break. */
+ * passes the point stands (see smooth_tau), and the place of the point on
+ * the palette is moved towards the place of the point one pass on, all the
+ * way at nought, not at all at one: at an edge both sides then show the
+ * same point, and between the edges the colour runs on without a break. */
 static unsigned int tessell_output(number_t zre, number_t zim,
                                    unsigned int iter, number_t smooth,
                                    number_t tau)
@@ -1712,20 +1731,18 @@ static unsigned int tessell_output(number_t zre, number_t zim,
                                   (number_t)cfractalc.outdecompradial,
                                   ring_odd);
         };
-        const unsigned int here = color_lookup(value(zre, zim, zmag));
+        number_t here = value(zre, zim, zmag);
+        color_precalc(here, 0);
         if (!onward)
             return here;
-        const unsigned int next = color_lookup(value(nextre, nextim, nextmag));
-        if (cpalette.type & (C256 | SMALLITER))
-            return tau < 0.5 ? next : here;
-        int w = (int)(tau * 256);
-        w = w < 0 ? 0 : (w > 255 ? 255 : w);
-        return (interpoltype(cpalette, here, next, w));
+        number_t next = value(nextre, nextim, nextmag);
+        color_precalc(next, 0);
+        return color_place_between(next, here, tau);
     };
     number_t f = cfractalc.outtessellfrequency;
     if (cfractalc.outtessellscaling == FBM_SCALE_FIXED ||
         !(cfractalc.outtessellfactor != 0))
-        return at(f);
+        return color_at_place(at(f));
     const number_t count = cfractalc.outtessellscaling == FBM_SCALE_SMOOTH
                                ? smooth / 256
                                : (number_t)(iter >> SHIFT);
@@ -1739,15 +1756,10 @@ static unsigned int tessell_output(number_t zre, number_t zim,
     const number_t whole = nfloor(doublings);
     const double between = (double)(doublings - whole);
     f = nldexp(f, (int)whole);
-    const unsigned int a = at(f);
+    const number_t a = at(f);
     if (between == 0)
-        return a;
-    const unsigned int b = at(2 * f);
-    if (cpalette.type & (C256 | SMALLITER))
-        return between < 0.5 ? a : b;
-    int w = (int)(between * 256);
-    w = w < 0 ? 0 : (w > 255 ? 255 : w);
-    return (interpoltype(cpalette, b, a, w));
+        return color_at_place(a);
+    return color_at_place(color_place_between(a, at(2 * f), (number_t)between));
 }
 
 static unsigned int color_output(number_t zre, number_t zim, unsigned int iter);

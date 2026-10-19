@@ -17,8 +17,9 @@
  * colour comes from: zmag is zmag and the angle the decomposition, to the
  * bit. The outside's three modes, at nought with nothing to colour by, are
  * the count alone; sized by the count, a whole number of doublings is the
- * tiles at a fixed frequency that many times doubled, and in between a
- * palette of 256 entries takes one of the two sizes.
+ * tiles at a fixed frequency that many times doubled, and in between the
+ * place on the palette lies between the places of the two sizes, the short
+ * way round the palette.
  *
  * formulas.cpp is included rather than linked, since incolor_output is its
  * own and static.
@@ -481,7 +482,20 @@ int main()
               "the smooth count where it is whole sizes as the whole one");
 
         int doubled = 1, between = 1;
-        cpalette.type = C256;
+        /* a palette whose entries are their own numbers, as the palette
+         * probe reads a point with: the pixel is the place */
+        unsigned int *const colours = cpalette.pixels;
+        static unsigned int places[257];
+        for (int k = 0; k < 257; k++)
+            places[k] = k;
+        cpalette.pixels = places;
+        cpalette.type = SMALLITER;
+        /* how far b lies from a, the short way round the palette's ring */
+        auto around = [](int a, int b) {
+            const int ring = cpalette.size - 1;
+            int d = ((b - a) % ring + ring) % ring;
+            return d > ring / 2 ? d - ring : d;
+        };
         cfractalc.coloringmode = M::ColOut_tessell;
         for (int iy = -40; iy < 40; iy += 3)
             for (int ix = -40; ix < 40; ix += 3) {
@@ -494,7 +508,7 @@ int main()
                 if (scaled != outside_at(ix, iy))
                     doubled = 0;
                 /* three doublings in ten iterations: between two sizes,
-                 * one or the other */
+                 * a place between theirs */
                 outstyle(5, TESSELL_ANGLE, TESSELL_TURNED, 1, 2,
                          FBM_SCALE_ITER, 3);
                 unsigned int mid = outside_at(ix, iy);
@@ -504,13 +518,17 @@ int main()
                 unsigned int lo = outside_at(ix, iy);
                 cfractalc.outtessellfrequency = nldexp((number_t)2, w + 1);
                 unsigned int hi = outside_at(ix, iy);
-                if (mid != lo && mid != hi)
+                const int span = around((int)lo, (int)hi),
+                          part = around((int)lo, (int)mid);
+                if (span >= 0 ? part < -1 || part > span + 1
+                              : part > 1 || part < span - 1)
                     between = 0;
             }
         cpalette.type = 0;
+        cpalette.pixels = colours;
         check(doubled, "a whole number of doublings is the tiles at that "
                        "frequency");
-        check(between, "and between two, with 256 colours, one of the two");
+        check(between, "and between two, a place between their places");
         outstyle(3, TESSELL_ANGLE, TESSELL_TURNED, 1, 8, FBM_SCALE_FIXED, 1);
     }
 
@@ -578,7 +596,8 @@ int main()
      * colour palette each channel lies between the entry the probe names and
      * the next, as the palette's own blend has it, at every intensity --
      * none of them the two pictures at nought and one dissolved, which would
-     * draw a colour the probe has no place for. Inside and out. */
+     * draw a colour the probe has no place for. Inside and out, and outside
+     * between two sizes of the tiles as well. */
     {
         const int was = cpalette.type, mode = cfractalc.incoloringmode;
         const struct truec keep = cpalette.info.truec;
@@ -616,6 +635,7 @@ int main()
                 cfractalc.coloringmode = OutColormodeType::ColOut_tessell;
                 for (number_t much : {(number_t)0.01, (number_t)0.25,
                                       (number_t)1, (number_t)141.42})
+                  for (int scaled = 0; scaled < 2; scaled++)
                     for (int iy = -8; iy < 8; iy++)
                         for (int ix = -8; ix < 8; ix++) {
                             number_t x = ((number_t)ix + (number_t)0.5) / 23;
@@ -623,7 +643,11 @@ int main()
                             color_px = x;
                             color_py = y;
                             cfractalc.intessellintensity = much;
-                            outstyle(3, c, f, much, 8, FBM_SCALE_FIXED, 1);
+                            /* sized by the count, 7 passes at 3
+                             * doublings in ten: between two sizes */
+                            outstyle(3, c, f, much, 8,
+                                     scaled ? FBM_SCALE_ITER : FBM_SCALE_FIXED,
+                                     scaled ? 3 : 1);
                             unsigned int in[2], out[2];
                             for (int probe = 0; probe < 2; probe++) {
                                 cpalette.type = probe ? SMALLITER : TRUECOLOR;
@@ -659,6 +683,50 @@ int main()
         check(agree_in && moved, "inside, every intensity draws the colour "
                                  "at the place the probe finds");
         check(agree_out, "and outside");
+    }
+
+    /* --- the same distance on every palette, in every style -------------
+     *
+     * A tile's own amount is as much as a turn of the angle takes, 20000,
+     * whatever the colour comes from and whatever the size of the palette:
+     * a flat tile, zmag and none took the whole palette once, which made the
+     * same intensity move a tile eighty places on one palette and a third of
+     * one on another. So every style gives the same value on a palette of
+     * 200 entries and on one of 65534, and the tile's turn moves it by the
+     * intensity times 20000 times the turn. */
+    {
+        const int size = cpalette.size;
+        int same = 1, scaled = 1;
+        auto never = []() { return 0; };
+        for (int c : {TESSELL_ANGLE, TESSELL_MIDDLE, TESSELL_ZMAG, TESSELL_NONE})
+            for (int f : {TESSELL_TURNED, TESSELL_SHADED, TESSELL_EDGED,
+                          TESSELL_FLAT})
+                for (number_t much : {(number_t)0.01, (number_t)1}) {
+                    number_t v[2], bare = 0;
+                    for (int k = 0; k < 2; k++) {
+                        cpalette.size = k ? 65535 : 200;
+                        v[k] = tessell_colour(c, f, much, (number_t)0.37, 0.25,
+                                              0.1, -0.2, (number_t)0.3,
+                                              (number_t)-0.4, (number_t)5000,
+                                              0, 0, 1, 0, 1, 0, never);
+                        bare = tessell_colour(c, f, 0, (number_t)0.37, 0.25,
+                                              0.1, -0.2, (number_t)0.3,
+                                              (number_t)-0.4, (number_t)5000,
+                                              0, 0, 1, 0, 1, 0, never);
+                    }
+                    if (v[0] != v[1])
+                        same = 0;
+                    /* out at a quarter: no edge, and a bevel of 625 */
+                    const number_t own =
+                        much * ((number_t)0.37 * 20000 +
+                                (f == TESSELL_SHADED ? (number_t)625 : 0));
+                    const number_t d = v[0] - bare - own;
+                    if (d > (number_t)1e-6 || d < (number_t)-1e-6)
+                        scaled = 0;
+                }
+        cpalette.size = size;
+        check(same, "every style moves a tile as far on any palette");
+        check(scaled, "by the intensity times a turn of the angle's colours");
     }
 
     /* --- the dialog's names ---------------------------------------------- */

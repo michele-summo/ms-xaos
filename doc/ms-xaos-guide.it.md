@@ -1512,8 +1512,8 @@ quattro campi.
 | --- | --- |
 | **Tassellazione** | quale tassellatura, con il numero con cui la conosce `randsctile` e il suo nome: **3: esagoni**, dove parte. La scheda Tassellature di Aiuto → Riferimento delle formule utente ha un'immagine di ciascuna |
 | **Colorazione** | da cosa viene il colore, dappertutto: **angolo di z**, dove parte; **angolo attorno al centro della tessera**, quello della tessera in cui cade il punto, che fa di ogni tessera una piccola ruota di colore; **zmag**, il valore della modalità con quel nome; **nessuna**, solo le tessere |
-| **Tessere** | come ogni tessera si stacca dalle vicine: **ognuna spostata di un tanto proprio**, lungo la tavolozza, dove parte; **sfumate dal centro al bordo**, lo stesso, e spostata di un ottavo dei colori di un giro in più dal centro al bordo, come una smussatura; **con il bordo marcato**, lo stesso, e la parte esterna della tessera disegnata nell'altra metà della tavolozza; **un colore pieno ciascuna**, un colore suo, da qualunque cosa venga il colore |
-| **Intensità** | quanto sono distanti lungo la tavolozza le tessere: moltiplica ogni quantità propria di una tessera, il suo spostamento, la smussatura di **sfumate dal centro al bordo** e il bordo di **con il bordo marcato**. A `1`, dove parte, le tessere sono come descritte qui; a `0` resta solo ciò da cui viene il colore, così **angolo di z** è una decomposizione semplice e **zmag** lo zmag semplice; in mezzo le tessere si vedono appena, e sopra `1` di più. Misurato con **Vista → Sonda della tavolozza (clic su un punto)**, a `1` una tessera di **angolo di z** e **ognuna spostata di un tanto proprio** si sposta fino a una decina di posti, così `0.1` la sposta fino a uno e `0.2` fino a due; con **un colore pieno ciascuna**, **zmag** o **nessuna** si sposta fino all'intera tavolozza, 8191 posti in quella predefinita, così lì un posto vale circa `0.0001` |
+| **Tessere** | come ogni tessera si stacca dalle vicine: **ognuna spostata di un tanto proprio**, lungo la tavolozza, dove parte; **sfumate dal centro al bordo**, lo stesso, e spostata di un ottavo dei colori di un giro in più dal centro al bordo, come una smussatura; **con il bordo marcato**, lo stesso, e la parte esterna della tessera spostata della metà dei colori di un giro in più; **un colore pieno ciascuna**, un colore suo, da qualunque cosa venga il colore |
+| **Intensità** | quanto sono distanti lungo la tavolozza le tessere: moltiplica ogni quantità propria di una tessera, il suo spostamento, la smussatura di **sfumate dal centro al bordo** e il bordo di **con il bordo marcato**. A `1`, dove parte, le tessere sono come descritte qui; a `0` resta solo ciò da cui viene il colore, così **angolo di z** è una decomposizione semplice e **zmag** lo zmag semplice; in mezzo le tessere si vedono appena, e sopra `1` di più. Misurato con **Vista → Sonda della tavolozza (clic su un punto)**, a `1` una tessera si sposta fino a una decina di posti, in ogni stile e su qualsiasi tavolozza, così `0.1` la sposta fino a un posto e `0.01` fino a un decimo |
 
 La modalità sta tra le modalità che si ripetono e le decomposizioni, e le
 impostazioni di entrambe la raggiungono. **Frequenza (modalità periodiche)** e
@@ -1529,15 +1529,16 @@ la funzione come per le decomposizioni, e per l'angolo attorno al centro
 altrettanti anelli dal centro al bordo, che seguono la forma della tessera.
 **zmag**, **nessuna** e una tessera piena non ne leggono nessuna.
 
-La quantità propria di una tessera viene dall'hash che le dà il nome. Per un
-angolo copre tanta tavolozza quanta ne copre un giro dell'angolo, così
-un'impostazione della decomposizione spostata lascia i colori delle tessere
-dove erano; per **zmag**, **nessuna** e una tessera piena copre tutta la
-tavolozza, così **nessuna** con **ognuna spostata di un tanto proprio** è lo
-stesso di **un colore pieno ciascuna**. **angolo attorno al centro della
-tessera** mette un giro intero di colori in ogni tessera, che alla grandezza
-delle tessere sono moltissimi colori in pochi pixel: una **Velocità** sotto
-uno, o una frequenza sotto uno, rende leggibili le ruote.
+La quantità propria di una tessera viene dall'hash che le dà il nome. Da
+qualunque cosa venga il colore, copre tanta tavolozza quanta ne copre un giro
+dell'angolo, una decina di posti della sonda della tavolozza su qualsiasi
+tavolozza, così un'impostazione della decomposizione spostata lascia i colori
+delle tessere dove erano e l'intensità sposta allo stesso modo tutti gli stili;
+**nessuna** con **ognuna spostata di un tanto proprio** è lo stesso di **un
+colore pieno ciascuna**. **angolo attorno al centro della tessera** mette un
+giro intero di colori in ogni tessera, che alla grandezza delle tessere sono
+moltissimi colori in pochi pixel: una **Velocità** sotto uno, o una frequenza
+sotto uno, rende leggibili le ruote.
 
 Con **Colorazione** a **angolo di z**, **Tessere** a **ognuna spostata di un
 tanto proprio** e le impostazioni delle decomposizioni dove partono, la
@@ -1570,21 +1571,21 @@ solo grana, come accadde quando ci fu provato il moto.
 | campo | |
 | --- | --- |
 | **Modalità** | una delle tre |
-| **Tassellazione**, **Colorazione**, **Tessere**, **Intensità** | come all'interno, con impostazioni proprie. **angolo di z** è l'angolo del punto di fuga e **zmag** il logaritmo del suo modulo, come lo aggiunge `iter+log(mag)`; tranne che in `tessellation + iter` con dimensionamento **fisso** o **iterazione**, si leggono entrambi qualche iterazione oltre il bailout, dove si calcola il conteggio smooth, e sfumano nello stesso punto un'iterazione dopo quanto il conteggio smooth è avanzato verso l'iterazione seguente, così proseguono attraverso i bordi delle iterazioni invece di spezzarsi lì |
+| **Tassellazione**, **Colorazione**, **Tessere**, **Intensità** | come all'interno, con impostazioni proprie. **angolo di z** è l'angolo del punto di fuga e **zmag** il logaritmo del suo modulo, come lo aggiunge `iter+log(mag)`; tranne che in `tessellation + iter` con dimensionamento **fisso** o **iterazione**, si leggono entrambi qualche iterazione oltre il bailout, dove si calcola il conteggio smooth, e il loro posto sulla tavolozza si avvicina a quello dello stesso punto un'iterazione dopo quanto il conteggio smooth è avanzato verso l'iterazione seguente, così proseguono attraverso i bordi delle iterazioni invece di spezzarsi lì |
 | **Frequenza** | tessere per unità del piano, `8` dove parte: la grandezza delle tessere, che va alzata quando si zooma, come la frequenza del moto |
 | **Dimensionamento delle tessere** e **Fattore** | cosa dà la grandezza alle tessere, come [Dimensionare i segni con il conteggio](#dimensionare-i-segni-con-il-conteggio) la dà ai segni del moto: **fisso**, la sola frequenza; **iterazione** o **iterazione smooth**, la frequenza raddoppiata tante volte quante dice il fattore ogni dieci iterazioni di quel conteggio |
 
-Tra due raddoppi le tessere sono lette a entrambe le grandezze e i due colori
-si fondono, una dissolvenza da una grandezza alla successiva: le tessere non
-hanno un valore di mezzo verso cui fondersi, come ha il moto. Una tavolozza di
-256 colori, che non ne ha tra i suoi, prende la grandezza più vicina. Tra due
-raddoppi la tassellatura è letta due volte, il che ne raddoppia il costo. Un
-fattore di `1` raddoppia la frequenza dieci volte ogni cento iterazioni, il che
-porta presto le tessere sotto il pixel: qualche decimo è un inizio migliore. Le
-[impostazioni delle decomposizioni](#impostazioni-delle-decomposizioni)
-dell'esterno raggiungono i due angoli: **Iterazioni per fascia** fa fasce del
-conteggio per l'angolo di z e anelli dal centro al bordo per l'angolo attorno
-al centro.
+Tra due raddoppi le tessere sono lette a entrambe le grandezze e i loro due
+posti sulla tavolozza si mescolano per la via più corta, così ogni pixel è un
+colore della tavolozza e la sonda della tavolozza lo nomina: dove le tessere
+delle due grandezze stanno lontane sulla tavolozza, il mescolamento passa per i
+colori tra loro. Tra due raddoppi la tassellatura è letta due volte, il che ne
+raddoppia il costo. Un fattore di `1` raddoppia la frequenza dieci volte ogni
+cento iterazioni, il che porta presto le tessere sotto il pixel: qualche decimo
+è un inizio migliore. Le [impostazioni delle
+decomposizioni](#impostazioni-delle-decomposizioni) dell'esterno raggiungono i
+due angoli: **Iterazioni per fascia** fa fasce del conteggio per l'angolo di z
+e anelli dal centro al bordo per l'angolo attorno al centro.
 
 Con **Intensità** a `0` e **Colorazione** a **nessuna**, `tessellation + iter`
 disegna come `iter` e `tessellation` un solo colore. Una posizione salva la

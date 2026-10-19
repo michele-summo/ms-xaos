@@ -1537,8 +1537,8 @@ champs.
 | --- | --- |
 | **Pavage** | quel pavage, avec le nombre sous lequel `randsctile` le connaît et son nom : **3: hexagones**, où il commence. L'onglet Pavages d'Aide → Référence des formules utilisateur a une image de chacun |
 | **Coloriage** | d'où vient la couleur, partout : **angle de z**, où il commence ; **angle autour du centre de la tuile**, celui de la tuile où tombe le point, qui fait de chaque tuile une petite roue de couleur ; **zmag**, la valeur du mode de ce nom ; **aucun**, rien que les tuiles |
-| **Tuiles** | comment chaque tuile se détache de ses voisines : **chacune décalée d'une quantité propre**, le long de la palette, où il commence ; **ombrées du centre au bord**, de même, et décalée d'un huitième des couleurs d'un tour de plus du centre au bord, comme un biseau ; **avec le bord marqué**, de même, et la partie extérieure de la tuile tracée dans l'autre moitié de la palette ; **une couleur unie chacune**, une couleur à elle, d'où que vienne la couleur |
-| **Intensité** | à quelle distance les tuiles sont placées le long de la palette : elle multiplie chaque quantité propre d'une tuile, son décalage, le biseau de **ombrées du centre au bord** et le bord de **avec le bord marqué**. À `1`, là où elle commence, les tuiles sont comme décrites ici ; à `0` il ne reste que ce dont vient la couleur, de sorte que **angle de z** est une décomposition simple et **zmag** le zmag simple ; entre les deux les tuiles se voient à peine, et au-dessus de `1` davantage. Mesuré avec **Vue → Sonde de palette (cliquer sur un point)**, à `1` une tuile de **angle de z** et **chacune décalée d'une quantité propre** est décalée d'une dizaine de places au plus, si bien que `0.1` la décale d'une place au plus et `0.2` de deux ; avec **une couleur unie chacune**, **zmag** ou **aucun** elle est décalée au plus de toute la palette, 8191 places pour celle par défaut, si bien qu'une place y vaut environ `0.0001` |
+| **Tuiles** | comment chaque tuile se détache de ses voisines : **chacune décalée d'une quantité propre**, le long de la palette, où il commence ; **ombrées du centre au bord**, de même, et décalée d'un huitième des couleurs d'un tour de plus du centre au bord, comme un biseau ; **avec le bord marqué**, de même, et la partie extérieure de la tuile décalée de la moitié des couleurs d'un tour de plus ; **une couleur unie chacune**, une couleur à elle, d'où que vienne la couleur |
+| **Intensité** | à quelle distance les tuiles sont placées le long de la palette : elle multiplie chaque quantité propre d'une tuile, son décalage, le biseau de **ombrées du centre au bord** et le bord de **avec le bord marqué**. À `1`, là où elle commence, les tuiles sont comme décrites ici ; à `0` il ne reste que ce dont vient la couleur, de sorte que **angle de z** est une décomposition simple et **zmag** le zmag simple ; entre les deux les tuiles se voient à peine, et au-dessus de `1` davantage. Mesuré avec **Vue → Sonde de palette (cliquer sur un point)**, à `1` une tuile est décalée d'une dizaine de places au plus, dans tous les styles et sur n'importe quelle palette, si bien que `0.1` la décale d'une place au plus et `0.01` d'un dixième |
 
 Le mode se tient entre les modes qui se répètent et les décompositions, et les
 réglages des deux l'atteignent. **Fréquence (modes périodiques)** et **Fonction
@@ -1554,15 +1554,16 @@ et la fonction comme pour les décompositions, et pour l'angle autour du centre
 autant d'anneaux du centre au bord, qui suivent la forme de la tuile. **zmag**,
 **aucun** et une tuile unie n'en lisent aucun.
 
-La quantité propre d'une tuile vient du hachage qui la nomme. Pour un angle
-elle couvre autant de la palette qu'un tour de l'angle, si bien qu'un réglage
-de la décomposition déplacé laisse les couleurs des tuiles où elles étaient ;
-pour **zmag**, **aucun** et une tuile unie elle couvre la palette entière, si
-bien qu'**aucun** avec **chacune décalée d'une quantité propre** revient à
-**une couleur unie chacune**. **angle autour du centre de la tuile** met un
-tour entier de couleurs dans chaque tuile, ce qui, à la taille qu'ont les
-tuiles, fait beaucoup de couleurs pour peu de pixels : une **Vitesse**
-inférieure à un, ou une fréquence inférieure à un, rend les roues lisibles.
+La quantité propre d'une tuile vient du hachage qui la nomme. D'où que vienne
+la couleur, elle couvre autant de la palette qu'un tour de l'angle, une dizaine
+de places de la sonde de palette sur n'importe quelle palette, si bien qu'un
+réglage de la décomposition déplacé laisse les couleurs des tuiles où elles
+étaient et que l'intensité décale tous les styles de la même façon ; **aucun**
+avec **chacune décalée d'une quantité propre** revient à **une couleur unie
+chacune**. **angle autour du centre de la tuile** met un tour entier de
+couleurs dans chaque tuile, ce qui, à la taille qu'ont les tuiles, fait
+beaucoup de couleurs pour peu de pixels : une **Vitesse** inférieure à un, ou
+une fréquence inférieure à un, rend les roues lisibles.
 
 Avec **Coloriage** sur **angle de z**, **Tuiles** sur **chacune décalée d'une
 quantité propre** et les réglages des décompositions là où ils commencent, le
@@ -1596,18 +1597,18 @@ donnerait que du grain, comme lorsque le mouvement y fut essayé.
 | champ | |
 | --- | --- |
 | **Mode** | l'un des trois |
-| **Pavage**, **Coloriage**, **Tuiles**, **Intensité** | comme à l'intérieur, avec des réglages à eux. **angle de z** est l'angle du point d'échappement et **zmag** le logarithme de son module, tel que `iter+log(mag)` l'ajoute ; sauf dans `tessellation + iter` avec un dimensionnement **fixe** ou **itération**, tous deux sont lus quelques itérations après le bailout, là où le compte lissé est calculé, et fondus dans le même point une itération plus loin à mesure que le compte lissé avance vers l'itération suivante, de sorte qu'ils se poursuivent à travers les bords des itérations au lieu de s'y briser |
+| **Pavage**, **Coloriage**, **Tuiles**, **Intensité** | comme à l'intérieur, avec des réglages à eux. **angle de z** est l'angle du point d'échappement et **zmag** le logarithme de son module, tel que `iter+log(mag)` l'ajoute ; sauf dans `tessellation + iter` avec un dimensionnement **fixe** ou **itération**, tous deux sont lus quelques itérations après le bailout, là où le compte lissé est calculé, et leur place sur la palette s'approche de celle du même point une itération plus loin à mesure que le compte lissé avance vers l'itération suivante, de sorte qu'ils se poursuivent à travers les bords des itérations au lieu de s'y briser |
 | **Fréquence** | tuiles par unité du plan, `8` au départ : la taille des tuiles, qu'il faut augmenter en zoomant, comme la fréquence du mouvement |
 | **Mise à l'échelle des tuiles** et **Facteur** | ce qui donne leur taille aux tuiles, comme [La taille des marques selon le compte](#la-taille-des-marques-selon-le-compte) la donne aux marques du mouvement : **fixe**, la fréquence seule ; **itération** ou **itération lissée**, la fréquence doublée autant de fois que le dit le facteur toutes les dix itérations de ce compte |
 
-Entre deux doublements les tuiles sont lues aux deux tailles et les deux
-couleurs sont fondues, un fondu d'une taille à la suivante : les tuiles n'ont
-pas de valeur médiane vers laquelle se fondre, comme en a le mouvement. Une
-palette de 256 couleurs, qui n'en a aucune entre les siennes, prend la taille
-la plus proche. Entre deux doublements le pavage est lu deux fois, ce qui en
-double le coût. Un facteur de `1` double la fréquence dix fois toutes les cent
-itérations, ce qui amène vite les tuiles sous le pixel : quelques dixièmes sont
-un meilleur départ. Les [réglages des
+Entre deux doublements les tuiles sont lues aux deux tailles et leurs deux
+places sur la palette sont mélangées par le plus court chemin, de sorte que
+chaque pixel est une couleur de la palette et que la sonde de palette la nomme
+: là où les tuiles des deux tailles sont loin l'une de l'autre sur la palette,
+le mélange passe par les couleurs entre elles. Entre deux doublements le pavage
+est lu deux fois, ce qui en double le coût. Un facteur de `1` double la
+fréquence dix fois toutes les cent itérations, ce qui amène vite les tuiles
+sous le pixel : quelques dixièmes sont un meilleur départ. Les [réglages des
 décompositions](#réglages-des-décompositions) de l'extérieur atteignent les
 deux angles : **Itérations par bande** fait des bandes du compte pour l'angle
 de z et des anneaux du centre au bord pour l'angle autour du centre.

@@ -1470,8 +1470,8 @@ diálogo tem quatro campos.
 | --- | --- |
 | **Pavimentação** | qual pavimentação, com o número pelo qual `randsctile` a conhece e o seu nome: **3: hexágonos**, onde começa. O separador Pavimentações de Ajuda → Referência das fórmulas do utilizador tem uma imagem de cada uma |
 | **Coloração** | de onde vem a cor, em toda a parte: **ângulo de z**, onde começa; **ângulo em torno do centro do ladrilho**, o do ladrilho em que cai o ponto, que faz de cada ladrilho uma pequena roda de cor; **zmag**, o valor do modo com esse nome; **nenhuma**, nada além dos ladrilhos |
-| **Ladrilhos** | como cada ladrilho se destaca dos vizinhos: **cada um deslocado de uma quantidade própria**, ao longo da paleta, onde começa; **sombreados do centro para a borda**, o mesmo, e deslocado mais um oitavo das cores de uma volta do centro para a borda, como um chanfro; **com a borda marcada**, o mesmo, e a parte exterior do ladrilho desenhada na outra metade da paleta; **uma cor lisa cada um**, uma cor sua, venha de onde vier a cor |
-| **Intensidade** | quão afastados ficam os ladrilhos ao longo da paleta: multiplica cada quantidade própria de um ladrilho, o seu deslocamento, o bisel de **sombreados do centro para a borda** e a borda de **com a borda marcada**. Em `1`, onde começa, os ladrilhos são como aqui descritos; em `0` fica só aquilo de que vem a cor, pelo que **ângulo de z** é uma decomposição simples e **zmag** o zmag simples; pelo meio os ladrilhos mal se veem, e acima de `1` veem-se mais. Medido com **Vista → Sonda da paleta (clique num ponto)**, em `1` um ladrilho de **ângulo de z** e **cada um deslocado de uma quantidade própria** desloca-se até cerca de dez lugares, pelo que `0.1` o desloca até um e `0.2` até dois; com **uma cor lisa cada um**, **zmag** ou **nenhuma** desloca-se até à paleta inteira, 8191 lugares na predefinida, pelo que aí um lugar vale cerca de `0.0001` |
+| **Ladrilhos** | como cada ladrilho se destaca dos vizinhos: **cada um deslocado de uma quantidade própria**, ao longo da paleta, onde começa; **sombreados do centro para a borda**, o mesmo, e deslocado mais um oitavo das cores de uma volta do centro para a borda, como um chanfro; **com a borda marcada**, o mesmo, e a parte exterior do ladrilho deslocada mais metade das cores de uma volta; **uma cor lisa cada um**, uma cor sua, venha de onde vier a cor |
+| **Intensidade** | quão afastados ficam os ladrilhos ao longo da paleta: multiplica cada quantidade própria de um ladrilho, o seu deslocamento, o bisel de **sombreados do centro para a borda** e a borda de **com a borda marcada**. Em `1`, onde começa, os ladrilhos são como aqui descritos; em `0` fica só aquilo de que vem a cor, pelo que **ângulo de z** é uma decomposição simples e **zmag** o zmag simples; pelo meio os ladrilhos mal se veem, e acima de `1` veem-se mais. Medido com **Vista → Sonda da paleta (clique num ponto)**, em `1` um ladrilho desloca-se até cerca de dez lugares, em qualquer estilo e em qualquer paleta, pelo que `0.1` o desloca até um lugar e `0.01` até uma décima |
 
 O modo está entre os modos que se repetem e as decomposições, e as definições
 de ambos chegam-lhe. **Frequência (modos periódicos)** e **Função (modos
@@ -1487,15 +1487,16 @@ o ângulo em torno do centro outros tantos anéis do centro para a borda, que
 seguem a forma do ladrilho. **zmag**, **nenhuma** e um ladrilho liso não leem
 nenhuma delas.
 
-A quantidade própria de um ladrilho vem do hash que lhe dá o nome. Para um
-ângulo abrange tanto da paleta como uma volta do ângulo, de modo que uma
-definição da decomposição mudada deixa as cores dos ladrilhos onde estavam;
-para **zmag**, **nenhuma** e um ladrilho liso abrange a paleta inteira, de modo
-que **nenhuma** com **cada um deslocado de uma quantidade própria** é o mesmo
-que **uma cor lisa cada um**. **ângulo em torno do centro do ladrilho** põe uma
-volta inteira de cores em cada ladrilho, o que, ao tamanho que os ladrilhos
-têm, são muitíssimas cores em poucos píxeis: uma **Velocidade** abaixo de um,
-ou uma frequência abaixo de um, torna as rodas legíveis.
+A quantidade própria de um ladrilho vem do hash que lhe dá o nome. Venha de
+onde vier a cor, abrange tanto da paleta como uma volta do ângulo, cerca de dez
+lugares da sonda da paleta em qualquer paleta, de modo que uma definição da
+decomposição mudada deixa as cores dos ladrilhos onde estavam e a intensidade
+desloca todos os estilos por igual; **nenhuma** com **cada um deslocado de uma
+quantidade própria** é o mesmo que **uma cor lisa cada um**. **ângulo em torno
+do centro do ladrilho** põe uma volta inteira de cores em cada ladrilho, o que,
+ao tamanho que os ladrilhos têm, são muitíssimas cores em poucos píxeis: uma
+**Velocidade** abaixo de um, ou uma frequência abaixo de um, torna as rodas
+legíveis.
 
 Com **Coloração** em **ângulo de z**, **Ladrilhos** em **cada um deslocado de
 uma quantidade própria** e as definições das decomposições onde começam, o modo
@@ -1528,19 +1529,19 @@ seguinte e só daria grão, como aconteceu quando lá se experimentou o moviment
 | campo | |
 | --- | --- |
 | **Modo** | um dos três |
-| **Pavimentação**, **Coloração**, **Ladrilhos**, **Intensidade** | como no interior, com definições próprias. **ângulo de z** é o ângulo do ponto de fuga e **zmag** o logaritmo do seu módulo, tal como `iter+log(mag)` o soma; exceto em `tessellation + iter` com dimensionamento **fixo** ou **iteração**, ambos são lidos algumas iterações depois do bailout, onde se calcula a contagem suavizada, e fundem-se no mesmo ponto uma iteração depois à medida que a contagem suavizada avança para a iteração seguinte, de modo que continuam através dos limites das iterações em vez de se quebrarem aí |
+| **Pavimentação**, **Coloração**, **Ladrilhos**, **Intensidade** | como no interior, com definições próprias. **ângulo de z** é o ângulo do ponto de fuga e **zmag** o logaritmo do seu módulo, tal como `iter+log(mag)` o soma; exceto em `tessellation + iter` com dimensionamento **fixo** ou **iteração**, ambos são lidos algumas iterações depois do bailout, onde se calcula a contagem suavizada, e o seu lugar na paleta aproxima-se do lugar do mesmo ponto uma iteração depois à medida que a contagem suavizada avança para a iteração seguinte, de modo que continuam através dos limites das iterações em vez de se quebrarem aí |
 | **Frequência** | ladrilhos por unidade do plano, `8` onde começa: o tamanho dos ladrilhos, que é preciso subir ao aproximar, como a frequência do movimento |
 | **Escala dos ladrilhos** e **Fator** | o que dá o tamanho aos ladrilhos, como [O tamanho das marcas pela contagem](#o-tamanho-das-marcas-pela-contagem) o dá às marcas do movimento: **fixo**, só a frequência; **iteração** ou **iteração suavizada**, a frequência duplicada tantas vezes quantas diz o fator a cada dez iterações dessa contagem |
 
-Entre duas duplicações os ladrilhos são lidos nos dois tamanhos e as duas cores
-fundem-se, uma transição de um tamanho para o seguinte: os ladrilhos não têm um
-valor intermédio para onde fundir, como tem o movimento. Uma paleta de 256
-cores, que não tem nenhuma entre as suas, fica com o tamanho mais próximo.
-Entre duas duplicações a pavimentação é lida duas vezes, o que duplica o seu
-custo. Um fator de `1` duplica a frequência dez vezes a cada cem iterações, o
-que depressa leva os ladrilhos para baixo do píxel: algumas décimas são um
-começo melhor. As [definições das decomposições](#definições-das-decomposições)
-do exterior chegam aos dois ângulos: **Iterações por faixa** faz faixas da
+Entre duas duplicações os ladrilhos são lidos nos dois tamanhos e os seus dois
+lugares na paleta misturam-se pelo caminho mais curto, de modo que cada píxel é
+uma cor da paleta e a sonda da paleta a nomeia: onde os ladrilhos dos dois
+tamanhos ficam longe na paleta, a mistura passa pelas cores entre eles. Entre
+duas duplicações a pavimentação é lida duas vezes, o que duplica o seu custo.
+Um fator de `1` duplica a frequência dez vezes a cada cem iterações, o que
+depressa leva os ladrilhos para baixo do píxel: algumas décimas são um começo
+melhor. As [definições das decomposições](#definições-das-decomposições) do
+exterior chegam aos dois ângulos: **Iterações por faixa** faz faixas da
 contagem para o ângulo de z e anéis do centro para a borda para o ângulo em
 torno do centro.
 
