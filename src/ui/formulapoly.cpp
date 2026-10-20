@@ -6,7 +6,10 @@
  *
  * Every coefficient is a complex number drawn in polar form: its magnitude
  * evenly between the two the fields give, its argument evenly round the whole
- * turn. Written out, each part keeps four significant figures of the
+ * turn. Given a delta, only the first coefficient's argument goes round the
+ * whole turn, and every other is drawn evenly within delta degrees across,
+ * centred on it: the same draws in the same order, so that the length and
+ * the magnitudes are the ones the same seed gives without one. Written out, each part keeps four significant figures of the
  * magnitude, however large or small that is, so that a range of 0.001 to
  * 0.002 is not rounded to nought and one of 100 to 1000 does not trail twelve
  * decimals. A coefficient whose imaginary part rounds to nought is written as
@@ -89,6 +92,24 @@ int formula_poly_magnitude(const char *text, double fallback,
     return FORMULA_POLY_OK;
 }
 
+int formula_poly_delta(const char *text, double *delta)
+{
+    double value = 0;
+    const int reading = number_in(text, &value);
+    if (reading == FORMULA_POLY_EMPTY) {
+        *delta = -1;
+        return FORMULA_POLY_OK;
+    }
+    if (reading != FORMULA_POLY_OK)
+        return reading;
+    if (value < 0)
+        return FORMULA_POLY_NEGATIVE;
+    if (value > FORMULA_POLY_WIDEST)
+        return FORMULA_POLY_TOO_WIDE;
+    *delta = value;
+    return FORMULA_POLY_OK;
+}
+
 /* splitmix64: small, and enough for picking coefficients. */
 static uint64_t next(uint64_t *state)
 {
@@ -142,17 +163,24 @@ static std::string decimal(double x, int decimals)
 
 std::string formula_poly_random(int shortest, int longest, double smallest,
                                 double largest, unsigned long long seed,
-                                int *length)
+                                int *length, double delta)
 {
     uint64_t state = seed;
     const int m = between(&state, shortest, longest);
     if (length)
         *length = m;
 
+    const double turn = 6.283185307179586477;
+    double first = 0;
     std::string out = "poly(z";
     for (int k = 1; k <= m; k++) {
         const double r = smallest + (largest - smallest) * fraction(&state);
-        const double angle = 6.283185307179586477 * fraction(&state);
+        double angle = turn * fraction(&state);
+        /* The same draw, spread over delta across rather than the turn. */
+        if (k == 1)
+            first = angle;
+        else if (delta >= 0)
+            angle = first + (angle / turn - 0.5) * delta * (turn / 360);
         /* Four significant figures of the magnitude: three decimals at one,
          * one more for each tenth smaller, one fewer for each ten times
          * larger. Twelve at most, which is past anything a picture shows. */

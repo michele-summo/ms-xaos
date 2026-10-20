@@ -108,21 +108,29 @@ na descrição da função que os recebe. Um quinto mostra uma imagem de cada
 pavimentação que `randsctile` aceita, já que quarenta e cinco números com uma
 linha de palavras cada um dizem pouco das formas.
 
+Fractal → Fórmula do utilizador tem um botão **Referência das fórmulas...** ao
+lado de OK, que abre a janela no separador em que foi deixada; os dois diálogos
+**Pavimentação...**, do interior e do exterior, têm um que a abre no separador
+Pavimentações. O diálogo espera enquanto se usa a janela, de modo que antes de
+OK se pode procurar nela uma pavimentação, ou copiar dela uma fórmula.
+
 Um sexto, **Utilitários**, escreve fórmulas em vez de as descrever. Por agora
-contém um `poly` aleatório, a partir de quatro campos:
+contém um `poly` aleatório, a partir de cinco campos:
 
 | | |
 | --- | --- |
 | comprimento mínimo e máximo | m, o número de coeficientes, sorteado entre os dois; o grau é m − 1. São precisos ambos, como números inteiros de 1 a 254 — até onde vai `poly`, já que o parser aceita 255 argumentos por chamada e `z` é um deles |
 | módulo mínimo e máximo | o tamanho de cada coeficiente, sorteado uniformemente entre os dois. 0 e 1 quando deixados vazios; no máximo 1000000 |
+| delta do argumento | em graus, de 0 a 360. Vazio, onde começa, deixa cada argumento livre em toda a volta, e a fórmula é a que se sorteava antes de o campo existir. Com um número, o argumento do primeiro coeficiente continua a percorrer toda a volta e cada um dos outros é sorteado uniformemente dentro de uma largura desses graus, centrada no do primeiro: com 0 todos os coeficientes têm o argumento do primeiro, com 30 ficam a menos de 15 graus dele para cada lado. Uma fórmula de um só coeficiente não tem outro a manter perto |
 
 Cada coeficiente é complexo, `{re,im}`, com o seu argumento sorteado ao acaso
-em toda a volta, e cada parte é escrita com quatro algarismos significativos do
-seu módulo, para que um intervalo de 0.001 a 0.002 não desapareça no
-arredondamento. Não há `c` na fórmula. Uma fórmula do utilizador faz `z`
-começar no píxel tanto no modo mandelbrot como no modo julia, por isso o que
-desenha é o conjunto de Julia preenchido do próprio polinómio, igual nos dois;
-`c` vai onde se quiser, como em `poly(...) + c`.
+em toda a volta, ou perto do do primeiro conforme diz o delta, e cada parte é
+escrita com quatro algarismos significativos do seu módulo, para que um
+intervalo de 0.001 a 0.002 não desapareça no arredondamento. Não há `c` na
+fórmula. Uma fórmula do utilizador faz `z` começar no píxel tanto no modo
+mandelbrot como no modo julia, por isso o que desenha é o conjunto de Julia
+preenchido do próprio polinómio, igual nos dois; `c` vai onde se quiser, como
+em `poly(...) + c`.
 
 Cada alteração num campo gera uma fórmula nova, tal como **Gerar outro**, e
 **Copiar** põe-na na área de transferência para Fractal → Fórmula do
@@ -147,6 +155,18 @@ quer que fosse, por isso `LOGN(5;Z^2)+C` e `LOGN(5,Z^2)+C` eram uma só fórmula
 e o mesmo valia para as duas partes de um número complexo. Isso acabou. Um
 ponto e vírgula é agora recusado onde aparece — *Operador inválido: ;* — e a
 vírgula é o separador em todo o lado, como é no resto da sintaxe.
+
+**Rodar um ponto: `rotate(z, angle)`.** `z` rodado no sentido dos ponteiros do
+relógio em torno da origem, `angle` radianos, dos quais se lê a parte real:
+`z*e^(-i*angle)`. No sentido dos ponteiros do relógio tal como o plano é
+desenhado, seja qual for o ângulo da vista, que roda a imagem acabada depois.
+Uma imagem desenhada a partir de um ponto passado por `rotate` roda com ele no
+sentido dos ponteiros do relógio: `fbm(rotate(x,0.5),7)` é o movimento de
+`fbm(x,7)` rodado meio radiano no sentido dos ponteiros do relógio em torno da
+origem, e `ifiterl(rotate(z,0.5)^2+rotate(c,0.5), z^2+rotate(c,0.5))` é o
+conjunto de Mandelbrot rodado da mesma forma. Um número inteiro de quartos de
+volta escrito com as constantes, `pi_2`, `pi` e `pi2`, é exato: uma volta
+inteira não roda nada, bit a bit.
 
 ### A sonda da paleta
 
@@ -1468,7 +1488,7 @@ diálogo tem quatro campos.
 
 | campo | |
 | --- | --- |
-| **Pavimentação** | qual pavimentação, com o número pelo qual `randsctile` a conhece e o seu nome: **3: hexágonos**, onde começa. O separador Pavimentações de Ajuda → Referência das fórmulas do utilizador tem uma imagem de cada uma |
+| **Pavimentação** | qual pavimentação, com o número pelo qual `randsctile` a conhece e o seu nome: **3: hexágonos**, onde começa. O separador Pavimentações de Ajuda → Referência das fórmulas do utilizador tem uma imagem de cada uma, e o botão **Referência das fórmulas...** do diálogo abre-a aí |
 | **Coloração** | de onde vem a cor, em toda a parte: **ângulo de z**, onde começa; **ângulo em torno do centro do ladrilho**, o do ladrilho em que cai o ponto, que faz de cada ladrilho uma pequena roda de cor; **zmag**, o valor do modo com esse nome; **nenhuma**, nada além dos ladrilhos |
 | **Ladrilhos** | como cada ladrilho se destaca dos vizinhos: **cada um deslocado de uma quantidade própria**, ao longo da paleta, onde começa; **sombreados do centro para a borda**, o mesmo, e deslocado mais um oitavo das cores de uma volta do centro para a borda, como um chanfro; **com a borda marcada**, o mesmo, e a parte exterior do ladrilho deslocada mais metade das cores de uma volta; **uma cor lisa cada um**, uma cor sua, venha de onde vier a cor |
 | **Intensidade** | quão afastados ficam os ladrilhos ao longo da paleta: multiplica cada quantidade própria de um ladrilho, o seu deslocamento, o bisel de **sombreados do centro para a borda** e a borda de **com a borda marcada**. Em `1`, onde começa, os ladrilhos são como aqui descritos; em `0` fica só aquilo de que vem a cor, pelo que **ângulo de z** é uma decomposição simples e **zmag** o zmag simples; pelo meio os ladrilhos mal se veem, e acima de `1` veem-se mais. Medido com **Vista → Sonda da paleta (clique num ponto)**, em `1` um ladrilho desloca-se até cerca de dez lugares, em qualquer estilo e em qualquer paleta, pelo que `0.1` o desloca até um lugar e `0.01` até uma décima |

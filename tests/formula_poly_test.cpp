@@ -6,7 +6,8 @@
  * -- k1*z^(m-1) + ... + km -- which is a second reading of the call that
  * shares nothing with poly's own Horner loop. Around that, the fields: read as
  * the tab reads them, and kept to -- the length, and the magnitude of every
- * coefficient, whose argument has to go all the way round.
+ * coefficient, whose argument has to go all the way round, or keep within
+ * the delta of the first's when one is given.
  */
 
 #include <cmath>
@@ -242,6 +243,49 @@ int main()
               what);
     }
 
+    /* An empty delta is none, which reads as a negative one. */
+    struct {
+        const char *text;
+        int reading;
+        double delta;
+    } deltas[] = {
+        {"", FORMULA_POLY_OK, -1},
+        {"  ", FORMULA_POLY_OK, -1},
+        {"0", FORMULA_POLY_OK, 0},
+        {" 30 ", FORMULA_POLY_OK, 30},
+        {"12.5", FORMULA_POLY_OK, 12.5},
+        {"360", FORMULA_POLY_OK, 360},
+        {"abc", FORMULA_POLY_NOT_NUMBER, 0},
+        {"30,5", FORMULA_POLY_NOT_NUMBER, 0},
+        {"-1", FORMULA_POLY_NEGATIVE, 0},
+        {"360.5", FORMULA_POLY_TOO_WIDE, 0},
+    };
+    for (const auto &f : deltas) {
+        double delta = -2;
+        const int reading = formula_poly_delta(f.text, &delta);
+        sprintf(what, "the delta \"%s\" reads as %d%s", f.text, f.reading,
+                f.reading == FORMULA_POLY_OK ? ", with its value" : "");
+        check(reading == f.reading &&
+                  (reading != FORMULA_POLY_OK || delta == f.delta),
+              what);
+    }
+
+    /* --- with no delta, the calls drawn before there was one --------------
+     *
+     * Written down from the generator as it was before the delta, so that the
+     * same seed still gives the same call, to the character. */
+    {
+        int m = 0;
+        check(formula_poly_random(3, 5, 0.5, 2, 1, &m) ==
+                      "poly(z, {1.592,-0.293}, {-1.096,0.4}, {1.18,-1.145}, "
+                      "{-0.284,1.253}, {-1.393,0.958})" &&
+                  formula_poly_random(3, 5, 0.5, 2, 42, &m, -1) ==
+                      "poly(z, {-0.1322,0.728}, {0.987,0.241}, "
+                      "{0.355,1.767}, {-0.911,1.437})",
+              "with no delta, seeds 1 and 42 give the calls they gave before "
+              "there was a delta");
+    }
+
     /* --- every call parses, keeps to the fields and is its polynomial -----
      *
      * The ends are there on purpose: one coefficient, the longest call the
@@ -335,6 +379,78 @@ int main()
                 "sectors holds %d of %d",
                 fewest, k);
         check(fewest > k / 10, what);
+    }
+
+    /* --- a delta keeps the arguments near the first's ---------------------
+     *
+     * Every argument after the first within half the delta of it, measured
+     * the short way round; and spread over the whole of that width, not
+     * bunched: the farthest of all of them reaches nearly half the delta.
+     * The length and the magnitudes are the ones the seed gives without a
+     * delta, since the draws are the same. The magnitudes are kept from 0.5
+     * up, where four significant figures hold an argument to a thousandth of
+     * a radian or better. A call of one coefficient has no other argument to
+     * keep near, and is the call drawn without a delta. */
+    {
+        const double deltas_tried[] = {0, 1, 30, 90, 180, 360};
+        for (double delta : deltas_tried) {
+            const char *wrong = NULL;
+            double farthest = 0;
+            for (unsigned long long seed = 1; seed <= 300 && !wrong; seed++) {
+                int m = 0, m_free = 0;
+                const std::string call =
+                    formula_poly_random(2, 12, 0.5, 2, seed, &m, delta);
+                const std::string free =
+                    formula_poly_random(2, 12, 0.5, 2, seed, &m_free);
+                wrong = examine(call, m, 2, 12, 0.5, 2);
+                if (!wrong && m != m_free)
+                    wrong = "the length is not the one drawn without a delta";
+                std::vector<std::string> args, args_free;
+                arguments(call, args);
+                arguments(free, args_free);
+                double first = 0;
+                for (int j = 1; j <= m && !wrong; j++) {
+                    double re, im, re_free, im_free;
+                    value_of(args[j], &re, &im);
+                    value_of(args_free[j], &re_free, &im_free);
+                    const double r = std::hypot(re, im);
+                    if (std::fabs(r - std::hypot(re_free, im_free)) > 2e-3 * r)
+                        wrong = "a magnitude is not the one drawn without a "
+                                "delta";
+                    const double a = std::atan2(im, re);
+                    if (j == 1) {
+                        first = a;
+                        if (args[1] != args_free[1])
+                            wrong = "the first coefficient is not the one "
+                                    "drawn without a delta";
+                        continue;
+                    }
+                    double apart = std::fabs(a - first);
+                    apart = std::fmin(apart, 2 * M_PI - apart);
+                    farthest = std::fmax(farthest, apart);
+                    if (apart > delta / 2 * M_PI / 180 + 2e-3)
+                        wrong = "an argument farther from the first's than "
+                                "half the delta";
+                }
+            }
+            const double half = std::fmin(delta / 2, 180) * M_PI / 180;
+            if (!wrong && farthest < 0.95 * half - 2e-3)
+                wrong = "the arguments keep well within the delta";
+            if (wrong)
+                sprintf(what, "delta %g: %s", delta, wrong);
+            else
+                sprintf(what,
+                        "delta %g: 300 calls keep every argument within %g "
+                        "degrees of the first's, and reach %.2f",
+                        delta, delta / 2, farthest * 180 / M_PI);
+            check(!wrong, what);
+        }
+        int m = 0, m_free = 0;
+        check(formula_poly_random(1, 1, 0.5, 2, 7, &m, 30) ==
+                      formula_poly_random(1, 1, 0.5, 2, 7, &m_free) &&
+                  m == 1,
+              "a call of one coefficient is the same with a delta and "
+              "without");
     }
 
     printf("%s\n", failures ? "FAILED" : "all passed");

@@ -27,6 +27,7 @@ const char *qt_gettext(const char * /*context*/, const char *text)
 enum expectation {
     Ok,    /* must parse and evaluate to a finite value */
     OkVal, /* ...and match the expected value */
+    OkExact, /* ...to the bit */
     Err    /* must report this error without crashing */
 };
 
@@ -46,6 +47,7 @@ struct testcase {
 
 #define T_OK(e, n) {e, Ok, 0, 0, 0, 0, 0, NULL, n}
 #define T_VAL(e, r, i, n) {e, OkVal, 0, r, i, 0, 0, NULL, n}
+#define T_EXACT(e, r, i, n) {e, OkExact, 0, r, i, 0, 0, NULL, n}
 #define T_ERR(e, c, n) {e, Err, c, 0, 0, 0, 0, NULL, n}
 /* ...evaluated on iteration k, for the iteration-dependent functions */
 #define T_VAL_AT(e, k, r, i, n) {e, OkVal, 0, r, i, k, 0, NULL, n}
@@ -336,6 +338,23 @@ static const testcase cases[] = {
     T_VAL("z+(1/z)*(-1)^n", 2.5, 0, "shipped: (-1)^n"),
     T_VAL("(abs(re(z))+i*abs(im(z)))^2+c", 7, 0, "shipped: USER_FORMULA default"),
 
+    /* --- rotate: clockwise, z*e^(-i*angle) -------------------------------
+     * Whole quarter turns, written as the constants are, are exact: a full
+     * turn is no turn at all and a quarter turn of 2 is -2i, not -2i and a
+     * trace of real. The imaginary part of the angle is not read. */
+    T_EXACT("rotate(z,0)", 2, 0, "rotate: no angle is no turn"),
+    T_EXACT("rotate(z,pi_2)", 0, -2, "rotate: a quarter turn clockwise"),
+    T_EXACT("rotate(z,pi)", -2, 0, "rotate: half a turn"),
+    T_EXACT("rotate(z,-pi_2)", 0, 2, "rotate: a quarter turn back"),
+    T_EXACT("rotate(z,pi2)", 2, 0, "rotate: a whole turn is no turn"),
+    T_EXACT("rotate(z,-3*pi2)", 2, 0, "rotate: three turns back are none"),
+    T_VAL("rotate(i,0.5)", 0.479425538604203, 0.877582561890373,
+          "rotate: i turned by half a radian, i*e^(-0.5i)"),
+    T_VAL("rotate(z,{0.5,7})", 1.755165123780746, -0.958851077208406,
+          "rotate: the imaginary part of the angle is not read"),
+    T_VAL("rotate(rotate(z*c+i,0.3),-0.3)", 6, 1,
+          "rotate: turning back undoes it"),
+
     /* --- and the semicolon, which is not a separator -----------------------
      * It was one until the comma was made the only one. A formula that still
      * has it is refused where it stands rather than read as something else,
@@ -439,6 +458,12 @@ static int run_case(const testcase &tc)
             if (!std::isfinite(re) || !std::isfinite(im)) {
                 printf("FAIL  result is not finite: %g%+gi\n", re, im);
                 failed = 1;
+            } else if (tc.expect == OkExact) {
+                if (re != tc.re || im != tc.im) {
+                    printf("FAIL  expected exactly %g%+gi, got %.21g%+.21gi\n",
+                           tc.re, tc.im, re, im);
+                    failed = 1;
+                }
             } else if (tc.expect == OkVal) {
                 double tol = 1e-9 * (1.0 + fabs(tc.re) + fabs(tc.im));
                 if (fabs(re - tc.re) > tol || fabs(im - tc.im) > tol) {

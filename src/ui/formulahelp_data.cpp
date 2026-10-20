@@ -108,6 +108,7 @@ const struct formula_help_row formula_help_functions[] = {
     {"ngon", "z, [centre=0], [sides=3], [power=1]", QT_TRANSLATE_NOOP("FormulaHelp", "folds z about centre onto a polygon with that many sides, the corner radius raised to power"), NULL}, /* 4 */
     {"parchment", "z, sectors", QT_TRANSLATE_NOOP("FormulaHelp", "quantises the angle of z into |sectors| sectors, keeping |z|"), NULL}, /* 2 */
     {"parchmenta", "z, sectors", QT_TRANSLATE_NOOP("FormulaHelp", "as parchment, but mirroring alternate half sectors"), NULL}, /* 2 */
+    {"rotate", "z, angle", QT_TRANSLATE_NOOP("FormulaHelp", "z turned clockwise about the origin by angle radians, the real part of it: z*e^(-i*angle). Whatever the view's own angle is; a picture drawn from a point put through it turns clockwise with it, as fbm(rotate(x,0.5),7)"), NULL}, /* 2 */
     {NULL, NULL, NULL, QT_TRANSLATE_NOOP("FormulaHelp", "snapping to a grid of step 1/n; n == 0 leaves the value alone")},
     {"truncv", "z, n", QT_TRANSLATE_NOOP("FormulaHelp", "both components, step 1/|n|"), NULL}, /* 2 */
     {"truncc", "z, n", QT_TRANSLATE_NOOP("FormulaHelp", "real step 1/real(n), imaginary step 1/imag(n)"), NULL}, /* 2 */

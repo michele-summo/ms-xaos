@@ -162,6 +162,8 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sfparchment, 2, "parchment\0"},
     /* parchmenta(a, b): as parchment, but mirroring alternate half sectors */
     {sfparchmenta, 2, "parchmenta\0"},
+    /* rotate(a, b): a turned clockwise by real(b) radians about the origin */
+    {sfrotate, 2, "rotate\0"},
 
     /* --- snapping to a grid of step 1/n; n == 0 leaves the value alone --- */
     {sftruncv, 2, "truncv\0"},   /* both components, step 1/|b| */
@@ -1061,6 +1063,34 @@ sfarg *sfparchmenta(sfarg *const p)
     number_t trm = trc < trc2 + 0.1 / n ? trc2 - t : t + nN - trc2;
 
     sfvalue(p) = gsl_complex_polar(gsl_complex_abs(z), trm);
+    return sfaram2(p);
+}
+
+/* rotate(z, angle): z turned clockwise about the origin by real(angle)
+ * radians, z * e^(-i*angle) -- clockwise as the plane is drawn, with the
+ * imaginary axis going down the screen, and whatever the view's own angle,
+ * which turns the picture after it is drawn. A picture drawn from a point put
+ * through it, as fbm(rotate(x, 0.5), 7), turns clockwise with it. The cosine
+ * and sine of a whole number of quarter turns are not quite what they should
+ * be, so they are made so: a quarter turn of 1 is -i, and not -i plus a trace
+ * of real, and a whole turn is no turn at all, to the bit. */
+sfarg *sfrotate(sfarg *const p)
+{
+    const gsl_complex z = sfvalue(sfaram2(p));
+    const number_t angle = GSL_REAL(sfvalue(sfaram1(p)));
+    number_t c = ncos(angle);
+    number_t s = nsin(angle);
+    /* A quarter turn as pi_2 is worked out, so that pi_2, pi and pi2 are
+     * whole quarters to the bit. */
+    static const number_t quarter = 2 * natan((number_t)1);
+    const number_t quarters = angle / quarter;
+    if (quarters == nfloor(quarters)) {
+        const long q = ((long)nfmod(quarters, (number_t)4) + 4) % 4;
+        c = q == 0 ? 1 : q == 2 ? -1 : 0;
+        s = q == 1 ? 1 : q == 3 ? -1 : 0;
+    }
+    GSL_SET_COMPLEX(&sfvalue(p), GSL_REAL(z) * c + GSL_IMAG(z) * s,
+                    GSL_IMAG(z) * c - GSL_REAL(z) * s);
     return sfaram2(p);
 }
 

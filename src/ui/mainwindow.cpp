@@ -1602,6 +1602,16 @@ void MainWindow::showDialog(const char *name)
                                 });
                         });
 
+                /* The reference, at the tab it was left at: a window of its
+                 * own, which stays open beside the dialog and the formula
+                 * after it. */
+                QPushButton *reference = buttonBox->addButton(
+                    TR("Dialog", "Formula reference..."),
+                    QDialogButtonBox::ActionRole);
+                reference->setAutoDefault(false);
+                connect(reference, &QPushButton::clicked, qDialog,
+                        []() { ui_formulahelp_open(-1); });
+
                 connect(buttonBox, SIGNAL(accepted()), qDialog, SLOT(accept()));
                 connect(buttonBox, SIGNAL(rejected()), qDialog, SLOT(reject()));
                 dialogLayout->addWidget(buttonBox);

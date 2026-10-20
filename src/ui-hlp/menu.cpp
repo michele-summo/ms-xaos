@@ -19,6 +19,7 @@
 #include "i18n.h"
 #include "xthread.h"
 #include "customdialog.h"
+#include "formulahelp.h"
 
 #define LANG(name, name2)                                                      \
     MENUSTRING("lang", NULL, name, name2, 0,                                   \
@@ -383,6 +384,7 @@ void uih_registermenudialogs_i18n(void)
      * from and how the tiles stand apart; see intessellcolor -- and the
      * commands a position saves them as, the tiling by its number. */
     Register(uih_tessellationdialog);
+    DIALOGREFERENCE_I(FORMULA_HELP_TILINGS + 1);
     DIALOGCHOICE_I(TR("Dialog", "Tiling:"), tessell_tilings, 2);
     DIALOGCHOICE_I(TR("Dialog", "Coloring:"), tessell_colors, 0);
     DIALOGCHOICE_I(TR("Dialog", "Tiles:"), tessell_fills, 0);
@@ -404,6 +406,7 @@ void uih_registermenudialogs_i18n(void)
      * has them, the tiling by its name; and the command a position saves
      * them as, the tiling by its number. */
     Register(uih_outtessellationdialog);
+    DIALOGREFERENCE_I(FORMULA_HELP_TILINGS + 1);
     DIALOGCHOICE_I(TR("Dialog", "Mode:"), outtessellmodes, 0);
     DIALOGCHOICE_I(TR("Dialog", "Tiling:"), tessell_tilings, 2);
     DIALOGCHOICE_I(TR("Dialog", "Coloring:"), tessell_colors, 0);

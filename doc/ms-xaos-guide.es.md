@@ -110,21 +110,28 @@ descripción de la función que los recibe. Una quinta muestra una imagen de cad
 teselado que admite `randsctile`, ya que cuarenta y cinco números con una línea
 de palabras cada uno dicen poco de las formas.
 
+Fractal → Fórmula de usuario tiene un botón **Referencia de fórmulas...** junto
+a OK, que abre la ventana en la pestaña en que se dejó; los dos diálogos
+**Teselado...**, del interior y del exterior, tienen uno que la abre en la
+pestaña Teselados. El diálogo espera mientras se usa la ventana, de modo que
+antes de OK se puede buscar en ella un teselado o copiar de ella una fórmula.
+
 Una sexta, **Utilidades**, escribe fórmulas en lugar de describirlas. Por ahora
-contiene un `poly` aleatorio, a partir de cuatro campos:
+contiene un `poly` aleatorio, a partir de cinco campos:
 
 | | |
 | --- | --- |
 | longitud mínima y máxima | m, el número de coeficientes, sorteado entre las dos; el grado es m − 1. Hacen falta ambas, como números enteros de 1 a 254 — hasta donde llega `poly`, ya que el parser admite 255 argumentos por llamada y `z` es uno de ellos |
 | módulo mínimo y máximo | el tamaño de cada coeficiente, sorteado uniformemente entre los dos. 0 y 1 si se dejan vacíos; como máximo 1000000 |
+| delta del argumento | en grados, de 0 a 360. Vacío, donde empieza, deja cada argumento libre en toda la vuelta, y la fórmula es la que se sorteaba antes de que existiera el campo. Con un número, el argumento del primer coeficiente sigue recorriendo toda la vuelta y cada uno de los demás se sortea uniformemente dentro de una anchura de esos grados, centrada en el del primero: con 0 todos los coeficientes tienen el argumento del primero, con 30 quedan a menos de 15 grados de él a uno y otro lado. Una fórmula de un solo coeficiente no tiene otro que mantener cerca |
 
 Cada coeficiente es complejo, `{re,im}`, con su argumento sorteado al azar en
-toda la vuelta, y cada parte se escribe con cuatro cifras significativas de su
-módulo, para que un intervalo de 0.001 a 0.002 no se pierda al redondear. En la
-fórmula no hay `c`. Una fórmula de usuario hace empezar `z` en el píxel tanto
-en modo mandelbrot como en modo julia, así que lo que dibuja es el conjunto de
-Julia relleno del propio polinomio, igual en ambos; `c` va donde se quiera,
-como en `poly(...) + c`.
+toda la vuelta, o cerca del del primero según diga el delta, y cada parte se
+escribe con cuatro cifras significativas de su módulo, para que un intervalo de
+0.001 a 0.002 no se pierda al redondear. En la fórmula no hay `c`. Una fórmula
+de usuario hace empezar `z` en el píxel tanto en modo mandelbrot como en modo
+julia, así que lo que dibuja es el conjunto de Julia relleno del propio
+polinomio, igual en ambos; `c` va donde se quiera, como en `poly(...) + c`.
 
 Cada cambio en un campo genera una fórmula nueva, igual que **Generar otro**, y
 **Copiar** la pone en el portapapeles para Fractal → Fórmula de usuario.
@@ -149,6 +156,18 @@ que `LOGN(5;Z^2)+C` y `LOGN(5,Z^2)+C` eran una misma fórmula, y lo mismo pasaba
 con las dos partes de un número complejo. Eso se acabó. Ahora un punto y coma
 se rechaza donde aparece — *Operador no válido: ;* — y la coma es el separador
 en todas partes, como lo es en el resto de la sintaxis.
+
+**Girar un punto: `rotate(z, angle)`.** `z` girado en sentido horario alrededor
+del origen `angle` radianes, de los que se lee la parte real: `z*e^(-i*angle)`.
+En sentido horario tal como se dibuja el plano, sea cual sea el ángulo de la
+vista, que gira la imagen terminada después. Una imagen dibujada a partir de un
+punto pasado por `rotate` gira con él en sentido horario:
+`fbm(rotate(x,0.5),7)` es el movimiento de `fbm(x,7)` girado medio radián en
+sentido horario alrededor del origen, y
+`ifiterl(rotate(z,0.5)^2+rotate(c,0.5), z^2+rotate(c,0.5))` es el conjunto de
+Mandelbrot girado del mismo modo. Un número entero de cuartos de vuelta escrito
+con las constantes, `pi_2`, `pi` y `pi2`, es exacto: una vuelta entera no gira
+nada, bit a bit.
 
 ### La sonda de paleta
 
@@ -1506,7 +1525,7 @@ diálogo tiene cuatro campos.
 
 | campo | |
 | --- | --- |
-| **Teselado** | qué teselado, con el número con que lo conoce `randsctile` y su nombre: **3: hexágonos**, donde empieza. La pestaña Teselados de Ayuda → Referencia de fórmulas de usuario tiene una imagen de cada uno |
+| **Teselado** | qué teselado, con el número con que lo conoce `randsctile` y su nombre: **3: hexágonos**, donde empieza. La pestaña Teselados de Ayuda → Referencia de fórmulas de usuario tiene una imagen de cada uno, y el botón **Referencia de fórmulas...** del diálogo la abre ahí |
 | **Coloreado** | de dónde viene el color, en todas partes: **ángulo de z**, donde empieza; **ángulo en torno al centro de la tesela**, el de la tesela en la que cae el punto, que hace de cada tesela una pequeña rueda de color; **zmag**, el valor del modo de ese nombre; **ninguno**, nada más que las teselas |
 | **Teselas** | cómo se separa cada tesela de sus vecinas: **cada una desplazada en una cantidad propia**, a lo largo de la paleta, donde empieza; **sombreadas del centro al borde**, lo mismo, y desplazada un octavo más de los colores de una vuelta del centro al borde, como un bisel; **con el borde marcado**, lo mismo, y la parte exterior de la tesela desplazada la mitad de los colores de una vuelta más; **un color liso cada una**, un color propio, venga de donde venga el color |
 | **Intensidad** | cuánto se separan las teselas a lo largo de la paleta: multiplica cada cantidad propia de una tesela, su desplazamiento, el bisel de **sombreadas del centro al borde** y el borde de **con el borde marcado**. En `1`, donde empieza, las teselas son como se describen aquí; en `0` solo queda aquello de lo que viene el color, así que **ángulo de z** es una descomposición simple y **zmag** el zmag simple; en medio las teselas apenas se ven, y por encima de `1` se ven más. Medido con **Vista → Sonda de paleta (haz clic en un punto)**, en `1` una tesela se desplaza hasta unos diez lugares, en cualquier estilo y en cualquier paleta, así que `0.1` la desplaza hasta un lugar y `0.01` hasta una décima |
