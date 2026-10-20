@@ -160,6 +160,13 @@ set turned the same way. A whole number of quarter turns written with the
 constants, `pi_2`, `pi` and `pi2`, is exact: a whole turn is no turn at all, to
 the bit.
 
+**The smallest or largest of many: `minmc(z1, z2, ...)` and
+`maxmc(z1, z2, ...)`.** The smallest, or the largest, modulus among all the
+arguments, gathered from left to right, held at the angle of `z1`:
+`minmc(z, p, p2)` is as long as the shortest of the three and points where `z`
+points. With two arguments they are `minm` and `maxm`, to the bit; an empty
+place is passed over, and one argument alone is `z1` itself.
+
 ### The palette probe
 
 **View → Palette probe (click a point)** turns the pointer into a probe: click

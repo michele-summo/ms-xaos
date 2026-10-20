@@ -174,6 +174,13 @@ Mandelbrot tourné de même. Un nombre entier de quarts de tour écrit avec les
 constantes, `pi_2`, `pi` et `pi2`, est exact : un tour complet ne tourne pas du
 tout, au bit près.
 
+**Le plus petit ou le plus grand de plusieurs : `minmc(z1, z2, ...)` et
+`maxmc(z1, z2, ...)`.** Le plus petit, ou le plus grand, module de tous les
+arguments, recueilli de gauche à droite et maintenu à l'angle de `z1` :
+`minmc(z, p, p2)` est aussi long que le plus court des trois et pointe là où
+pointe `z`. Avec deux arguments, ce sont `minm` et `maxm`, au bit près ; une
+place vide est sautée, et un seul argument est `z1` lui-même.
+
 ### La sonde de palette
 
 **Vue → Sonde de palette (cliquer sur un point)** transforme le pointeur en

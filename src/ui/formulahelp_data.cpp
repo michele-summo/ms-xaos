@@ -79,6 +79,9 @@ const struct formula_help_row formula_help_functions[] = {
     {"maxr", "z, threshold", QT_TRANSLATE_NOOP("FormulaHelp", "the larger real part; imaginary part taken from z"), NULL}, /* 2 */
     {"maxi", "z, threshold", QT_TRANSLATE_NOOP("FormulaHelp", "the larger imaginary part; real part taken from z"), NULL}, /* 2 */
     {"maxm", "z, threshold", QT_TRANSLATE_NOOP("FormulaHelp", "the larger modulus, held at the angle of z"), NULL}, /* 2 */
+    {NULL, NULL, NULL, QT_TRANSLATE_NOOP("FormulaHelp", "smallest or largest modulus of any number")},
+    {"minmc", "z1, z2, ...", QT_TRANSLATE_NOOP("FormulaHelp", "the smallest modulus of all the arguments, held at the angle of z1; with two, minm"), NULL}, /* variadic */
+    {"maxmc", "z1, z2, ...", QT_TRANSLATE_NOOP("FormulaHelp", "the largest modulus of all the arguments, held at the angle of z1; with two, maxm"), NULL}, /* variadic */
     {NULL, NULL, NULL, QT_TRANSLATE_NOOP("FormulaHelp", "mid(z, low, high) confines z to the range low..high.")},
     {"mid", "z, low, high", QT_TRANSLATE_NOOP("FormulaHelp", "both components confined"), NULL}, /* 3 */
     {"midr", "z, low, high", QT_TRANSLATE_NOOP("FormulaHelp", "real part confined; imaginary part taken from z"), NULL}, /* 3 */

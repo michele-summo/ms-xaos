@@ -173,6 +173,13 @@ Mandelbrot ruotato allo stesso modo. Un numero intero di quarti di giro scritto
 con le costanti, `pi_2`, `pi` e `pi2`, è esatto: un giro intero non ruota
 affatto, bit per bit.
 
+**Il minimo o il massimo di tanti: `minmc(z1, z2, ...)` e
+`maxmc(z1, z2, ...)`.** Il modulo minimo, o massimo, fra tutti gli argomenti,
+raccolto da sinistra a destra e tenuto all'angolo di `z1`: `minmc(z, p, p2)` è
+lungo quanto il più corto dei tre e punta dove punta `z`. Con due argomenti
+sono `minm` e `maxm`, fino all'ultimo bit; un posto vuoto viene saltato, e un
+solo argomento è `z1` stesso.
+
 ### La sonda della tavolozza
 
 **Vista → Sonda della tavolozza (clic su un punto)** trasforma il puntatore in
