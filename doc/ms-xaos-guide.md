@@ -231,9 +231,9 @@ The formula used last is shown faint in the bar: the whole of it while the bar
 is empty, and the rest of it after what you have typed for as long as what you
 type is how it begins. Tab puts it in the bar whole. Once what you type goes
 another way the faint text goes too, and Tab moves on to the buttons as before.
-The bar opens empty, with that formula faint in it, and OK on an empty bar uses
-it; only the very first time, before any formula has been used, does it open
-with the formula in use, `z^2+c`.
+The bar opens with the formula in use written out in it, to be changed or kept,
+and Up brings in the ones used before it. Emptied, it shows the formula used
+last faint, and OK on an empty bar uses it.
 
 **View → Status** shows the formula the same way: on one line if it fits the
 window, on two if not — the second under the first, going on between names —
@@ -329,18 +329,21 @@ suffixes that stand for the calls made on them most often:
 | `_br` | `bshipr(…)` |
 | `_pM` | `parchment(…, M)` |
 | `_paM` | `parchmenta(…, M)` |
+| `_rNtD` | `rotate(…, N/D*pi)` |
 
 They are read from left to right, each wrapping what the ones before it made:
 `z_p3` is `parchment(z,3)`, `c_b_p2` is `parchment(bship(c),2)` and `p12_p2_p3`
-is `parchment(parchment(p12,2),3)`. *M* is part of the name, so it is written in
-figures — a whole number, one or more; `z_p0` is refused with a message that
-says so. Not on `n`, which is a count and has no second component for any of
-them to work on.
+is `parchment(parchment(p12,2),3)`. *M* is part of the name, so it is written
+in figures — a whole number, one or more; `z_p0` is refused with a message that
+says so. A turn, `_rNtD`, is *N*/*D* of half a turn clockwise, written in
+figures the same way: `p4_r3t7` is `rotate(p4,3/7*pi)`; *D* is one or more,
+while *N* may be 0, which is no turn at all. Not on `n`, which is a count and
+has no second component for any of them to work on.
 
 They are spelled out as the calls before the formula is read, so a suffixed
 variable draws exactly what the calls written out draw and costs what they
 cost; the formula is saved as it was written. Anything that is not one of the
-five is left alone and refused as the unknown name it is.
+six is left alone and refused as the unknown name it is.
 
 **Removed.** `powi`, `powdc` and `logcn` were second names for `pow` and
 `logn`; `rad`, `deg` and `sign` were listed with no implementation behind them,

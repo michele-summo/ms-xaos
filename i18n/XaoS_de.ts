@@ -711,7 +711,7 @@
     </message>
     <message>
         <location filename="../src/ui/customdialog.cpp" line="407"/>
-        <location filename="../src/ui/mainwindow.cpp" line="1609"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1607"/>
         <source>Formula reference...</source>
         <translation>Formelreferenz...</translation>
     </message>
@@ -756,19 +756,19 @@
         <translation>An der Achse zentrieren:</translation>
     </message>
     <message>
-        <location filename="../src/ui/mainwindow.cpp" line="1527"/>
-        <location filename="../src/ui/mainwindow.cpp" line="1528"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1525"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1526"/>
         <source>Older formula (Up)</source>
         <translation>Ältere Formel (Pfeil nach oben)</translation>
     </message>
     <message>
-        <location filename="../src/ui/mainwindow.cpp" line="1533"/>
-        <location filename="../src/ui/mainwindow.cpp" line="1534"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1531"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1532"/>
         <source>Newer formula (Down)</source>
         <translation>Neuere Formel (Pfeil nach unten)</translation>
     </message>
     <message>
-        <location filename="../src/ui/mainwindow.cpp" line="1592"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1590"/>
         <source>History...</source>
         <translation>Verlauf...</translation>
     </message>
@@ -2638,67 +2638,72 @@
         <translation>parchmenta(..., M)</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="264"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="259"/>
+        <source>rotate(..., N/D*pi): turned clockwise by N/D of half a turn, p4_r3t7 being rotate(p4,3/7*pi). D is one or more, N may be 0</source>
+        <translation>rotate(..., N/D*pi): im Uhrzeigersinn um N/D einer halben Umdrehung gedreht; p4_r3t7 ist rotate(p4,3/7*pi). D ist 1 oder mehr, N darf 0 sein</translation>
+    </message>
+    <message>
+        <location filename="../src/ui/formulahelp_data.cpp" line="265"/>
         <source>writing a value</source>
         <translation>einen Wert schreiben</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="265"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="266"/>
         <source>a complex number given by its two parts, as in {0,2} for 2i</source>
         <translation>eine komplexe Zahl, durch ihre beiden Teile gegeben, wie in {0,2} für 2i</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="266"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="267"/>
         <source>the imaginary unit, as the shipped formulas use it</source>
         <translation>die imaginäre Einheit, wie die mitgelieferten Formeln sie verwenden</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="267"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="268"/>
         <source>a real number, read at the full precision of this build</source>
         <translation>eine reelle Zahl, mit der vollen Genauigkeit dieses Builds gelesen</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="268"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="269"/>
         <source>calling</source>
         <translation>aufrufen</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="269"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="270"/>
         <source>arguments are separated by a comma, and by nothing else: a semicolon used to serve as well and is now refused where it stands</source>
         <translation>Argumente werden durch ein Komma getrennt und durch nichts anderes: ein Semikolon ging früher auch und wird nun abgelehnt, wo es steht</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="270"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="271"/>
         <source>an argument shown in square brackets may be left out; the value shown is what the function uses instead</source>
         <translation>ein in eckigen Klammern gezeigtes Argument kann weggelassen werden; der gezeigte Wert ist der, den die Funktion stattdessen verwendet</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="271"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="272"/>
         <source>one may be left out in the middle as well, by leaving its place empty; spaces make no difference</source>
         <translation>man kann auch eines in der Mitte weglassen, indem man seinen Platz leer lässt; Leerzeichen spielen keine Rolle</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="272"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="273"/>
         <source>an empty coefficient of poly is a term that is not there: this is z^2 + 1</source>
         <translation>ein leerer Koeffizient von poly ist ein Term, der nicht da ist: dies ist z^2 + 1</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="273"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="274"/>
         <source>an empty branch of ifiter or ifiterl repeats the one before it: two iterations of a, then b</source>
         <translation>ein leerer Zweig von ifiter oder ifiterl wiederholt den vorigen: zwei Iterationen von a, dann b</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="274"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="275"/>
         <source>multiplication may be left out before a name or a bracket</source>
         <translation>die Multiplikation kann vor einem Namen oder einer Klammer weggelassen werden</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="275"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="276"/>
         <source>the same, between two bracketed groups</source>
         <translation>ebenso zwischen zwei geklammerten Gruppen</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="276"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="277"/>
         <source>a leading minus binds looser than a power: it means -(z^2)</source>
         <translation>ein führendes Minus bindet schwächer als eine Potenz: es bedeutet -(z^2)</translation>
     </message>

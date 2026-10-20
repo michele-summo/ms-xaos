@@ -256,6 +256,7 @@ const struct formula_help_row formula_help_variables[] = {
     {"_br", "", QT_TRANSLATE_NOOP("FormulaHelp", "bshipr(...)"), NULL},
     {"_pM", "", QT_TRANSLATE_NOOP("FormulaHelp", "parchment(..., M)"), NULL},
     {"_paM", "", QT_TRANSLATE_NOOP("FormulaHelp", "parchmenta(..., M)"), NULL},
+    {"_rNtD", "", QT_TRANSLATE_NOOP("FormulaHelp", "rotate(..., N/D*pi): turned clockwise by N/D of half a turn, p4_r3t7 being rotate(p4,3/7*pi). D is one or more, N may be 0"), NULL},
     {NULL, NULL, NULL, NULL}};
 
 /* How values are written. These are properties of the parser rather than

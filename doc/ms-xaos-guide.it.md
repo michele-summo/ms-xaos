@@ -247,9 +247,9 @@ L'ultima formula usata è mostrata in grigio chiaro nella barra: intera finché
 la barra è vuota, e il resto dopo ciò che hai scritto finché ciò che scrivi ne
 è l'inizio. Tab la mette intera nella barra. Appena ciò che scrivi prende
 un'altra strada il testo in grigio sparisce, e Tab passa ai pulsanti come
-prima. La barra si apre vuota, con quella formula in grigio, e OK su una barra
-vuota usa quella; solo la primissima volta, quando non è ancora stata usata
-nessuna formula, si apre con la formula in uso, `z^2+c`.
+prima. La barra si apre con la formula in uso scritta per intero, da cambiare o
+tenere, e Freccia su porta quelle usate prima. Svuotata, mostra in grigio la
+formula usata per ultima, e OK su una barra vuota usa quella.
 
 **Vista → Stato** mostra la formula allo stesso modo: su una riga se ci sta
 nella finestra, su due se no — la seconda sotto la prima, andando a capo tra i
@@ -349,19 +349,23 @@ suffissi che stanno per le chiamate fatte più spesso su di essi:
 | `_br` | `bshipr(…)` |
 | `_pM` | `parchment(…, M)` |
 | `_paM` | `parchmenta(…, M)` |
+| `_rNtD` | `rotate(…, N/D*pi)` |
 
 Si leggono da sinistra a destra, ciascuno avvolgendo ciò che hanno prodotto i
 precedenti: `z_p3` è `parchment(z,3)`, `c_b_p2` è `parchment(bship(c),2)` e
 `p12_p2_p3` è `parchment(parchment(p12,2),3)`. *M* fa parte del nome, quindi si
 scrive in cifre — un numero intero, da uno in su; `z_p0` è rifiutato con un
-messaggio che lo dice. Non su `n`, che è un conteggio e non ha una seconda
-componente su cui uno di essi possa lavorare.
+messaggio che lo dice. Una rotazione, `_rNtD`, è di *N*/*D* di mezzo giro in
+senso orario, scritta in cifre allo stesso modo: `p4_r3t7` è
+`rotate(p4,3/7*pi)`; *D* va da uno in su, mentre *N* può essere 0, cioè nessuna
+rotazione. Non su `n`, che è un conteggio e non ha una seconda componente su
+cui uno di essi possa lavorare.
 
 Vengono espansi nelle chiamate prima che la formula sia letta, così una
 variabile con suffisso disegna esattamente ciò che disegnano le chiamate
 scritte per esteso e costa quanto costano; la formula viene salvata come è
-stata scritta. Tutto ciò che non è uno dei cinque viene lasciato com'è e
-rifiutato come il nome sconosciuto che è.
+stata scritta. Tutto ciò che non è uno dei sei viene lasciato com'è e rifiutato
+come il nome sconosciuto che è.
 
 **Rimossi.** `powi`, `powdc` e `logcn` erano secondi nomi di `pow` e `logn`;
 `rad`, `deg` e `sign` erano elencati senza alcuna implementazione dietro, e un

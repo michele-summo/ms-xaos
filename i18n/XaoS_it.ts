@@ -711,7 +711,7 @@
     </message>
     <message>
         <location filename="../src/ui/customdialog.cpp" line="407"/>
-        <location filename="../src/ui/mainwindow.cpp" line="1609"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1607"/>
         <source>Formula reference...</source>
         <translation>Riferimento delle formule...</translation>
     </message>
@@ -756,19 +756,19 @@
         <translation>Centra sull&apos;asse:</translation>
     </message>
     <message>
-        <location filename="../src/ui/mainwindow.cpp" line="1527"/>
-        <location filename="../src/ui/mainwindow.cpp" line="1528"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1525"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1526"/>
         <source>Older formula (Up)</source>
         <translation>Formula più vecchia (freccia su)</translation>
     </message>
     <message>
-        <location filename="../src/ui/mainwindow.cpp" line="1533"/>
-        <location filename="../src/ui/mainwindow.cpp" line="1534"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1531"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1532"/>
         <source>Newer formula (Down)</source>
         <translation>Formula più recente (freccia giù)</translation>
     </message>
     <message>
-        <location filename="../src/ui/mainwindow.cpp" line="1592"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1590"/>
         <source>History...</source>
         <translation>Cronologia...</translation>
     </message>
@@ -2638,67 +2638,72 @@
         <translation>parchmenta(..., M)</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="264"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="259"/>
+        <source>rotate(..., N/D*pi): turned clockwise by N/D of half a turn, p4_r3t7 being rotate(p4,3/7*pi). D is one or more, N may be 0</source>
+        <translation>rotate(..., N/D*pi): ruotato in senso orario di N/D di mezzo giro; p4_r3t7 è rotate(p4,3/7*pi). D va da 1 in su, N può essere 0</translation>
+    </message>
+    <message>
+        <location filename="../src/ui/formulahelp_data.cpp" line="265"/>
         <source>writing a value</source>
         <translation>scrivere un valore</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="265"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="266"/>
         <source>a complex number given by its two parts, as in {0,2} for 2i</source>
         <translation>un numero complesso dato dalle sue due parti, come in {0,2} per 2i</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="266"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="267"/>
         <source>the imaginary unit, as the shipped formulas use it</source>
         <translation>l&apos;unità immaginaria, come la usano le formule incluse</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="267"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="268"/>
         <source>a real number, read at the full precision of this build</source>
         <translation>un numero reale, letto alla piena precisione di questa build</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="268"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="269"/>
         <source>calling</source>
         <translation>chiamare</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="269"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="270"/>
         <source>arguments are separated by a comma, and by nothing else: a semicolon used to serve as well and is now refused where it stands</source>
         <translation>gli argomenti sono separati da una virgola, e da nient&apos;altro: un tempo valeva anche il punto e virgola, che ora è rifiutato dove compare</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="270"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="271"/>
         <source>an argument shown in square brackets may be left out; the value shown is what the function uses instead</source>
         <translation>un argomento mostrato tra parentesi quadre si può omettere; il valore mostrato è quello che la funzione usa al suo posto</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="271"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="272"/>
         <source>one may be left out in the middle as well, by leaving its place empty; spaces make no difference</source>
         <translation>se ne può omettere uno anche in mezzo, lasciandone vuoto il posto; gli spazi non fanno differenza</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="272"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="273"/>
         <source>an empty coefficient of poly is a term that is not there: this is z^2 + 1</source>
         <translation>un coefficiente vuoto di poly è un termine che non c&apos;è: questo è z^2 + 1</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="273"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="274"/>
         <source>an empty branch of ifiter or ifiterl repeats the one before it: two iterations of a, then b</source>
         <translation>un ramo vuoto di ifiter o ifiterl ripete quello prima: due iterazioni di a, poi b</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="274"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="275"/>
         <source>multiplication may be left out before a name or a bracket</source>
         <translation>la moltiplicazione si può omettere prima di un nome o di una parentesi</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="275"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="276"/>
         <source>the same, between two bracketed groups</source>
         <translation>lo stesso, tra due gruppi tra parentesi</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="276"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="277"/>
         <source>a leading minus binds looser than a power: it means -(z^2)</source>
         <translation>un meno iniziale lega meno di una potenza: significa -(z^2)</translation>
     </message>
@@ -4425,7 +4430,7 @@
     <message>
         <location filename="../src/ui/formulahelp.cpp" line="292"/>
         <source>A random polynomial in z, written as poly(z, k1, ..., km). Its length is m, the number of coefficients, and its degree m - 1. Each coefficient is a complex number with a magnitude drawn between the minimum and the maximum -- 0 and 1 when left empty -- and an argument drawn at random: round the whole turn, or, given a delta in degrees, the first round the whole turn and every other within delta degrees across, centred on the first&apos;s. There is no c in it: z starts at the pixel, so the picture is the polynomial&apos;s own filled Julia set, the same in mandelbrot and julia mode. Add c where you want it, as in poly(...) + c.</source>
-        <translation>Un polinomio casuale in z, scritto come poly(z, k1, ..., km). La sua lunghezza è m, il numero dei coefficienti, e il suo grado m - 1. Ogni coefficiente è un numero complesso con un modulo estratto tra il minimo e il massimo -- 0 e 1 se lasciati vuoti -- e un argomento estratto a caso: su tutto il giro, oppure, dato un delta in gradi, il primo su tutto il giro e ogni altro entro un'ampiezza di delta gradi centrata su quello del primo. Non contiene c: z parte dal pixel, quindi l&apos;immagine è l&apos;insieme di Julia pieno del polinomio stesso, uguale in modalità mandelbrot e julia. Aggiungi c dove lo vuoi, come in poly(...) + c.</translation>
+        <translation>Un polinomio casuale in z, scritto come poly(z, k1, ..., km). La sua lunghezza è m, il numero dei coefficienti, e il suo grado m - 1. Ogni coefficiente è un numero complesso con un modulo estratto tra il minimo e il massimo -- 0 e 1 se lasciati vuoti -- e un argomento estratto a caso: su tutto il giro, oppure, dato un delta in gradi, il primo su tutto il giro e ogni altro entro un&apos;ampiezza di delta gradi centrata su quello del primo. Non contiene c: z parte dal pixel, quindi l&apos;immagine è l&apos;insieme di Julia pieno del polinomio stesso, uguale in modalità mandelbrot e julia. Aggiungi c dove lo vuoi, come in poly(...) + c.</translation>
     </message>
     <message>
         <location filename="../src/ui/formulahelp.cpp" line="311"/>

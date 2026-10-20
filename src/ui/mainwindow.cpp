@@ -1508,12 +1508,10 @@ void MainWindow::showDialog(const char *name)
                  * box, one line wide however long the formula. */
                 FormulaEdit *edit = new FormulaEdit(qDialog);
                 edit->setObjectName(label + "-data");
-                /* Empty, with the formula used last faint in it, once there
-                 * is one: the formula in use only the first time, when there
-                 * is nothing faint to show. */
+                /* The formula in use, written out, to be changed or kept;
+                 * the ones used before it are a step up away. */
                 const QStringList used = formula_history();
-                if (used.isEmpty())
-                    edit->setPlainText(QString::fromUtf8(dialog->defstr));
+                edit->setPlainText(QString::fromUtf8(dialog->defstr));
                 edit->moveCursor(QTextCursor::End);
 
                 /* Beside the bar, a step back through the formulas used

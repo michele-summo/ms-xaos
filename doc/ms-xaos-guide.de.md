@@ -257,10 +257,10 @@ Die zuletzt verwendete Formel steht blass in der Leiste: ganz, solange die
 Leiste leer ist, und ihr Rest hinter dem Getippten, solange das Getippte ihr
 Anfang ist. Tab setzt sie ganz in die Leiste. Sobald das Getippte anders
 weitergeht, verschwindet der blasse Text, und Tab geht wie bisher zu den
-Schaltflächen weiter. Die Leiste öffnet sich leer, mit dieser Formel blass
-darin, und OK bei leerer Leiste verwendet sie; nur beim allerersten Mal, bevor
-überhaupt eine Formel verwendet wurde, öffnet sie sich mit der aktuellen
-Formel, `z^2+c`.
+Schaltflächen weiter. Die Leiste öffnet sich mit der aktuellen Formel
+ausgeschrieben darin, zum Ändern oder Behalten, und Pfeil nach oben holt die
+davor verwendeten. Geleert zeigt sie die zuletzt verwendete Formel blass, und
+OK bei leerer Leiste verwendet sie.
 
 **Ausschnitt → Status** zeigt die Formel genauso: in einer Zeile, wenn sie ins
 Fenster passt, sonst in zwei — die zweite unter der ersten, zwischen Namen
@@ -365,20 +365,23 @@ Suffixe, die für die am häufigsten darauf angewandten Aufrufe stehen:
 | `_br` | `bshipr(…)` |
 | `_pM` | `parchment(…, M)` |
 | `_paM` | `parchmenta(…, M)` |
+| `_rNtD` | `rotate(…, N/D*pi)` |
 
 Sie werden von links nach rechts gelesen, jedes umschließt, was die vorigen
 ergeben haben: `z_p3` ist `parchment(z,3)`, `c_b_p2` ist
 `parchment(bship(c),2)` und `p12_p2_p3` ist `parchment(parchment(p12,2),3)`.
 *M* ist Teil des Namens, wird also in Ziffern geschrieben — eine ganze Zahl,
-eins oder mehr; `z_p0` wird mit einer Meldung abgelehnt, die das sagt. Nicht an
-`n`, das eine Anzahl ist und keine zweite Komponente hat, an der eines davon
-arbeiten könnte.
+eins oder mehr; `z_p0` wird mit einer Meldung abgelehnt, die das sagt. Eine
+Drehung, `_rNtD`, ist *N*/*D* einer halben Umdrehung im Uhrzeigersinn, ebenso
+in Ziffern geschrieben: `p4_r3t7` ist `rotate(p4,3/7*pi)`; *D* ist eins oder
+mehr, *N* darf 0 sein, also gar keine Drehung. Nicht an `n`, das eine Anzahl
+ist und keine zweite Komponente hat, an der eines davon arbeiten könnte.
 
 Sie werden zu den Aufrufen ausgeschrieben, bevor die Formel gelesen wird, also
 zeichnet eine Variable mit Suffix genau, was die ausgeschriebenen Aufrufe
 zeichnen, und kostet, was sie kosten; die Formel wird so gespeichert, wie sie
-geschrieben wurde. Alles, was keines der fünf ist, bleibt, wie es ist, und wird
-als der unbekannte Name abgelehnt, der es ist.
+geschrieben wurde. Alles, was keines der sechs ist, bleibt, wie es ist, und
+wird als der unbekannte Name abgelehnt, der es ist.
 
 **Entfernt.** `powi`, `powdc` und `logcn` waren zweite Namen für `pow` und
 `logn`; `rad`, `deg` und `sign` waren ohne jede Implementierung dahinter
