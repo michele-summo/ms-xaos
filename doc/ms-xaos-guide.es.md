@@ -178,6 +178,18 @@ salta, y un solo valor es `z1` mismo. El mismo módulo quiere decir el mismo
 salvo los últimos bits, así que `argminm(z^2, z_r90^2)` es `z^2` en todas
 partes.
 
+**Las partes reales e imaginarias mínimas o máximas: `argminx(z1, z2, ...)`,
+`argmaxx(z1, z2, ...)`, `argminxa(z1, z2, ...)` y `argmaxxa(z1, z2, ...)`.** Lo
+mismo sobre las partes reales y las partes imaginarias, cada una por separado,
+de modo que la parte real puede venir de un valor y la imaginaria de otro:
+`argminx({1,2}, {-3,5}, {4,-6})` es `{-3,-6}`, y `argmaxx` de los mismos tres
+es `{4,5}`. `argminxa` y `argmaxxa` comparan por valor absoluto y conservan el
+signo: `argminxa({1,2}, {-3,5}, {4,-6})` es `{1,2}`, las partes más cercanas a
+cero. De dos partes iguales, la escrita primero; de `x` y `-x`, `argminxa` toma
+la negativa y `argmaxxa` la positiva, así que `argminxa({1,2}, {-1,-1}, {2,1})`
+es `{-1,-1}`. Como en `argminm`, valores absolutos que difieren en los últimos
+bits cuentan como iguales.
+
 ### La sonda de paleta
 
 **Vista → Sonda de paleta (haz clic en un punto)** convierte el puntero en una

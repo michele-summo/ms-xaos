@@ -186,6 +186,19 @@ Betrag der zuerst geschriebene; ein leerer Platz wird übergangen, und ein
 einzelner Wert ist `z1` selbst. Gleich heißt gleich bis auf die letzten Bits,
 daher ist `argminm(z^2, z_r90^2)` überall `z^2`.
 
+**Kleinste oder größte Real- und Imaginärteile: `argminx(z1, z2, ...)`,
+`argmaxx(z1, z2, ...)`, `argminxa(z1, z2, ...)` und `argmaxxa(z1, z2, ...)`.**
+Dasselbe über die Realteile und die Imaginärteile, jeder für sich genommen,
+sodass der Realteil von einem Wert und der Imaginärteil von einem anderen
+kommen kann: `argminx({1,2}, {-3,5}, {4,-6})` ist `{-3,-6}`, und `argmaxx`
+derselben drei ist `{4,5}`. `argminxa` und `argmaxxa` vergleichen nach
+Absolutbetrag und behalten das Vorzeichen: `argminxa({1,2}, {-3,5}, {4,-6})`
+ist `{1,2}`, die Teile, die null am nächsten liegen. Von zwei gleichen Teilen
+der zuerst geschriebene; von `x` und `-x` nimmt `argminxa` den negativen und
+`argmaxxa` den positiven, also ist `argminxa({1,2}, {-1,-1}, {2,1})` gleich
+`{-1,-1}`. Wie bei `argminm` gelten Absolutbeträge, die sich nur in den letzten
+Bits unterscheiden, als gleich.
+
 ### Die Palettensonde
 
 **Ausschnitt → Palettensonde (auf einen Punkt klicken)** macht den Mauszeiger

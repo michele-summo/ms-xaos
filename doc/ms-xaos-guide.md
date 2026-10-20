@@ -169,6 +169,18 @@ first; an empty place is passed over, and one value alone is `z1` itself. The
 same means the same to within the last few bits, so `argminm(z^2, z_r90^2)` is
 `z^2` everywhere.
 
+**The smallest or largest real and imaginary parts: `argminx(z1, z2, ...)`,
+`argmaxx(z1, z2, ...)`, `argminxa(z1, z2, ...)` and `argmaxxa(z1, z2, ...)`.**
+The same over the real parts and the imaginary parts, each taken on its own, so
+that the real part may come from one value and the imaginary part from another:
+`argminx({1,2}, {-3,5}, {4,-6})` is `{-3,-6}`, and `argmaxx` of the same three
+is `{4,5}`. `argminxa` and `argmaxxa` compare by absolute value and keep the
+sign: `argminxa({1,2}, {-3,5}, {4,-6})` is `{1,2}`, the parts nearest to
+nought. Of two equal parts, the one written first; of `x` and `-x`, `argminxa`
+takes the negative one and `argmaxxa` the positive one, so
+`argminxa({1,2}, {-1,-1}, {2,1})` is `{-1,-1}`. As with `argminm`, absolute
+values a few bits apart count as the same.
+
 ### The palette probe
 
 **View → Palette probe (click a point)** turns the pointer into a probe: click

@@ -182,6 +182,18 @@ un posto vuoto viene saltato, e un solo valore è `z1` stesso. Lo stesso modulo
 vuol dire lo stesso a meno degli ultimi bit, quindi `argminm(z^2, z_r90^2)` è
 `z^2` ovunque.
 
+**Le parti reali e immaginarie minime o massime: `argminx(z1, z2, ...)`,
+`argmaxx(z1, z2, ...)`, `argminxa(z1, z2, ...)` e `argmaxxa(z1, z2, ...)`.** Lo
+stesso sulle parti reali e sulle parti immaginarie, ciascuna per conto suo,
+così che la parte reale può venire da un valore e quella immaginaria da un
+altro: `argminx({1,2}, {-3,5}, {4,-6})` è `{-3,-6}`, e `argmaxx` degli stessi
+tre è `{4,5}`. `argminxa` e `argmaxxa` confrontano il valore assoluto e tengono
+il segno: `argminxa({1,2}, {-3,5}, {4,-6})` è `{1,2}`, le parti più vicine a
+zero. Fra due parti uguali, quella scritta prima; fra `x` e `-x`, `argminxa`
+prende la negativa e `argmaxxa` la positiva, quindi
+`argminxa({1,2}, {-1,-1}, {2,1})` è `{-1,-1}`. Come per `argminm`, valori
+assoluti che differiscono negli ultimi bit contano come uguali.
+
 ### La sonda della tavolozza
 
 **Vista → Sonda della tavolozza (clic su un punto)** trasforma il puntatore in

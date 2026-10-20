@@ -183,6 +183,20 @@ première ; une place vide est sautée, et une seule valeur est `z1` lui-même. 
 même module veut dire le même aux derniers bits près, si bien que
 `argminm(z^2, z_r90^2)` est `z^2` partout.
 
+**Les parties réelles et imaginaires les plus petites ou les plus grandes :
+`argminx(z1, z2, ...)`, `argmaxx(z1, z2, ...)`, `argminxa(z1, z2, ...)` et
+`argmaxxa(z1, z2, ...)`.** La même chose sur les parties réelles et les parties
+imaginaires, chacune pour elle-même, de sorte que la partie réelle peut venir
+d'une valeur et la partie imaginaire d'une autre :
+`argminx({1,2}, {-3,5}, {4,-6})` vaut `{-3,-6}`, et `argmaxx` des trois mêmes
+vaut `{4,5}`. `argminxa` et `argmaxxa` comparent en valeur absolue et gardent
+le signe : `argminxa({1,2}, {-3,5}, {4,-6})` vaut `{1,2}`, les parties les plus
+proches de zéro. De deux parties égales, celle écrite en premier ; de `x` et
+`-x`, `argminxa` prend la négative et `argmaxxa` la positive, donc
+`argminxa({1,2}, {-1,-1}, {2,1})` vaut `{-1,-1}`. Comme pour `argminm`, des
+valeurs absolues qui ne diffèrent que par les derniers bits comptent comme
+égales.
+
 ### La sonde de palette
 
 **Vue → Sonde de palette (cliquer sur un point)** transforme le pointeur en

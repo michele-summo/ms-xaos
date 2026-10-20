@@ -82,6 +82,11 @@ const struct formula_help_row formula_help_functions[] = {
     {NULL, NULL, NULL, QT_TRANSLATE_NOOP("FormulaHelp", "argmin and argmax by modulus, over any number")},
     {"argminm", "z1, z2, ...", QT_TRANSLATE_NOOP("FormulaHelp", "the one of z1, z2, ... with the smallest modulus, whole; of two alike, the first"), NULL}, /* variadic */
     {"argmaxm", "z1, z2, ...", QT_TRANSLATE_NOOP("FormulaHelp", "the one of z1, z2, ... with the largest modulus, whole; of two alike, the first"), NULL}, /* variadic */
+    {NULL, NULL, NULL, QT_TRANSLATE_NOOP("FormulaHelp", "smallest and largest real part and imaginary part, over any number, as they are or by absolute value")},
+    {"argminx", "z1, z2, ...", QT_TRANSLATE_NOOP("FormulaHelp", "the smallest of the real parts and the smallest of the imaginary parts, each on its own"), NULL}, /* variadic */
+    {"argmaxx", "z1, z2, ...", QT_TRANSLATE_NOOP("FormulaHelp", "the largest of the real parts and the largest of the imaginary parts, each on its own"), NULL}, /* variadic */
+    {"argminxa", "z1, z2, ...", QT_TRANSLATE_NOOP("FormulaHelp", "the real part and the imaginary part nearest to 0, each on its own and with its sign; of x and -x, the negative"), NULL}, /* variadic */
+    {"argmaxxa", "z1, z2, ...", QT_TRANSLATE_NOOP("FormulaHelp", "the real part and the imaginary part farthest from 0, each on its own and with its sign; of x and -x, the positive"), NULL}, /* variadic */
     {NULL, NULL, NULL, QT_TRANSLATE_NOOP("FormulaHelp", "mid(z, low, high) confines z to the range low..high.")},
     {"mid", "z, low, high", QT_TRANSLATE_NOOP("FormulaHelp", "both components confined"), NULL}, /* 3 */
     {"midr", "z, low, high", QT_TRANSLATE_NOOP("FormulaHelp", "real part confined; imaginary part taken from z"), NULL}, /* 3 */
