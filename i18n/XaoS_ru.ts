@@ -1839,876 +1839,891 @@
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="82"/>
+        <source>argmin and argmax by modulus, over any number</source>
+        <translation>argmin и argmax по модулю, среди любого числа значений</translation>
+    </message>
+    <message>
+        <location filename="../src/ui/formulahelp_data.cpp" line="83"/>
+        <source>the one of z1, z2, ... with the smallest modulus, whole; of two alike, the first</source>
+        <translation>то из z1, z2, ..., у которого наименьший модуль, целиком; из двух равных — первое</translation>
+    </message>
+    <message>
+        <location filename="../src/ui/formulahelp_data.cpp" line="84"/>
+        <source>the one of z1, z2, ... with the largest modulus, whole; of two alike, the first</source>
+        <translation>то из z1, z2, ..., у которого наибольший модуль, целиком; из двух равных — первое</translation>
+    </message>
+    <message>
+        <location filename="../src/ui/formulahelp_data.cpp" line="85"/>
         <source>mid(z, low, high) confines z to the range low..high.</source>
         <translation>mid(z, low, high) ограничивает z диапазоном low..high.</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="83"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="86"/>
         <source>both components confined</source>
         <translation>ограничены обе компоненты</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="84"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="87"/>
         <source>real part confined; imaginary part taken from z</source>
         <translation>ограничена действительная часть; мнимая часть берётся из z</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="85"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="88"/>
         <source>imaginary part confined; real part taken from z</source>
         <translation>ограничена мнимая часть; действительная часть берётся из z</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="86"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="89"/>
         <source>modulus confined, held at the angle of z</source>
         <translation>ограничен модуль, при угле z</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="87"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="90"/>
         <source>real trigonometry applied to each component separately</source>
         <translation>действительная тригонометрия, применённая к каждой компоненте отдельно</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="88"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="91"/>
         <source>sin(real(z)) + i*cos(imag(z))</source>
         <translation>sin(real(z)) + i*cos(imag(z))</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="89"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="92"/>
         <source>cos(real(z)) + i*sin(imag(z))</source>
         <translation>cos(real(z)) + i*sin(imag(z))</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="90"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="93"/>
         <source>sin(real(z)); imaginary part passes through</source>
         <translation>sin(real(z)); мнимая часть проходит без изменений</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="91"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="94"/>
         <source>cos(real(z)); imaginary part passes through</source>
         <translation>cos(real(z)); мнимая часть проходит без изменений</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="92"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="95"/>
         <source>sin(imag(z)); real part passes through</source>
         <translation>sin(imag(z)); действительная часть проходит без изменений</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="93"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="96"/>
         <source>cos(imag(z)); real part passes through</source>
         <translation>cos(imag(z)); действительная часть проходит без изменений</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="94"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="97"/>
         <source>tan(real(z)) + i*cot(imag(z))</source>
         <translation>tan(real(z)) + i*cot(imag(z))</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="95"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="98"/>
         <source>cot(real(z)) + i*tan(imag(z))</source>
         <translation>cot(real(z)) + i*tan(imag(z))</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="96"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="99"/>
         <source>tan(real(z)); imaginary part passes through</source>
         <translation>tan(real(z)); мнимая часть проходит без изменений</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="97"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="100"/>
         <source>cot(real(z)); imaginary part passes through</source>
         <translation>cot(real(z)); мнимая часть проходит без изменений</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="98"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="101"/>
         <source>tan(imag(z)); real part passes through</source>
         <translation>tan(imag(z)); действительная часть проходит без изменений</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="99"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="102"/>
         <source>cot(imag(z)); real part passes through</source>
         <translation>cot(imag(z)); действительная часть проходит без изменений</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="100"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="103"/>
         <source>waveforms, again component by component</source>
         <translation>формы волн, снова покомпонентно</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="101"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="104"/>
         <source>each component truncated towards zero</source>
         <translation>каждая компонента, усечённая к нулю</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="102"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="105"/>
         <source>each component less its floor, a ramp in [0, 1)</source>
         <translation>каждая компонента минус её округление вниз, пила в [0, 1)</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="103"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="106"/>
         <source>triangle wave of period 2, in [-1, 1], on each component</source>
         <translation>треугольная волна периода 2, в [-1, 1], на каждой компоненте</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="104"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="107"/>
         <source>assorted</source>
         <translation>разное</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="105"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="108"/>
         <source>|z|^power * e^(i*angle_factor*arg(z)): the modulus raised to power, the angle multiplied by angle_factor</source>
         <translation>|z|^power * e^(i*angle_factor*arg(z)): модуль в степени power, угол, умноженный на angle_factor</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="106"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="109"/>
         <source>1/z softened so that it stays finite at the origin: real(z)/(|z|^2 + real(softening)) - i*imag(z)/(|z|^2 + imag(softening))</source>
         <translation>1/z, смягчённое так, чтобы оставаться конечным в начале координат: real(z)/(|z|^2 + real(softening)) - i*imag(z)/(|z|^2 + imag(softening))</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="107"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="110"/>
         <source>atan2 of each pair of components; differs from atan2 on real arguments only</source>
         <translation>atan2 от каждой пары компонент; отличается от atan2 только на действительных аргументах</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="108"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="111"/>
         <source>folds z about centre onto a polygon with that many sides, the corner radius raised to power</source>
         <translation>складывает z вокруг centre на многоугольник с таким числом сторон, радиус углов в степени power</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="109"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="112"/>
         <source>quantises the angle of z into |sectors| sectors, keeping |z|</source>
         <translation>квантует угол z на |sectors| секторов, сохраняя |z|</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="110"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="113"/>
         <source>as parchment, but mirroring alternate half sectors</source>
         <translation>как parchment, но с отражением чередующихся полусекторов</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="111"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="114"/>
         <source>z turned clockwise about the origin by angle radians, the real part of it: z*e^(-i*angle). Whatever the view&apos;s own angle is; a picture drawn from a point put through it turns clockwise with it, as fbm(rotate(x,0.5),7)</source>
         <translation>z, повёрнутое по часовой стрелке вокруг начала координат на angle радиан (берётся действительная часть): z*e^(-i*angle), независимо от угла вида. Изображение, построенное по точке, пропущенной через rotate, поворачивается вместе с ней по часовой стрелке, например fbm(rotate(x,0.5),7)</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="112"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="115"/>
         <source>snapping to a grid of step 1/n; n == 0 leaves the value alone</source>
         <translation>привязка к сетке с шагом 1/n; n == 0 оставляет значение как есть</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="113"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="116"/>
         <source>both components, step 1/|n|</source>
         <translation>обе компоненты, шаг 1/|n|</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="114"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="117"/>
         <source>real step 1/real(n), imaginary step 1/imag(n)</source>
         <translation>действительный шаг 1/real(n), мнимый шаг 1/imag(n)</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="115"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="118"/>
         <source>real component only, step 1/|n|</source>
         <translation>только действительная компонента, шаг 1/|n|</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="116"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="119"/>
         <source>imaginary component only, step 1/|n|</source>
         <translation>только мнимая компонента, шаг 1/|n|</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="117"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="120"/>
         <source>the modulus, step 1/|n|, angle kept</source>
         <translation>модуль, шаг 1/|n|, угол сохраняется</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="118"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="121"/>
         <source>the angle, step 1/|n| in radians, modulus kept</source>
         <translation>угол, шаг 1/|n| в радианах, модуль сохраняется</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="119"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="122"/>
         <source>special functions, none of them elementary</source>
         <translation>специальные функции, ни одна не элементарная</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="120"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="123"/>
         <source>error function over the complex plane</source>
         <translation>функция ошибок на комплексной плоскости</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="121"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="124"/>
         <source>the gamma function over the complex plane</source>
         <translation>гамма-функция на комплексной плоскости</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="122"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="125"/>
         <source>principal branch of the Lambert W of z</source>
         <translation>главная ветвь W-функции Ламберта от z</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="123"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="126"/>
         <source>choosing by iteration</source>
         <translation>выбор по итерации</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="124"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="127"/>
         <source>picks one argument by iteration number, cycling: the first on the first iteration, the second on the next, and round again; only that one runs</source>
         <translation>выбирает один аргумент по номеру итерации, по кругу: первый на первой итерации, второй на следующей, и снова сначала; выполняется только он</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="125"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="128"/>
         <source>as ifiter, but holding the last argument once the iterations run out</source>
         <translation>как ifiter, но после окончания итераций остаётся на последнем аргументе</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="126"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="129"/>
         <source>last on the last iteration the limit allows, rest on the others; only the chosen one runs</source>
         <translation>last на последней итерации, которую допускает предел, rest на остальных; выполняется только выбранный</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="127"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="130"/>
         <source>before while the iteration is below n, after from n on; only the chosen one runs</source>
         <translation>before, пока итерация меньше n, after начиная с n; выполняется только выбранный</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="128"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="131"/>
         <source>randomness: all but the seed optional, and a new field every iteration; what the kaleidoscope and kaled_mirror do is in the Values tab</source>
         <translation>случайность: всё необязательно, кроме зерна, и новое поле на каждой итерации; что делают калейдоскоп и kaled_mirror, описано во вкладке «Значения»</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="129"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="132"/>
         <source>real(scale) times a random number in [0, 1); depends on call order, so a redraw differs</source>
         <translation>real(scale), умноженное на случайное число в [0, 1); зависит от порядка вызовов, поэтому перерисовка отличается</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="130"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="133"/>
         <source>coherent noise over the point: soft blobs, size wide and size high -- gradient noise, one octave of what fbm sums</source>
         <translation>когерентный шум по точке: мягкие пятна шириной size и высотой size -- градиентный шум, одна октава того, что суммирует fbm</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="131"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="134"/>
         <source>the same field with no interpolation: a mosaic of flat square cells</source>
         <translation>то же поле без интерполяции: мозаика плоских квадратных ячеек</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="132"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="135"/>
         <source>the same field cut into irregular flat polygons, with straight edges</source>
         <translation>то же поле, разрезанное на неправильные плоские многоугольники с прямыми сторонами</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="133"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="136"/>
         <source>the same field cut into hexagons: a honeycomb of flat cells</source>
         <translation>то же поле, разрезанное на шестиугольники: соты из плоских ячеек</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="134"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="137"/>
         <source>the same field cut into equilateral triangles, alternating in orientation</source>
         <translation>то же поле, разрезанное на равносторонние треугольники с чередующейся ориентацией</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="135"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="138"/>
         <source>the same field over one of forty-five tilings, chosen by the first argument (see the values, and the Tilings tab for a picture of each): regular, Archimedean and their duals, bricks and other patterns, Islamic stars, Voronoi, Penrose, Ammann-Beenker and more that never repeat. The rest as randsc</source>
         <translation>то же поле на одной из сорока пяти мозаик, выбранной первым аргументом (см. значения и вкладку «Мозаики» с картинкой каждой): правильные, архимедовы и их двойственные, кирпичи и другие узоры, исламские звёзды, Вороной, Пенроуз, Амман-Бенкер и другие, которые никогда не повторяются. Остальное как у randsc</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="136"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="139"/>
         <source>a fractional Brownian motion over the value written in front of it, the same motion the fbm colouring modes draw: octaves of gradient noise, each at twice the frequency of the one before and keeping roughness of its height. Runs from nought to intensity and never below. fbm(z,7) moves with the orbit, fbm(x,7) stands still on the plane; parchmenta(z,6) inside it folds the plane into sectors</source>
         <translation>дробное броуновское движение над значением, записанным перед ним, то же движение, что рисуют режимы раскраски fbm: октавы градиентного шума, каждая с удвоенной частотой предыдущей и с долей roughness её высоты. Идёт от нуля до intensity и никогда ниже. fbm(z,7) движется вместе с орбитой, fbm(x,7) стоит на месте на плоскости; parchmenta(z,6) внутри него складывает плоскость на секторы</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="137"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="140"/>
         <source>watching the orbit: both hand back their argument until the last iteration, and what they gathered on it, which the inside colouring modes then draw</source>
         <translation>наблюдение за орбитой: обе возвращают свой аргумент до последней итерации, а на ней то, что собрали, и это затем рисуют режимы внутренней раскраски</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="138"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="141"/>
         <source>how near the orbit ever came to a shape; the shapes are in the Values tab</source>
         <translation>насколько близко орбита когда-либо подходила к фигуре; фигуры описаны во вкладке «Значения»</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="139"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="142"/>
         <source>the average of (sin(density*arg orbit)+1)/2 along the orbit; density a whole number, how many stripes go round a turn</source>
         <translation>среднее (sin(density*arg орбиты)+1)/2 вдоль орбиты; density — целое число, сколько полос укладывается в один оборот</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="140"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="143"/>
         <source>figures, drawn the same in mandelbrot and julia mode as the noise is -- but fractals of their own rather than fields: each carries the point to the parent of the part it stands in, so the pass it leaves on is the level of that part and writing one alone draws the figure. The topmost part, having no parent, is thrown out of the bailout rather than declared gone, so that the outside colouring modes that read z have a point of the plane to read there. radius is read the way bailout is, as the square of the distance, and the figure is inscribed in the shape a bailout of that number draws: the gasket in the triangle at -90 degrees, the carpet in the square, the snowflake with its points on the corners of the hexagon at 0. Each takes the kaleidoscope the randsc family takes, written last: a figure folds z, the point it is carrying, where a field folds the position, and what comes of it is the same -- the figure drawn in one wedge and repeated round the origin. A bailout larger than the radius leaves a margin between figure and shape: that is no part of the figure and gets no iteration, being turned by the figure&apos;s own symmetry so that it never leaves and takes the inside colour</source>
         <translation>фигуры, рисуемые одинаково в режимах mandelbrot и julia, как и шум -- но собственные фракталы, а не поля: каждая переносит точку к родителю той части, в которой она находится, поэтому проход, на котором она уходит, равен уровню этой части, и одна такая запись сама по себе рисует фигуру. Самая верхняя часть, не имея родителя, выбрасывается за bailout, а не объявляется исчезнувшей, чтобы режимам внешней раскраски, читающим z, было что там читать. radius читается так же, как bailout, — как квадрат расстояния, и фигура вписана в форму, которую рисует bailout с этим числом: треугольник Серпинского в треугольник под -90 градусов, ковёр в квадрат, снежинка с вершинами в углах шестиугольника под 0. Каждая принимает калейдоскоп семейства randsc, записанный последним: фигура складывает z, переносимую ею точку, там, где поле складывает положение, и результат тот же -- фигура, нарисованная в одном клине и повторённая вокруг начала координат. Bailout больше радиуса оставляет поле между фигурой и формой: оно не входит в фигуру и не получает итераций, поворачиваясь собственной симметрией фигуры так, что никогда не уходит и принимает внутренний цвет</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="141"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="144"/>
         <source>the Sierpinski gasket: doubling away from the nearest corner carries a point to the parent of its hole, so it leaves on the pass numbered by the cut that took it</source>
         <translation>треугольник Серпинского: удвоение в сторону от ближайшей вершины переносит точку к родителю её дыры, поэтому она уходит на проходе с номером того разреза, который её забрал</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="142"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="145"/>
         <source>the Sierpinski carpet: cut into squares by squares, the border ring kept and all it encloses thrown away, so one square stands in the middle and 4*squares-4 around it. 3 is the usual carpet, 5 or 7 a lacier one, 2 a gasket</source>
         <translation>ковёр Серпинского: разрезан на squares на squares квадратов, граничное кольцо оставлено, а всё, что внутри, выброшено, так что один квадрат стоит в центре и 4*squares-4 вокруг. 3 — обычный ковёр, 5 или 7 — более ажурный, 2 — треугольник Серпинского</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="143"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="146"/>
         <source>the Koch snowflake, read from its middle out and banded by generation: a regular hexagon, six triangles of its own side standing on its six sides, twelve of a third that on their free edges, and so on. Each step onto a parent expands -- by the root of three onto the hexagon, by three below that -- so that the figure stays sensitive when it is written inside a larger formula. Whether a point is ground is decided by walking down the Koch curve one level a pass, so what a picture shows is what its iteration count paid for. The ground it leaves in the corners of the hexagon is no part of the figure: it is turned half about, which lands ground on ground, so it never leaves and takes the inside colour -- turned rather than left where it stood, so that the point keeps moving as it does in the other two</source>
         <translation>снежинка Коха, читаемая от центра наружу и с полосами по поколениям: правильный шестиугольник, шесть треугольников с той же стороной на его шести сторонах, двенадцать в треть этого на их свободных сторонах, и так далее. Каждый шаг к родителю растягивает -- на корень из трёх к шестиугольнику, в три раза ниже -- чтобы фигура оставалась чувствительной, когда записана внутри большей формулы. Является ли точка фоном, решается спуском по кривой Коха на один уровень за проход, поэтому то, что показывает изображение, — это то, за что заплатило его число итераций. Фон, который остаётся в углах шестиугольника, не входит в фигуру: он поворачивается на пол-оборота, что кладёт фон на фон, так что никогда не уходит и принимает внутренний цвет -- поворачивается, а не остаётся на месте, чтобы точка продолжала двигаться, как в двух других</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="144"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="147"/>
         <source>polynomials</source>
         <translation>многочлены</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="145"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="148"/>
         <source>k1*z^(m-1) + k2*z^(m-2) + ... + km: the first coefficient written multiplies the highest power, the last stands alone</source>
         <translation>k1*z^(m-1) + k2*z^(m-2) + ... + km: первый записанный коэффициент умножает старшую степень, последний стоит отдельно</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="157"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="160"/>
         <source>trap: which shape the orbit is measured against</source>
         <translation>trap: с какой фигурой сравнивается орбита</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="158"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="161"/>
         <source>the centre itself, a point</source>
         <translation>сам центр, точка</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="159"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="162"/>
         <source>a horizontal line through the centre</source>
         <translation>горизонтальная прямая через центр</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="160"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="163"/>
         <source>a vertical line through the centre</source>
         <translation>вертикальная прямая через центр</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="161"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="164"/>
         <source>both of them, a cross</source>
         <translation>обе вместе, крест</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="162"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="165"/>
         <source>a ring of radius size</source>
         <translation>кольцо радиуса size</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="163"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="166"/>
         <source>a square of half-side size</source>
         <translation>квадрат с полустороной size</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="164"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="167"/>
         <source>a diamond of half-diagonal size</source>
         <translation>ромб с полудиагональю size</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="165"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="168"/>
         <source>randsctile: the tiling, its first argument. Every one scaled to a tile of unit area on average, so it changes the shape of the cells and not their scale. The ones that never repeat are worked out point by point and cost the most; they go flat past four thousand million cells from the origin. The Tilings tab has a picture of each</source>
         <translation>randsctile: мозаика, её первый аргумент. Каждая масштабирована к плитке единичной площади в среднем, поэтому меняет форму ячеек, а не их масштаб. Те, что никогда не повторяются, вычисляются поточечно и обходятся дороже всего; они становятся плоскими дальше четырёх миллиардов ячеек от начала координат. Во вкладке «Мозаики» есть картинка каждой</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="166"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="169"/>
         <source>squares</source>
         <translation>квадраты</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="167"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="170"/>
         <source>equilateral triangles</source>
         <translation>равносторонние треугольники</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="168"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="171"/>
         <source>hexagons</source>
         <translation>шестиугольники</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="169"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="172"/>
         <source>octagons and squares (4.8.8)</source>
         <translation>восьмиугольники и квадраты (4.8.8)</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="170"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="173"/>
         <source>hexagons and triangles, the trihexagonal (3.6.3.6)</source>
         <translation>шестиугольники и треугольники, тришестиугольная (3.6.3.6)</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="171"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="174"/>
         <source>hexagons, squares and triangles (3.4.6.4)</source>
         <translation>шестиугольники, квадраты и треугольники (3.4.6.4)</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="172"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="175"/>
         <source>dodecagons and triangles (3.12.12)</source>
         <translation>двенадцатиугольники и треугольники (3.12.12)</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="173"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="176"/>
         <source>dodecagons, hexagons and squares (4.6.12)</source>
         <translation>двенадцатиугольники, шестиугольники и квадраты (4.6.12)</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="174"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="177"/>
         <source>rows of squares and of triangles (3.3.3.4.4)</source>
         <translation>ряды квадратов и треугольников (3.3.3.4.4)</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="175"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="178"/>
         <source>the snub square (3.3.4.3.4)</source>
         <translation>плосконосая квадратная (3.3.4.3.4)</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="176"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="179"/>
         <source>the snub hexagonal, hexagons in a sea of triangles (3.3.3.3.6)</source>
         <translation>плосконосая шестиугольная, шестиугольники в море треугольников (3.3.3.3.6)</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="177"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="180"/>
         <source>tetrakis square: right triangles, eight round a point</source>
         <translation>тетракисквадратная: прямоугольные треугольники, восемь вокруг точки</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="178"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="181"/>
         <source>rhombille: rhombi that read as cubes</source>
         <translation>ромбическая: ромбы, которые читаются как кубы</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="179"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="182"/>
         <source>deltoidal trihexagonal: kites</source>
         <translation>дельтоидная тришестиугольная: дельтоиды</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="180"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="183"/>
         <source>triakis triangular: obtuse triangles</source>
         <translation>триакистреугольная: тупоугольные треугольники</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="181"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="184"/>
         <source>kisrhombille: half-equilateral triangles, twelve round a point</source>
         <translation>кисромбическая: половинки равносторонних треугольников, двенадцать вокруг точки</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="182"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="185"/>
         <source>prismatic pentagons</source>
         <translation>призматические пятиугольники</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="183"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="186"/>
         <source>Cairo pentagons</source>
         <translation>каирские пятиугольники</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="184"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="187"/>
         <source>floret pentagons, six to a flower</source>
         <translation>пятиугольники-цветки, шесть в цветке</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="185"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="188"/>
         <source>bricks, running bond</source>
         <translation>кирпичи, ложковая кладка</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="186"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="189"/>
         <source>Flemish bond: a brick and a half brick by turns</source>
         <translation>фламандская кладка: кирпич и полкирпича поочерёдно</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="187"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="190"/>
         <source>herringbone</source>
         <translation>ёлочка</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="188"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="191"/>
         <source>basketweave</source>
         <translation>плетёнка</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="189"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="192"/>
         <source>Pythagorean: squares of two sizes</source>
         <translation>пифагорова: квадраты двух размеров</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="190"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="193"/>
         <source>chevrons</source>
         <translation>шевроны</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="191"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="194"/>
         <source>squares and rhombi in alternate rows</source>
         <translation>квадраты и ромбы чередующимися рядами</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="192"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="195"/>
         <source>houses: a pentagon, up and hanging by turns</source>
         <translation>домики: пятиугольник, то стоящий, то висящий</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="193"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="196"/>
         <source>rows: two of squares, one of triangles</source>
         <translation>ряды: два из квадратов, один из треугольников</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="194"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="197"/>
         <source>rows: one of squares, two of triangles</source>
         <translation>ряды: один из квадратов, два из треугольников</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="195"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="198"/>
         <source>hexagons among triangles</source>
         <translation>шестиугольники среди треугольников</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="196"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="199"/>
         <source>Greek crosses</source>
         <translation>греческие кресты</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="197"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="200"/>
         <source>T tetrominoes</source>
         <translation>T-тетрамино</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="198"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="201"/>
         <source>eight-pointed stars and crosses</source>
         <translation>восьмиконечные звёзды и кресты</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="199"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="202"/>
         <source>six-pointed stars and hexagons</source>
         <translation>шестиконечные звёзды и шестиугольники</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="200"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="203"/>
         <source>eight-pointed stars with four-pointed ones and rhombi</source>
         <translation>восьмиконечные звёзды с четырёхконечными и ромбами</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="201"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="204"/>
         <source>twelve-pointed stars with three-pointed ones and rhombi</source>
         <translation>двенадцатиконечные звёзды с трёхконечными и ромбами</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="202"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="205"/>
         <source>twelve-pointed stars with notched hexagons and squares</source>
         <translation>двенадцатиконечные звёзды с вырезанными шестиугольниками и квадратами</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="203"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="206"/>
         <source>Voronoi cells, irregular -- randscp&apos;s</source>
         <translation>ячейки Вороного, неправильные -- как у randscp</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="204"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="207"/>
         <source>Penrose rhombs: never repeats, fivefold</source>
         <translation>ромбы Пенроуза: никогда не повторяется, пятикратная</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="205"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="208"/>
         <source>Penrose kites and darts</source>
         <translation>воздушные змеи и дротики Пенроуза</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="206"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="209"/>
         <source>Ammann-Beenker: squares and rhombi, eightfold, never repeats</source>
         <translation>Амман-Бенкер: квадраты и ромбы, восьмикратная, никогда не повторяется</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="207"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="210"/>
         <source>rhombi in twelve directions, never repeats</source>
         <translation>ромбы в двенадцати направлениях, никогда не повторяется</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="208"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="211"/>
         <source>rhombi in seven directions, never repeats</source>
         <translation>ромбы в семи направлениях, никогда не повторяется</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="209"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="212"/>
         <source>the pinwheel: triangles facing every way there is</source>
         <translation>вертушка: треугольники, повёрнутые во все возможные стороны</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="210"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="213"/>
         <source>the chair: Ls cut into Ls</source>
         <translation>стул: буквы L, разрезанные на L</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="211"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="214"/>
         <source>nought, as a zero size gives</source>
         <translation>ноль, как даёт нулевой размер</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="212"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="215"/>
         <source>randsc family and the three figures: how many wedges the kaleidoscope folds the plane into. The fields fold the position; a figure has no use for it and reads z, the point it carries down towards the part it stands in, so that is what a figure folds</source>
         <translation>семейство randsc и три фигуры: на сколько клиньев калейдоскоп складывает плоскость. Поля складывают положение; фигуре оно не нужно, и она читает z, точку, которую несёт вниз к той части, где находится, поэтому именно её фигура и складывает</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="213"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="216"/>
         <source>no folding at all, which is what a call that says nothing gets</source>
         <translation>никакого складывания, что и получает вызов, который ничего не указывает</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="214"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="217"/>
         <source>that many wedges around the origin, the field taken from one</source>
         <translation>столько клиньев вокруг начала координат, поле взято из одного из них</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="215"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="218"/>
         <source>randsc family and the three figures: kaled_mirror, which mirror the kaleidoscope folds with</source>
         <translation>семейство randsc и три фигуры: kaled_mirror, каким зеркалом складывает калейдоскоп</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="216"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="219"/>
         <source>the far half of each wedge mirrors the near half, so a wedge is symmetric about its bisector</source>
         <translation>дальняя половина каждого клина отражает ближнюю, поэтому клин симметричен относительно своей биссектрисы</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="217"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="220"/>
         <source>the same the other way about, the near half mirroring the far one</source>
         <translation>то же наоборот, ближняя половина отражает дальнюю</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="218"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="221"/>
         <source>folds the way 0 does</source>
         <translation>складывает так же, как 0</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="219"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="222"/>
         <source>randsc family: the skew, which turns a cell&apos;s value by how far out of the middle of its cell the point stands, so that the colouring modes have something to read inside a cell. It is measured in the cell&apos;s own geometry, so the colour follows the shape the field is cut into: squares in randscq, hexagons in randsch, triangles in randsct, each cell&apos;s own polygon in randscp, and its own blobs in randsc. The real part is that gradient, the imaginary part a flat turn the whole cell shares. A turn and not a scaling, so the modulus is untouched and a circular bailout cannot see it at all, at any skew; a polygon reads the components instead and does see it, the more so the further its corners stand out past its sides. zmag reads the modulus and so stays flat; colour with real, imag, angle or real/imag</source>
         <translation>семейство randsc: перекос, который поворачивает значение ячейки на столько, насколько точка удалена от середины своей ячейки, чтобы режимам раскраски было что читать внутри ячейки. Он измеряется в собственной геометрии ячейки, поэтому цвет повторяет форму, на которую разрезано поле: квадраты в randscq, шестиугольники в randsch, треугольники в randsct, многоугольник каждой ячейки в randscp и её пятна в randsc. Действительная часть — этот градиент, мнимая часть — ровный поворот, общий для всей ячейки. Поворот, а не масштабирование, поэтому модуль не меняется и круглый bailout его вовсе не видит, при любом перекосе; многоугольник же читает компоненты и видит его, тем сильнее, чем дальше его углы выступают за стороны. zmag читает модуль и поэтому остаётся плоским; раскрашивайте через real, imag, angle или real/imag</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="220"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="223"/>
         <source>the default: no turn at all, the value stays on the real axis and is the number it always was, to the bit</source>
         <translation>по умолчанию: никакого поворота, значение остаётся на действительной оси и равно тому числу, каким было всегда, до бита</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="221"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="224"/>
         <source>a seventh of a colour band across a cell: shows at a colour speed of about 8, and costs nothing under a circular, square or hexagonal bailout</source>
         <translation>седьмая часть цветовой полосы поперёк ячейки: видна при скорости раскраски около 8 и ничего не стоит при круглом, квадратном или шестиугольном bailout</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="222"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="225"/>
         <source>about one band across a cell, which is what shows at a colour speed of 1. Free under a circular bailout; one to three per cent of the picture changes which cells leave under a polygon</source>
         <translation>примерно одна полоса поперёк ячейки, что видно при скорости раскраски 1. Бесплатно при круглом bailout; при многоугольнике меняется от одного до трёх процентов уходящих ячеек</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="223"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="226"/>
         <source>no more colour to speak of past 1, and more of the picture moving under a polygonal bailout. Pair a large skew with a circular bailout</source>
         <translation>после 1 цвета почти не прибавляется, а при многоугольном bailout сдвигается бо́льшая часть изображения. Сочетайте большой перекос с круглым bailout</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="224"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="227"/>
         <source>randsc family: what the skew does. The numbers add together rather than choosing one another out, so 3 is the shape and the rosette at once and 11 is those two with the modulus moving as well. A skew of nought leaves every one of them doing nothing</source>
         <translation>семейство randsc: что делает перекос. Числа складываются, а не исключают друг друга, поэтому 3 — это форма и розетка одновременно, а 11 — эти две плюс движущийся модуль. Нулевой перекос оставляет каждый из них без действия</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="225"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="228"/>
         <source>the shape: the cell&apos;s own outline, shrunk step by step -- squares in randscq, hexagons in randsch, triangles in randsct, its polygon in randscp, its blobs in randsc. What a call that gives no skew_mode gets, and what is used when neither 1 nor 2 is named</source>
         <translation>форма: собственный контур ячейки, уменьшаемый шаг за шагом -- квадраты в randscq, шестиугольники в randsch, треугольники в randsct, её многоугольник в randscp, её пятна в randsc. То, что получает вызов без skew_mode, и то, что используется, когда не указаны ни 1, ни 2</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="226"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="229"/>
         <source>the rosette: the angle round the middle of the cell, folded into as many turns as the kaleidoscope has wedges, so each cell carries the picture&apos;s own symmetry. Plain spokes when nothing is folded, and a spiral when added to 1</source>
         <translation>розетка: угол вокруг середины ячейки, сложенный в столько оборотов, сколько клиньев у калейдоскопа, чтобы каждая ячейка несла симметрию самого изображения. Простые лучи, когда ничего не сложено, и спираль при сложении с 1</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="227"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="230"/>
         <source>across the wedge: a turn that follows where the point stands in its wedge of the kaleidoscope -- nothing on the edges of the wedge, the whole turn the imaginary part of the skew gives on its own down the middle (127 degrees for 2) -- the same in every wedge, so the picture stays a kaleidoscope, mirrors and all. Does nothing when nothing is folded, or when the imaginary part is nought</source>
         <translation>поперёк клина: поворот, следующий за тем, где точка стоит в своём клине калейдоскопа -- ничего на краях клина, весь поворот, который мнимая часть перекоса даёт сама по себе, посередине (127 градусов для 2) -- одинаково в каждом клине, чтобы изображение оставалось калейдоскопом, вместе с зеркалами. Ничего не делает, когда ничего не сложено или когда мнимая часть равна нулю</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="228"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="231"/>
         <source>radial: the modulus moves as well as the angle. The only one zmag and the bailout can see, since those read the modulus and nothing else -- and for that reason the only one that cuts the figure where the bailout falls inside a cell</source>
         <translation>радиальный: вместе с углом движется и модуль. Единственный, который видят zmag и bailout, поскольку они читают модуль и ничего больше -- и поэтому единственный, который режет фигуру там, где bailout попадает внутрь ячейки</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="229"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="232"/>
         <source>randsc family: selfsim, every pass so far rather than this one alone. Each pass is a field of its own, its cells the degradation times those of the pass before, so a formula calling one on every pass reads a finer field each time -- and once the cells are smaller than a pixel, snow. With selfsim the call hands back the passes so far averaged, pass n weighed by d^(nH): d is the degradation, the geometric mean of its two components taken without their signs, and H is this number. The fine passes weigh little, so their snow lies under the coarse ones rather than over them. It is the skewed value that is averaged, so the skew and its modes go on doing what they do. An average draws the values together, so a higher colour speed brings back the contrast. With a degradation of one every pass weighs the same, and the answer is their plain average, which settles toward a flat middle</source>
         <translation>семейство randsc: selfsim, все проходы до сих пор, а не только этот. Каждый проход — отдельное поле, его ячейки в degradation раз больше ячеек предыдущего, поэтому формула, вызывающая такую функцию на каждом проходе, каждый раз читает всё более мелкое поле -- а когда ячейки становятся меньше пикселя, получается снег. С selfsim вызов возвращает среднее проходов до сих пор, проход n с весом d^(nH): d — degradation, среднее геометрическое двух её компонент без знаков, а H — это число. Мелкие проходы весят мало, поэтому их снег лежит под крупными, а не поверх. Усредняется значение с перекосом, поэтому перекос и его режимы продолжают делать своё. Среднее сближает значения, поэтому более высокая скорость раскраски возвращает контраст. При degradation, равной единице, все проходы весят одинаково, и результат — их простое среднее, которое стремится к плоской середине</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="230"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="233"/>
         <source>off: the one pass, to the bit -- what a call that says nothing gets, and a place left empty</source>
         <translation>выкл: один проход, до бита -- то, что получает вызов, который ничего не указывает, и пустое место</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="231"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="234"/>
         <source>the plain average: every pass weighed alike, as a degradation of one weighs them, and what every H near nought gives. Not off</source>
         <translation>простое среднее: все проходы с одинаковым весом, как их взвешивает degradation, равная единице, и что даёт любое H около нуля. Не выкл</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="232"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="235"/>
         <source>the plain motion: each pass weighs d times the one before</source>
         <translation>простое движение: каждый проход весит в d раз больше предыдущего</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="233"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="236"/>
         <source>rougher: the fine passes keep more of their weight, so more of the detail shows</source>
         <translation>грубее: мелкие проходы сохраняют больший вес, поэтому видно больше деталей</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="234"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="237"/>
         <source>smoother: the first few passes take nearly all of it</source>
         <translation>глаже: первые несколько проходов забирают почти всё</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="235"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="238"/>
         <source>the fine passes outweigh the coarse ones, which is the snow back again</source>
         <translation>мелкие проходы перевешивают крупные, и снег возвращается</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="236"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="239"/>
         <source>the real part weighs the passes as above; the imaginary part turns each pass by that times the logarithm of d further than the one before, before they are averaged -- a spiral of octaves, and a value with an imaginary part even without a skew. The weights are divided by the sum of their sizes, so the answer stays within the values averaged. Turns nothing at a degradation of one. Off only when left out</source>
         <translation>действительная часть взвешивает проходы как выше; мнимая часть поворачивает каждый проход на это значение, умноженное на логарифм d, больше предыдущего, прежде чем их усреднить -- спираль октав и значение с мнимой частью даже без перекоса. Веса делятся на сумму их величин, поэтому результат остаётся в пределах усредняемых значений. При degradation, равной единице, ничего не поворачивает. Выключено, только если опущено</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="243"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="246"/>
         <source>the iteration</source>
         <translation>итерация</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="244"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="247"/>
         <source>the current value, and what the formula computes the next one from; in the initialization, where z starts</source>
         <translation>текущее значение, из которого формула вычисляет следующее; в инициализации — откуда начинается z</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="245"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="248"/>
         <source>the point being iterated -- the pixel in mandelbrot mode, the constant in julia mode</source>
         <translation>итерируемая точка -- пиксель в режиме mandelbrot, константа в режиме julia</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="246"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="249"/>
         <source>the iteration number</source>
         <translation>номер итерации</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="247"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="250"/>
         <source>the plain coordinate: like c, but the pixel in julia mode too, and unchanged from pass to pass</source>
         <translation>простая координата: как c, но пиксель и в режиме julia, и неизменная от прохода к проходу</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="248"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="251"/>
         <source>earlier values of z; Fractal -&gt; Set p values on first iteration says what they are before there are any</source>
         <translation>прежние значения z; Фрактал -&gt; Задать значения p на первой итерации говорит, чему они равны, пока их ещё нет</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="249"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="252"/>
         <source>the value z had on the pass before this one</source>
         <translation>значение z на проходе перед этим</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="250"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="253"/>
         <source>the one before that, and so on</source>
         <translation>то, что было перед ним, и так далее</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="251"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="254"/>
         <source>as far back as one may look; any p up to this is a variable, whether or not the picture runs that many passes</source>
         <translation>насколько далеко можно заглянуть назад; любое p до этого — переменная, делает ли изображение столько проходов или нет</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="252"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="255"/>
         <source>another name for p1</source>
         <translation>другое имя для p1</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="253"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="256"/>
         <source>suffixes on z, c, x and the p&apos;s, a shorthand for the calls made most often on one. Read from left to right, each wrapping what the ones before made: c_b_p2 is parchment(bship(c), 2), p12_p2_p3 is parchment(parchment(p12, 2), 3). M is a whole number of one or more, written in figures. Not on n, which is a count</source>
         <translation>суффиксы у z, c, x и p — сокращение для самых частых вызовов над ними. Читаются слева направо, и каждый оборачивает то, что сделали предыдущие: c_b_p2 — это parchment(bship(c), 2), p12_p2_p3 — это parchment(parchment(p12, 2), 3). M — целое число от одного и больше, записанное цифрами. Не у n, которое является счётчиком</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="254"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="257"/>
         <source>bship(...)</source>
         <translation>bship(...)</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="255"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="258"/>
         <source>bshipi(...)</source>
         <translation>bshipi(...)</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="256"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="259"/>
         <source>bshipr(...)</source>
         <translation>bshipr(...)</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="257"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="260"/>
         <source>parchment(..., M)</source>
         <translation>parchment(..., M)</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="258"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="261"/>
         <source>parchmenta(..., M)</source>
         <translation>parchmenta(..., M)</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="259"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="262"/>
         <source>rotate(..., N/D*pi): turned clockwise by N/D of half a turn, p4_r3t7 being rotate(p4,3/7*pi). D is one or more, N may be 0</source>
         <translation>rotate(..., N/D*pi): поворот по часовой стрелке на N/D полуоборота; p4_r3t7 — это rotate(p4,3/7*pi). D от 1 и больше, N может быть 0</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="260"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="263"/>
         <source>rotate(..., N/180*pi): turned clockwise by N degrees, z_r45 being rotate(z,45/180*pi)</source>
         <translation>rotate(..., N/180*pi): поворот по часовой стрелке на N градусов; z_r45 — это rotate(z,45/180*pi)</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="266"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="269"/>
         <source>writing a value</source>
         <translation>запись значения</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="267"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="270"/>
         <source>a complex number given by its two parts, as in {0,2} for 2i</source>
         <translation>комплексное число, заданное двумя частями, как {0,2} для 2i</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="268"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="271"/>
         <source>the imaginary unit, as the shipped formulas use it</source>
         <translation>мнимая единица, как её используют поставляемые формулы</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="269"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="272"/>
         <source>a real number, read at the full precision of this build</source>
         <translation>действительное число, читаемое с полной точностью этой сборки</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="270"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="273"/>
         <source>calling</source>
         <translation>вызов</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="271"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="274"/>
         <source>arguments are separated by a comma, and by nothing else: a semicolon used to serve as well and is now refused where it stands</source>
         <translation>аргументы разделяются запятой и ничем иным: раньше годилась и точка с запятой, теперь она отвергается там, где стоит</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="272"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="275"/>
         <source>an argument shown in square brackets may be left out; the value shown is what the function uses instead</source>
         <translation>аргумент, показанный в квадратных скобках, можно опустить; показанное значение функция использует вместо него</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="273"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="276"/>
         <source>one may be left out in the middle as well, by leaving its place empty; spaces make no difference</source>
         <translation>опустить можно и аргумент в середине, оставив его место пустым; пробелы роли не играют</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="274"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="277"/>
         <source>an empty coefficient of poly is a term that is not there: this is z^2 + 1</source>
         <translation>пустой коэффициент poly — это отсутствующий член: здесь z^2 + 1</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="275"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="278"/>
         <source>an empty branch of ifiter or ifiterl repeats the one before it: two iterations of a, then b</source>
         <translation>пустая ветвь ifiter или ifiterl повторяет предыдущую: две итерации a, затем b</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="276"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="279"/>
         <source>multiplication may be left out before a name or a bracket</source>
         <translation>умножение можно опустить перед именем или скобкой</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="277"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="280"/>
         <source>the same, between two bracketed groups</source>
         <translation>то же самое между двумя группами в скобках</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="278"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="281"/>
         <source>a leading minus binds looser than a power: it means -(z^2)</source>
         <translation>начальный минус связывает слабее степени: это означает -(z^2)</translation>
     </message>

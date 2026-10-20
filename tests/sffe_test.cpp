@@ -353,6 +353,17 @@ static const testcase cases[] = {
     T_EXACT("rotate(z,270/180*pi)", 0, 2,
             "rotate: so are three quarters, z_r270"),
     T_EXACT("rotate(z,3/6*pi)", 0, -2, "rotate: and a quarter, z_r3t6"),
+
+    /* --- argminm, argmaxm: the argument of smallest or largest modulus --- */
+    T_EXACT("argminm(z,c)", 2, 0, "argminm: the smaller of two"),
+    T_EXACT("argmaxm(z,c)", 3, 0, "argmaxm: the larger of two"),
+    T_EXACT("argminm(c,{0,1},z)", 0, 1, "argminm: the smallest of three, as it is"),
+    T_EXACT("argmaxm(-z,c,{0,4})", 0, 4, "argmaxm: the largest of three, as it is"),
+    T_EXACT("argmaxm({3,4},z)", 3, 4, "argmaxm: the first already the largest"),
+    T_EXACT("argminm(i*z,-p,c)", -1, 0, "argminm: angle and all"),
+    T_EXACT("argminm(-p,p)", -1, 0, "argminm: of two alike, the first"),
+    T_EXACT("argminm(z)", 2, 0, "argminm: one argument is itself"),
+    T_EXACT("argminm(c, ,z)", 2, 0, "argminm: an empty place is passed over"),
     T_VAL("rotate(i,0.5)", 0.479425538604203, 0.877582561890373,
           "rotate: i turned by half a radian, i*e^(-0.5i)"),
     T_VAL("rotate(z,{0.5,7})", 1.755165123780746, -0.958851077208406,

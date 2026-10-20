@@ -174,6 +174,13 @@ Mandelbrot tourné de même. Un nombre entier de quarts de tour écrit avec les
 constantes, `pi_2`, `pi` et `pi2`, est exact : un tour complet ne tourne pas du
 tout, au bit près.
 
+**La valeur de plus petit ou de plus grand module : `argminm(z1, z2, ...)` et
+`argmaxm(z1, z2, ...)`.** Un argmin et un argmax par module : de `z1`, `z2`,
+..., celle dont le module est le plus petit, ou le plus grand, rendue entière,
+parties réelle et imaginaire telles quelles. `argminm(z, p, p2)` est celle des
+trois la plus proche de l'origine. De deux de même module, celle écrite la
+première ; une place vide est sautée, et une seule valeur est `z1` lui-même.
+
 ### La sonde de palette
 
 **Vue → Sonde de palette (cliquer sur un point)** transforme le pointeur en

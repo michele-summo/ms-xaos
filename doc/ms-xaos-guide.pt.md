@@ -168,6 +168,13 @@ conjunto de Mandelbrot rodado da mesma forma. Um número inteiro de quartos de
 volta escrito com as constantes, `pi_2`, `pi` e `pi2`, é exato: uma volta
 inteira não roda nada, bit a bit.
 
+**O valor de módulo mínimo ou máximo: `argminm(z1, z2, ...)` e
+`argmaxm(z1, z2, ...)`.** Um argmin e um argmax por módulo: de `z1`, `z2`, ...,
+aquele cujo módulo é o mínimo, ou o máximo, devolvido inteiro, com a parte real
+e a imaginária tal como são. `argminm(z, p, p2)` é o dos três mais próximo da
+origem. De dois com o mesmo módulo, o escrito primeiro; um lugar vazio é
+saltado, e um só valor é o próprio `z1`.
+
 ### A sonda da paleta
 
 **Vista → Sonda da paleta (clique num ponto)** transforma o ponteiro numa

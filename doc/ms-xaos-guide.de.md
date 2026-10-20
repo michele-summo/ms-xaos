@@ -177,6 +177,14 @@ Mandelbrot-Menge, ebenso gedreht. Eine ganze Zahl von Vierteldrehungen, mit den
 Konstanten `pi_2`, `pi` und `pi2` geschrieben, ist exakt: eine ganze Umdrehung
 dreht gar nicht, bitgenau.
 
+**Der Wert mit kleinstem oder größtem Betrag: `argminm(z1, z2, ...)` und
+`argmaxm(z1, z2, ...)`.** Ein argmin und ein argmax nach Betrag: von `z1`,
+`z2`, ... derjenige, dessen Betrag der kleinste oder größte ist, ganz
+zurückgegeben, Real- und Imaginärteil, wie sie sind. `argminm(z, p, p2)` ist
+derjenige der drei, der dem Ursprung am nächsten liegt. Von zweien mit gleichem
+Betrag der zuerst geschriebene; ein leerer Platz wird übergangen, und ein
+einzelner Wert ist `z1` selbst.
+
 ### Die Palettensonde
 
 **Ausschnitt → Palettensonde (auf einen Punkt klicken)** macht den Mauszeiger

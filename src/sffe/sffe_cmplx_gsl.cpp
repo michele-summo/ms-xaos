@@ -116,6 +116,11 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sfmaxi, 2, "maxi\0"}, /* larger imaginary part; real part taken from a */
     {sfmaxm, 2, "maxm\0"}, /* larger modulus, held at the angle of a */
 
+    /* --- argmin and argmax by modulus, over any number: the one of the
+     * values whose modulus is the smallest or the largest, whole --- */
+    {sfargminm, SFFE_VARIADIC, "argminm\0", NULL, false, 2},
+    {sfargmaxm, SFFE_VARIADIC, "argmaxm\0", NULL, false, 2},
+
     /* --- mid(a, b, c) confines a to the range b..c.
      * With b < c it is a plain clamp. With b > c the range is inverted and a
      * value outside it is sent to the opposite end: mid(0,10,1) is 10 while
@@ -945,6 +950,38 @@ static inline cmplx sfarg_or(sfarg *const p, unsigned int place, number_t re,
     cmplx fallback;
     GSL_SET_COMPLEX(&fallback, re, im);
     return fallback;
+}
+
+/* argminm(z1, z2, ...) and argmaxm: the one of z1, z2, ... whose modulus is
+ * the smallest or the largest, handed back whole -- an argmin and an argmax
+ * over |z1|, |z2|, .... Of two with the same modulus, the one written first.
+ * An empty place is passed over, and one value alone is z1. */
+static sfarg *sfargextremem(sfarg *const p, bool larger)
+{
+    cmplx best = sfarg_or(p, 1, 0, 0);
+    number_t r = gsl_complex_abs(best);
+    for (unsigned int k = 2; k <= p->argc; k++) {
+        const sfarg *a = p->args[p->argc - k];
+        if (a->omitted)
+            continue;
+        const number_t rk = gsl_complex_abs(sfvalue(a));
+        if (larger ? r < rk : rk < r) {
+            r = rk;
+            best = sfvalue(a);
+        }
+    }
+    sfvalue(p) = best;
+    return sfaram1(p);
+}
+
+sfarg *sfargminm(sfarg *const p)
+{
+    return sfargextremem(p, false);
+}
+
+sfarg *sfargmaxm(sfarg *const p)
+{
+    return sfargextremem(p, true);
 }
 
 sfarg *sfjulian(sfarg *const p)
