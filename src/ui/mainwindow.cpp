@@ -1539,17 +1539,29 @@ void MainWindow::showDialog(const char *name)
                         [edit]() { edit->stepOlder(); });
                 connect(newer, &QToolButton::clicked, edit,
                         [edit]() { edit->stepNewer(); });
+                /* The two arrows together as tall as the bar with one line
+                 * in it, and the label as tall as that line and centred on
+                 * it: all three line up on the first line, however many the
+                 * formula takes. Left to themselves the arrows were taller
+                 * than a one-line bar, which sat lower than the label. */
+                const int line = edit->lineHeight();
+                older->setFixedSize(line, line / 2);
+                newer->setFixedSize(line, line - line / 2);
                 QVBoxLayout *steps = new QVBoxLayout();
                 steps->setSpacing(0);
                 steps->addWidget(older);
                 steps->addWidget(newer);
                 steps->addStretch();
                 QHBoxLayout *field = new QHBoxLayout();
-                field->addWidget(edit);
+                field->addWidget(edit, 0, Qt::AlignTop);
                 field->addLayout(steps);
 
+                QLabel *name = new QLabel(label, qDialog);
+                name->setBuddy(edit);
+                name->setFixedHeight(line);
+                name->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
                 QFormLayout *formLayout = new QFormLayout();
-                formLayout->addRow(label, field);
+                formLayout->addRow(name, field);
 
                 /* The line under the bar. It is there whether or not there is
                  * anything to say, and two lines high so that a long signature

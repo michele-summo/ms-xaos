@@ -383,15 +383,21 @@ void FormulaEdit::setPreferredWidth(int pixels)
     updateGeometry();
 }
 
+int FormulaEdit::lineHeight() const
+{
+    const QMargins margins = contentsMargins();
+    const qreal margin = document()->documentMargin();
+    return (int)std::ceil(QFontMetricsF(document()->defaultFont())
+                              .lineSpacing() +
+                          2 * margin) +
+           margins.top() + margins.bottom();
+}
+
 int FormulaEdit::wantedHeight() const
 {
     const QMargins margins = contentsMargins();
     const int frame = margins.top() + margins.bottom();
-    const qreal margin = document()->documentMargin();
-    const int line = (int)std::ceil(QFontMetricsF(document()->defaultFont())
-                                        .lineSpacing() +
-                                    2 * margin) +
-                     frame;
+    const int line = lineHeight();
     const int text =
         (int)std::ceil(document()->documentLayout()->documentSize().height()) +
         frame;
