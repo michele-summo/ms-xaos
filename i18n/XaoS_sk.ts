@@ -1827,17 +1827,17 @@
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="82"/>
-        <source>smallest or largest modulus of any number</source>
+        <source>argmin and argmax by modulus, over any number</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="83"/>
-        <source>the smallest modulus of all the arguments, held at the angle of z1; with two, minm</source>
+        <source>the one of z1, z2, ... with the smallest modulus, whole; of two alike, the first</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="84"/>
-        <source>the largest modulus of all the arguments, held at the angle of z1; with two, maxm</source>
+        <source>the one of z1, z2, ... with the largest modulus, whole; of two alike, the first</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

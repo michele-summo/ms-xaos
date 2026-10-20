@@ -116,10 +116,10 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sfmaxi, 2, "maxi\0"}, /* larger imaginary part; real part taken from a */
     {sfmaxm, 2, "maxm\0"}, /* larger modulus, held at the angle of a */
 
-    /* --- the same over any number: the smallest or largest modulus of all
-     * the arguments, held at the angle of the first --- */
-    {sfminmc, SFFE_VARIADIC, "minmc\0", NULL, false, 2},
-    {sfmaxmc, SFFE_VARIADIC, "maxmc\0", NULL, false, 2},
+    /* --- argmin and argmax by modulus, over any number: the one of the
+     * values whose modulus is the smallest or the largest, whole --- */
+    {sfargminm, SFFE_VARIADIC, "argminm\0", NULL, false, 2},
+    {sfargmaxm, SFFE_VARIADIC, "argmaxm\0", NULL, false, 2},
 
     /* --- mid(a, b, c) confines a to the range b..c.
      * With b < c it is a plain clamp. With b > c the range is inverted and a
@@ -952,36 +952,36 @@ static inline cmplx sfarg_or(sfarg *const p, unsigned int place, number_t re,
     return fallback;
 }
 
-/* minmc(z1, z2, ...) and maxmc: the smallest or the largest of |z1|, |z2|,
- * ..., gathered from left to right, held at the angle of z1. With two
- * arguments they are minm and maxm, to the bit; with more they are those
- * chained, minm(minm(z1, z2), z3), save that the modulus is carried as it was
- * read rather than taken again from the point it was turned into. An empty
- * place is passed over, and one argument alone is z1 as it is. */
-static sfarg *sfextremem(sfarg *const p, bool larger)
+/* argminm(z1, z2, ...) and argmaxm: the one of z1, z2, ... whose modulus is
+ * the smallest or the largest, handed back whole -- an argmin and an argmax
+ * over |z1|, |z2|, .... Of two with the same modulus, the one written first.
+ * An empty place is passed over, and one value alone is z1. */
+static sfarg *sfargextremem(sfarg *const p, bool larger)
 {
-    const cmplx first = sfarg_or(p, 1, 0, 0);
-    number_t r = gsl_complex_abs(first);
+    cmplx best = sfarg_or(p, 1, 0, 0);
+    number_t r = gsl_complex_abs(best);
     for (unsigned int k = 2; k <= p->argc; k++) {
         const sfarg *a = p->args[p->argc - k];
         if (a->omitted)
             continue;
         const number_t rk = gsl_complex_abs(sfvalue(a));
-        if (larger ? r < rk : rk < r)
+        if (larger ? r < rk : rk < r) {
             r = rk;
+            best = sfvalue(a);
+        }
     }
-    sfvalue(p) = gsl_complex_polar(r, gsl_complex_arg(first));
+    sfvalue(p) = best;
     return sfaram1(p);
 }
 
-sfarg *sfminmc(sfarg *const p)
+sfarg *sfargminm(sfarg *const p)
 {
-    return sfextremem(p, false);
+    return sfargextremem(p, false);
 }
 
-sfarg *sfmaxmc(sfarg *const p)
+sfarg *sfargmaxm(sfarg *const p)
 {
-    return sfextremem(p, true);
+    return sfargextremem(p, true);
 }
 
 sfarg *sfjulian(sfarg *const p)

@@ -169,12 +169,12 @@ Mandelbrot girado del mismo modo. Un número entero de cuartos de vuelta escrito
 con las constantes, `pi_2`, `pi` y `pi2`, es exacto: una vuelta entera no gira
 nada, bit a bit.
 
-**El menor o el mayor de muchos: `minmc(z1, z2, ...)` y `maxmc(z1, z2, ...)`.**
-El módulo mínimo, o máximo, de todos los argumentos, reunido de izquierda a
-derecha y mantenido en el ángulo de `z1`: `minmc(z, p, p2)` es tan largo como
-el más corto de los tres y apunta adonde apunta `z`. Con dos argumentos son
-`minm` y `maxm`, hasta el último bit; un lugar vacío se salta, y un solo
-argumento es `z1` mismo.
+**El valor de módulo mínimo o máximo: `argminm(z1, z2, ...)` y
+`argmaxm(z1, z2, ...)`.** Un argmin y un argmax por módulo: de `z1`, `z2`, ...,
+aquel cuyo módulo es el mínimo, o el máximo, devuelto entero, con la parte real
+y la imaginaria tal como son. `argminm(z, p, p2)` es el de los tres más cercano
+al origen. De dos con el mismo módulo, el escrito primero; un lugar vacío se
+salta, y un solo valor es `z1` mismo.
 
 ### La sonda de paleta
 

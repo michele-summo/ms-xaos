@@ -108,9 +108,9 @@ sfarg *sfmax(sfarg *const p);
 sfarg *sfmaxr(sfarg *const p);
 sfarg *sfmaxi(sfarg *const p);
 sfarg *sfmaxm(sfarg *const p);
-/* the same over any number of arguments */
-sfarg *sfminmc(sfarg *const p);
-sfarg *sfmaxmc(sfarg *const p);
+/* argmin and argmax by modulus, over any number of arguments */
+sfarg *sfargminm(sfarg *const p);
+sfarg *sfargmaxm(sfarg *const p);
 /* mid function: if a<b then a<x<b else x<b or x<a */
 sfarg *sfmid(sfarg *const p);
 sfarg *sfmidr(sfarg *const p);

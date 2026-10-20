@@ -160,12 +160,12 @@ set turned the same way. A whole number of quarter turns written with the
 constants, `pi_2`, `pi` and `pi2`, is exact: a whole turn is no turn at all, to
 the bit.
 
-**The smallest or largest of many: `minmc(z1, z2, ...)` and
-`maxmc(z1, z2, ...)`.** The smallest, or the largest, modulus among all the
-arguments, gathered from left to right, held at the angle of `z1`:
-`minmc(z, p, p2)` is as long as the shortest of the three and points where `z`
-points. With two arguments they are `minm` and `maxm`, to the bit; an empty
-place is passed over, and one argument alone is `z1` itself.
+**The value of smallest or largest modulus: `argminm(z1, z2, ...)` and
+`argmaxm(z1, z2, ...)`.** An argmin and an argmax by modulus: of `z1`, `z2`,
+..., the one whose modulus is the smallest, or the largest, handed back whole,
+real and imaginary parts as they are. `argminm(z, p, p2)` is whichever of the
+three is nearest the origin. Of two with the same modulus, the one written
+first; an empty place is passed over, and one value alone is `z1` itself.
 
 ### The palette probe
 

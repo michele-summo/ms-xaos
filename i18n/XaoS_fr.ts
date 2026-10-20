@@ -1839,18 +1839,18 @@
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="82"/>
-        <source>smallest or largest modulus of any number</source>
-        <translation>le plus petit ou le plus grand module d&apos;un nombre quelconque de valeurs</translation>
+        <source>argmin and argmax by modulus, over any number</source>
+        <translation>argmin et argmax par module, sur un nombre quelconque de valeurs</translation>
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="83"/>
-        <source>the smallest modulus of all the arguments, held at the angle of z1; with two, minm</source>
-        <translation>le plus petit module de tous les arguments, maintenu à l&apos;angle de z1 ; avec deux, minm</translation>
+        <source>the one of z1, z2, ... with the smallest modulus, whole; of two alike, the first</source>
+        <translation>celui de z1, z2, ... de plus petit module, entier ; de deux égaux, le premier</translation>
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="84"/>
-        <source>the largest modulus of all the arguments, held at the angle of z1; with two, maxm</source>
-        <translation>le plus grand module de tous les arguments, maintenu à l&apos;angle de z1 ; avec deux, maxm</translation>
+        <source>the one of z1, z2, ... with the largest modulus, whole; of two alike, the first</source>
+        <translation>celui de z1, z2, ... de plus grand module, entier ; de deux égaux, le premier</translation>
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="85"/>

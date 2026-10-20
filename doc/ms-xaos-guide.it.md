@@ -173,12 +173,12 @@ Mandelbrot ruotato allo stesso modo. Un numero intero di quarti di giro scritto
 con le costanti, `pi_2`, `pi` e `pi2`, è esatto: un giro intero non ruota
 affatto, bit per bit.
 
-**Il minimo o il massimo di tanti: `minmc(z1, z2, ...)` e
-`maxmc(z1, z2, ...)`.** Il modulo minimo, o massimo, fra tutti gli argomenti,
-raccolto da sinistra a destra e tenuto all'angolo di `z1`: `minmc(z, p, p2)` è
-lungo quanto il più corto dei tre e punta dove punta `z`. Con due argomenti
-sono `minm` e `maxm`, fino all'ultimo bit; un posto vuoto viene saltato, e un
-solo argomento è `z1` stesso.
+**Il valore di modulo minimo o massimo: `argminm(z1, z2, ...)` e
+`argmaxm(z1, z2, ...)`.** Un argmin e un argmax per modulo: fra `z1`, `z2`,
+..., quello il cui modulo è il minimo, o il massimo, restituito intero, con
+parte reale e immaginaria così come sono. `argminm(z, p, p2)` è quello dei tre
+più vicino all'origine. Fra due con lo stesso modulo, quello scritto per primo;
+un posto vuoto viene saltato, e un solo valore è `z1` stesso.
 
 ### La sonda della tavolozza
 
