@@ -173,7 +173,20 @@ inteira não roda nada, bit a bit.
 aquele cujo módulo é o mínimo, ou o máximo, devolvido inteiro, com a parte real
 e a imaginária tal como são. `argminm(z, p, p2)` é o dos três mais próximo da
 origem. De dois com o mesmo módulo, o escrito primeiro; um lugar vazio é
-saltado, e um só valor é o próprio `z1`.
+saltado, e um só valor é o próprio `z1`. O mesmo módulo quer dizer o mesmo a
+menos dos últimos bits, por isso `argminm(z^2, z_r90^2)` é `z^2` em toda a
+parte.
+
+**As partes reais e imaginárias mínimas ou máximas: `argminx(z1, z2, ...)`,
+`argmaxx(z1, z2, ...)`, `argminxa(z1, z2, ...)` e `argmaxxa(z1, z2, ...)`.** O
+mesmo sobre as partes reais e as partes imaginárias, cada uma por si, de modo
+que a parte real pode vir de um valor e a imaginária de outro:
+`argminx({1,2}, {-3,5}, {4,-6})` é `{-3,-6}`, e `argmaxx` dos mesmos três é
+`{4,5}`. `argminxa` e `argmaxxa` comparam pelo valor absoluto e mantêm o sinal:
+`argminxa({1,2}, {-3,5}, {4,-6})` é `{1,2}`, as partes mais próximas de zero.
+De duas partes iguais, nas quatro, a escrita primeiro, também entre `x` e `-x`,
+por isso `argminxa({1,2}, {-1,-1}, {2,1})` é `{1,-1}`. Como em `argminm`,
+valores absolutos que diferem nos últimos bits contam como iguais.
 
 ### A sonda da paleta
 

@@ -13,7 +13,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
-#define sffnctscount 107
+#define sffnctscount 111
 /* sfcmplxfunc starts with the operators, which are reached through
  * sffe_operator/sffe_unary_operator rather than by name. Lookups by name start
  * after them. */
@@ -111,6 +111,12 @@ sfarg *sfmaxm(sfarg *const p);
 /* argmin and argmax by modulus, over any number of arguments */
 sfarg *sfargminm(sfarg *const p);
 sfarg *sfargmaxm(sfarg *const p);
+/* the same over the real and the imaginary parts, each on its own, and by
+ * absolute value */
+sfarg *sfargminx(sfarg *const p);
+sfarg *sfargmaxx(sfarg *const p);
+sfarg *sfargminxa(sfarg *const p);
+sfarg *sfargmaxxa(sfarg *const p);
 /* mid function: if a<b then a<x<b else x<b or x<a */
 sfarg *sfmid(sfarg *const p);
 sfarg *sfmidr(sfarg *const p);

@@ -121,6 +121,15 @@ const sffunction sfcmplxfunc[sffnctscount] = {
     {sfargminm, SFFE_VARIADIC, "argminm\0", NULL, false, 2},
     {sfargmaxm, SFFE_VARIADIC, "argmaxm\0", NULL, false, 2},
 
+    /* --- the same over the real and the imaginary parts, each on its own:
+     * the smallest or the largest real part and imaginary part --- */
+    {sfargminx, SFFE_VARIADIC, "argminx\0", NULL, false, 2},
+    {sfargmaxx, SFFE_VARIADIC, "argmaxx\0", NULL, false, 2},
+    /* the same by absolute value: the real part and the imaginary part
+     * nearest to nought or farthest from it, each with its sign --- */
+    {sfargminxa, SFFE_VARIADIC, "argminxa\0", NULL, false, 2},
+    {sfargmaxxa, SFFE_VARIADIC, "argmaxxa\0", NULL, false, 2},
+
     /* --- mid(a, b, c) confines a to the range b..c.
      * With b < c it is a plain clamp. With b > c the range is inverted and a
      * value outside it is sent to the opposite end: mid(0,10,1) is 10 while
@@ -955,7 +964,13 @@ static inline cmplx sfarg_or(sfarg *const p, unsigned int place, number_t re,
 /* argminm(z1, z2, ...) and argmaxm: the one of z1, z2, ... whose modulus is
  * the smallest or the largest, handed back whole -- an argmin and an argmax
  * over |z1|, |z2|, .... Of two with the same modulus, the one written first.
- * An empty place is passed over, and one value alone is z1. */
+ * An empty place is passed over, and one value alone is z1.
+ *
+ * The same modulus means the same to a few units in the last place: values
+ * equal in exact arithmetic seldom come out equal to the bit, z^2 and
+ * rotate(z,pi_2)^2 going through a log and an exp along different angles,
+ * and a choice between them that the last bits made would change from one
+ * iteration and one pixel to the next, which draws as noise. */
 static sfarg *sfargextremem(sfarg *const p, bool larger)
 {
     cmplx best = sfarg_or(p, 1, 0, 0);
@@ -965,7 +980,9 @@ static sfarg *sfargextremem(sfarg *const p, bool larger)
         if (a->omitted)
             continue;
         const number_t rk = gsl_complex_abs(sfvalue(a));
-        if (larger ? r < rk : rk < r) {
+        const number_t tie =
+            nldexp(r < rk ? rk : r, 8 - NUMBER_MANTISSA_BITS);
+        if (larger ? rk - r > tie : r - rk > tie) {
             r = rk;
             best = sfvalue(a);
         }
@@ -982,6 +999,72 @@ sfarg *sfargminm(sfarg *const p)
 sfarg *sfargmaxm(sfarg *const p)
 {
     return sfargextremem(p, true);
+}
+
+/* argminx(z1, z2, ...) and argmaxx: the smallest or the largest of the real
+ * parts and of the imaginary parts, each taken on its own, as min and max do
+ * for two -- argminx(1+2i, -3+5i, 4-6i) is -3-6i. Of two alike, the first.
+ * An empty place is passed over, and one value alone is z1. */
+static number_t extremex(number_t best, number_t x, bool larger)
+{
+    return (larger ? x > best : x < best) ? x : best;
+}
+
+/* argminxa and argmaxxa do the same by absolute value, and keep the sign:
+ * argminxa(1+2i, -3+5i, 4-6i) is 1+2i. Of two parts with the same absolute
+ * value, x and -x among them, the one written first, so argminxa(1+2i,
+ * -1-i, 2+i) is 1-i.
+ *
+ * As in argminm, the same absolute value means the same to a few units in
+ * the last place: x and -x seldom come out of a formula as exact opposites,
+ * and a sign that the last bits chose would draw as noise. */
+static number_t extremexa(number_t best, number_t x, bool larger)
+{
+    const number_t ab = best < 0 ? -best : best;
+    const number_t ax = x < 0 ? -x : x;
+    const number_t tie = nldexp(ab < ax ? ax : ab, 8 - NUMBER_MANTISSA_BITS);
+    return (larger ? ax - ab > tie : ab - ax > tie) ? x : best;
+}
+
+static sfarg *sfargextremex(sfarg *const p, bool larger, bool absolute)
+{
+    cmplx best = sfarg_or(p, 1, 0, 0);
+    for (unsigned int k = 2; k <= p->argc; k++) {
+        const sfarg *a = p->args[p->argc - k];
+        if (a->omitted)
+            continue;
+        const number_t re = GSL_REAL(sfvalue(a));
+        const number_t im = GSL_IMAG(sfvalue(a));
+        if (absolute) {
+            GSL_REAL(best) = extremexa(GSL_REAL(best), re, larger);
+            GSL_IMAG(best) = extremexa(GSL_IMAG(best), im, larger);
+        } else {
+            GSL_REAL(best) = extremex(GSL_REAL(best), re, larger);
+            GSL_IMAG(best) = extremex(GSL_IMAG(best), im, larger);
+        }
+    }
+    sfvalue(p) = best;
+    return sfaram1(p);
+}
+
+sfarg *sfargminx(sfarg *const p)
+{
+    return sfargextremex(p, false, false);
+}
+
+sfarg *sfargmaxx(sfarg *const p)
+{
+    return sfargextremex(p, true, false);
+}
+
+sfarg *sfargminxa(sfarg *const p)
+{
+    return sfargextremex(p, false, true);
+}
+
+sfarg *sfargmaxxa(sfarg *const p)
+{
+    return sfargextremex(p, true, true);
 }
 
 sfarg *sfjulian(sfarg *const p)
