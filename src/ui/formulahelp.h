@@ -119,7 +119,9 @@ std::vector<std::u16string> formula_status_lines(
  *
  * poly(z, k1, ..., km) with m drawn between a shortest and a longest length,
  * and every coefficient a complex number whose magnitude is drawn between a
- * smallest and a largest one and whose argument is drawn at random. Written
+ * smallest and a largest one and whose argument is drawn at random -- round
+ * the whole turn, or, given a delta, the first round the whole turn and the
+ * others within delta degrees across centred on the first's. Written
  * without Qt, like the walk above, so that a test can hand every formula it
  * makes to the parser. See formulapoly.cpp.
  */
@@ -131,6 +133,9 @@ std::vector<std::u16string> formula_status_lines(
  * which is what the parser reads, anything larger is a long row of digits
  * saying nothing a fractal can use. */
 #define FORMULA_POLY_LARGEST 1000000
+/* The widest delta, in degrees: a whole turn, past which there is nowhere
+ * further for an argument to go. */
+#define FORMULA_POLY_WIDEST 360
 
 enum formula_poly_reading {
     FORMULA_POLY_OK = 0,
@@ -140,7 +145,8 @@ enum formula_poly_reading {
     FORMULA_POLY_TOO_SHORT,   /* a length below 1 */
     FORMULA_POLY_TOO_LONG,    /* a length above FORMULA_POLY_LONGEST */
     FORMULA_POLY_NEGATIVE,    /* a magnitude below nought */
-    FORMULA_POLY_TOO_LARGE    /* a magnitude above FORMULA_POLY_LARGEST */
+    FORMULA_POLY_TOO_LARGE,   /* a magnitude above FORMULA_POLY_LARGEST */
+    FORMULA_POLY_TOO_WIDE     /* a delta above FORMULA_POLY_WIDEST */
 };
 
 /* One of the two lengths as written in its field: FORMULA_POLY_OK and the
@@ -153,12 +159,21 @@ int formula_poly_length(const char *text, int *length);
 int formula_poly_magnitude(const char *text, double fallback,
                            double *magnitude);
 
+/* The delta as written in its field, in degrees: FORMULA_POLY_OK and the
+ * delta in *delta -- negative when the field is empty, which is no delta --
+ * or why there is none. FORMULA_POLY_NEGATIVE is a delta below nought. */
+int formula_poly_delta(const char *text, double *delta);
+
 /* A call of a length from shortest to longest, its coefficients of a
  * magnitude from smallest to largest, all four already read; the same seed
- * gives the same call. The length drawn is put in *length. */
+ * gives the same call. The length drawn is put in *length. A delta of nought
+ * or more, in degrees, keeps the argument of every coefficient after the
+ * first within delta across, centred on the first's; a negative one, as an
+ * empty field reads, leaves every argument free, and the call is the one
+ * drawn before there was a delta, to the character. */
 std::string formula_poly_random(int shortest, int longest, double smallest,
                                 double largest, unsigned long long seed,
-                                int *length);
+                                int *length, double delta = -1);
 
 /* The two of them worded into the line the bar shows, with the argument the
  * cursor is in emphasised, and empty when there is nothing to show.
@@ -170,7 +185,24 @@ std::string formula_poly_random(int shortest, int longest, double smallest,
 class QString;
 QString formula_hint_text(const QString &text, int cursor);
 
+/* Help -> User formula reference, at the tab it was left at. */
 struct uih_context;
 void ui_formulahelp(struct uih_context *uih);
+
+/* Its tabs, in the order they stand. */
+enum formula_help_tab {
+    FORMULA_HELP_FUNCTIONS,
+    FORMULA_HELP_VARIABLES,
+    FORMULA_HELP_NOTATION,
+    FORMULA_HELP_VALUES,
+    FORMULA_HELP_TILINGS,
+    FORMULA_HELP_UTILITIES
+};
+
+/* The same window opened at one of those tabs, or at the one it was left at
+ * when tab is negative: what the buttons in the dialogs that name what the
+ * reference shows open -- User formula, and Tessellation... at the Tilings
+ * tab. */
+void ui_formulahelp_open(int tab);
 
 #endif // FORMULAHELP_H

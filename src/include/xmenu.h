@@ -43,6 +43,12 @@ typedef struct dialog {
      * their places in the command. A rule at the head of a column is left
      * out, a heading kept. */
     int column;
+    /* Beside OK, a button opening Help -> User formula reference at one of
+     * its tabs, for a dialog whose fields name what the reference shows: the
+     * tab, counted from one, as formula_help_tab counts it from nought. The
+     * dialog's alone, set on its first field, as the rule is: it takes no
+     * parameter. Nought, as every field is unless told, has none. */
+    int reference;
 } menudialog;
 
 typedef char *(*tokenfunc)(struct uih_context *c);
@@ -223,6 +229,11 @@ typedef char *(*tokenfunc)(struct uih_context *c);
  * _back fields before it; see menudialog's viewtools. */
 #define DIALOGVIEWTOOLS_I(_back)                                               \
     menudialogs_i18n[no_menudialogs_i18n].viewtools = _back;
+
+/* The reference button, at tab _tab counted from one, on the dialog whose
+ * first field is defined next; see menudialog's reference. */
+#define DIALOGREFERENCE_I(_tab)                                                \
+    menudialogs_i18n[no_menudialogs_i18n].reference = _tab;
 
 #define NULL_I()                                                               \
     menudialogs_i18n[no_menudialogs_i18n].question = NULL;                     \

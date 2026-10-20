@@ -1508,12 +1508,10 @@ void MainWindow::showDialog(const char *name)
                  * box, one line wide however long the formula. */
                 FormulaEdit *edit = new FormulaEdit(qDialog);
                 edit->setObjectName(label + "-data");
-                /* Empty, with the formula used last faint in it, once there
-                 * is one: the formula in use only the first time, when there
-                 * is nothing faint to show. */
+                /* The formula in use, written out, to be changed or kept;
+                 * the ones used before it are a step up away. */
                 const QStringList used = formula_history();
-                if (used.isEmpty())
-                    edit->setPlainText(QString::fromUtf8(dialog->defstr));
+                edit->setPlainText(QString::fromUtf8(dialog->defstr));
                 edit->moveCursor(QTextCursor::End);
 
                 /* Beside the bar, a step back through the formulas used
@@ -1541,17 +1539,29 @@ void MainWindow::showDialog(const char *name)
                         [edit]() { edit->stepOlder(); });
                 connect(newer, &QToolButton::clicked, edit,
                         [edit]() { edit->stepNewer(); });
+                /* The two arrows together as tall as the bar with one line
+                 * in it, and the label as tall as that line and centred on
+                 * it: all three line up on the first line, however many the
+                 * formula takes. Left to themselves the arrows were taller
+                 * than a one-line bar, which sat lower than the label. */
+                const int line = edit->lineHeight();
+                older->setFixedSize(line, line / 2);
+                newer->setFixedSize(line, line - line / 2);
                 QVBoxLayout *steps = new QVBoxLayout();
                 steps->setSpacing(0);
                 steps->addWidget(older);
                 steps->addWidget(newer);
                 steps->addStretch();
                 QHBoxLayout *field = new QHBoxLayout();
-                field->addWidget(edit);
+                field->addWidget(edit, 0, Qt::AlignTop);
                 field->addLayout(steps);
 
+                QLabel *name = new QLabel(label, qDialog);
+                name->setBuddy(edit);
+                name->setFixedHeight(line);
+                name->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
                 QFormLayout *formLayout = new QFormLayout();
-                formLayout->addRow(label, field);
+                formLayout->addRow(name, field);
 
                 /* The line under the bar. It is there whether or not there is
                  * anything to say, and two lines high so that a long signature
@@ -1601,6 +1611,16 @@ void MainWindow::showDialog(const char *name)
                                     edit->setFocus();
                                 });
                         });
+
+                /* The reference, at the tab it was left at: a window of its
+                 * own, which stays open beside the dialog and the formula
+                 * after it. */
+                QPushButton *reference = buttonBox->addButton(
+                    TR("Dialog", "Formula reference..."),
+                    QDialogButtonBox::ActionRole);
+                reference->setAutoDefault(false);
+                connect(reference, &QPushButton::clicked, qDialog,
+                        []() { ui_formulahelp_open(-1); });
 
                 connect(buttonBox, SIGNAL(accepted()), qDialog, SLOT(accept()));
                 connect(buttonBox, SIGNAL(rejected()), qDialog, SLOT(reject()));

@@ -1,6 +1,6 @@
 # MS XaoS
 
-> Übersetzung der [englischen Anleitung](ms-xaos-guide.md) der Version 2.11. Wo
+> Übersetzung der [englischen Anleitung](ms-xaos-guide.md) der Version 2.13. Wo
 > sie voneinander abweichen, gilt das englische Original.
 
 Ein Fork von [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Alles, was das
@@ -115,21 +115,30 @@ in der Beschreibung der Funktion zu vergraben, die sie nimmt. Ein fünfter zeigt
 ein Bild jeder Kachelung, die `randsctile` nimmt, denn fünfundvierzig Zahlen
 mit je einer Zeile Worte sagen wenig über die Formen.
 
+Fraktal → Benutzerformel hat neben OK eine Schaltfläche **Formelreferenz...**,
+die das Fenster bei dem Reiter öffnet, bei dem es verlassen wurde; die beiden
+Dialoge **Kachelung...**, innen und außen, haben eine, die es beim Reiter
+Kachelungen öffnet. Der Dialog wartet, während das Fenster benutzt wird, sodass
+man vor OK darin eine Kachelung nachschlagen oder eine Formel daraus kopieren
+kann.
+
 Ein sechster, **Werkzeuge**, schreibt Formeln, statt sie zu beschreiben.
-Vorerst enthält er ein zufälliges `poly` aus vier Feldern:
+Vorerst enthält er ein zufälliges `poly` aus fünf Feldern:
 
 | | |
 | --- | --- |
 | minimale und maximale Länge | m, die Anzahl der Koeffizienten, zwischen beiden gezogen; der Grad ist m − 1. Beide werden gebraucht, als ganze Zahlen von 1 bis 254 — so weit `poly` reicht, da der Parser 255 Argumente pro Aufruf nimmt und `z` eines davon ist |
 | minimaler und maximaler Betrag | die Größe jedes Koeffizienten, gleichmäßig zwischen beiden gezogen. 0 und 1, wenn leer gelassen; höchstens 1000000 |
+| Delta des Arguments | in Grad, von 0 bis 360. Leer, wie es beginnt, lässt es jedes Argument frei über die ganze Umdrehung, und die Formel ist die, die vor dem Feld gezogen wurde. Mit einer Zahl geht das Argument des ersten Koeffizienten weiter über die ganze Umdrehung, und jedes weitere wird gleichmäßig innerhalb einer Breite von so vielen Grad gezogen, zentriert auf das des ersten: bei 0 haben alle Koeffizienten das Argument des ersten, bei 30 bleiben sie innerhalb von 15 Grad zu beiden Seiten davon. Eine Formel mit einem Koeffizienten hat keinen weiteren, den sie nahe halten müsste |
 
 Jeder Koeffizient ist komplex, `{re,im}`, mit einem über die ganze Umdrehung
-zufällig gezogenen Argument, und jeder Teil wird mit vier signifikanten Stellen
-seines Betrags geschrieben, damit ein Bereich von 0.001 bis 0.002 nicht
-weggerundet wird. In der Formel steht kein `c`. Eine Benutzerformel lässt `z`
-im Mandelbrot- wie im Juliamodus beim Pixel beginnen, also zeichnet sie die
-gefüllte Julia-Menge des Polynoms selbst, in beiden gleich; `c` kommt dahin, wo
-man es haben will, wie in `poly(...) + c`.
+zufällig gezogenen Argument, oder nahe dem des ersten, wie das Delta es sagt,
+und jeder Teil wird mit vier signifikanten Stellen seines Betrags geschrieben,
+damit ein Bereich von 0.001 bis 0.002 nicht weggerundet wird. In der Formel
+steht kein `c`. Eine Benutzerformel lässt `z` im Mandelbrot- wie im Juliamodus
+beim Pixel beginnen, also zeichnet sie die gefüllte Julia-Menge des Polynoms
+selbst, in beiden gleich; `c` kommt dahin, wo man es haben will, wie in
+`poly(...) + c`.
 
 Jede Änderung an einem Feld erzeugt eine neue Formel, ebenso **Ein weiteres
 erzeugen**, und **Kopieren** legt sie in die Zwischenablage für Fraktal →
@@ -155,6 +164,18 @@ irgendetwas las, also waren `LOGN(5;Z^2)+C` und `LOGN(5,Z^2)+C` eine Formel,
 und dasselbe galt für die beiden Teile einer komplexen Zahl. Das ist vorbei.
 Ein Semikolon wird jetzt dort abgelehnt, wo es steht — *Falsche Operation: ;* —
 und das Komma ist überall das Trennzeichen, wie in der ganzen übrigen Syntax.
+
+**Einen Punkt drehen: `rotate(z, angle)`.** `z` im Uhrzeigersinn um den
+Ursprung um `angle` Radiant gedreht, wovon der Realteil gelesen wird:
+`z*e^(-i*angle)`. Im Uhrzeigersinn, wie die Ebene gezeichnet wird, unabhängig
+vom Winkel des Ausschnitts, der das fertige Bild danach dreht. Ein Bild, das
+aus einem durch `rotate` geführten Punkt gezeichnet wird, dreht sich mit ihm im
+Uhrzeigersinn: `fbm(rotate(x,0.5),7)` ist die Bewegung von `fbm(x,7)`, um einen
+halben Radiant im Uhrzeigersinn um den Ursprung gedreht, und
+`ifiterl(rotate(z,0.5)^2+rotate(c,0.5), z^2+rotate(c,0.5))` die
+Mandelbrot-Menge, ebenso gedreht. Eine ganze Zahl von Vierteldrehungen, mit den
+Konstanten `pi_2`, `pi` und `pi2` geschrieben, ist exakt: eine ganze Umdrehung
+dreht gar nicht, bitgenau.
 
 ### Die Palettensonde
 
@@ -236,10 +257,10 @@ Die zuletzt verwendete Formel steht blass in der Leiste: ganz, solange die
 Leiste leer ist, und ihr Rest hinter dem Getippten, solange das Getippte ihr
 Anfang ist. Tab setzt sie ganz in die Leiste. Sobald das Getippte anders
 weitergeht, verschwindet der blasse Text, und Tab geht wie bisher zu den
-Schaltflächen weiter. Die Leiste öffnet sich leer, mit dieser Formel blass
-darin, und OK bei leerer Leiste verwendet sie; nur beim allerersten Mal, bevor
-überhaupt eine Formel verwendet wurde, öffnet sie sich mit der aktuellen
-Formel, `z^2+c`.
+Schaltflächen weiter. Die Leiste öffnet sich mit der aktuellen Formel
+ausgeschrieben darin, zum Ändern oder Behalten, und Pfeil nach oben holt die
+davor verwendeten. Geleert zeigt sie die zuletzt verwendete Formel blass, und
+OK bei leerer Leiste verwendet sie.
 
 **Ausschnitt → Status** zeigt die Formel genauso: in einer Zeile, wenn sie ins
 Fenster passt, sonst in zwei — die zweite unter der ersten, zwischen Namen
@@ -344,20 +365,23 @@ Suffixe, die für die am häufigsten darauf angewandten Aufrufe stehen:
 | `_br` | `bshipr(…)` |
 | `_pM` | `parchment(…, M)` |
 | `_paM` | `parchmenta(…, M)` |
+| `_rNtD` | `rotate(…, N/D*pi)` |
 
 Sie werden von links nach rechts gelesen, jedes umschließt, was die vorigen
 ergeben haben: `z_p3` ist `parchment(z,3)`, `c_b_p2` ist
 `parchment(bship(c),2)` und `p12_p2_p3` ist `parchment(parchment(p12,2),3)`.
 *M* ist Teil des Namens, wird also in Ziffern geschrieben — eine ganze Zahl,
-eins oder mehr; `z_p0` wird mit einer Meldung abgelehnt, die das sagt. Nicht an
-`n`, das eine Anzahl ist und keine zweite Komponente hat, an der eines davon
-arbeiten könnte.
+eins oder mehr; `z_p0` wird mit einer Meldung abgelehnt, die das sagt. Eine
+Drehung, `_rNtD`, ist *N*/*D* einer halben Umdrehung im Uhrzeigersinn, ebenso
+in Ziffern geschrieben: `p4_r3t7` ist `rotate(p4,3/7*pi)`; *D* ist eins oder
+mehr, *N* darf 0 sein, also gar keine Drehung. Nicht an `n`, das eine Anzahl
+ist und keine zweite Komponente hat, an der eines davon arbeiten könnte.
 
 Sie werden zu den Aufrufen ausgeschrieben, bevor die Formel gelesen wird, also
 zeichnet eine Variable mit Suffix genau, was die ausgeschriebenen Aufrufe
 zeichnen, und kostet, was sie kosten; die Formel wird so gespeichert, wie sie
-geschrieben wurde. Alles, was keines der fünf ist, bleibt, wie es ist, und wird
-als der unbekannte Name abgelehnt, der es ist.
+geschrieben wurde. Alles, was keines der sechs ist, bleibt, wie es ist, und
+wird als der unbekannte Name abgelehnt, der es ist.
 
 **Entfernt.** `powi`, `powdc` und `logcn` waren zweite Namen für `pow` und
 `logn`; `rad`, `deg` und `sign` waren ohne jede Implementierung dahinter
@@ -1566,7 +1590,7 @@ Felder.
 
 | Feld | |
 | --- | --- |
-| **Kachelung** | welche Kachelung, mit der Zahl, unter der `randsctile` sie kennt, und ihrem Namen: **3: Sechsecke**, wo es beginnt. Der Reiter Kachelungen von Hilfe → Referenz der Benutzerformeln hat ein Bild jeder |
+| **Kachelung** | welche Kachelung, mit der Zahl, unter der `randsctile` sie kennt, und ihrem Namen: **3: Sechsecke**, wo es beginnt. Der Reiter Kachelungen von Hilfe → Referenz der Benutzerformeln hat ein Bild jeder, und die Schaltfläche **Formelreferenz...** des Dialogs öffnet ihn dort |
 | **Färbung** | woher die Farbe kommt, überall: **Winkel von z**, wo es beginnt; **Winkel um die Kachelmitte**, der um die Mitte der Kachel, in der der Punkt liegt, der jede Kachel zu einem kleinen Farbrad macht; **zmag**, der Wert des Modus dieses Namens; **keine**, nur die Kacheln |
 | **Kacheln** | wie sich jede Kachel von ihren Nachbarn abhebt: **jede um einen eigenen Betrag verschoben**, entlang der Palette, wo es beginnt; **von der Mitte zum Rand schattiert**, dasselbe, und von der Mitte zum Rand um ein Achtel der Farben einer Drehung weiter verschoben, wie eine Fase; **mit betontem Rand**, dasselbe, und der äußere Teil der Kachel um die Hälfte der Farben einer Drehung weiter verschoben; **jede in einer eigenen Farbe**, eine Farbe für sich, woher die Farbe auch kommt |
 | **Intensität** | wie weit die Kacheln auf der Palette auseinanderliegen: sie vervielfacht jeden eigenen Betrag einer Kachel, ihre Verschiebung, die Abschrägung von **von der Mitte zum Rand schattiert** und den Rand von **mit betontem Rand**. Bei `1`, wo sie beginnt, sind die Kacheln wie hier beschrieben; bei `0` bleibt nur, woher die Farbe kommt, also ist **Winkel von z** eine einfache Zerlegung und **zmag** einfaches zmag; dazwischen sind die Kacheln schwach zu sehen, über `1` stärker. Mit **Ausschnitt → Palettensonde (auf einen Punkt klicken)** gemessen, wird eine Kachel bei `1` um bis zu etwa zehn Stellen verschoben, in jedem Stil und auf jeder Palette, also bei `0.1` um bis zu eine Stelle und bei `0.01` um bis zu ein Zehntel |

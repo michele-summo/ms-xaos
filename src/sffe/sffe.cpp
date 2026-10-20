@@ -603,14 +603,15 @@ char sffe_doname(char **str)
  *
  *   _b   bship(.)          _pM   parchment(., M)
  *   _bi  bshipi(.)         _paM  parchmenta(., M)
- *   _br  bshipr(.)
+ *   _br  bshipr(.)         _rNtD rotate(., N/D*pi)
  *
  * They go on z, c, x, p and p1 to p9999 -- not on n, which is a count and has
  * no second component for any of these to work on -- and are read from left
  * to right, each wrapping what the ones before it made: c_b_p2 is
  * parchment(bship(c),2), and p12_p2_p3 is parchment(parchment(p12,2),3). M is
  * part of the name, so it can only be written in figures: a whole number, one
- * or more.
+ * or more. So are N and D of a turn, p4_r3t7 being rotate(p4,3/7*pi): N may
+ * be nought, a turn of nothing, D may not.
  *
  * Done on the working copy between phases 1 and 2, name by name, so that all
  * that comes after -- the count of arguments, the multiplication left out
@@ -622,15 +623,22 @@ char sffe_doname(char **str)
  * ever touches the copy the parser cuts up. */
 
 /* what each suffix opens, in the order sffe_suffix numbers them */
-static const char *const sffe_suffix_call[5] = {
-    "bship(", "bshipi(", "bshipr(", "parchment(", "parchmenta("};
+static const char *const sffe_suffix_call[6] = {
+    "bship(", "bshipi(", "bshipr(", "parchment(", "parchmenta(", "rotate("};
 
 /* The suffix starting at p, which is at an underscore, and where it ends; NULL
- * if it is not one of the five. kind is its place in sffe_suffix_call, and
- * the figures are the count the two that take one were given. */
+ * if it is not one of the six. kind is its place in sffe_suffix_call, and
+ * the figures are the count the two that take one were given -- or, for a
+ * turn, its numerator, the denominator going in below, which is empty for
+ * every other suffix. */
 static const char *sffe_suffix(const char *p, const char *end, int *kind,
-                               const char **figures, size_t *nfigures)
+                               const char **figures, size_t *nfigures,
+                               const char **below = NULL, size_t *nbelow = NULL)
 {
+    if (below) {
+        *below = NULL;
+        *nbelow = 0;
+    }
     if (p >= end || *p != '_') {
         return NULL;
     }
@@ -645,6 +653,27 @@ static const char *sffe_suffix(const char *p, const char *end, int *kind,
         p += 1;
     }
     size_t nd = (size_t)(p - d);
+
+    /* _rNtD: figures, a t, figures */
+    if (nw == 1 && w[0] == 'r' && nd && p < end && *p == 't') {
+        p += 1;
+        const char *b = p;
+        while (p < end && isdigit((unsigned char)*p)) {
+            p += 1;
+        }
+        if (p == b || (p < end && *p != '_')) {
+            return NULL;
+        }
+        *kind = 5;
+        *figures = d;
+        *nfigures = nd;
+        if (below) {
+            *below = b;
+            *nbelow = (size_t)(p - b);
+        }
+        return p;
+    }
+
     if (p < end && *p != '_') {
         return NULL; /* letters after the figures */
     }
@@ -758,11 +787,17 @@ static char *sffe_spell_suffixes(char *text, char **culprit)
         if (under && *c != '(' && sffe_suffixed_base(name, under)) {
             while (p < c) {
                 int kind;
-                const char *d;
-                size_t nd;
-                const char *next = sffe_suffix(p, c, &kind, &d, &nd);
+                const char *d, *b;
+                size_t nd, nb;
+                const char *next = sffe_suffix(p, c, &kind, &d, &nd, &b, &nb);
                 if (!next) {
                     break;
+                }
+                /* a count of nought, or a turn divided by nought; a turn of
+                 * nought is no turn, and allowed */
+                if (kind == 5) {
+                    d = b;
+                    nd = nb;
                 }
                 size_t z = 0;
                 while (z < nd && d[z] == '0') {
@@ -798,10 +833,10 @@ static char *sffe_spell_suffixes(char *text, char **culprit)
         }
         sffe_text_put(&out, name, (size_t)(under - name));
         for (const char *q = under; q < c;) {
-            const char *d;
-            size_t nd;
+            const char *d, *b;
+            size_t nd, nb;
             int kind = 0;
-            q = sffe_suffix(q, c, &kind, &d, &nd);
+            q = sffe_suffix(q, c, &kind, &d, &nd, &b, &nb);
             if (nd) {
                 while (nd > 1 && *d == '0') { /* 03 is 3 */
                     d += 1;
@@ -809,6 +844,15 @@ static char *sffe_spell_suffixes(char *text, char **culprit)
                 }
                 sffe_text_put(&out, ",", 1);
                 sffe_text_put(&out, d, nd);
+            }
+            if (nb) { /* the turn: N/D*pi */
+                while (nb > 1 && *b == '0') {
+                    b += 1;
+                    nb -= 1;
+                }
+                sffe_text_put(&out, "/", 1);
+                sffe_text_put(&out, b, nb);
+                sffe_text_put(&out, "*pi", 3);
             }
             sffe_text_put(&out, ")", 1);
         }

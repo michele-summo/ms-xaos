@@ -35,6 +35,9 @@ class FormulaEdit : public QTextEdit
 
     /* The height the text needs, held between one line and the tallest. */
     int wantedHeight() const;
+    /* The height of the bar holding one line, frame included: what the
+     * label and the arrows beside it line up with. */
+    int lineHeight() const;
 
     /* The formulas used before, newest first, which the bar steps through
      * and of which the newest is its ghost: while the text is the start of

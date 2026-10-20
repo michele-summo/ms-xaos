@@ -2,7 +2,7 @@
 
 A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Everything the
 original does, it still does; this describes what has been added or changed,
-and why. Version 2.11.
+and why. Version 2.13.
 
 ## Two binaries
 
@@ -102,20 +102,28 @@ function that takes them. A fifth shows a picture of every tiling `randsctile`
 takes, since forty-five numbers with a line of words each say little about the
 shapes.
 
+Fractal → User formula has a **Formula reference...** button beside OK, which
+opens the window at the tab it was left at; the two **Tessellation...**
+dialogs, of the inside and of the outside, have one that opens it at the
+Tilings tab. The dialog waits while the window is used, so that a tiling can be
+looked up in it, or a formula copied from it, before OK.
+
 A sixth, **Utilities**, writes formulas instead of describing them. For now it
-holds a random `poly`, from four fields:
+holds a random `poly`, from five fields:
 
 | | |
 | --- | --- |
 | minimum and maximum length | m, the number of coefficients, drawn between the two; the degree is m − 1. Both are needed, as whole numbers from 1 to 254 — as long as `poly` goes, the parser taking 255 arguments to a call and `z` being one of them |
 | minimum and maximum magnitude | the size of every coefficient, drawn evenly between the two. 0 and 1 when left empty; at most 1000000 |
+| argument delta | in degrees, from 0 to 360. Empty, where it starts, leaves every argument free round the whole turn, and the formula is the one drawn before the field was there. Given a number, the first coefficient's argument still goes round the whole turn and every other is drawn evenly within that many degrees across, centred on the first's: at 0 every coefficient has the first's argument, at 30 they keep within 15 degrees of it either way. A formula of one coefficient has no other to keep near it |
 
 Each coefficient is complex, `{re,im}`, with its argument drawn at random round
-the whole turn, and each part is written to four significant figures of its
-magnitude, so that a range of 0.001 to 0.002 is not rounded away. There is no
-`c` in the formula. A user formula starts `z` at the pixel in mandelbrot mode as
-well as in julia mode, so what it draws is the polynomial's own filled Julia
-set, the same in both; `c` goes wherever it is wanted, as in `poly(...) + c`.
+the whole turn, or near the first's as the delta says, and each part is written
+to four significant figures of its magnitude, so that a range of 0.001 to 0.002
+is not rounded away. There is no `c` in the formula. A user formula starts `z`
+at the pixel in mandelbrot mode as well as in julia mode, so what it draws is
+the polynomial's own filled Julia set, the same in both; `c` goes wherever it
+is wanted, as in `poly(...) + c`.
 
 Every change to a field draws a new formula, as does **Generate another**, and
 **Copy** puts it on the clipboard for Fractal → User formula. While a length is
@@ -140,6 +148,17 @@ to serve as well: the parser turned it into a comma before reading anything, so
 two parts of a complex number. That is gone. A semicolon is now refused where it
 stands — *Invalid operator: ;* — and the comma is the separator throughout, as
 it is everywhere else in the syntax.
+
+**Turning a point: `rotate(z, angle)`.** `z` turned clockwise about the origin
+by `angle` radians, of which the real part is read: `z*e^(-i*angle)`. Clockwise
+as the plane is drawn, whatever the view's own angle, which turns the finished
+picture after it. A picture drawn from a point put through it turns clockwise
+with it: `fbm(rotate(x,0.5),7)` is the motion of `fbm(x,7)` turned half a
+radian clockwise about the origin, and
+`ifiterl(rotate(z,0.5)^2+rotate(c,0.5), z^2+rotate(c,0.5))` is the Mandelbrot
+set turned the same way. A whole number of quarter turns written with the
+constants, `pi_2`, `pi` and `pi2`, is exact: a whole turn is no turn at all, to
+the bit.
 
 ### The palette probe
 
@@ -212,9 +231,9 @@ The formula used last is shown faint in the bar: the whole of it while the bar
 is empty, and the rest of it after what you have typed for as long as what you
 type is how it begins. Tab puts it in the bar whole. Once what you type goes
 another way the faint text goes too, and Tab moves on to the buttons as before.
-The bar opens empty, with that formula faint in it, and OK on an empty bar uses
-it; only the very first time, before any formula has been used, does it open
-with the formula in use, `z^2+c`.
+The bar opens with the formula in use written out in it, to be changed or kept,
+and Up brings in the ones used before it. Emptied, it shows the formula used
+last faint, and OK on an empty bar uses it.
 
 **View → Status** shows the formula the same way: on one line if it fits the
 window, on two if not — the second under the first, going on between names —
@@ -310,18 +329,21 @@ suffixes that stand for the calls made on them most often:
 | `_br` | `bshipr(…)` |
 | `_pM` | `parchment(…, M)` |
 | `_paM` | `parchmenta(…, M)` |
+| `_rNtD` | `rotate(…, N/D*pi)` |
 
 They are read from left to right, each wrapping what the ones before it made:
 `z_p3` is `parchment(z,3)`, `c_b_p2` is `parchment(bship(c),2)` and `p12_p2_p3`
-is `parchment(parchment(p12,2),3)`. *M* is part of the name, so it is written in
-figures — a whole number, one or more; `z_p0` is refused with a message that
-says so. Not on `n`, which is a count and has no second component for any of
-them to work on.
+is `parchment(parchment(p12,2),3)`. *M* is part of the name, so it is written
+in figures — a whole number, one or more; `z_p0` is refused with a message that
+says so. A turn, `_rNtD`, is *N*/*D* of half a turn clockwise, written in
+figures the same way: `p4_r3t7` is `rotate(p4,3/7*pi)`; *D* is one or more,
+while *N* may be 0, which is no turn at all. Not on `n`, which is a count and
+has no second component for any of them to work on.
 
 They are spelled out as the calls before the formula is read, so a suffixed
 variable draws exactly what the calls written out draw and costs what they
 cost; the formula is saved as it was written. Anything that is not one of the
-five is left alone and refused as the unknown name it is.
+six is left alone and refused as the unknown name it is.
 
 **Removed.** `powi`, `powdc` and `logcn` were second names for `pow` and
 `logn`; `rad`, `deg` and `sign` were listed with no implementation behind them,
@@ -1422,7 +1444,7 @@ to a unit as the squares of `squares` are. Its dialog has four fields.
 
 | field | |
 | --- | --- |
-| **Tiling** | which tiling, by the number `randsctile` knows it by and its name — `3: hexagons`, where it starts. The Tilings tab of Help → User formula reference has a picture of each |
+| **Tiling** | which tiling, by the number `randsctile` knows it by and its name — `3: hexagons`, where it starts. The Tilings tab of Help → User formula reference has a picture of each, and the dialog's **Formula reference...** button opens it there |
 | **Coloring** | what the colour comes from, all over: `angle`, the angle of `z`, where it starts; `tile-angle`, the angle about the middle of the tile the point is in, which makes each tile a small wheel of colour; `zmag`, the value of the mode of that name; `none`, nothing but the tiles |
 | **Tiles** | how each tile stands apart from its neighbours: `turned`, moved along the palette by an amount of its own, where it starts; `shaded`, the same, and moved by an eighth of a turn's colours more from its middle to its edge, a bevel; `edged`, the same, and the outer part of the tile moved by half a turn's colours more; `flat`, one colour of its own, whatever the colour comes from |
 | **Intensity** | how far apart along the palette the tiles are set: it multiplies every amount a tile has of its own, its turn, the bevel of `shaded` and the edge of `edged`. At `1`, where it starts, the tiles are as described here; at `0` only what the colour comes from is left, so `angle` is a plain decomposition and `zmag` plain `zmag`; in between the tiles show faintly, and above `1` more strongly. Measured with **View → Palette probe (click a point)**, at `1` a tile is moved by up to about ten places, in every style and on any palette, so that `0.1` moves it by up to one place and `0.01` by up to a tenth |

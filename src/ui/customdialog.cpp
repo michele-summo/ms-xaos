@@ -11,6 +11,7 @@
 #include "i18n.h"
 #include "ui_helper.h"
 #include "viewtools.h"
+#include "formulahelp.h"
 
 #ifdef USE_FLOAT128
 #include <quadmath.h>
@@ -397,6 +398,22 @@ CustomDialog::CustomDialog(struct uih_context *uih, const menuitem *item,
     QDialogButtonBox *buttonBox =
         new QDialogButtonBox((QDialogButtonBox::Ok | QDialogButtonBox::Cancel),
                              Qt::Horizontal, this);
+    /* The reference beside OK, at the tab that shows what the fields name.
+     * Modal to the main window alone, so that the reference, a window of its
+     * own, can be scrolled and read while the dialog waits. */
+    if (dialog[0].question && dialog[0].reference > 0) {
+        const int tab = dialog[0].reference - 1;
+        QPushButton *reference = buttonBox->addButton(
+            TR("Dialog", "Formula reference..."), QDialogButtonBox::ActionRole);
+        reference->setAutoDefault(false);
+        if (tab == FORMULA_HELP_TILINGS)
+            reference->setToolTip(TR("Dialog", "A picture of every tiling, in "
+                                               "the Tilings tab of the user "
+                                               "formula reference"));
+        connect(reference, &QPushButton::clicked, this,
+                [tab]() { ui_formulahelp_open(tab); });
+        setWindowModality(Qt::WindowModal);
+    }
     connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
     connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
     dialogLayout->addWidget(buttonBox);

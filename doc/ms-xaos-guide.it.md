@@ -1,6 +1,6 @@
 # MS XaoS
 
-> Traduzione della [guida in inglese](ms-xaos-guide.md) della versione 2.11.
+> Traduzione della [guida in inglese](ms-xaos-guide.md) della versione 2.13.
 > Dove le due differiscono, fa fede l'originale inglese.
 
 Un fork di [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Tutto ciò che fa
@@ -110,21 +110,30 @@ nella descrizione della funzione che li prende. Una quinta mostra un'immagine
 di ogni tassellatura che `randsctile` accetta, perché quarantacinque numeri con
 una riga di parole ciascuno dicono poco delle forme.
 
+Frattale → Formula utente ha un pulsante **Riferimento delle formule...**
+accanto a OK, che apre la finestra alla scheda in cui era stata lasciata; le
+due finestre **Tassellazione...**, dell'interno e dell'esterno, ne hanno uno
+che la apre alla scheda Tassellature. La finestra di dialogo aspetta mentre si
+usa il riferimento, così che prima di OK vi si possa cercare una tassellatura,
+o copiarne una formula.
+
 Una sesta, **Utilità**, scrive formule invece di descriverle. Per ora contiene
-un `poly` casuale, da quattro campi:
+un `poly` casuale, da cinque campi:
 
 | | |
 | --- | --- |
 | lunghezza minima e massima | m, il numero dei coefficienti, estratto tra le due; il grado è m − 1. Servono entrambe, come numeri interi da 1 a 254 — fin dove arriva `poly`, dato che il parser accetta 255 argomenti per chiamata e `z` è uno di essi |
 | modulo minimo e massimo | la grandezza di ogni coefficiente, estratta uniformemente tra i due. 0 e 1 se lasciati vuoti; al massimo 1000000 |
+| delta dell'argomento | in gradi, da 0 a 360. Vuoto, dove parte, lascia ogni argomento libero su tutto il giro, e la formula è quella che si estraeva prima che il campo ci fosse. Dato un numero, l'argomento del primo coefficiente va ancora su tutto il giro e ogni altro è estratto uniformemente entro un'ampiezza di quei gradi, centrata su quello del primo: a 0 ogni coefficiente ha l'argomento del primo, a 30 restano entro 15 gradi da esso da una parte e dall'altra. Una formula di un solo coefficiente non ne ha altri da tenere vicini |
 
 Ogni coefficiente è complesso, `{re,im}`, con il suo argomento estratto a caso
-sull'intero giro, e ogni parte è scritta con quattro cifre significative del
-suo modulo, così che un intervallo da 0.001 a 0.002 non venga arrotondato via.
-Nella formula non c'è `c`. Una formula utente fa partire `z` dal pixel sia in
-modalità mandelbrot sia in modalità julia, quindi ciò che disegna è l'insieme
-di Julia pieno del polinomio stesso, uguale in entrambe; `c` va dove serve,
-come in `poly(...) + c`.
+sull'intero giro, o vicino a quello del primo come dice il delta, e ogni parte
+è scritta con quattro cifre significative del suo modulo, così che un
+intervallo da 0.001 a 0.002 non venga arrotondato via. Nella formula non c'è
+`c`. Una formula utente fa partire `z` dal pixel sia in modalità mandelbrot sia
+in modalità julia, quindi ciò che disegna è l'insieme di Julia pieno del
+polinomio stesso, uguale in entrambe; `c` va dove serve, come in
+`poly(...) + c`.
 
 Ogni modifica a un campo genera una formula nuova, come fa **Generane un
 altro**, e **Copia** la mette negli appunti per Frattale → Formula utente.
@@ -151,6 +160,18 @@ formula, e lo stesso valeva per le due parti di un numero complesso. Non è più
 così. Un punto e virgola ora è rifiutato dove compare — *Operatore non valido:
 ;* — e la virgola è il separatore ovunque, come lo è in tutto il resto della
 sintassi.
+
+**Ruotare un punto: `rotate(z, angle)`.** `z` ruotato in senso orario attorno
+all'origine di `angle` radianti, di cui si legge la parte reale:
+`z*e^(-i*angle)`. In senso orario come il piano è disegnato, qualunque sia
+l'angolo della vista, che ruota l'immagine finita dopo. Un'immagine disegnata
+da un punto passato per `rotate` ruota con esso in senso orario:
+`fbm(rotate(x,0.5),7)` è il moto di `fbm(x,7)` ruotato di mezzo radiante in
+senso orario attorno all'origine, e
+`ifiterl(rotate(z,0.5)^2+rotate(c,0.5), z^2+rotate(c,0.5))` è l'insieme di
+Mandelbrot ruotato allo stesso modo. Un numero intero di quarti di giro scritto
+con le costanti, `pi_2`, `pi` e `pi2`, è esatto: un giro intero non ruota
+affatto, bit per bit.
 
 ### La sonda della tavolozza
 
@@ -226,9 +247,9 @@ L'ultima formula usata è mostrata in grigio chiaro nella barra: intera finché
 la barra è vuota, e il resto dopo ciò che hai scritto finché ciò che scrivi ne
 è l'inizio. Tab la mette intera nella barra. Appena ciò che scrivi prende
 un'altra strada il testo in grigio sparisce, e Tab passa ai pulsanti come
-prima. La barra si apre vuota, con quella formula in grigio, e OK su una barra
-vuota usa quella; solo la primissima volta, quando non è ancora stata usata
-nessuna formula, si apre con la formula in uso, `z^2+c`.
+prima. La barra si apre con la formula in uso scritta per intero, da cambiare o
+tenere, e Freccia su porta quelle usate prima. Svuotata, mostra in grigio la
+formula usata per ultima, e OK su una barra vuota usa quella.
 
 **Vista → Stato** mostra la formula allo stesso modo: su una riga se ci sta
 nella finestra, su due se no — la seconda sotto la prima, andando a capo tra i
@@ -328,19 +349,23 @@ suffissi che stanno per le chiamate fatte più spesso su di essi:
 | `_br` | `bshipr(…)` |
 | `_pM` | `parchment(…, M)` |
 | `_paM` | `parchmenta(…, M)` |
+| `_rNtD` | `rotate(…, N/D*pi)` |
 
 Si leggono da sinistra a destra, ciascuno avvolgendo ciò che hanno prodotto i
 precedenti: `z_p3` è `parchment(z,3)`, `c_b_p2` è `parchment(bship(c),2)` e
 `p12_p2_p3` è `parchment(parchment(p12,2),3)`. *M* fa parte del nome, quindi si
 scrive in cifre — un numero intero, da uno in su; `z_p0` è rifiutato con un
-messaggio che lo dice. Non su `n`, che è un conteggio e non ha una seconda
-componente su cui uno di essi possa lavorare.
+messaggio che lo dice. Una rotazione, `_rNtD`, è di *N*/*D* di mezzo giro in
+senso orario, scritta in cifre allo stesso modo: `p4_r3t7` è
+`rotate(p4,3/7*pi)`; *D* va da uno in su, mentre *N* può essere 0, cioè nessuna
+rotazione. Non su `n`, che è un conteggio e non ha una seconda componente su
+cui uno di essi possa lavorare.
 
 Vengono espansi nelle chiamate prima che la formula sia letta, così una
 variabile con suffisso disegna esattamente ciò che disegnano le chiamate
 scritte per esteso e costa quanto costano; la formula viene salvata come è
-stata scritta. Tutto ciò che non è uno dei cinque viene lasciato com'è e
-rifiutato come il nome sconosciuto che è.
+stata scritta. Tutto ciò che non è uno dei sei viene lasciato com'è e rifiutato
+come il nome sconosciuto che è.
 
 **Rimossi.** `powi`, `powdc` e `logcn` erano secondi nomi di `pow` e `logn`;
 `rad`, `deg` e `sign` erano elencati senza alcuna implementazione dietro, e un
@@ -1510,7 +1535,7 @@ quattro campi.
 
 | campo | |
 | --- | --- |
-| **Tassellazione** | quale tassellatura, con il numero con cui la conosce `randsctile` e il suo nome: **3: esagoni**, dove parte. La scheda Tassellature di Aiuto → Riferimento delle formule utente ha un'immagine di ciascuna |
+| **Tassellazione** | quale tassellatura, con il numero con cui la conosce `randsctile` e il suo nome: **3: esagoni**, dove parte. La scheda Tassellature di Aiuto → Riferimento delle formule utente ha un'immagine di ciascuna, e il pulsante **Riferimento delle formule...** della finestra la apre lì |
 | **Colorazione** | da cosa viene il colore, dappertutto: **angolo di z**, dove parte; **angolo attorno al centro della tessera**, quello della tessera in cui cade il punto, che fa di ogni tessera una piccola ruota di colore; **zmag**, il valore della modalità con quel nome; **nessuna**, solo le tessere |
 | **Tessere** | come ogni tessera si stacca dalle vicine: **ognuna spostata di un tanto proprio**, lungo la tavolozza, dove parte; **sfumate dal centro al bordo**, lo stesso, e spostata di un ottavo dei colori di un giro in più dal centro al bordo, come una smussatura; **con il bordo marcato**, lo stesso, e la parte esterna della tessera spostata della metà dei colori di un giro in più; **un colore pieno ciascuna**, un colore suo, da qualunque cosa venga il colore |
 | **Intensità** | quanto sono distanti lungo la tavolozza le tessere: moltiplica ogni quantità propria di una tessera, il suo spostamento, la smussatura di **sfumate dal centro al bordo** e il bordo di **con il bordo marcato**. A `1`, dove parte, le tessere sono come descritte qui; a `0` resta solo ciò da cui viene il colore, così **angolo di z** è una decomposizione semplice e **zmag** lo zmag semplice; in mezzo le tessere si vedono appena, e sopra `1` di più. Misurato con **Vista → Sonda della tavolozza (clic su un punto)**, a `1` una tessera si sposta fino a una decina di posti, in ogni stile e su qualsiasi tavolozza, così `0.1` la sposta fino a un posto e `0.01` fino a un decimo |

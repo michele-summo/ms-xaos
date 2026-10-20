@@ -13,7 +13,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
-#define sffnctscount 104
+#define sffnctscount 105
 /* sfcmplxfunc starts with the operators, which are reached through
  * sffe_operator/sffe_unary_operator rather than by name. Lookups by name start
  * after them. */
@@ -138,6 +138,7 @@ sfarg *sfatan2s(sfarg *const p); /* atan2(x1, x2) + i*atan2(y1, y2) */
 sfarg *sfngon(sfarg *const p);
 sfarg *sfparchment(sfarg *const p);
 sfarg *sfparchmenta(sfarg *const p);
+sfarg *sfrotate(sfarg *const p); /* z turned clockwise by an angle */
 /* other trunc function */
 sfarg *sftruncv(sfarg *const p);
 sfarg *sftruncc(sfarg *const p);

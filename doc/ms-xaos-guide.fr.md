@@ -1,6 +1,6 @@
 # MS XaoS
 
-> Traduction du [guide en anglais](ms-xaos-guide.md) de la version 2.11. En cas
+> Traduction du [guide en anglais](ms-xaos-guide.md) de la version 2.13. En cas
 > de différence, l'original anglais fait foi.
 
 Un fork de [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Tout ce que fait
@@ -111,22 +111,30 @@ enterrer dans la description de la fonction qui les prend. Un cinquième montre
 une image de chaque pavage que prend `randsctile`, puisque quarante-cinq
 nombres avec une ligne de mots chacun en disent peu sur les formes.
 
+Fractale → Formule utilisateur a un bouton **Référence des formules...** à côté
+d'OK, qui ouvre la fenêtre à l'onglet où elle a été laissée ; les deux
+dialogues **Pavage...**, de l'intérieur et de l'extérieur, en ont un qui
+l'ouvre à l'onglet Pavages. Le dialogue attend pendant qu'on se sert de la
+fenêtre, de sorte qu'on peut y chercher un pavage, ou y copier une formule,
+avant OK.
+
 Un sixième, **Outils**, écrit des formules au lieu de les décrire. Pour
-l'instant il contient un `poly` aléatoire, à partir de quatre champs :
+l'instant il contient un `poly` aléatoire, à partir de cinq champs :
 
 | | |
 | --- | --- |
 | longueur minimale et maximale | m, le nombre de coefficients, tiré entre les deux ; le degré est m − 1. Les deux sont nécessaires, en nombres entiers de 1 à 254 — aussi loin que va `poly`, l'analyseur prenant 255 arguments par appel et `z` étant l'un d'eux |
 | module minimal et maximal | la taille de chaque coefficient, tirée uniformément entre les deux. 0 et 1 si laissés vides ; au plus 1000000 |
+| delta de l'argument | en degrés, de 0 à 360. Vide, où il commence, il laisse chaque argument libre sur tout le tour, et la formule est celle qu'on tirait avant que le champ existe. Avec un nombre, l'argument du premier coefficient parcourt toujours tout le tour et chacun des autres est tiré uniformément dans une largeur de ce nombre de degrés, centrée sur celui du premier : à 0 tous les coefficients ont l'argument du premier, à 30 ils restent à moins de 15 degrés de lui de part et d'autre. Une formule d'un seul coefficient n'en a pas d'autre à garder près de lui |
 
 Chaque coefficient est complexe, `{re,im}`, avec son argument tiré au hasard
-sur tout le tour, et chaque partie est écrite avec quatre chiffres
-significatifs de son module, pour qu'un intervalle de 0.001 à 0.002 ne
-disparaisse pas à l'arrondi. Il n'y a pas de `c` dans la formule. Une formule
-utilisateur fait partir `z` du pixel en mode mandelbrot comme en mode julia,
-donc ce qu'elle trace est l'ensemble de Julia rempli du polynôme lui-même,
-identique dans les deux ; `c` se place où on le veut, comme dans
-`poly(...) + c`.
+sur tout le tour, ou près de celui du premier comme le dit le delta, et chaque
+partie est écrite avec quatre chiffres significatifs de son module, pour qu'un
+intervalle de 0.001 à 0.002 ne disparaisse pas à l'arrondi. Il n'y a pas de `c`
+dans la formule. Une formule utilisateur fait partir `z` du pixel en mode
+mandelbrot comme en mode julia, donc ce qu'elle trace est l'ensemble de Julia
+rempli du polynôme lui-même, identique dans les deux ; `c` se place où on le
+veut, comme dans `poly(...) + c`.
 
 Chaque modification d'un champ génère une nouvelle formule, comme **En générer
 un autre**, et **Copier** la met dans le presse-papiers pour Fractale → Formule
@@ -153,6 +161,18 @@ formule, et il en allait de même des deux parties d'un nombre complexe. C'est
 fini. Un point-virgule est désormais refusé là où il se trouve — *Opérateur
 invalide : ;* — et la virgule est le séparateur partout, comme dans tout le
 reste de la syntaxe.
+
+**Tourner un point : `rotate(z, angle)`.** `z` tourné dans le sens horaire
+autour de l'origine de `angle` radians, dont on lit la partie réelle :
+`z*e^(-i*angle)`. Dans le sens horaire tel que le plan est dessiné, quel que
+soit l'angle de la vue, qui tourne l'image finie ensuite. Une image tirée d'un
+point passé par `rotate` tourne avec lui dans le sens horaire :
+`fbm(rotate(x,0.5),7)` est le mouvement de `fbm(x,7)` tourné d'un demi-radian
+dans le sens horaire autour de l'origine, et
+`ifiterl(rotate(z,0.5)^2+rotate(c,0.5), z^2+rotate(c,0.5))` l'ensemble de
+Mandelbrot tourné de même. Un nombre entier de quarts de tour écrit avec les
+constantes, `pi_2`, `pi` et `pi2`, est exact : un tour complet ne tourne pas du
+tout, au bit près.
 
 ### La sonde de palette
 
@@ -232,9 +252,10 @@ La dernière formule utilisée apparaît en pâle dans la barre : entière tant 
 la barre est vide, et sa suite après ce que vous avez tapé tant que ce que vous
 tapez en est le début. Tab la met entière dans la barre. Dès que ce que vous
 tapez prend un autre chemin, le texte pâle disparaît, et Tab passe aux boutons
-comme avant. La barre s'ouvre vide, avec cette formule en pâle, et OK sur une
-barre vide l'utilise ; seule la toute première fois, avant qu'aucune formule
-n'ait été utilisée, elle s'ouvre sur la formule en cours, `z^2+c`.
+comme avant. La barre s'ouvre avec la formule en cours écrite en entier, à
+changer ou à garder, et Flèche haut amène celles utilisées avant. Vidée, elle
+montre en pâle la dernière formule utilisée, et OK sur une barre vide
+l'utilise.
 
 **Vue → Affichage état** montre la formule de la même façon : sur une ligne si
 elle tient dans la fenêtre, sur deux sinon — la seconde sous la première,
@@ -335,18 +356,22 @@ des suffixes qui valent pour les appels faits le plus souvent sur eux :
 | `_br` | `bshipr(…)` |
 | `_pM` | `parchment(…, M)` |
 | `_paM` | `parchmenta(…, M)` |
+| `_rNtD` | `rotate(…, N/D*pi)` |
 
 Ils se lisent de gauche à droite, chacun enveloppant ce qu'ont produit les
 précédents : `z_p3` est `parchment(z,3)`, `c_b_p2` est `parchment(bship(c),2)`
 et `p12_p2_p3` est `parchment(parchment(p12,2),3)`. *M* fait partie du nom, il
 s'écrit donc en chiffres — un nombre entier, un ou plus ; `z_p0` est refusé
-avec un message qui le dit. Pas sur `n`, qui est un compte et n'a pas de
-seconde composante sur laquelle l'un d'eux pourrait travailler.
+avec un message qui le dit. Une rotation, `_rNtD`, vaut *N*/*D* d'un demi-tour
+dans le sens horaire, écrite en chiffres de la même façon : `p4_r3t7` est
+`rotate(p4,3/7*pi)` ; *D* vaut un ou plus, tandis que *N* peut valoir 0, aucune
+rotation. Pas sur `n`, qui est un compte et n'a pas de seconde composante sur
+laquelle l'un d'eux pourrait travailler.
 
 Ils sont développés en appels avant que la formule soit lue, donc une variable
 suffixée trace exactement ce que tracent les appels écrits en entier et coûte
 ce qu'ils coûtent ; la formule est enregistrée telle qu'elle a été écrite. Tout
-ce qui n'est pas l'un des cinq est laissé tel quel et refusé comme le nom
+ce qui n'est pas l'un des six est laissé tel quel et refusé comme le nom
 inconnu qu'il est.
 
 **Supprimés.** `powi`, `powdc` et `logcn` étaient des seconds noms de `pow` et
@@ -1535,7 +1560,7 @@ champs.
 
 | champ | |
 | --- | --- |
-| **Pavage** | quel pavage, avec le nombre sous lequel `randsctile` le connaît et son nom : **3: hexagones**, où il commence. L'onglet Pavages d'Aide → Référence des formules utilisateur a une image de chacun |
+| **Pavage** | quel pavage, avec le nombre sous lequel `randsctile` le connaît et son nom : **3: hexagones**, où il commence. L'onglet Pavages d'Aide → Référence des formules utilisateur a une image de chacun, et le bouton **Référence des formules...** du dialogue l'ouvre là |
 | **Coloriage** | d'où vient la couleur, partout : **angle de z**, où il commence ; **angle autour du centre de la tuile**, celui de la tuile où tombe le point, qui fait de chaque tuile une petite roue de couleur ; **zmag**, la valeur du mode de ce nom ; **aucun**, rien que les tuiles |
 | **Tuiles** | comment chaque tuile se détache de ses voisines : **chacune décalée d'une quantité propre**, le long de la palette, où il commence ; **ombrées du centre au bord**, de même, et décalée d'un huitième des couleurs d'un tour de plus du centre au bord, comme un biseau ; **avec le bord marqué**, de même, et la partie extérieure de la tuile décalée de la moitié des couleurs d'un tour de plus ; **une couleur unie chacune**, une couleur à elle, d'où que vienne la couleur |
 | **Intensité** | à quelle distance les tuiles sont placées le long de la palette : elle multiplie chaque quantité propre d'une tuile, son décalage, le biseau de **ombrées du centre au bord** et le bord de **avec le bord marqué**. À `1`, là où elle commence, les tuiles sont comme décrites ici ; à `0` il ne reste que ce dont vient la couleur, de sorte que **angle de z** est une décomposition simple et **zmag** le zmag simple ; entre les deux les tuiles se voient à peine, et au-dessus de `1` davantage. Mesuré avec **Vue → Sonde de palette (cliquer sur un point)**, à `1` une tuile est décalée d'une dizaine de places au plus, dans tous les styles et sur n'importe quelle palette, si bien que `0.1` la décale d'une place au plus et `0.01` d'un dixième |
