@@ -707,7 +707,7 @@
     </message>
     <message>
         <location filename="../src/ui/customdialog.cpp" line="407"/>
-        <location filename="../src/ui/mainwindow.cpp" line="1607"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1625"/>
         <source>Formula reference...</source>
         <translation>Referencia de fórmulas...</translation>
     </message>
@@ -752,19 +752,19 @@
         <translation>Centrar en el eje:</translation>
     </message>
     <message>
-        <location filename="../src/ui/mainwindow.cpp" line="1525"/>
-        <location filename="../src/ui/mainwindow.cpp" line="1526"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1531"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1532"/>
         <source>Older formula (Up)</source>
         <translation>Fórmula más antigua (flecha arriba)</translation>
     </message>
     <message>
-        <location filename="../src/ui/mainwindow.cpp" line="1531"/>
-        <location filename="../src/ui/mainwindow.cpp" line="1532"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1537"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1538"/>
         <source>Newer formula (Down)</source>
         <translation>Fórmula más reciente (flecha abajo)</translation>
     </message>
     <message>
-        <location filename="../src/ui/mainwindow.cpp" line="1590"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1608"/>
         <source>History...</source>
         <translation>Historial...</translation>
     </message>
@@ -2635,67 +2635,72 @@
         <translation>rotate(..., N/D*pi): girado en sentido horario N/D de media vuelta; p4_r3t7 es rotate(p4,3/7*pi). D es 1 o más, N puede ser 0</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="265"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="260"/>
+        <source>rotate(..., N/180*pi): turned clockwise by N degrees, z_r45 being rotate(z,45/180*pi)</source>
+        <translation>rotate(..., N/180*pi): girado en sentido horario N grados; z_r45 es rotate(z,45/180*pi)</translation>
+    </message>
+    <message>
+        <location filename="../src/ui/formulahelp_data.cpp" line="266"/>
         <source>writing a value</source>
         <translation>escribir un valor</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="266"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="267"/>
         <source>a complex number given by its two parts, as in {0,2} for 2i</source>
         <translation>un número complejo dado por sus dos partes, como en {0,2} para 2i</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="267"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="268"/>
         <source>the imaginary unit, as the shipped formulas use it</source>
         <translation>la unidad imaginaria, como la usan las fórmulas incluidas</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="268"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="269"/>
         <source>a real number, read at the full precision of this build</source>
         <translation>un número real, leído con la precisión completa de esta compilación</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="269"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="270"/>
         <source>calling</source>
         <translation>llamar</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="270"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="271"/>
         <source>arguments are separated by a comma, and by nothing else: a semicolon used to serve as well and is now refused where it stands</source>
         <translation>los argumentos se separan con una coma, y con nada más: antes también servía el punto y coma, que ahora se rechaza donde aparece</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="271"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="272"/>
         <source>an argument shown in square brackets may be left out; the value shown is what the function uses instead</source>
         <translation>un argumento mostrado entre corchetes se puede omitir; el valor mostrado es el que usa la función en su lugar</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="272"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="273"/>
         <source>one may be left out in the middle as well, by leaving its place empty; spaces make no difference</source>
         <translation>también se puede omitir uno en medio, dejando vacío su lugar; los espacios no importan</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="273"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="274"/>
         <source>an empty coefficient of poly is a term that is not there: this is z^2 + 1</source>
         <translation>un coeficiente vacío de poly es un término que no está: esto es z^2 + 1</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="274"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="275"/>
         <source>an empty branch of ifiter or ifiterl repeats the one before it: two iterations of a, then b</source>
         <translation>una rama vacía de ifiter o ifiterl repite la anterior: dos iteraciones de a, luego b</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="275"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="276"/>
         <source>multiplication may be left out before a name or a bracket</source>
         <translation>la multiplicación se puede omitir antes de un nombre o de un paréntesis</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="276"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="277"/>
         <source>the same, between two bracketed groups</source>
         <translation>lo mismo, entre dos grupos entre paréntesis</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="277"/>
+        <location filename="../src/ui/formulahelp_data.cpp" line="278"/>
         <source>a leading minus binds looser than a power: it means -(z^2)</source>
         <translation>un menos inicial liga menos que una potencia: significa -(z^2)</translation>
     </message>
@@ -4335,27 +4340,27 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../src/ui/formulaedit.cpp" line="507"/>
+        <location filename="../src/ui/formulaedit.cpp" line="513"/>
         <source>(%1 characters)</source>
         <translation>(%1 caracteres)</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulaedit.cpp" line="531"/>
+        <location filename="../src/ui/formulaedit.cpp" line="537"/>
         <source>Formulas used before</source>
         <translation>Fórmulas usadas antes</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulaedit.cpp" line="536"/>
+        <location filename="../src/ui/formulaedit.cpp" line="542"/>
         <source>No formula has been used yet.</source>
         <translation>Todavía no se ha usado ninguna fórmula.</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulaedit.cpp" line="537"/>
+        <location filename="../src/ui/formulaedit.cpp" line="543"/>
         <source>Newest first. Double-click one, or pick it and press Use, to put it in the formula bar.</source>
         <translation>La más reciente primero. Haz doble clic en una, o selecciónala y pulsa Usar, para ponerla en la barra de fórmulas.</translation>
     </message>
     <message>
-        <location filename="../src/ui/formulaedit.cpp" line="551"/>
+        <location filename="../src/ui/formulaedit.cpp" line="557"/>
         <source>Use</source>
         <translation>Usar</translation>
     </message>

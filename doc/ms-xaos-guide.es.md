@@ -244,9 +244,11 @@ La última fórmula usada se muestra tenue en la barra: entera mientras la barra
 está vacía, y el resto detrás de lo que has escrito mientras lo que escribes
 sea su comienzo. Tab la pone entera en la barra. En cuanto lo que escribes va
 por otro camino el texto tenue desaparece, y Tab pasa a los botones como antes.
-La barra se abre con la fórmula en uso escrita entera, para cambiarla o
-dejarla, y Flecha arriba trae las usadas antes. Vaciada, muestra tenue la
-fórmula usada la última vez, y Aceptar con la barra vacía la usa.
+La barra se abre vacía, con esa fórmula tenue dentro, y Aceptar con la barra
+vacía la usa; solo la primerísima vez, cuando aún no se ha usado ninguna
+fórmula, se abre con la fórmula en uso, `z^2+c`. Una vez elegida una fórmula
+con Aceptar, se abre con la fórmula en uso escrita entera, para cambiarla o
+dejarla, hasta que se cierra XaoS.
 
 **Vista → Estado** muestra la fórmula de la misma manera: en una línea si cabe
 en la ventana, en dos si no — la segunda bajo la primera, saltando entre
@@ -347,6 +349,7 @@ sufijos que equivalen a las llamadas que más se hacen sobre ellas:
 | `_pM` | `parchment(…, M)` |
 | `_paM` | `parchmenta(…, M)` |
 | `_rNtD` | `rotate(…, N/D*pi)` |
+| `_rN` | `rotate(…, N/180*pi)` |
 
 Se leen de izquierda a derecha, y cada uno envuelve lo que hicieron los
 anteriores: `z_p3` es `parchment(z,3)`, `c_b_p2` es `parchment(bship(c),2)` y
@@ -355,13 +358,14 @@ que se escribe en cifras — un número entero, de uno o más; `z_p0` se rechaza
 con un mensaje que lo dice. Un giro, `_rNtD`, es *N*/*D* de media vuelta en
 sentido horario, escrito en cifras del mismo modo: `p4_r3t7` es
 `rotate(p4,3/7*pi)`; *D* es uno o más, mientras que *N* puede ser 0, que no
-gira nada. No en `n`, que es una cuenta y no tiene una segunda componente sobre
-la que trabajar.
+gira nada. Sin la `t`, *N* va en grados: `z_r45` es `rotate(z,45/180*pi)`. No
+en `n`, que es una cuenta y no tiene una segunda componente sobre la que
+trabajar.
 
 Se expanden en las llamadas antes de leer la fórmula, así que una variable con
 sufijo dibuja exactamente lo que dibujan las llamadas escritas enteras y cuesta
 lo que cuestan; la fórmula se guarda tal como se escribió. Todo lo que no sea
-uno de los seis se deja como está y se rechaza como el nombre desconocido que
+uno de los siete se deja como está y se rechaza como el nombre desconocido que
 es.
 
 **Eliminados.** `powi`, `powdc` y `logcn` eran segundos nombres de `pow` y

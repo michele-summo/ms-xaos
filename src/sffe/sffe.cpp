@@ -604,6 +604,7 @@ char sffe_doname(char **str)
  *   _b   bship(.)          _pM   parchment(., M)
  *   _bi  bshipi(.)         _paM  parchmenta(., M)
  *   _br  bshipr(.)         _rNtD rotate(., N/D*pi)
+ *                          _rN   rotate(., N/180*pi)
  *
  * They go on z, c, x, p and p1 to p9999 -- not on n, which is a count and has
  * no second component for any of these to work on -- and are read from left
@@ -611,7 +612,8 @@ char sffe_doname(char **str)
  * parchment(bship(c),2), and p12_p2_p3 is parchment(parchment(p12,2),3). M is
  * part of the name, so it can only be written in figures: a whole number, one
  * or more. So are N and D of a turn, p4_r3t7 being rotate(p4,3/7*pi): N may
- * be nought, a turn of nothing, D may not.
+ * be nought, a turn of nothing, D may not. Without the t, N is in degrees,
+ * z_r45 being rotate(z,45/180*pi).
  *
  * Done on the working copy between phases 1 and 2, name by name, so that all
  * that comes after -- the count of arguments, the multiplication left out
@@ -627,7 +629,7 @@ static const char *const sffe_suffix_call[6] = {
     "bship(", "bshipi(", "bshipr(", "parchment(", "parchmenta(", "rotate("};
 
 /* The suffix starting at p, which is at an underscore, and where it ends; NULL
- * if it is not one of the six. kind is its place in sffe_suffix_call, and
+ * if it is not one of the seven. kind is its place in sffe_suffix_call, and
  * the figures are the count the two that take one were given -- or, for a
  * turn, its numerator, the denominator going in below, which is empty for
  * every other suffix. */
@@ -676,6 +678,18 @@ static const char *sffe_suffix(const char *p, const char *end, int *kind,
 
     if (p < end && *p != '_') {
         return NULL; /* letters after the figures */
+    }
+
+    /* _rN: figures and no t, a turn of N degrees, N/180*pi */
+    if (nw == 1 && w[0] == 'r' && nd) {
+        *kind = 5;
+        *figures = d;
+        *nfigures = nd;
+        if (below) {
+            *below = "180";
+            *nbelow = 3;
+        }
+        return p;
     }
 
     if (nw == 1 && w[0] == 'b' && !nd) {
@@ -845,7 +859,7 @@ static char *sffe_spell_suffixes(char *text, char **culprit)
                 sffe_text_put(&out, ",", 1);
                 sffe_text_put(&out, d, nd);
             }
-            if (nb) { /* the turn: N/D*pi */
+            if (nb) { /* the turn: N/D*pi, D being 180 for degrees */
                 while (nb > 1 && *b == '0') {
                     b += 1;
                     nb -= 1;

@@ -1508,10 +1508,16 @@ void MainWindow::showDialog(const char *name)
                  * box, one line wide however long the formula. */
                 FormulaEdit *edit = new FormulaEdit(qDialog);
                 edit->setObjectName(label + "-data");
-                /* The formula in use, written out, to be changed or kept;
-                 * the ones used before it are a step up away. */
+                /* Once a formula has been chosen here since the program
+                 * started, the formula in use, written out, to be changed or
+                 * kept. Before that, empty, with the formula used last faint
+                 * in it -- or the formula in use the very first time, when
+                 * there is nothing faint to show. The ones used before are a
+                 * step up away either way. */
+                static bool chosen = false;
                 const QStringList used = formula_history();
-                edit->setPlainText(QString::fromUtf8(dialog->defstr));
+                if (chosen || used.isEmpty())
+                    edit->setPlainText(QString::fromUtf8(dialog->defstr));
                 edit->moveCursor(QTextCursor::End);
 
                 /* Beside the bar, a step back through the formulas used
@@ -1670,6 +1676,7 @@ void MainWindow::showDialog(const char *name)
                             if (formula.trimmed().isEmpty() && !used.isEmpty())
                                 formula = used.first();
                             formula_history_add(formula);
+                            chosen = true;
                             param->dstring = strdup(formula.toUtf8());
                             menuActivate(item, param);
                         });
