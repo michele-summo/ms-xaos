@@ -707,7 +707,7 @@
     </message>
     <message>
         <location filename="../src/ui/customdialog.cpp" line="407"/>
-        <location filename="../src/ui/mainwindow.cpp" line="1607"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1625"/>
         <source>Formula reference...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -752,19 +752,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui/mainwindow.cpp" line="1525"/>
-        <location filename="../src/ui/mainwindow.cpp" line="1526"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1531"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1532"/>
         <source>Older formula (Up)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui/mainwindow.cpp" line="1531"/>
-        <location filename="../src/ui/mainwindow.cpp" line="1532"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1537"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1538"/>
         <source>Newer formula (Down)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui/mainwindow.cpp" line="1590"/>
+        <location filename="../src/ui/mainwindow.cpp" line="1608"/>
         <source>History...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2639,67 +2639,72 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui/formulahelp_data.cpp" line="265"/>
-        <source>writing a value</source>
+        <location filename="../src/ui/formulahelp_data.cpp" line="260"/>
+        <source>rotate(..., N/180*pi): turned clockwise by N degrees, z_r45 being rotate(z,45/180*pi)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="266"/>
-        <source>a complex number given by its two parts, as in {0,2} for 2i</source>
+        <source>writing a value</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="267"/>
-        <source>the imaginary unit, as the shipped formulas use it</source>
+        <source>a complex number given by its two parts, as in {0,2} for 2i</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="268"/>
-        <source>a real number, read at the full precision of this build</source>
+        <source>the imaginary unit, as the shipped formulas use it</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="269"/>
-        <source>calling</source>
+        <source>a real number, read at the full precision of this build</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="270"/>
-        <source>arguments are separated by a comma, and by nothing else: a semicolon used to serve as well and is now refused where it stands</source>
+        <source>calling</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="271"/>
-        <source>an argument shown in square brackets may be left out; the value shown is what the function uses instead</source>
+        <source>arguments are separated by a comma, and by nothing else: a semicolon used to serve as well and is now refused where it stands</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="272"/>
-        <source>one may be left out in the middle as well, by leaving its place empty; spaces make no difference</source>
+        <source>an argument shown in square brackets may be left out; the value shown is what the function uses instead</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="273"/>
-        <source>an empty coefficient of poly is a term that is not there: this is z^2 + 1</source>
+        <source>one may be left out in the middle as well, by leaving its place empty; spaces make no difference</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="274"/>
-        <source>an empty branch of ifiter or ifiterl repeats the one before it: two iterations of a, then b</source>
+        <source>an empty coefficient of poly is a term that is not there: this is z^2 + 1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="275"/>
-        <source>multiplication may be left out before a name or a bracket</source>
+        <source>an empty branch of ifiter or ifiterl repeats the one before it: two iterations of a, then b</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="276"/>
-        <source>the same, between two bracketed groups</source>
+        <source>multiplication may be left out before a name or a bracket</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="277"/>
+        <source>the same, between two bracketed groups</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/ui/formulahelp_data.cpp" line="278"/>
         <source>a leading minus binds looser than a power: it means -(z^2)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4307,27 +4312,27 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../src/ui/formulaedit.cpp" line="507"/>
+        <location filename="../src/ui/formulaedit.cpp" line="513"/>
         <source>(%1 characters)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui/formulaedit.cpp" line="531"/>
+        <location filename="../src/ui/formulaedit.cpp" line="537"/>
         <source>Formulas used before</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui/formulaedit.cpp" line="536"/>
+        <location filename="../src/ui/formulaedit.cpp" line="542"/>
         <source>No formula has been used yet.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui/formulaedit.cpp" line="537"/>
+        <location filename="../src/ui/formulaedit.cpp" line="543"/>
         <source>Newest first. Double-click one, or pick it and press Use, to put it in the formula bar.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/ui/formulaedit.cpp" line="551"/>
+        <location filename="../src/ui/formulaedit.cpp" line="557"/>
         <source>Use</source>
         <translation type="unfinished"></translation>
     </message>

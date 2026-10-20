@@ -1073,7 +1073,10 @@ sfarg *sfparchmenta(sfarg *const p)
  * through it, as fbm(rotate(x, 0.5), 7), turns clockwise with it. The cosine
  * and sine of a whole number of quarter turns are not quite what they should
  * be, so they are made so: a quarter turn of 1 is -i, and not -i plus a trace
- * of real, and a whole turn is no turn at all, to the bit. */
+ * of real, and a whole turn is no turn at all, to the bit. An angle a few
+ * units in the last place off a whole number of quarters is taken for it:
+ * the parser divides by multiplying by the inverse, so 180/180*pi, which
+ * z_r180 spells, is not quite pi in every precision. */
 sfarg *sfrotate(sfarg *const p)
 {
     const gsl_complex z = sfvalue(sfaram2(p));
@@ -1084,8 +1087,10 @@ sfarg *sfrotate(sfarg *const p)
      * whole quarters to the bit. */
     static const number_t quarter = 2 * natan((number_t)1);
     const number_t quarters = angle / quarter;
-    if (quarters == nfloor(quarters)) {
-        const long q = ((long)nfmod(quarters, (number_t)4) + 4) % 4;
+    const number_t whole = nround(quarters);
+    if (nfabs(quarters - whole) <=
+        nldexp(nfabs(whole) + 1, 8 - NUMBER_MANTISSA_BITS)) {
+        const long q = ((long)nfmod(whole, (number_t)4) + 4) % 4;
         c = q == 0 ? 1 : q == 2 ? -1 : 0;
         s = q == 1 ? 1 : q == 3 ? -1 : 0;
     }

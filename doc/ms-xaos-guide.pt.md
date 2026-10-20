@@ -242,9 +242,10 @@ A última fórmula usada aparece esbatida na barra: inteira enquanto a barra est
 vazia, e o resto a seguir ao que escreveu enquanto o que escreve for o seu
 início. Tab põe-na inteira na barra. Assim que o que escreve segue outro
 caminho, o texto esbatido desaparece, e Tab passa para os botões como antes. A
-barra abre com a fórmula em uso escrita por inteiro, para mudar ou manter, e
-Seta para cima traz as usadas antes. Esvaziada, mostra esbatida a última
-fórmula usada, e OK com a barra vazia usa-a.
+barra abre vazia, com essa fórmula esbatida, e OK com a barra vazia usa-a; só
+da primeiríssima vez, antes de se ter usado qualquer fórmula, abre com a
+fórmula em uso, `z^2+c`. Depois de escolhida uma fórmula com OK, abre com a
+fórmula em uso escrita por inteiro, para mudar ou manter, até se fechar o XaoS.
 
 **Vista → Estado** mostra a fórmula da mesma maneira: numa linha se couber na
 janela, em duas se não — a segunda por baixo da primeira, mudando de linha
@@ -343,6 +344,7 @@ sufixos que valem pelas chamadas feitas mais vezes sobre eles:
 | `_pM` | `parchment(…, M)` |
 | `_paM` | `parchmenta(…, M)` |
 | `_rNtD` | `rotate(…, N/D*pi)` |
+| `_rN` | `rotate(…, N/180*pi)` |
 
 Leem-se da esquerda para a direita, cada um envolvendo o que os anteriores
 fizeram: `z_p3` é `parchment(z,3)`, `c_b_p2` é `parchment(bship(c),2)` e
@@ -351,13 +353,14 @@ escreve-se em algarismos — um número inteiro, de um ou mais; `z_p0` é recusa
 com uma mensagem que o diz. Uma rotação, `_rNtD`, é *N*/*D* de meia volta no
 sentido dos ponteiros do relógio, escrita em algarismos da mesma forma:
 `p4_r3t7` é `rotate(p4,3/7*pi)`; *D* é um ou mais, enquanto *N* pode ser 0, que
-não roda nada. Não em `n`, que é uma contagem e não tem uma segunda componente
-sobre a qual trabalhar.
+não roda nada. Sem o `t`, *N* é em graus: `z_r45` é `rotate(z,45/180*pi)`. Não
+em `n`, que é uma contagem e não tem uma segunda componente sobre a qual
+trabalhar.
 
 São expandidos nas chamadas antes de a fórmula ser lida, por isso uma variável
 com sufixo desenha exatamente o que as chamadas escritas por extenso desenham e
 custa o que elas custam; a fórmula é guardada como foi escrita. O que não for
-um dos seis é deixado como está e recusado como o nome desconhecido que é.
+um dos sete é deixado como está e recusado como o nome desconhecido que é.
 
 **Removidos.** `powi`, `powdc` e `logcn` eram segundos nomes de `pow` e `logn`;
 `rad`, `deg` e `sign` estavam listados sem nenhuma implementação por trás, e um

@@ -252,10 +252,11 @@ La dernière formule utilisée apparaît en pâle dans la barre : entière tant 
 la barre est vide, et sa suite après ce que vous avez tapé tant que ce que vous
 tapez en est le début. Tab la met entière dans la barre. Dès que ce que vous
 tapez prend un autre chemin, le texte pâle disparaît, et Tab passe aux boutons
-comme avant. La barre s'ouvre avec la formule en cours écrite en entier, à
-changer ou à garder, et Flèche haut amène celles utilisées avant. Vidée, elle
-montre en pâle la dernière formule utilisée, et OK sur une barre vide
-l'utilise.
+comme avant. La barre s'ouvre vide, avec cette formule en pâle, et OK sur une
+barre vide l'utilise ; seule la toute première fois, avant qu'aucune formule
+n'ait été utilisée, elle s'ouvre sur la formule en cours, `z^2+c`. Une fois une
+formule choisie avec OK, elle s'ouvre sur la formule en cours écrite en entier,
+à changer ou à garder, jusqu'à la fermeture de XaoS.
 
 **Vue → Affichage état** montre la formule de la même façon : sur une ligne si
 elle tient dans la fenêtre, sur deux sinon — la seconde sous la première,
@@ -357,6 +358,7 @@ des suffixes qui valent pour les appels faits le plus souvent sur eux :
 | `_pM` | `parchment(…, M)` |
 | `_paM` | `parchmenta(…, M)` |
 | `_rNtD` | `rotate(…, N/D*pi)` |
+| `_rN` | `rotate(…, N/180*pi)` |
 
 Ils se lisent de gauche à droite, chacun enveloppant ce qu'ont produit les
 précédents : `z_p3` est `parchment(z,3)`, `c_b_p2` est `parchment(bship(c),2)`
@@ -365,13 +367,14 @@ s'écrit donc en chiffres — un nombre entier, un ou plus ; `z_p0` est refusé
 avec un message qui le dit. Une rotation, `_rNtD`, vaut *N*/*D* d'un demi-tour
 dans le sens horaire, écrite en chiffres de la même façon : `p4_r3t7` est
 `rotate(p4,3/7*pi)` ; *D* vaut un ou plus, tandis que *N* peut valoir 0, aucune
-rotation. Pas sur `n`, qui est un compte et n'a pas de seconde composante sur
-laquelle l'un d'eux pourrait travailler.
+rotation. Sans le `t`, *N* est en degrés : `z_r45` est `rotate(z,45/180*pi)`.
+Pas sur `n`, qui est un compte et n'a pas de seconde composante sur laquelle
+l'un d'eux pourrait travailler.
 
 Ils sont développés en appels avant que la formule soit lue, donc une variable
 suffixée trace exactement ce que tracent les appels écrits en entier et coûte
 ce qu'ils coûtent ; la formule est enregistrée telle qu'elle a été écrite. Tout
-ce qui n'est pas l'un des six est laissé tel quel et refusé comme le nom
+ce qui n'est pas l'un des sept est laissé tel quel et refusé comme le nom
 inconnu qu'il est.
 
 **Supprimés.** `powi`, `powdc` et `logcn` étaient des seconds noms de `pow` et

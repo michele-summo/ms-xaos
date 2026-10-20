@@ -224,6 +224,10 @@ int main(void)
             {"z^2+c_b_r1t3", "z^2+rotate(bship(c),1/3*pi)"},
             {"z_r1t4_p3^2+c", "parchment(rotate(z,1/4*pi),3)^2+c"},
             {"Z_R1T8^2+C", "rotate(z,1/8*pi)^2+c"},
+            {"z_r45^2+c", "rotate(z,45/180*pi)^2+c"},
+            {"z^2+p2_r030+c", "z^2+rotate(p2,30/180*pi)+c"},
+            {"z_r90^2+c", "rotate(z,1/2*pi)^2+c"},
+            {"z_r45_p3^2+c", "parchment(rotate(z,45/180*pi),3)^2+c"},
         };
         for (size_t i = 0; i < sizeof pairs / sizeof pairs[0]; i++) {
             unsigned long long a = picture(pairs[i][0], "");
@@ -239,6 +243,12 @@ int main(void)
         check(picture("z_r0t5^2+c", "") == square &&
                   picture("z_r2t1^2+c", "") == square,
               "z_r0t5 and z_r2t1 draw z^2+c itself");
+        /* Without the t, degrees: a half turn is z_r1t1 to the bit, and no
+         * turn or a whole one is no turn at all. */
+        check(picture("z_r180^2+c", "") == picture("z_r1t1^2+c", "") &&
+                  picture("z_r0^2+c", "") == square &&
+                  picture("z_r360^2+c", "") == square,
+              "z_r180 is z_r1t1, and z_r0 and z_r360 draw z^2+c itself");
 
         /* The text read back is the one given, not the calls, since that is
          * what a saved position writes out. */
@@ -259,8 +269,9 @@ int main(void)
             {"z_q3^2+c", UnknownVariable}, {"z_b2^2+c", UnknownVariable},
             {"z_p^2+c", UnknownVariable},  {"n_b+z^2+c", UnknownVariable},
             {"z_^2+c", UnknownVariable},   {"z_p3(2)+c", UnknownFunction},
-            {"z_r1t0^2+c", InvalidSuffix}, {"z_r3^2+c", UnknownVariable},
+            {"z_r1t0^2+c", InvalidSuffix}, {"z_r^2+c", UnknownVariable},
             {"z_r3t^2+c", UnknownVariable}, {"z_rt3^2+c", UnknownVariable},
+            {"z_r3x^2+c", UnknownVariable},
         };
         for (size_t i = 0; i < sizeof refused / sizeof refused[0]; i++) {
             int got = sffe_parse(&cfractalc.userformula, refused[i].text);
