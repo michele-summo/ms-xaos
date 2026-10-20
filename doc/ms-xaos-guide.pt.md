@@ -173,7 +173,9 @@ inteira não roda nada, bit a bit.
 aquele cujo módulo é o mínimo, ou o máximo, devolvido inteiro, com a parte real
 e a imaginária tal como são. `argminm(z, p, p2)` é o dos três mais próximo da
 origem. De dois com o mesmo módulo, o escrito primeiro; um lugar vazio é
-saltado, e um só valor é o próprio `z1`.
+saltado, e um só valor é o próprio `z1`. O mesmo módulo quer dizer o mesmo a
+menos dos últimos bits, por isso `argminm(z^2, z_r90^2)` é `z^2` em toda a
+parte.
 
 ### A sonda da paleta
 

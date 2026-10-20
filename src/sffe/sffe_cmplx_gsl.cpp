@@ -955,7 +955,13 @@ static inline cmplx sfarg_or(sfarg *const p, unsigned int place, number_t re,
 /* argminm(z1, z2, ...) and argmaxm: the one of z1, z2, ... whose modulus is
  * the smallest or the largest, handed back whole -- an argmin and an argmax
  * over |z1|, |z2|, .... Of two with the same modulus, the one written first.
- * An empty place is passed over, and one value alone is z1. */
+ * An empty place is passed over, and one value alone is z1.
+ *
+ * The same modulus means the same to a few units in the last place: values
+ * equal in exact arithmetic seldom come out equal to the bit, z^2 and
+ * rotate(z,pi_2)^2 going through a log and an exp along different angles,
+ * and a choice between them that the last bits made would change from one
+ * iteration and one pixel to the next, which draws as noise. */
 static sfarg *sfargextremem(sfarg *const p, bool larger)
 {
     cmplx best = sfarg_or(p, 1, 0, 0);
@@ -965,7 +971,9 @@ static sfarg *sfargextremem(sfarg *const p, bool larger)
         if (a->omitted)
             continue;
         const number_t rk = gsl_complex_abs(sfvalue(a));
-        if (larger ? r < rk : rk < r) {
+        const number_t tie =
+            nldexp(r < rk ? rk : r, 8 - NUMBER_MANTISSA_BITS);
+        if (larger ? rk - r > tie : r - rk > tie) {
             r = rk;
             best = sfvalue(a);
         }

@@ -165,7 +165,9 @@ the bit.
 ..., the one whose modulus is the smallest, or the largest, handed back whole,
 real and imaginary parts as they are. `argminm(z, p, p2)` is whichever of the
 three is nearest the origin. Of two with the same modulus, the one written
-first; an empty place is passed over, and one value alone is `z1` itself.
+first; an empty place is passed over, and one value alone is `z1` itself. The
+same means the same to within the last few bits, so `argminm(z^2, z_r90^2)` is
+`z^2` everywhere.
 
 ### The palette probe
 

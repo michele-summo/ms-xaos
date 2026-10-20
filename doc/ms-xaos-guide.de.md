@@ -183,7 +183,8 @@ dreht gar nicht, bitgenau.
 zurückgegeben, Real- und Imaginärteil, wie sie sind. `argminm(z, p, p2)` ist
 derjenige der drei, der dem Ursprung am nächsten liegt. Von zweien mit gleichem
 Betrag der zuerst geschriebene; ein leerer Platz wird übergangen, und ein
-einzelner Wert ist `z1` selbst.
+einzelner Wert ist `z1` selbst. Gleich heißt gleich bis auf die letzten Bits,
+daher ist `argminm(z^2, z_r90^2)` überall `z^2`.
 
 ### Die Palettensonde
 

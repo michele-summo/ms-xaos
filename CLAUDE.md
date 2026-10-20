@@ -138,7 +138,7 @@ version.
 cd build/Desktop_Qt_6_8_0_MinGW_64_bit-Release && ctest -j4
 ```
 
-The suite has 401 tests; say how many when reporting. `randsc_speed` and
+The suite has 405 tests; say how many when reporting. `randsc_speed` and
 `phist_speed` measure ratios of timings and can fail under a loaded machine:
 run them again on their own (`ctest -R randsc_speed`) before treating a
 failure as real.

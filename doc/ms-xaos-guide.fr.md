@@ -179,7 +179,9 @@ tout, au bit près.
 ..., celle dont le module est le plus petit, ou le plus grand, rendue entière,
 parties réelle et imaginaire telles quelles. `argminm(z, p, p2)` est celle des
 trois la plus proche de l'origine. De deux de même module, celle écrite la
-première ; une place vide est sautée, et une seule valeur est `z1` lui-même.
+première ; une place vide est sautée, et une seule valeur est `z1` lui-même. Le
+même module veut dire le même aux derniers bits près, si bien que
+`argminm(z^2, z_r90^2)` est `z^2` partout.
 
 ### La sonde de palette
 

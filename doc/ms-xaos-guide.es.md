@@ -174,7 +174,9 @@ nada, bit a bit.
 aquel cuyo módulo es el mínimo, o el máximo, devuelto entero, con la parte real
 y la imaginaria tal como son. `argminm(z, p, p2)` es el de los tres más cercano
 al origen. De dos con el mismo módulo, el escrito primero; un lugar vacío se
-salta, y un solo valor es `z1` mismo.
+salta, y un solo valor es `z1` mismo. El mismo módulo quiere decir el mismo
+salvo los últimos bits, así que `argminm(z^2, z_r90^2)` es `z^2` en todas
+partes.
 
 ### La sonda de paleta
 

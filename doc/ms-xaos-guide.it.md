@@ -178,7 +178,9 @@ affatto, bit per bit.
 ..., quello il cui modulo è il minimo, o il massimo, restituito intero, con
 parte reale e immaginaria così come sono. `argminm(z, p, p2)` è quello dei tre
 più vicino all'origine. Fra due con lo stesso modulo, quello scritto per primo;
-un posto vuoto viene saltato, e un solo valore è `z1` stesso.
+un posto vuoto viene saltato, e un solo valore è `z1` stesso. Lo stesso modulo
+vuol dire lo stesso a meno degli ultimi bit, quindi `argminm(z^2, z_r90^2)` è
+`z^2` ovunque.
 
 ### La sonda della tavolozza
 

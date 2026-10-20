@@ -249,6 +249,12 @@ int main(void)
                   picture("z_r0^2+c", "") == square &&
                   picture("z_r360^2+c", "") == square,
               "z_r180 is z_r1t1, and z_r0 and z_r360 draw z^2+c itself");
+        /* Two values of the same modulus in exact arithmetic are alike to
+         * argminm, whatever their last bits: z^2 and z_r90^2 = -z^2 leave it
+         * z^2 on every pass and every pixel, not one or the other by turns. */
+        check(picture("argminm(z^2,z_r90^2)+c", "") == square &&
+                  picture("argmaxm(z^2,z_r90^2)+c", "") == square,
+              "argminm and argmaxm of z^2 and z_r90^2 draw z^2+c itself");
 
         /* The text read back is the one given, not the calls, since that is
          * what a saved position writes out. */
