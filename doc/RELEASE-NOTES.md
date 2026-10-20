@@ -1,9 +1,9 @@
-# MS XaoS 2.11
+# MS XaoS 2.14
 
 What has changed since
-[2.7](https://github.com/michele-summo/ms-xaos/releases/tag/v2.7). Versions
-2.8, 2.9 and 2.10 were never released on their own, so what they brought is
-here too. Everything MS XaoS adds over
+[2.11](https://github.com/michele-summo/ms-xaos/releases/tag/v2.11). Versions
+2.12 and 2.13 were never released on their own, so what they brought is here
+too. Everything MS XaoS adds over
 [XaoS](https://github.com/xaos-project/XaoS) 4.3.3 is in the notes of
 [1.6](https://github.com/michele-summo/ms-xaos/releases/tag/v1.6),
 [1.7](https://github.com/michele-summo/ms-xaos/releases/tag/v1.7),
@@ -12,85 +12,69 @@ here too. Everything MS XaoS adds over
 [1.8.0](https://github.com/michele-summo/ms-xaos/releases/tag/v1.8.0),
 [2.3](https://github.com/michele-summo/ms-xaos/releases/tag/v2.3),
 [2.4](https://github.com/michele-summo/ms-xaos/releases/tag/v2.4),
-[2.5](https://github.com/michele-summo/ms-xaos/releases/tag/v2.5) and
-[2.7](https://github.com/michele-summo/ms-xaos/releases/tag/v2.7), and the
-[guide](https://github.com/michele-summo/ms-xaos/blob/v2.11/doc/ms-xaos-guide.md)
+[2.5](https://github.com/michele-summo/ms-xaos/releases/tag/v2.5),
+[2.7](https://github.com/michele-summo/ms-xaos/releases/tag/v2.7) and
+[2.11](https://github.com/michele-summo/ms-xaos/releases/tag/v2.11), and the
+[guide](https://github.com/michele-summo/ms-xaos/blob/v2.14/doc/ms-xaos-guide.md)
 says what each thing does and why it was made that way.
 
-## Tessellation outside
+## The formula reference at hand
 
-**Fractal → Outcoloring mode → Tessellation...** has three modes, as
-Fractional Brownian Motion has: `tessellation + smooth`, the tiles worn by the
-smooth count; `tessellation + iter`, by the whole count; and `tessellation`,
-the tiles alone. The tiles are laid over the pixel's place in the plane, not
-over the escape point, which jumps from one band to the next and would give
-only grain. The dialog has the inside's fields, with settings of their own, and
-three more:
+**Fractal → User formula** has a **Formula reference...** button beside OK,
+which opens the reference at the tab it was left at. The inside and outside
+**Tessellation...** dialogs have one too, which opens it at the Tilings tab.
+The dialogs wait for you while the reference, a window of its own, is
+scrolled and read.
 
-* **Frequency**, tiles to a unit of the plane, `8` where it starts. It has to
-  be raised as you zoom in, as the motion's frequency does.
-* **Tile scaling**: `fixed`, by the frequency alone; `iteration` or `smooth`,
-  by the frequency doubled with that count, so that the tiles grow finer
-  towards the edge of the set.
-* **Scaling factor**, how many times the frequency doubles every ten
-  iterations. A factor of a few tenths is a good start; at `1` the tiles fall
-  below a pixel soon.
+## Turning a value: `rotate`
 
-Between two doublings the tiles are read at both sizes and their two places on
-the palette are blended, which doubles the cost of the tiling. `angle` is the
-angle of the escape point and `zmag` the log of its modulus. Both are read a
-few iterations past the bailout and run on across the edges of the iterations
-instead of breaking there, except in `tessellation + iter` with `fixed` or
-`iteration` scaling. A position saves the mode as `(outcoloring 21)` to
-`(outcoloring 23)` and the settings in one command,
-`(outtessellation 5 'tile-angle 'shaded 0.6 40 'smooth 0.4)`, only when one of
-them has moved.
+`rotate(z, angle)` turns `z` clockwise about the origin by `angle` radians,
+`z*e^(-i*angle)`, whatever the view's own angle; a picture drawn from a point
+put through it turns clockwise with it. A whole number of quarter turns is
+exact, so a whole turn is no turn at all, to the bit, even when the angle
+comes out of a division such as `180/180*pi`.
 
-## Intensity
+Two variable suffixes say it shorter. `_rNtD` turns by *N*/*D* of half a turn,
+so `p4_r3t7` is `rotate(p4,3/7*pi)`; `_rN`, without the `t`, turns by *N*
+degrees, so `z_r45` is `rotate(z,45/180*pi)`. They chain with the other
+suffixes, read from left to right.
 
-Both Tessellation dialogs, inside and outside, have an **Intensity** field: how
-far apart along the palette the tiles are set. It multiplies every amount a
-tile has of its own, its turn, the bevel of `shaded` and the edge of `edged`,
-and nothing else. It takes any real value: at `0` only what the colour comes
-from is left, so `angle` is a plain decomposition and `zmag` plain `zmag`; at
-`1`, where it starts, the tiles are as before; above `1` they stand further
-apart.
+## Choosing among values: argmin and argmax
 
-The intensity moves colours along the palette and never mixes them. Measured
-with **View → Palette probe (click a point)**, at `1` a tile is moved by up to
-about ten places, in every style and on any palette, so that `0.1` moves it by
-up to one place and `0.01` by up to a tenth. On the default palette the
-colours change within a place or two, so the range that reads as a stronger or
-fainter tiling is about `0.01` to `0.5`; above that the tiles' colours are
-already as far apart as the palette makes them. The inside saves it as
-`(intessellintensity 0.5)`, only when it is not one.
+Six functions take any number of arguments and choose among them:
 
-## One scale for every tile style
+* `argminm(z1, z2, ...)` and `argmaxm(z1, z2, ...)` hand back whole the value
+  whose modulus is the smallest or the largest.
+* `argminx(z1, z2, ...)` and `argmaxx(z1, z2, ...)` take the smallest or the
+  largest real part and imaginary part, each on its own, so the two parts may
+  come from different values: `argminx({1,2}, {-3,5}, {4,-6})` is `{-3,-6}`.
+* `argminxa(z1, z2, ...)` and `argmaxxa(z1, z2, ...)` do the same by absolute
+  value and keep the sign: `argminxa({1,2}, {-3,5}, {4,-6})` is `{1,2}`.
 
-A tile's own amount now spans the same part of the palette whatever its colour
-comes from and whatever the size of the palette: as much as a turn of the
-angle, about ten places. Before, a `flat` tile, `zmag` and `none` took the
-whole palette, which on the default palette of 65534 entries made a hundredth
-of intensity eighty places, and an `edged` tile was moved by half the palette.
-They now take what `angle` with `turned` takes, and `edged` half of that, so
-the intensity moves every style alike and `none` with `turned` is the same as
-`flat`.
+Of two alike, every one of them keeps the one written first, `x` and `-x`
+included for the absolute values, so `argminxa({1,2}, {-1,-1}, {2,1})` is
+`{1,-1}`. Two moduli or absolute values a few units in the last place apart
+count as alike: values equal in exact arithmetic seldom come out equal to the
+bit, and a choice made by the last bits would draw as noise.
+`argminm(z^2, z_r90^2)+c` draws `z^2+c`. An empty place is passed over, and
+one value alone is that value.
 
-## Every pixel a colour of the palette
+## A delta for the random poly
 
-Where the outside blends two things, the two sizes of tiles between two
-doublings or a value and the same value one iteration on, it blends their
-places on the palette, the short way round, and looks the colour up there. It
-never mixes two colours in RGB, so every pixel is a colour of the palette and
-the palette probe names it. Where two places lie far apart, the blend runs
-through the palette's colours between them.
+The random poly of the reference's Utilities tab has a fifth field,
+**Argument delta (degrees)**. Empty, as it starts, the draws are what they
+were, and the same seed gives the same poly. Given a delta, the first
+coefficient's argument still goes round the whole turn and every other one is
+drawn within that many degrees of it.
 
-## Penrose examples
+## The formula bar
 
-`examples/MS-XaoS` holds twenty positions on the Penrose rhombs, tiling 39,
-ten inside and ten outside: the same flat tiles at intensity `0.01`, `0.1`,
-`1` and `141.42`, then every colouring and tile style and, outside, every
-scaling and the three modes. They are installed with the other examples.
+**Fractal → User formula** opens, as before, on an empty bar with the formula
+used last faint in it, which OK on the empty bar takes. Once a formula has
+been chosen there with OK, it opens from then on, until XaoS is closed, with
+the formula in use written out. The bar, its two history arrows and its label
+now line up with one line of formula, and the arrows and the label stay
+beside the first line while the bar grows below.
 
 ## Translations and the guide
 
@@ -100,22 +84,16 @@ English and in the six translations.
 
 ## Tests
 
-359 tests, as in 2.7, with more in the tessellation suites. A pixel of the
-outside drawn in truecolor must be the colour of the palette entry the probe
-names for it, for every colouring, every tile style, intensities from `0.01` to
-`141.42` and every scaling; between two sizes the probe's place must lie on the
-short way between the two sizes' places; and a tile's own amount must be the
-same on a palette of 200 entries and on one of 65535. The round trip of saved
-positions now also goes through the twenty examples, forty positions in all.
+435 tests, 76 more than in 2.11: the new functions, the suffixes and the
+exact quarter turns in the parser's suite, the suffixes drawn against the
+calls written out, the ties of the argmin and argmax functions, and the random
+poly's draws with and without a delta.
 
 ## Compatibility
 
-* Positions saved by 2.7 load and draw as 2.7 draws them, except inside
-  tessellation with `flat`, `zmag`, `none` or `edged` tiles: their tiles now
-  span ten places of the palette instead of the whole of it, as described
-  above. With `angle` or `tile-angle` and `turned` or `shaded` tiles they draw
-  as before, pixel for pixel.
-* Those saved by 2.11 open in 2.7 unless they use outside tessellation or an
-  intensity other than one.
+* Positions saved by 2.11 load and draw as 2.11 draws them; none of the
+  changes moves a setting.
+* Those saved by 2.14 open in 2.11 unless their user formula uses `rotate`,
+  the `_r` suffixes or the argmin and argmax functions.
 * The download for Windows holds XaoS.exe and XaoS-quad.exe as before; the one
   for macOS holds the ordinary build alone.
