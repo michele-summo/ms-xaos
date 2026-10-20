@@ -1869,13 +1869,13 @@
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="88"/>
-        <source>the real part and the imaginary part nearest to 0, each on its own and with its sign; of x and -x, the negative</source>
-        <translation>действительная и мнимая части, ближайшие к 0, каждая сама по себе и со своим знаком; из x и -x — отрицательная</translation>
+        <source>the real part and the imaginary part nearest to 0, each on its own and with its sign; of two alike, the first</source>
+        <translation>действительная и мнимая части, ближайшие к 0, каждая сама по себе и со своим знаком; из двух равных — первая</translation>
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="89"/>
-        <source>the real part and the imaginary part farthest from 0, each on its own and with its sign; of x and -x, the positive</source>
-        <translation>действительная и мнимая части, наиболее удалённые от 0, каждая сама по себе и со своим знаком; из x и -x — положительная</translation>
+        <source>the real part and the imaginary part farthest from 0, each on its own and with its sign; of two alike, the first</source>
+        <translation>действительная и мнимая части, наиболее удалённые от 0, каждая сама по себе и со своим знаком; из двух равных — первая</translation>
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="90"/>

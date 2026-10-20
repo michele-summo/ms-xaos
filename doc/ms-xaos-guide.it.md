@@ -189,10 +189,10 @@ così che la parte reale può venire da un valore e quella immaginaria da un
 altro: `argminx({1,2}, {-3,5}, {4,-6})` è `{-3,-6}`, e `argmaxx` degli stessi
 tre è `{4,5}`. `argminxa` e `argmaxxa` confrontano il valore assoluto e tengono
 il segno: `argminxa({1,2}, {-3,5}, {4,-6})` è `{1,2}`, le parti più vicine a
-zero. Fra due parti uguali, quella scritta prima; fra `x` e `-x`, `argminxa`
-prende la negativa e `argmaxxa` la positiva, quindi
-`argminxa({1,2}, {-1,-1}, {2,1})` è `{-1,-1}`. Come per `argminm`, valori
-assoluti che differiscono negli ultimi bit contano come uguali.
+zero. Fra due parti uguali, in tutte e quattro, quella scritta prima, anche fra
+`x` e `-x`, quindi `argminxa({1,2}, {-1,-1}, {2,1})` è `{1,-1}`. Come per
+`argminm`, valori assoluti che differiscono negli ultimi bit contano come
+uguali.
 
 ### La sonda della tavolozza
 

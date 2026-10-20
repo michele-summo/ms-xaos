@@ -191,11 +191,10 @@ d'une valeur et la partie imaginaire d'une autre :
 `argminx({1,2}, {-3,5}, {4,-6})` vaut `{-3,-6}`, et `argmaxx` des trois mêmes
 vaut `{4,5}`. `argminxa` et `argmaxxa` comparent en valeur absolue et gardent
 le signe : `argminxa({1,2}, {-3,5}, {4,-6})` vaut `{1,2}`, les parties les plus
-proches de zéro. De deux parties égales, celle écrite en premier ; de `x` et
-`-x`, `argminxa` prend la négative et `argmaxxa` la positive, donc
-`argminxa({1,2}, {-1,-1}, {2,1})` vaut `{-1,-1}`. Comme pour `argminm`, des
-valeurs absolues qui ne diffèrent que par les derniers bits comptent comme
-égales.
+proches de zéro. De deux parties égales, dans les quatre, celle écrite en
+premier, `x` et `-x` compris, donc `argminxa({1,2}, {-1,-1}, {2,1})` vaut
+`{1,-1}`. Comme pour `argminm`, des valeurs absolues qui ne diffèrent que par
+les derniers bits comptent comme égales.
 
 ### La sonde de palette
 

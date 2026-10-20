@@ -1011,9 +1011,9 @@ static number_t extremex(number_t best, number_t x, bool larger)
 }
 
 /* argminxa and argmaxxa do the same by absolute value, and keep the sign:
- * argminxa(1+2i, -3+5i, 4-6i) is 1+2i. Of a value and its opposite, argminxa
- * takes the negative one and argmaxxa the positive one, so argminxa(1+2i,
- * -1-i, 2+i) is -1-i.
+ * argminxa(1+2i, -3+5i, 4-6i) is 1+2i. Of two parts with the same absolute
+ * value, x and -x among them, the one written first, so argminxa(1+2i,
+ * -1-i, 2+i) is 1-i.
  *
  * As in argminm, the same absolute value means the same to a few units in
  * the last place: x and -x seldom come out of a formula as exact opposites,
@@ -1023,11 +1023,7 @@ static number_t extremexa(number_t best, number_t x, bool larger)
     const number_t ab = best < 0 ? -best : best;
     const number_t ax = x < 0 ? -x : x;
     const number_t tie = nldexp(ab < ax ? ax : ab, 8 - NUMBER_MANTISSA_BITS);
-    if (larger ? ax - ab > tie : ab - ax > tie)
-        return x;
-    if (ax - ab > tie || ab - ax > tie)
-        return best;
-    return extremex(best, x, larger);
+    return (larger ? ax - ab > tie : ab - ax > tie) ? x : best;
 }
 
 static sfarg *sfargextremex(sfarg *const p, bool larger, bool absolute)

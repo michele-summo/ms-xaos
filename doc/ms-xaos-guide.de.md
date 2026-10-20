@@ -194,10 +194,9 @@ kommen kann: `argminx({1,2}, {-3,5}, {4,-6})` ist `{-3,-6}`, und `argmaxx`
 derselben drei ist `{4,5}`. `argminxa` und `argmaxxa` vergleichen nach
 Absolutbetrag und behalten das Vorzeichen: `argminxa({1,2}, {-3,5}, {4,-6})`
 ist `{1,2}`, die Teile, die null am nächsten liegen. Von zwei gleichen Teilen
-der zuerst geschriebene; von `x` und `-x` nimmt `argminxa` den negativen und
-`argmaxxa` den positiven, also ist `argminxa({1,2}, {-1,-1}, {2,1})` gleich
-`{-1,-1}`. Wie bei `argminm` gelten Absolutbeträge, die sich nur in den letzten
-Bits unterscheiden, als gleich.
+nehmen alle vier den zuerst geschriebenen, auch bei `x` und `-x`, also ist
+`argminxa({1,2}, {-1,-1}, {2,1})` gleich `{1,-1}`. Wie bei `argminm` gelten
+Absolutbeträge, die sich nur in den letzten Bits unterscheiden, als gleich.
 
 ### Die Palettensonde
 

@@ -185,10 +185,10 @@ de modo que la parte real puede venir de un valor y la imaginaria de otro:
 `argminx({1,2}, {-3,5}, {4,-6})` es `{-3,-6}`, y `argmaxx` de los mismos tres
 es `{4,5}`. `argminxa` y `argmaxxa` comparan por valor absoluto y conservan el
 signo: `argminxa({1,2}, {-3,5}, {4,-6})` es `{1,2}`, las partes más cercanas a
-cero. De dos partes iguales, la escrita primero; de `x` y `-x`, `argminxa` toma
-la negativa y `argmaxxa` la positiva, así que `argminxa({1,2}, {-1,-1}, {2,1})`
-es `{-1,-1}`. Como en `argminm`, valores absolutos que difieren en los últimos
-bits cuentan como iguales.
+cero. De dos partes iguales, en las cuatro, la escrita primero, también entre
+`x` y `-x`, así que `argminxa({1,2}, {-1,-1}, {2,1})` es `{1,-1}`. Como en
+`argminm`, valores absolutos que difieren en los últimos bits cuentan como
+iguales.
 
 ### La sonda de paleta
 

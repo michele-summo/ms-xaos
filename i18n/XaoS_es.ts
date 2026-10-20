@@ -1861,13 +1861,13 @@
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="88"/>
-        <source>the real part and the imaginary part nearest to 0, each on its own and with its sign; of x and -x, the negative</source>
-        <translation>la parte real y la parte imaginaria más cercanas a 0, cada una por separado y con su signo; de x y -x, la negativa</translation>
+        <source>the real part and the imaginary part nearest to 0, each on its own and with its sign; of two alike, the first</source>
+        <translation>la parte real y la parte imaginaria más cercanas a 0, cada una por separado y con su signo; de dos iguales, la primera</translation>
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="89"/>
-        <source>the real part and the imaginary part farthest from 0, each on its own and with its sign; of x and -x, the positive</source>
-        <translation>la parte real y la parte imaginaria más lejanas de 0, cada una por separado y con su signo; de x y -x, la positiva</translation>
+        <source>the real part and the imaginary part farthest from 0, each on its own and with its sign; of two alike, the first</source>
+        <translation>la parte real y la parte imaginaria más lejanas de 0, cada una por separado y con su signo; de dos iguales, la primera</translation>
     </message>
     <message>
         <location filename="../src/ui/formulahelp_data.cpp" line="90"/>
