@@ -12,10 +12,7 @@
 #include "xmenu.h"
 #include "play.h"
 #include "i18n.h"
-
-#ifdef USE_FLOAT128
-#include <quadmath.h>
-#endif
+#include "misc-f.h"
 
 #define myputs(s)                                                              \
     ((xio_puts(s, uih->savec->file) == XIO_EOF) ? outputerror(uih), 1 : 0)
@@ -99,53 +96,21 @@ static void save_float(struct uih_context *uih, number_t number)
     else
         first = 0;
     char s[256];
-    char fs[10];
     /* Full precision for the build, so that reloading the file puts the view
      * back exactly where it was saved. */
-#ifdef USE_FLOAT128
-    snprintf(fs, sizeof(fs), "%%.%iQG", NUMBER_DIGITS);
-    quadmath_snprintf(s, 256, fs, (__float128)number);
-#else
-#ifdef USE_LONG_DOUBLE
-    snprintf(fs, sizeof(fs), "%%.%iLG", NUMBER_DIGITS);
-    snprintf(s, 256, fs, (long double)number);
-#else
-    snprintf(fs, sizeof(fs), "%%.%iG", NUMBER_DIGITS);
-    snprintf(s, 256, fs, (double)number);
-#endif
-#endif
-    myputs(s);
+    myputs(xnumtostr(s, sizeof(s), number, NUMBER_DIGITS));
 }
 
 static void save_float2(struct uih_context *uih, number_t number, int places)
 {
-    char fs[10];
     if (!first)
         myputc(' ');
     else
         first = 0;
-    if (places < 0)
-        places = 0;
-    if (places > NUMBER_DIGITS)
-        places = NUMBER_DIGITS;
     char s[256];
-#ifdef USE_FLOAT128
-    /* The format string is built from places and then used, which it was not:
-     * this branch composed fs and went on to print a hardcoded 34 digits, so
-     * asking for fewer had no effect. */
-    snprintf(fs, sizeof(fs), "%%.%iQG", places);
-    quadmath_snprintf(s, 256, fs, (__float128)number);
-#else
-#ifdef USE_LONG_DOUBLE
-    snprintf(fs, sizeof(fs), "%%.%iLG", places);
-    snprintf(s, 256, fs, (long double)number);
-#else
-    /* ...and this one passed 10 and 256 as the format strings. */
-    snprintf(fs, sizeof(fs), "%%.%iG", places);
-    snprintf(s, 256, fs, (double)number);
-#endif
-#endif
-    myputs(s);
+    /* xnumtostr keeps places between one and what the build holds; %.0G
+     * prints one digit, as asking for none here always did. */
+    myputs(xnumtostr(s, sizeof(s), number, places));
 }
 
 static void save_int(struct uih_context *uih, int number)

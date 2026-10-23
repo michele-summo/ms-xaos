@@ -1941,8 +1941,10 @@ int sffe_parse(sffe **parser, const char *expression)
                 for (ui1 = 0; ui1 < _parser->argCount; ui1 += 1) {
                     if ((_parser->args + ui1)->value) {
 #ifdef SFFE_COMPLEX
-                        printf(" %g%+gI", real((*(_parser->args + ui1)->value)),
-                               imag((*(_parser->args + ui1)->value)));
+                        /* a trace for the developer, a double is enough */
+                        printf(" %g%+gI",
+                               (double)real((*(_parser->args + ui1)->value)),
+                               (double)imag((*(_parser->args + ui1)->value)));
 #else
                         printf(" %g", (*(_parser->args + ui1)->value));
 #endif

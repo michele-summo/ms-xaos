@@ -3443,18 +3443,18 @@ static void uih_drawstatus(uih_context *uih, void * /*data*/)
     QPoint windowCursorPos = qApp->widgetAt(globalCursorPos)->mapFromGlobal(QCursor::pos());
     int cursorposx = windowCursorPos.x();
     int cursorposy = windowCursorPos.y();
-    double realwidth = (double)uih->fcontext->rs.mc - (double)uih->fcontext->rs.nc;
-    double realheight = (double)uih->fcontext->rs.mi - (double)uih->fcontext->rs.ni;
-    double pixelwidth = realwidth/ uih->image->width;
-    double pixelheight = realheight / uih->image->height;
-    double realrelposx = pixelwidth * cursorposx;
-    double realrelposy = pixelheight * cursorposy;
-    double windowleftabspos = (double)uih->fcontext->rs.nc;
-    double windowtopabspos = (double)uih->fcontext->rs.ni;
-    double cursorabsposx = windowleftabspos + realrelposx;
-    double cursorabsposy = windowtopabspos + realrelposy;
-    sprintf(str, TR("Message", "Mouse:[%1.12f,%1.12f]"),
-            (double)cursorabsposx, (double)cursorabsposy);
+    /* In number_t and shown with as many digits as the centre above: through a
+     * double and twelve fixed decimals, every pixel of a view past 1e-12 read
+     * as the same place. */
+    number_t realwidth = uih->fcontext->rs.mc - uih->fcontext->rs.nc;
+    number_t realheight = uih->fcontext->rs.mi - uih->fcontext->rs.ni;
+    number_t pixelwidth = realwidth / uih->image->width;
+    number_t pixelheight = realheight / uih->image->height;
+    number_t cursorabsposx = uih->fcontext->rs.nc + pixelwidth * cursorposx;
+    number_t cursorabsposy = uih->fcontext->rs.ni + pixelheight * cursorposy;
+    sprintf(str, TR("Message", "Mouse:[%s,%s]"),
+            xnumtostr(cbuf, sizeof(cbuf), cursorabsposx, digits),
+            xnumtostr(cbuf2, sizeof(cbuf2), cursorabsposy, digits));
     xprint(uih->image, uih->font, 0, y, str, FGCOLOR(uih),
            BGCOLOR(uih), 0);
     y += h;

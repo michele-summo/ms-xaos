@@ -50,9 +50,6 @@
 #include "julia.h"
 #include "ui_helper.h"
 #include "xthread.h"
-#ifndef M_PI
-#define M_PI 3.1415
-#endif
 
 #ifdef USE_SFFE
 #include "sffe.h"
@@ -1287,62 +1284,62 @@ static unsigned int truecolor_output(number_t zre, number_t zim, number_t pre,
     case 0:
         break;
     case 1:
-        r = (int)((sinl(atan2l(zre, zim) * 20) + 1) *
+        r = (int)((nsin(natan2(zre, zim) * 20) + 1) *
                    127);
-        w = (int)((sinl(zim / zre)) * 127);
+        w = (int)((nsin(zim / zre)) * 127);
         b = (int)((int)(zre * zim));
-        g = (int)((sinl((zre * zre) / 2) + 1) * 127);
+        g = (int)((nsin((zre * zre) / 2) + 1) * 127);
         break;
     case 2:
         if (!inset) {
-            b = (int)((sinl(zre * 2) + 1) * 127);
-            g = (int)((sinl(zim * 2) + 1) * 127);
-            r = (int)((sinl((zim * zim + zre * zre) / 2) + 1) * 127);
+            b = (int)((nsin(zre * 2) + 1) * 127);
+            g = (int)((nsin(zim * 2) + 1) * 127);
+            r = (int)((nsin((zim * zim + zre * zre) / 2) + 1) * 127);
         } else {
-            b = (int)((sinl(zre * 50) + 1) * 127);
-            g = (int)((sinl(zim * 50) + 1) * 127);
-            r = (int)((sinl((zim * zim + zre * zre) * 50) + 1) *
+            b = (int)((nsin(zre * 50) + 1) * 127);
+            g = (int)((nsin(zim * 50) + 1) * 127);
+            r = (int)((nsin((zim * zim + zre * zre) * 50) + 1) *
                        127);
         }
-        w = (int)((sinl(zim / zre)) * 127);
+        w = (int)((nsin(zim / zre)) * 127);
         break;
     case 3:
         if (inset)
-            hsv_to_rgb((int)(atan2l(zre, zim) * 256 / M_PI),
-                       (int)((sinl((zre * 50)) + 1) * 128),
-                       (int)((sinl((zim * 50)) + 1) * 128), &b, &g,
+            hsv_to_rgb((int)(natan2(zre, zim) * 256 / N_PI),
+                       (int)((nsin((zre * 50)) + 1) * 128),
+                       (int)((nsin((zim * 50)) + 1) * 128), &b, &g,
                        &r);
         else
-            hsv_to_rgb((int)(atan2l(zre, zim) * 256 / M_PI),
-                       (int)((sinl(zre) + 1) * 128),
-                       (int)((sinl(zim) + 1) * 128), &b, &g, &r);
+            hsv_to_rgb((int)(natan2(zre, zim) * 256 / N_PI),
+                       (int)((nsin(zre) + 1) * 128),
+                       (int)((nsin(zim) + 1) * 128), &b, &g, &r);
         break;
     case 4:
         if (inset)
             hsv_to_rgb(
-                (int)(sinl((zre * zre + zim * zim) * 0.1) * 256),
-                (int)(sinl(atan2l(zre, zim) * 10) * 128 +
+                (int)(nsin((zre * zre + zim * zim) * 0.1) * 256),
+                (int)(nsin(natan2(zre, zim) * 10) * 128 +
                        128),
-                (int)((sinl((zre + zim) * 10)) * 65 + 128), &b, &g,
+                (int)((nsin((zre + zim) * 10)) * 65 + 128), &b, &g,
                 &r);
         else
             hsv_to_rgb(
-                (int)(sinl((zre * zre + zim * zim) * 0.01) * 256),
-                (int)(sinl(atan2l(zre, zim) * 10) * 128 +
+                (int)(nsin((zre * zre + zim * zim) * 0.01) * 256),
+                (int)(nsin(natan2(zre, zim) * 10) * 128 +
                        128),
-                (int)((sinl((zre + zim) * 0.3)) * 65 + 128), &b, &g,
+                (int)((nsin((zre + zim) * 0.3)) * 65 + 128), &b, &g,
                 &r);
         break;
     case 5: {
         if (!inset) {
-            b = (int)(cosl(myabs(zre * zre)) * 128) + 128;
-            g = (int)(cosl(myabs(zre * zim)) * 128) + 128;
-            r = (int)(cosl(myabs(zim * zim + zre * zre)) * 128) +
+            b = (int)(ncos(myabs(zre * zre)) * 128) + 128;
+            g = (int)(ncos(myabs(zre * zim)) * 128) + 128;
+            r = (int)(ncos(myabs(zim * zim + zre * zre)) * 128) +
                 128;
         } else {
-            b = (int)(cosl(myabs(zre * zre) * 10) * 128) + 128;
-            g = (int)(cosl(myabs(zre * zim) * 10) * 128) + 128;
-            r = (int)(cosl(myabs(zim * zim + zre * zre) * 10) *
+            b = (int)(ncos(myabs(zre * zre) * 10) * 128) + 128;
+            g = (int)(ncos(myabs(zre * zim) * 10) * 128) + 128;
+            r = (int)(ncos(myabs(zim * zim + zre * zre) * 10) *
                        128) +
                 128;
         }
@@ -1392,9 +1389,9 @@ static unsigned int truecolor_output(number_t zre, number_t zim, number_t pre,
         }
     } break;
     case 10: {
-        b = (int)(atan2l(zre, zim) * 128 / M_PI) + 128;
-        g = (int)(atan2l(zre, zim) * 128 / M_PI) + 128;
-        r = (int)(atan2l(zim, zre) * 128 / M_PI) + 128;
+        b = (int)(natan2(zre, zim) * 128 / N_PI) + 128;
+        g = (int)(natan2(zre, zim) * 128 / N_PI) + 128;
+        r = (int)(natan2(zim, zre) * 128 / N_PI) + 128;
     } break;
         // case 11 is for disabling truecolor mode
     case 12: {
@@ -1825,11 +1822,11 @@ static unsigned int color_output(number_t zre, number_t zim, unsigned int iter)
             break;
         case OutColormodeType::ColOut_potential:
             zre = zre * zre + zim * zim;
-            i_f = (sqrtl(logl(zre) / i_f) * 256 * 256);
+            i_f = (nsqrt(nlog(zre) / i_f) * 256 * 256);
             break;
         case OutColormodeType::ColOut_color_decomposition:
             if (decomp_plain(&cfractalc, 0)) {
-                i_f = ((atan2l(zre, zim) / (M_PI + M_PI) + 0.75) *
+                i_f = ((natan2(zre, zim) / N_2PI + 0.75) *
                        20000);
                 break;
             }
@@ -1984,7 +1981,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
     case INCOLORING_FBM_DECOMP:
         /* and the same over the decomposition */
         if (plain)
-            i_f = fbm_fold(((atan2l(zre, zim) / (M_PI + M_PI) + 0.75) * 20000) +
+            i_f = fbm_fold(((natan2(zre, zim) / N_2PI + 0.75) * 20000) +
                            fbm_at_pixel(1) * SMUL);
         else
             i_f = fbm_fold(decomposition() + fbm_at_pixel(1) * SMUL);
@@ -2000,7 +1997,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
             break;
         }
         i_f = ((
-            (atan2l(zre, zim) / (M_PI + M_PI) + 0.75) *
+            (natan2(zre, zim) / N_2PI + 0.75) *
             20000));
         break;
     default:
@@ -2018,29 +2015,29 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
         break;
     case 5: /* the bands that choose between the two as well as the two */
         if (((int)(periodic(zre * zre + zim * zim) * 10)) % 2)
-            i_f = (cosl(periodic(zre * zim * pre * pim)) * 256 * 256);
+            i_f = (ncos(periodic(zre * zim * pre * pim)) * 256 * 256);
         else
-            i_f = (sinl(periodic(zre * zim * pre * pim)) * 256 * 256);
+            i_f = (nsin(periodic(zre * zim * pre * pim)) * 256 * 256);
         break;
     case 6:
-        i_f = ((zre * zre + zim * zim) * cosl(periodic(zre * zre)) * 256 *
+        i_f = ((zre * zre + zim * zim) * ncos(periodic(zre * zre)) * 256 *
                256);
         break;
     case 7:
-        i_f = (sinl(periodic(zre * zre - zim * zim)) * 256 * 256);
+        i_f = (nsin(periodic(zre * zre - zim * zim)) * 256 * 256);
         break;
     case 8:
-        i_f = (atanl((zre * zim * pre * pim)) * 256 * 64);
+        i_f = (natan((zre * zim * pre * pim)) * 256 * 64);
         break;
     case 9: /* squares a fortieth of a unit on a side, at a frequency of one */
         if ((abs((int)(periodic(zre) * 40)) % 2) ^
             (abs((int)(periodic(zim) * 40)) % 2))
             i_f = ((
-                (atan2l(zre, zim) / (M_PI + M_PI) + 0.75) *
+                (natan2(zre, zim) / N_2PI + 0.75) *
                 20000));
         else
             i_f = ((
-                (atan2l(zim, zre) / (M_PI + M_PI) + 0.75) *
+                (natan2(zim, zre) / N_2PI + 0.75) *
                 20000));
         break;
     case 10: /* real/mag: the cosine of the angle. Where atan2 has a seam
@@ -2167,7 +2164,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
             if (plain && colour == TESSELL_ANGLE && fill == TESSELL_TURNED &&
                 cfractalc.intessellintensity == 1) {
                 /* what the mode drew before it had a choice, to the bit */
-                i_f = ((atan2l(zre, zim) / (M_PI + M_PI) + 0.75 + turn) *
+                i_f = ((natan2(zre, zim) / N_2PI + 0.75 + turn) *
                        20000);
                 break;
             }
@@ -2813,7 +2810,7 @@ static unsigned int incolor_output(number_t zre, number_t zim, number_t pre,
 
 #define VARIABLES number_t zre1, zim1;
 #define INIT                                                                   \
-    pim = fabs(pim);                                                           \
+    pim = nfabs(pim);                                                          \
     zre = pre;                                                                 \
     zim = pim;
 #define BTEST                                                                  \

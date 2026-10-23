@@ -1,6 +1,6 @@
 # MS XaoS
 
-> Übersetzung der [englischen Anleitung](ms-xaos-guide.md) der Version 2.14. Wo
+> Übersetzung der [englischen Anleitung](ms-xaos-guide.md) der Version 2.15. Wo
 > sie voneinander abweichen, gilt das englische Original.
 
 Ein Fork von [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Alles, was das
