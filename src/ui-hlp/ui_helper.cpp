@@ -859,7 +859,7 @@ const char *uih_save(struct uih_context *c, xio_constpath filename, xio_file xpf
     uih_cycling_stop(c);
     uih_stoptimers(c);
     uih_clearwindows(c);
-    r = writepng(filename, c->queue->saveimage, xpf_data);
+    r = writeimage(filename, c->queue->saveimage, xpf_data);
     uih_cycling_continue(c);
     uih_resumetimers(c);
     return (r);

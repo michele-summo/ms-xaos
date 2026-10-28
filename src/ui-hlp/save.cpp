@@ -4,6 +4,7 @@
 #include <cstring>
 #include <cerrno>
 #include <cstdlib>
+#include <QDateTime>
 #include "filter.h"
 #include "fractal.h"
 #include "formulas.h"
@@ -977,6 +978,18 @@ int uih_save_enable(struct uih_context *uih, xio_file f, int mode)
                "\n"
                ";  - a realtime interactive fractal zoomer\n"
                ";Use xaos -loadpos <filename> to display it\n");
+    if (mode == UIH_SAVEANIMATION || mode == UIH_SAVEPOS) {
+        /* When the file was made, on a line of its own in ISO 8601 with the
+         * offset from UTC, so that a script can sort the files by it after a
+         * copy has given them all the same file date. It is a comment, so
+         * every release reads past it. */
+        QDateTime now = QDateTime::currentDateTime();
+        QString created =
+            now.toOffsetFromUtc(now.offsetFromUtc()).toString(Qt::ISODate);
+        myputs(";Created: ");
+        myputs(created.toUtf8().constData());
+        myputs("\n");
+    }
 #ifdef USE_FLOAT128
     /* The quad build records what it computed at, before anything else. It is
      * a command and not a comment so that a build which does not know it stops

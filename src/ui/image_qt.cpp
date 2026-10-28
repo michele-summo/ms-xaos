@@ -113,10 +113,22 @@ int xtextcharw(struct image *image, void *font, const char c)
     return metrics.horizontalAdvance(c);
 }
 
-// Saves image as png with xpf chunk data
-const char *writepng(xio_constpath filename, const struct image *image, xio_file xpf_data)
+// Saves the image as png, with the xpf data in a text chunk, or, when the
+// name ends in .webp, as lossless WebP, which has no place for the xpf data
+const char *writeimage(xio_constpath filename, const struct image *image, xio_file xpf_data)
 {
     QImage *qimage = reinterpret_cast<QImage **>(image->data)[image->currimage];
+    if (QString(filename).endsWith(".webp", Qt::CaseInsensitive)) {
+        if (!QImageWriter::supportedImageFormats().contains("webp"))
+            return TR("Error", "This build of XaoS cannot write WebP images: "
+                               "the Qt Image Formats module is missing");
+        QImageWriter writer(filename, "webp");
+        /* Qt's WebP plugin compresses losslessly at quality 100. */
+        writer.setQuality(100);
+        if (!writer.write(*qimage))
+            return TR("Error", "Could not save the image");
+        return NULL;
+    }
     if(xpf_data != NULL){
         QString xpf_chunk = xio_getstring(xpf_data);
         qimage->setText("Metadata", xpf_chunk);

@@ -1,6 +1,6 @@
 # MS XaoS
 
-> Traduction du [guide en anglais](ms-xaos-guide.md) de la version 2.15. En cas
+> Traduction du [guide en anglais](ms-xaos-guide.md) de la version 2.16. En cas
 > de différence, l'original anglais fait foi.
 
 Un fork de [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Tout ce que fait
@@ -61,6 +61,28 @@ Tout ce qu'une position peut contenir survit désormais sans changement à un
 enregistrement et un chargement : les 169 exemples fournis et 141 positions
 générées couvrant chaque formule, plan, mode de coloration et filtre font
 l'aller-retour au pixel près.
+
+Chaque fichier de position et d'animation est daté, sur la ligne après
+l'en-tête, en ISO 8601 avec le décalage par rapport à UTC :
+
+```
+;Created: 2026-10-28T17:46:30+01:00
+```
+
+C'est un commentaire, donc toute version ouvre le fichier comme avant ; un
+script peut trier les fichiers selon cette date après qu'une copie leur a donné
+à tous la même date de fichier.
+
+## Images WebP
+
+Fichier → Enregistrer sous → **WebP** enregistre l'image en WebP sans perte :
+les mêmes pixels que le PNG, dans un fichier plus petit. Contrairement au PNG,
+il ne contient pas la position, donc Fichier → Ouvrir ne peut pas la rouvrir.
+Rendre et Rendre une image ont un champ **Format de fichier** pour écrire les
+images en WebP, et en ligne de commande `-renderformat webp` fait de même.
+
+WebP demande le module Image Formats de Qt (le greffon `qwebp`) ; une version
+qui ne l'a pas le dit au lieu d'enregistrer.
 
 ## Annuler
 

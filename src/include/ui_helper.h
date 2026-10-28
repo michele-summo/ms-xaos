@@ -602,6 +602,7 @@ void uih_setfont(uih_context *c);
 
 /*animation rendering*/
 int uih_renderanimation(struct uih_context *gc, const char *basename,
+                        const char *extension,
                         const xio_constpath animation, int width, int height,
                         float pixelwidth, float pixelheight, int frametime,
                         int type, int antialiasing, int slowmode,

@@ -2,7 +2,7 @@
 
 A fork of [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Everything the
 original does, it still does; this describes what has been added or changed,
-and why. Version 2.15.
+and why. Version 2.16.
 
 ## Two binaries
 
@@ -55,6 +55,27 @@ count that is a visibly different picture.
 Everything a position can hold now survives a save and load unchanged: all 169
 shipped examples and 141 generated positions covering every formula, plane,
 colouring mode and filter round-trip pixel for pixel.
+
+Every position and animation file is dated, on the line after the header, in
+ISO 8601 with the offset from UTC:
+
+```
+;Created: 2026-10-28T17:46:30+01:00
+```
+
+It is a comment, so every release opens the file as before; a script can sort
+the files by it after a copy has given them all the same file date.
+
+## WebP images
+
+File → Save as → **WebP** saves the picture as a lossless WebP: the same pixels
+as the PNG, in a smaller file. Unlike the PNG it does not carry the position,
+so File → Open cannot reopen it. Render and Render Image have a **File format**
+field to write the frames as WebP, and on the command line `-renderformat webp`
+does the same.
+
+WebP needs Qt's Image Formats module (the `qwebp` plugin); a build without it
+says so instead of saving.
 
 ## Undo
 

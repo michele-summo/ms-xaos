@@ -44,6 +44,10 @@ static const char *const imgtypes[] = {QT_TRANSLATE_NOOP("Dialog", "Truecolor"),
                                        QT_TRANSLATE_NOOP("Dialog", "256 colors"),
                                        NULL};
 
+static const char *const imgformats[] = {
+    QT_TRANSLATE_NOOP("Dialog", "PNG"),
+    QT_TRANSLATE_NOOP("Dialog", "WebP (lossless)"), NULL};
+
 static const char *const yesno[] = {QT_TRANSLATE_NOOP("Dialog", "No"),
                                     QT_TRANSLATE_NOOP("Dialog", "Yes"), NULL};
 
@@ -105,7 +109,7 @@ static menudialog menudialogs_i18n[MAX_MENUDIALOGS_I18N];
 static menudialog *uih_perturbationdialog, *uih_juliadialog,
     *uih_smoothmorphdialog, *uih_renderdialog, *uih_viewdialog, *uih_linedialog,
     *uih_colordialog, *uih_rotationdialog, *uih_lettersdialog, *uih_iterdialog,
-    *dtextparam, *dcommand, *loaddialog, *playdialog, *saveimgdialog,
+    *dtextparam, *dcommand, *loaddialog, *playdialog, *saveimgdialog, *savewebpdialog,
     *saveposdialog, *uih_formuladialog, *uih_plviewdialog, *uih_coorddialog,
     *uih_angledialog, *uih_autorotatedialog, *uih_fastrotatedialog,
     *uih_filterdialog, *uih_shiftdialog, *uih_speeddialog, *printdialog,
@@ -176,6 +180,7 @@ void uih_registermenudialogs_i18n(void)
     DIALOGCHOICE_I(TR("Dialog", "Image type:"), imgtypes, 0);
     DIALOGCHOICE_I(TR("Dialog", "Antialiasing:"), yesno, 0);
     DIALOGCHOICE_I(TR("Dialog", "Always recalculate:"), yesno, 0);
+    DIALOGCHOICE_I(TR("Dialog", "File format:"), imgformats, 0);
     NULL_I();
 
     Register(uih_renderimgdialog);
@@ -186,6 +191,7 @@ void uih_registermenudialogs_i18n(void)
     DIALOGFLOAT_I(TR("Dialog", "Pixel height (cm):"), 0.025);
     DIALOGCHOICE_I(TR("Dialog", "Image type:"), imgtypes, 0);
     DIALOGCHOICE_I(TR("Dialog", "Antialiasing:"), yesno, 0);
+    DIALOGCHOICE_I(TR("Dialog", "File format:"), imgformats, 0);
     NULL_I();
 
     Register(uih_viewdialog);
@@ -235,6 +241,10 @@ void uih_registermenudialogs_i18n(void)
 
     Register(saveimgdialog);
     DIALOGOFILE_I(TR("Dialog", "Filename:"), "fract*.png");
+    NULL_I();
+
+    Register(savewebpdialog);
+    DIALOGOFILE_I(TR("Dialog", "Filename:"), "fract*.webp");
     NULL_I();
 
     Register(saveposdialog);
@@ -755,7 +765,8 @@ static void uih_render(struct uih_context *c, dialogparam *d)
         strcpy(base_name, d[1].dstring);
         strcat(base_name, file_suffix);
 
-        uih_renderanimation(c, base_name, (xio_path)curr_file, d[2].dint,
+        uih_renderanimation(c, base_name, d[10].dint ? "webp" : "png",
+                                (xio_path)curr_file, d[2].dint,
                                 d[3].dint, d[4].number, d[5].number,
                                 (int)(1000000 / d[6].number),
         #ifdef STRUECOLOR24
@@ -806,7 +817,8 @@ static void uih_renderimg(struct uih_context *c, dialogparam *d)
         return;
     }
 
-    uih_renderanimation(c, d[0].dstring, (xio_path)path, d[1].dint,
+    uih_renderanimation(c, d[0].dstring, d[7].dint ? "webp" : "png",
+                            (xio_path)path, d[1].dint,
                             d[2].dint, d[3].number, d[4].number,
                             (int)(1000000 / 30),
     #ifdef STRUECOLOR24
@@ -2242,6 +2254,10 @@ void uih_registermenus_i18n(void)
     SUBMENU_I("file", NULL, TR("Menu", "Save as"), "saveas");
     MENUDIALOG_I("saveas", NULL, TR("Menu", "PNG"), "saveimg", 0,
                  uih_savepngfile, saveimgdialog);
+    /* The same function: the image is written as WebP when the name ends in
+     * .webp. A WebP image does not carry the position, as a PNG does. */
+    MENUDIALOG_I("saveas", NULL, TR("Menu", "WebP"), "savewebp", 0,
+                 uih_savepngfile, savewebpdialog);
     MENUSEPARATOR_I("file")
     MENUDIALOGCB_I("file", NULL, TR("Menu", "Record"), "record", 0,
                    uih_saveanimfile, saveanimdialog, uih_saveanimenabled);
