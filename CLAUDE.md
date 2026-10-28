@@ -24,14 +24,21 @@ them and what to check before calling a change done.
 ## Building on Windows
 
 ```bash
-export PATH=/c/Qt/Tools/CMake_64/bin:/c/Qt/Tools/mingw1310_64/bin:/c/Qt/Tools/Ninja:/c/Qt/6.8.0/mingw_64/bin:$PATH
-cmake --build build/Desktop_Qt_6_8_0_MinGW_64_bit-Release
+export PATH=/c/Qt/Tools/CMake_64/bin:/c/Qt/Tools/mingw1310_64/bin:/c/Qt/Tools/Ninja:/c/Qt/6.12.0/mingw_64/bin:$PATH
+cmake --build build/Desktop_Qt_6_12_0_MinGW_64_bit-Release
+cmake --build build/Desktop_Qt_6_12_0_MinGW_64_bit-Release --target deploy
 ```
 
 `bin/XaoS.exe` (64-bit mantissa) and `bin/XaoS-quad.exe` (113-bit) are what it
-builds; they need `C:\Qt\6.8.0\mingw_64\bin` and `C:\Qt\Tools\mingw1310_64\bin`
+builds; they need `C:\Qt\6.12.0\mingw_64\bin` and `C:\Qt\Tools\mingw1310_64\bin`
 on PATH to start. The build compiles `i18n/*.ts` into `.qm` files itself, so
 there is nothing to run for them. Build with no warnings.
+
+The build does not copy Qt's DLLs into `bin/`: the `deploy` target does, with
+windeployqt, together with the image format plugins (`bin/imageformats/`,
+where `qwebp.dll` is what saving WebP needs). Run it after changing Qt, or
+`bin/` keeps the DLLs of the Qt it had before. The kit is Qt 6.12.0 since
+version 2.16; the 6.8.0 build folders point at a Qt that is gone.
 
 ## Translations
 
@@ -135,7 +142,7 @@ version.
 ### Running them
 
 ```bash
-cd build/Desktop_Qt_6_8_0_MinGW_64_bit-Release && ctest -j4
+cd build/Desktop_Qt_6_12_0_MinGW_64_bit-Release && ctest -j4
 ```
 
 The suite has 435 tests; say how many when reporting. `randsc_speed` and
