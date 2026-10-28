@@ -769,344 +769,344 @@
         <translation>Historial...</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/save.cpp" line="29"/>
+        <location filename="../src/ui-hlp/save.cpp" line="26"/>
         <source>zero</source>
         <translation>cero</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/save.cpp" line="30"/>
+        <location filename="../src/ui-hlp/save.cpp" line="27"/>
         <source>never</source>
         <translation>nunca</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/save.cpp" line="31"/>
+        <location filename="../src/ui-hlp/save.cpp" line="28"/>
         <source>animation</source>
         <translation>animación</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/save.cpp" line="32"/>
+        <location filename="../src/ui-hlp/save.cpp" line="29"/>
         <source>new</source>
         <translation>nuevas</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/save.cpp" line="33"/>
+        <location filename="../src/ui-hlp/save.cpp" line="30"/>
         <source>always</source>
         <translation>siempre</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="167"/>
-        <location filename="../src/ui-hlp/save.cpp" line="36"/>
+        <location filename="../src/engine/formulas.cpp" line="164"/>
+        <location filename="../src/ui-hlp/save.cpp" line="33"/>
         <source>left</source>
         <translation>izquierda</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="168"/>
+        <location filename="../src/engine/formulas.cpp" line="165"/>
         <source>both</source>
         <translation>ambidiestro</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="173"/>
+        <location filename="../src/engine/formulas.cpp" line="170"/>
         <source>fixed</source>
         <translation>fijo</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="174"/>
+        <location filename="../src/engine/formulas.cpp" line="171"/>
         <source>iteration</source>
         <translation>iteración</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="175"/>
+        <location filename="../src/engine/formulas.cpp" line="172"/>
         <source>smooth</source>
         <translation>iteración suavizada</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="181"/>
+        <location filename="../src/engine/formulas.cpp" line="178"/>
         <source>angle</source>
         <translation>ángulo de z</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="182"/>
+        <location filename="../src/engine/formulas.cpp" line="179"/>
         <source>tile-angle</source>
         <translation>ángulo en torno al centro de la tesela</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="183"/>
+        <location filename="../src/engine/formulas.cpp" line="180"/>
         <source>zmag</source>
         <translation>zmag</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="184"/>
+        <location filename="../src/engine/formulas.cpp" line="181"/>
         <source>none</source>
         <translation>ninguno</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="186"/>
+        <location filename="../src/engine/formulas.cpp" line="183"/>
         <source>turned</source>
         <translation>cada una desplazada en una cantidad propia</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="187"/>
+        <location filename="../src/engine/formulas.cpp" line="184"/>
         <source>shaded</source>
         <translation>sombreadas del centro al borde</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="188"/>
+        <location filename="../src/engine/formulas.cpp" line="185"/>
         <source>edged</source>
         <translation>con el borde marcado</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="189"/>
+        <location filename="../src/engine/formulas.cpp" line="186"/>
         <source>flat</source>
         <translation>un color liso cada una</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="195"/>
+        <location filename="../src/engine/formulas.cpp" line="192"/>
         <source>1: squares</source>
         <translation>1: cuadrados</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="196"/>
+        <location filename="../src/engine/formulas.cpp" line="193"/>
         <source>2: equilateral triangles</source>
         <translation>2: triángulos equiláteros</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="197"/>
+        <location filename="../src/engine/formulas.cpp" line="194"/>
         <source>3: hexagons</source>
         <translation>3: hexágonos</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="198"/>
+        <location filename="../src/engine/formulas.cpp" line="195"/>
         <source>4: octagons and squares (4.8.8)</source>
         <translation>4: octógonos y cuadrados (4.8.8)</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="199"/>
+        <location filename="../src/engine/formulas.cpp" line="196"/>
         <source>5: hexagons and triangles, the trihexagonal (3.6.3.6)</source>
         <translation>5: hexágonos y triángulos, el trihexagonal (3.6.3.6)</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="200"/>
+        <location filename="../src/engine/formulas.cpp" line="197"/>
         <source>6: hexagons, squares and triangles (3.4.6.4)</source>
         <translation>6: hexágonos, cuadrados y triángulos (3.4.6.4)</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="201"/>
+        <location filename="../src/engine/formulas.cpp" line="198"/>
         <source>7: dodecagons and triangles (3.12.12)</source>
         <translation>7: dodecágonos y triángulos (3.12.12)</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="202"/>
+        <location filename="../src/engine/formulas.cpp" line="199"/>
         <source>8: dodecagons, hexagons and squares (4.6.12)</source>
         <translation>8: dodecágonos, hexágonos y cuadrados (4.6.12)</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="203"/>
+        <location filename="../src/engine/formulas.cpp" line="200"/>
         <source>9: rows of squares and of triangles (3.3.3.4.4)</source>
         <translation>9: filas de cuadrados y de triángulos (3.3.3.4.4)</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="204"/>
+        <location filename="../src/engine/formulas.cpp" line="201"/>
         <source>10: the snub square (3.3.4.3.4)</source>
         <translation>10: el cuadrado romo (3.3.4.3.4)</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="205"/>
+        <location filename="../src/engine/formulas.cpp" line="202"/>
         <source>11: the snub hexagonal, hexagons in a sea of triangles (3.3.3.3.6)</source>
         <translation>11: el hexagonal romo, hexágonos en un mar de triángulos (3.3.3.3.6)</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="206"/>
+        <location filename="../src/engine/formulas.cpp" line="203"/>
         <source>12: tetrakis square: right triangles, eight round a point</source>
         <translation>12: tetrakis cuadrado: triángulos rectángulos, ocho alrededor de un punto</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="207"/>
+        <location filename="../src/engine/formulas.cpp" line="204"/>
         <source>13: rhombille: rhombi that read as cubes</source>
         <translation>13: rombille: rombos que se leen como cubos</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="208"/>
+        <location filename="../src/engine/formulas.cpp" line="205"/>
         <source>14: deltoidal trihexagonal: kites</source>
         <translation>14: deltoidal trihexagonal: cometas</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="209"/>
+        <location filename="../src/engine/formulas.cpp" line="206"/>
         <source>15: triakis triangular: obtuse triangles</source>
         <translation>15: triakis triangular: triángulos obtusos</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="210"/>
+        <location filename="../src/engine/formulas.cpp" line="207"/>
         <source>16: kisrhombille: half-equilateral triangles, twelve round a point</source>
         <translation>16: kisrombille: medios triángulos equiláteros, doce alrededor de un punto</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="211"/>
+        <location filename="../src/engine/formulas.cpp" line="208"/>
         <source>17: prismatic pentagons</source>
         <translation>17: pentágonos prismáticos</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="212"/>
+        <location filename="../src/engine/formulas.cpp" line="209"/>
         <source>18: Cairo pentagons</source>
         <translation>18: pentágonos de El Cairo</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="213"/>
+        <location filename="../src/engine/formulas.cpp" line="210"/>
         <source>19: floret pentagons, six to a flower</source>
         <translation>19: pentágonos en flor, seis por flor</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="214"/>
+        <location filename="../src/engine/formulas.cpp" line="211"/>
         <source>20: bricks, running bond</source>
         <translation>20: ladrillos, aparejo a soga</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="215"/>
+        <location filename="../src/engine/formulas.cpp" line="212"/>
         <source>21: Flemish bond: a brick and a half brick by turns</source>
         <translation>21: aparejo flamenco: un ladrillo y medio ladrillo alternados</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="216"/>
+        <location filename="../src/engine/formulas.cpp" line="213"/>
         <source>22: herringbone</source>
         <translation>22: espiga</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="217"/>
+        <location filename="../src/engine/formulas.cpp" line="214"/>
         <source>23: basketweave</source>
         <translation>23: tejido de cesta</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="218"/>
+        <location filename="../src/engine/formulas.cpp" line="215"/>
         <source>24: Pythagorean: squares of two sizes</source>
         <translation>24: pitagórico: cuadrados de dos tamaños</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="219"/>
+        <location filename="../src/engine/formulas.cpp" line="216"/>
         <source>25: chevrons</source>
         <translation>25: chevrones</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="220"/>
+        <location filename="../src/engine/formulas.cpp" line="217"/>
         <source>26: squares and rhombi in alternate rows</source>
         <translation>26: cuadrados y rombos en filas alternas</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="221"/>
+        <location filename="../src/engine/formulas.cpp" line="218"/>
         <source>27: houses: a pentagon, up and hanging by turns</source>
         <translation>27: casitas: un pentágono, derecho y colgando por turnos</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="222"/>
+        <location filename="../src/engine/formulas.cpp" line="219"/>
         <source>28: rows: two of squares, one of triangles</source>
         <translation>28: filas: dos de cuadrados, una de triángulos</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="223"/>
+        <location filename="../src/engine/formulas.cpp" line="220"/>
         <source>29: rows: one of squares, two of triangles</source>
         <translation>29: filas: una de cuadrados, dos de triángulos</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="224"/>
+        <location filename="../src/engine/formulas.cpp" line="221"/>
         <source>30: hexagons among triangles</source>
         <translation>30: hexágonos entre triángulos</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="225"/>
+        <location filename="../src/engine/formulas.cpp" line="222"/>
         <source>31: Greek crosses</source>
         <translation>31: cruces griegas</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="226"/>
+        <location filename="../src/engine/formulas.cpp" line="223"/>
         <source>32: T tetrominoes</source>
         <translation>32: tetrominós en T</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="227"/>
+        <location filename="../src/engine/formulas.cpp" line="224"/>
         <source>33: eight-pointed stars and crosses</source>
         <translation>33: estrellas de ocho puntas y cruces</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="228"/>
+        <location filename="../src/engine/formulas.cpp" line="225"/>
         <source>34: six-pointed stars and hexagons</source>
         <translation>34: estrellas de seis puntas y hexágonos</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="229"/>
+        <location filename="../src/engine/formulas.cpp" line="226"/>
         <source>35: eight-pointed stars with four-pointed ones and rhombi</source>
         <translation>35: estrellas de ocho puntas con estrellas de cuatro puntas y rombos</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="230"/>
+        <location filename="../src/engine/formulas.cpp" line="227"/>
         <source>36: twelve-pointed stars with three-pointed ones and rhombi</source>
         <translation>36: estrellas de doce puntas con estrellas de tres puntas y rombos</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="231"/>
+        <location filename="../src/engine/formulas.cpp" line="228"/>
         <source>37: twelve-pointed stars with notched hexagons and squares</source>
         <translation>37: estrellas de doce puntas con hexágonos dentados y cuadrados</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="232"/>
+        <location filename="../src/engine/formulas.cpp" line="229"/>
         <source>38: Voronoi cells, irregular -- randscp&apos;s</source>
         <translation>38: celdas de Voronoi, irregulares -- las de randscp</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="233"/>
+        <location filename="../src/engine/formulas.cpp" line="230"/>
         <source>39: Penrose rhombs: never repeats, fivefold</source>
         <translation>39: rombos de Penrose: nunca se repite, simetría quíntuple</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="234"/>
+        <location filename="../src/engine/formulas.cpp" line="231"/>
         <source>40: Penrose kites and darts</source>
         <translation>40: cometas y dardos de Penrose</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="235"/>
+        <location filename="../src/engine/formulas.cpp" line="232"/>
         <source>41: Ammann-Beenker: squares and rhombi, eightfold, never repeats</source>
         <translation>41: Ammann-Beenker: cuadrados y rombos, simetría óctuple, nunca se repite</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="236"/>
+        <location filename="../src/engine/formulas.cpp" line="233"/>
         <source>42: rhombi in twelve directions, never repeats</source>
         <translation>42: rombos en doce direcciones, nunca se repite</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="237"/>
+        <location filename="../src/engine/formulas.cpp" line="234"/>
         <source>43: rhombi in seven directions, never repeats</source>
         <translation>43: rombos en siete direcciones, nunca se repite</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="238"/>
+        <location filename="../src/engine/formulas.cpp" line="235"/>
         <source>44: the pinwheel: triangles facing every way there is</source>
         <translation>44: el molinete: triángulos orientados en todas las direcciones posibles</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="239"/>
+        <location filename="../src/engine/formulas.cpp" line="236"/>
         <source>45: the chair: Ls cut into Ls</source>
         <translation>45: la silla: eles cortadas en eles</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/save.cpp" line="37"/>
+        <location filename="../src/ui-hlp/save.cpp" line="34"/>
         <source>center</source>
         <translation>centro</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="166"/>
-        <location filename="../src/ui-hlp/save.cpp" line="38"/>
+        <location filename="../src/engine/formulas.cpp" line="163"/>
+        <location filename="../src/ui-hlp/save.cpp" line="35"/>
         <source>right</source>
         <translation>derecha</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/save.cpp" line="39"/>
+        <location filename="../src/ui-hlp/save.cpp" line="36"/>
         <source>top</source>
         <translation>arriba</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/save.cpp" line="40"/>
+        <location filename="../src/ui-hlp/save.cpp" line="37"/>
         <source>middle</source>
         <translation>centro</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/save.cpp" line="41"/>
+        <location filename="../src/ui-hlp/save.cpp" line="38"/>
         <source>bottom</source>
         <translation>abajo</translation>
     </message>
@@ -1453,13 +1453,13 @@
         <translation>La cuadrícula cartesiana no se admite con zoom &gt; 100000x</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/save.cpp" line="897"/>
+        <location filename="../src/ui-hlp/save.cpp" line="862"/>
         <source>Recording is already enabled</source>
         <translation>La grabación ya está activa</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/save.cpp" line="902"/>
-        <location filename="../src/ui-hlp/save.cpp" line="909"/>
+        <location filename="../src/ui-hlp/save.cpp" line="867"/>
+        <location filename="../src/ui-hlp/save.cpp" line="874"/>
         <source>File could not be opened or out of memory</source>
         <translation>No se pudo abrir el archivo, o memoria agotada</translation>
     </message>
@@ -3926,17 +3926,17 @@
         <translation>Copiar la URL de la posición</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="133"/>
+        <location filename="../src/engine/formulas.cpp" line="130"/>
         <source>Disable truecolor colouring</source>
         <translation>Desactivar el coloreado en color real</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="134"/>
+        <location filename="../src/engine/formulas.cpp" line="131"/>
         <source>simple red (for education purposes)</source>
         <translation>rojo simple (con fines didácticos)</translation>
     </message>
     <message>
-        <location filename="../src/engine/formulas.cpp" line="135"/>
+        <location filename="../src/engine/formulas.cpp" line="132"/>
         <source>simple blue (for education purposes)</source>
         <translation>azul simple (con fines didácticos)</translation>
     </message>
@@ -4036,6 +4036,11 @@
         <location filename="../src/ui-hlp/ui_helper.cpp" line="3369"/>
         <source>Julia</source>
         <translation>Julia</translation>
+    </message>
+    <message>
+        <location filename="../src/ui-hlp/ui_helper.cpp" line="3455"/>
+        <source>Mouse:[%s,%s]</source>
+        <translation>Ratón:[%s,%s]</translation>
     </message>
     <message>
         <source>Formula:%s</source>
@@ -4324,9 +4329,8 @@
         <translation>Portapapeles establecido en %s.</translation>
     </message>
     <message>
-        <location filename="../src/ui-hlp/ui_helper.cpp" line="3456"/>
         <source>Mouse:[%1.12f,%1.12f]</source>
-        <translation>Ratón:[%1.12f,%1.12f]</translation>
+        <translation type="vanished">Ratón:[%1.12f,%1.12f]</translation>
     </message>
     <message>
         <location filename="../src/ui/image_qt.cpp" line="189"/>

@@ -33,9 +33,6 @@
 #include "plane.h"
 #include "timers.h"
 #include "phist.h"
-#ifndef M_PI
-#define M_PI 3.1415
-#endif
 #include "xerror.h"
 
 struct symmetryinfo2 cursymmetry;
