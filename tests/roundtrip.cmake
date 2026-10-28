@@ -70,6 +70,12 @@ foreach(position ${positions})
       continue()
    endif()
 
+   # The saved file says when it was made, in ISO 8601 with the offset.
+   file(READ ${dir}/out.xpf saved)
+   if(NOT saved MATCHES "\n;Created: [0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-6][0-9](Z|[+-][0-1][0-9]:[0-5][0-9])\n")
+      list(APPEND failures "${name}: no creation date in the saved file")
+   endif()
+
    xaos_render(out.xpf b)
 
    if(NOT EXISTS ${dir}/a000000.png OR NOT EXISTS ${dir}/b000000.png)

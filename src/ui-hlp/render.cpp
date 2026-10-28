@@ -94,7 +94,8 @@ struct frame_info {
 };
 
 int uih_renderanimation(struct uih_context *gc1, const char *basename,
-                        xio_constpath animation, int width, int height,
+                        const char *extension, xio_constpath animation,
+                        int width, int height,
                         float pixelwidth, float pixelheight, int frametime,
                         int type, int antialias, int slowmode,
                         int letterspersec, const char *catalog)
@@ -296,12 +297,14 @@ int uih_renderanimation(struct uih_context *gc1, const char *basename,
                            uih->image->currlines[y],
                            img->width * img->bytesperpixel);
                 fflush(stdout);
-                sprintf(s, "%s%06i.png", basename, framenum);
+                sprintf(s, "%s%06i.%s", basename, framenum, extension);
                 curframe.rect = uih->fcontext->rs;
                 curframe.angle = uih->fcontext->angle;
                 curframe.name = s;
                 curframe.newimage = newimage;
-                writepng(s, uih->image, NULL);
+                const char *r = writeimage(s, uih->image, NULL);
+                if (r != NULL)
+                    uih_error(uih, r);
                 uih_displayed(uih);
                 lastframenum = framenum;
             } else {
@@ -312,10 +315,10 @@ int uih_renderanimation(struct uih_context *gc1, const char *basename,
         if (lastframenum < framenum) {
             // The image is a duplicate of the previous frame
             char t[256];
-            sprintf(t, "%s%06i.png", basename, framenum);
+            sprintf(t, "%s%06i.%s", basename, framenum, extension);
 #ifdef _WIN32
             // No symlinks on windows, so just save another copy
-            writepng(t, uih->image, NULL);
+            writeimage(t, uih->image, NULL);
 #else
             // On Unix, save a symlink.
             const char *link_target;

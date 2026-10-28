@@ -1,6 +1,6 @@
 # MS XaoS
 
-> Traducción de la [guía en inglés](ms-xaos-guide.md) de la versión 2.15. Donde
+> Traducción de la [guía en inglés](ms-xaos-guide.md) de la versión 2.16. Donde
 > difieran, la referencia es el original en inglés.
 
 Un fork de [XaoS](https://github.com/xaos-project/XaoS) 4.3.3. Todo lo que hace
@@ -62,6 +62,29 @@ Todo lo que una posición puede contener sobrevive ahora sin cambios a guardar y
 cargar: los 169 ejemplos incluidos y 141 posiciones generadas que cubren cada
 fórmula, plano, modo de coloreado y filtro hacen el viaje de ida y vuelta píxel
 a píxel.
+
+Cada archivo de posición y de animación lleva la fecha, en la línea tras la
+cabecera, en ISO 8601 con el desfase respecto a UTC:
+
+```
+;Created: 2026-10-28T17:46:30+01:00
+```
+
+Es un comentario, así que toda versión abre el archivo como antes; un script
+puede ordenar los archivos por ella después de que una copia les haya dado a
+todos la misma fecha de archivo.
+
+## Imágenes WebP
+
+Archivo → Guardar como → **WebP** guarda la imagen como WebP sin pérdida: los
+mismos píxeles que el PNG, en un archivo más pequeño. A diferencia del PNG no
+lleva la posición, así que Archivo → Abrir no puede reabrirla. Renderizar y
+Renderizar imagen tienen un campo **Formato de archivo** para escribir los
+fotogramas en WebP, y en la línea de órdenes `-renderformat webp` hace lo
+mismo.
+
+WebP necesita el módulo Image Formats de Qt (el plugin `qwebp`); una
+compilación sin él lo dice en lugar de guardar.
 
 ## Deshacer
 

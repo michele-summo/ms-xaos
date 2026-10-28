@@ -63,6 +63,7 @@ static const char *rbasename = "anim";
 static int alias = 0;
 static int slowmode = 0;
 static char *imgtype;
+static char *imgformat;
 static char *defsize;
 static float framerate;
 static int letterspersec = 20;
@@ -84,11 +85,12 @@ const struct params global_params[] = {
      "exact size of one pixel in centimeters"},
     {"", P_HELP, NULL, "Animation rendering:"},
     {"-render", P_STRING, &defrender,
-     "Render animation into sequence of .png files"},
+     "Render animation into sequence of .png (or .webp) files"},
     {"-basename", P_STRING, &rbasename,
      "Name for .png files (XaoS will add 4 digit number and extension"},
     {"-size", P_STRING, &defsize, "widthxheight"},
     {"-renderimage", P_STRING, &imgtype, "256 or truecolor"},
+    {"-renderformat", P_STRING, &imgformat, "png (default) or webp (lossless)"},
     {"-renderframerate", P_FLOAT, &framerate, "framerate"},
     {"-antialiasing", P_SWITCH, &alias,
      "Perform antialiasing (slow, requires quite lot of memory)"},
@@ -244,9 +246,13 @@ int ui_render(void)
              height <= 0)) {
             x_fatalerror("Invalid size (use for example 320x200");
         }
+        if (imgformat != NULL && strcmp("png", imgformat) &&
+            strcmp("webp", imgformat))
+            x_fatalerror("Unknown image format:%s", imgformat);
         if (framerate <= 0)
             framerate = 30;
-        if (!uih_renderanimation(NULL, rbasename, defrender, width, height,
+        if (!uih_renderanimation(NULL, rbasename, imgformat ? imgformat : "png",
+                                 defrender, width, height,
                                  pixelwidth, pixelheight,
                                  (int)(1000000 / framerate), imagetype, alias,
                                  slowmode, letterspersec, NULL))
